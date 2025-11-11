@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ajouter un produit</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center p-10">
+
+  <h1 class="text-3xl font-bold mb-8">🛒 Ajouter un produit</h1>
+
+  <div class="bg-white p-6 rounded shadow-md w-full max-w-md">
+    <div class="mb-4">
+      <label class="block mb-1">Nom du produit</label>
+      <input id="nom" type="text" class="w-full border p-2 rounded" placeholder="Ex: Clavier" />
+    </div>
+    <div class="mb-4">
+      <label class="block mb-1">Quantité</label>
+      <input id="quantite" type="number" class="w-full border p-2 rounded" placeholder="Ex: 5" />
+    </div>
+    <div class="mb-4">
+      <label class="block mb-1">Prix (€)</label>
+      <input id="prix" type="number" class="w-full border p-2 rounded" placeholder="Ex: 29.99" />
+    </div>
+    <button id="ajouter" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded w-full">
+      ➕ Ajouter
+    </button>
+  </div>
+
+  <a href="produits.html" class="mt-6 text-blue-600 underline">Voir les produits</a>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+    // ⚙️ CONFIGURATION FIREBASE
+    const firebaseConfig = {
+      apiKey: "TA_CLE_ICI",
+      authDomain: "ton-projet.firebaseapp.com",
+      databaseURL: "https://ton-projet-default-rtdb.firebaseio.com",
+      projectId: "ton-projet",
+      storageBucket: "ton-projet.appspot.com",
+      messagingSenderId: "XXXXXX",
+      appId: "1:XXXXXX:web:XXXXXX"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    document.getElementById("ajouter").addEventListener("click", async () => {
+      const nom = document.getElementById("nom").value.trim();
+      const quantite = document.getElementById("quantite").value.trim();
+      const prix = document.getElementById("prix").value.trim();
+
+      if (!nom || !quantite || !prix) {
+        alert("Veuillez remplir tous les champs !");
+        return;
+      }
+
+      await push(ref(db, "produits"), { nom, quantite, prix });
+      alert("✅ Produit ajouté !");
+      document.getElementById("nom").value = "";
+      document.getElementById("quantite").value = "";
+      document.getElementById("prix").value = "";
+    });
+  </script>
+</body>
+</html>
