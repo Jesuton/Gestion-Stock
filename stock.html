@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StockPilot</title>
+    <!-- Chargement de TailwindCSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Ajout de la police Inter pour une meilleure apparence */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+    <!-- 
+      CONTENEUR DE LA PAGE D'AUTHENTIFICATION
+      Initialement visible, sera caché par JS après la connexion.
+    -->
+    <div id="auth-page-container">
+        <div class="min-h-screen bg-gray-50 flex flex-col justify-center items-center p-4">
+            <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
+                <div class="flex flex-col items-center mb-6">
+                    <div class="bg-cyan-100 text-cyan-500 p-3 rounded-lg mb-4">
+                        <div data-icon="logo" class="w-8 h-8"></div>
+                    </div>
+                    <h1 class="text-2xl font-bold text-gray-800">StockPilot</h1>
+                    <p class="text-gray-500 mt-1">
+                        Connectez-vous à votre compte ou créez-en un pour continuer.
+                    </p>
+                </div>
+
+                <div class="w-full bg-gray-100 rounded-lg p-1 flex mb-6">
+                    <button id="auth-toggle-login" class="w-1/2 p-2 rounded-md text-sm font-semibold transition-colors bg-white shadow text-gray-800">
+                        Se connecter
+                    </button>
+                    <button id="auth-toggle-signup" class="w-1/2 p-2 rounded-md text-sm font-semibold transition-colors text-gray-500 hover:bg-gray-200">
+                        S'inscrire
+                    </button>
+                </div>
+
+                <!-- Formulaire de connexion (initialement visible) -->
+                <form id="login-form">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-sm font-medium text-gray-600" for="email">Email</label>
+                            <input type="email" id="email" value="votre@email.com" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" />
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-600" for="password">Mot de passe</label>
+                            <input type="password" id="password" value="********" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" />
+                        </div>
+                        <p id="login-error" class="text-red-500 text-sm mt-2 hidden"></p> <!-- Ajout pour les erreurs -->
+                        <button type="submit" id="login-submit-button" class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
+                            Se connecter
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Formulaire d'inscription (initialement caché) -->
+                <form id="signup-form" class="hidden">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-sm font-medium text-gray-600" for="fullName">Nom complet</label>
+                            <input type="text" id="fullName" placeholder="Jean Dupont" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" />
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-600" for="companyName">Nom de l'entreprise</label>
+                            <input type="text" id="companyName" placeholder="Ma Société" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" />
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-600" for="signup-email">Email</label>
+                            <input type="email" id="signup-email" placeholder="votre@email.com" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" />
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-600" for="signup-password">Mot de passe</label>
+                            <input type="password" id="signup-password" placeholder="********" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" />
+                        </div>
+                        <p id="signup-error" class="text-red-500 text-sm mt-2 hidden"></p> <!-- Ajout pour les erreurs -->
+                        <button type="submit" id="signup-submit-button" class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
+                            Créer mon compte
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 
+      CONTENEUR DE L'APPLICATION (LAYOUT)
+      Initialement caché, sera affiché par JS après la connexion.
+    -->
+    <div id="layout-container" class="hidden">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white shadow-md flex flex-col h-screen fixed">
+            <div class="p-6 flex items-center space-x-3 border-b border-gray-200">
+                <div class="bg-cyan-100 text-cyan-500 p-2 rounded-lg">
+                    <div data-icon="logo" class="w-6 h-6"></div>
+                </div>
+                <h1 class="text-xl font-bold text-gray-800">StockPilot</h1>
+            </div>
+            <nav class="flex-1 p-4 space-y-2">
+                <!-- Les boutons de navigation -->
+                <button data-page="Tableau de bord" class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors bg-cyan-400 text-white shadow">
+                    <div data-icon="dashboard" class="w-5 h-5"></div>
+                    <span>Tableau de bord</span>
+                </button>
+                <button data-page="Ventes" class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
+                    <div data-icon="sales" class="w-5 h-5"></div>
+                    <span>Ventes</span>
+                </button>
+                <button data-page="Stock Boutique" class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
+                    <div data-icon="box" class="w-5 h-5"></div>
+                    <span>Stock Boutique</span>
+                </button>
+                <button data-page="Mon Magasin" class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
+                    <div data-icon="box" class="w-5 h-5"></div>
+                    <span>Mon Magasin</span>
+                </button>
+                <button data-page="Statistiques" class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
+                    <div data-icon="stats" class="w-5 h-5"></div>
+                    <span>Statistiques</span>
+                </button>
+                <button data-page="Paramètres" class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
+                    <div data-icon="settings" class="w-5 h-5"></div>
+                    <span>Paramètres</span>
+                </button>
+            </nav>
+            <div class="p-4 border-t border-gray-200">
+                <div class="p-4 mb-2 rounded-lg bg-gray-100">
+                    <!-- Placeholder pour le profil utilisateur -->
+                    <p class="text-sm font-medium text-gray-700">Utilisateur connecté</p>
+                    <p id="user-email-display" class="text-xs text-gray-500 truncate">Chargement...</p> <!-- ID ajouté -->
+                </div>
+                <button id="logout-button" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">
+                    <div data-icon="logout" class="w-5 h-5"></div>
+                    <span>Déconnexion</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Contenu principal (pages) -->
+        <main class="flex-1 ml-64 overflow-y-auto">
+            
+            <!-- Page: Tableau de bord -->
+            <div id="page-Tableau-de-bord" class="page-content p-8">
+                <h1 class="text-3xl font-bold text-gray-800">Bienvenue!</h1>
+                <p class="text-gray-500 mt-1">Voici un aperçu de votre activité</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+                    <!-- StatCard -->
+                    <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500">Ventes du jour</p>
+                            <p class="text-2xl font-bold text-gray-800 mt-1">0</p>
+                        </div>
+                        <div class="p-3 rounded-lg bg-blue-100">
+                            <div data-icon="sales" class="w-6 h-6 text-blue-500"></div>
+                        </div>
+                    </div>
+                    <!-- StatCard -->
+                    <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500">Stock Boutique</p>
+                            <p class="text-2xl font-bold text-gray-800 mt-1">0 produits</p>
+                        </div>
+                        <div class="p-3 rounded-lg bg-green-100">
+                            <div data-icon="box" class="w-6 h-6 text-green-500"></div>
+                        </div>
+                    </div>
+                    <!-- StatCard -->
+                    <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500">Stock Magasin</p>
+                            <p class="text-2xl font-bold text-gray-800 mt-1">0 produits</p>
+                        </div>
+                        <div class="p-3 rounded-lg bg-yellow-100">
+                            <div data-icon="box" class="w-6 h-6 text-yellow-500"></div>
+                        </div>
+                    </div>
+                    <!-- StatCard -->
+                    <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500">Revenus du mois</p>
+                            <p class="text-2xl font-bold text-gray-800 mt-1">0 FCFA</p>
+                        </div>
+                        <div class="p-3 rounded-lg bg-indigo-100">
+                            <div data-icon="stats" class="w-6 h-6 text-indigo-500"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-10 bg-white p-6 rounded-lg shadow-sm">
+                    <h2 class="text-xl font-bold text-gray-800">Démarrage rapide</h2>
+                    <div class="mt-4 space-y-4">
+                        <div class="p-4 border border-gray-200 rounded-lg">
+                            <h3 class="font-semibold text-gray-700">1. Ajouter des produits au magasin</h3>
+                            <p class="text-sm text-gray-500 mt-1">Commencez par ajouter vos produits dans "Mon Magasin" avec leurs prix d'achat.</p>
+                        </div>
+                        <div class="p-4 border border-gray-200 rounded-lg">
+                            <h3 class="font-semibold text-gray-700">2. Transférer vers la boutique</h3>
+                            <p class="text-sm text-gray-500 mt-1">Transférez les produits vers votre "Stock Boutique" en ajoutant votre marge.</p>
+                        </div>
+                        <div class="p-4 border border-gray-200 rounded-lg">
+                            <h3 class="font-semibold text-gray-700">3. Enregistrer vos ventes</h3>
+                            <p class="text-sm text-gray-500 mt-1">Utilisez l'interface "Ventes" pour enregistrer chaque transaction.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page: Ventes -->
+            <div id="page-Ventes" class="page-content p-8 hidden">
+                <h1 class="text-3xl font-bold text-gray-800">Ventes</h1>
+                <p class="text-gray-500 mt-1">Enregistrez vos ventes quotidiennes</p>
+                <div class="mt-8 bg-white p-6 rounded-lg shadow-sm">
+                    <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                        <div data-icon="sales" class="w-6 h-6 mr-3 text-cyan-500"></div>
+                        Enregistrer une vente
+                    </h2>
+                    <form class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="col-span-1">
+                            <label for="product" class="block text-sm font-medium text-gray-700 mb-1">Produit *</label>
+                            <select id="product" name="product" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500">
+                                <option>Sélectionner un produit</option>
+                            </select>
+                        </div>
+                        <div class="col-span-1">
+                            <label for="quantity" class="block text-sm font-medium text-gray-700 mb-1">Quantité *</label>
+                            <input type="number" name="quantity" id="quantity" value="1" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500" />
+                        </div>
+                        <div class="col-span-2">
+                            <label for="seller" class="block text-sm font-medium text-gray-700 mb-1">Vendeur *</label>
+                            <input type="text" name="seller" id="seller" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500" />
+                        </div>
+                        <div class="col-span-2">
+                            <label for="comment" class="block text-sm font-medium text-gray-700 mb-1">Commentaire (optionnel)</label>
+                            <textarea name="comment" id="comment" rows="4" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500"></textarea>
+                        </div>
+                        <div class="col-span-2">
+                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-cyan-400 text-white font-semibold rounded-lg shadow-md hover:bg-cyan-500 transition-colors">
+                                + Enregistrer la vente
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="mt-10 bg-white p-6 rounded-lg shadow-sm">
+                    <h2 class="text-xl font-bold text-gray-800">Historique des ventes</h2>
+                    <div class="mt-6 flex flex-col items-center justify-center text-center text-gray-500 h-32">
+                        <p>Aucune vente enregistrée</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page: Stock Boutique -->
+            <div id="page-Stock-Boutique" class="page-content p-8 hidden">
+                <h1 class="text-3xl font-bold text-gray-800">Stock de la Boutique</h1>
+                <div class="mt-8 bg-white p-6 rounded-lg shadow-sm">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div class="relative flex-grow">
+                            <input type="text" placeholder="Rechercher par nom ou description..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500" />
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2">
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h5" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 20v-5h-5" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 9a9 9 0 0114.13-6.364M20 15a9 9 0 01-14.13 6.364" />
+                                </svg>
+                                Réapprovisionner
+                            </button>
+                            <button class="px-4 py-2 bg-cyan-400 text-white font-semibold rounded-lg shadow-md hover:bg-cyan-500 transition-colors flex items-center gap-2">
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                </svg>
+                                Transférer depuis Magasin
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex flex-col items-center justify-center text-center text-gray-500 h-40">
+                        <p>Aucun article en inventaire.</p>
+                    </div>
+                </div>
+                <div class="mt-10 bg-white p-6 rounded-lg shadow-sm">
+                    <h2 class="text-xl font-bold text-gray-800">Mouvements du Stock Boutique</h2>
+                    <p class="text-sm text-gray-500 mt-1">Historique de tous les ajouts et réapprovisionnements de stock.</p>
+                    <div class="mt-6 flex flex-col items-center justify-center text-center text-gray-500 h-32">
+                        <p>Aucun mouvement de stock enregistré.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page: Mon Magasin -->
+            <div id="page-Mon-Magasin" class="page-content p-8 hidden">
+                <h1 class="text-3xl font-bold text-gray-800">Gestion du Magasin</h1>
+                <div class="mt-8 bg-white p-6 rounded-lg shadow-sm">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div class="relative flex-grow">
+                            <input type="text" placeholder="Rechercher par nom ou description..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500" />
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2">Entrée</button>
+                            <button class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2">Sortie</button>
+                            <button class="px-4 py-2 bg-cyan-400 text-white font-semibold rounded-lg shadow-md hover:bg-cyan-500 transition-colors flex items-center gap-2">
+                                + Nouveau Produit
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex flex-col items-center justify-center text-center text-gray-500 h-40">
+                        <p>Aucun article dans le magasin.</p>
+                    </div>
+                </div>
+                <div class="mt-10 bg-white p-6 rounded-lg shadow-sm">
+                    <h2 class="text-xl font-bold text-gray-800">Mouvements du Magasin</h2>
+                    <p class="text-sm text-gray-500 mt-1">Historique de toutes les entrées et sorties du magasin.</p>
+                    <div class="mt-6 flex flex-col items-center justify-center text-center text-gray-500 h-32">
+                        <p>Aucun mouvement enregistré.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page: Statistiques -->
+            <div id="page-Statistiques" class="page-content p-8 hidden">
+                <h1 class="text-3xl font-bold text-gray-800">Statistiques</h1>
+                <p class="text-gray-500 mt-1">Analysez vos performances commerciales</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+                    <!-- StatCard -->
+                    <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500">Ventes totales</p>
+                            <p class="text-2xl font-bold text-gray-800 mt-1">0</p>
+                            <p class="text-xs text-gray-400 mt-2">+0% par rapport au mois dernier</p>
+                        </div>
+                        <div class="p-3 rounded-lg bg-blue-100">
+                            <div data-icon="sales" class="w-6 h-6 text-blue-500"></div>
+                        </div>
+                    </div>
+                    <!-- StatCard -->
+                    <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500">Revenus</p>
+                            <p class="text-2xl font-bold text-gray-800 mt-1">0 FCFA</p>
+                            <p class="text-xs text-gray-400 mt-2">+0% par rapport au mois dernier</p>
+                        </div>
+                        <div class="p-3 rounded-lg bg-indigo-100">
+                            <div data-icon="stats" class="w-6 h-6 text-indigo-500"></div>
+                        </div>
+                    </div>
+                    <!-- StatCard -->
+                    <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500">Produits en stock</p>
+                            <p class="text-2xl font-bold text-gray-800 mt-1">0</p>
+                            <p class="text-xs text-gray-400 mt-2">Dans la boutique</p>
+                        </div>
+                        <div class="p-3 rounded-lg bg-green-100">
+                            <div data-icon="box" class="w-6 h-6 text-green-500"></div>
+                        </div>
+                    </div>
+                    <!-- StatCard -->
+                    <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500">Marge moyenne</p>
+                            <p class="text-2xl font-bold text-gray-800 mt-1">0%</p>
+                            <p class="text-xs text-gray-400 mt-2">Sur tous les produits</p>
+                        </div>
+                        <div class="p-3 rounded-lg bg-purple-100">
+                            <div data-icon="chartBar" class="w-6 h-6 text-purple-500"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-10 bg-white p-6 rounded-lg shadow-sm">
+                    <h2 class="text-xl font-bold text-gray-800">Graphiques et analyses</h2>
+                    <div class="mt-6 flex flex-col items-center justify-center text-center text-gray-500 h-64">
+                        <div data-icon="stats" class="w-16 h-16 text-gray-300 mb-4"></div>
+                        <p>Les graphiques détaillés seront disponibles prochainement</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page: Paramètres -->
+            <div id="page-Paramètres" class="page-content p-8 hidden">
+                <h1 class="text-3xl font-bold">Paramètres</h1>
+                <p class="text-gray-500 mt-1">Gérez les paramètres de votre compte et de l'application.</p>
+                <div class="mt-8 bg-white p-6 rounded-lg shadow-sm">
+                    <p>Les options de paramètres seront bientôt disponibles ici.</p>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+
+    <script type="module">
+        // --- SDK Firebase ---
+        // Importer les fonctions nécessaires des SDK Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            createUserWithEmailAndPassword, 
+            signInWithEmailAndPassword, 
+            signOut, 
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getDatabase, 
+            ref, 
+            set 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+        // --- GESTION DES ICÔNES SVG ---
+        
+        /**
+         * Renvoie le code SVG pour une icône donnée.
+         * @param {string} name - Le nom de l'icône.
+         * @returns {string} - La chaîne de caractères SVG.
+         */
+        function getIconSVG(name) {
+            const icons = {
+                logo: `
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2L4 6.5V17.5L12 22L20 17.5V6.5L12 2ZM11 15.5V10.5H13V15.5H11ZM11.5 8.5C10.67 8.5 10 7.83 10 7C10 6.17 10.67 5.5 11.5 5.5C12.33 5.5 13 6.17 13 7C13 7.83 12.33 8.5 11.5 8.5Z" />
+                    </svg>`,
+                dashboard: `
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                    </svg>`,
+                sales: `
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>`,
+                box: `
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>`,
+                stats: `
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>`,
+                settings: `
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>`,
+                logout: `
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>`,
+                chartBar: `
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-4m3 4v-2m3 2v-6m3 2V7" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 20h14" />
+                    </svg>`
+            };
+            return icons[name] || '';
+        }
+
+        /**
+         * Remplace tous les placeholders d'icônes [data-icon] par le SVG réel.
+         */
+        function renderIcons() {
+            document.querySelectorAll('[data-icon]').forEach(element => {
+                const iconName = element.getAttribute('data-icon');
+                const svgString = getIconSVG(iconName);
+                if (svgString) {
+                    // Créer un div temporaire pour parser le SVG
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = svgString.trim();
+                    const svgElement = tempDiv.firstChild;
+                    
+                    // Copier les classes de l'élément placeholder vers le SVG
+                    const placeholderClasses = element.getAttribute('class') || '';
+                    svgElement.setAttribute('class', placeholderClasses);
+                    
+                    // Remplacer l'élément placeholder par le SVG
+                    element.replaceWith(svgElement);
+                }
+            });
+        }
+
+        // --- GESTION DE L'APPLICATION ---
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Configuration et initialisation de Firebase ---
+            const firebaseConfig = {
+                apiKey: "AIzaSyB65Iye8YMpxXsPthdBYmNojBMpaTPZS3A",
+                authDomain: "gestion-stock-c9484.firebaseapp.com",
+                databaseURL: "https://gestion-stock-c9484-default-rtdb.firebaseio.com",
+                projectId: "gestion-stock-c9484",
+                storageBucket: "gestion-stock-c9484.firebasestorage.app",
+                messagingSenderId: "834033352449",
+                appId: "1:834033352449:web:b86ff5b60c816bb469e500",
+                measurementId: "G-5VKP3S88F8"
+            };
+
+            // Initialiser Firebase
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getDatabase(app);
+
+            // État de l'application
+            let isAuthenticated = false;
+            let currentPage = 'Tableau de bord'; // Page par défaut
+            let isLoginView = true; // Pour le formulaire d'authentification
+            let currentUser = null; // Pour stocker l'objet utilisateur
+
+            // Références DOM
+            const authPageContainer = document.getElementById('auth-page-container');
+            const layoutContainer = document.getElementById('layout-container');
+            const logoutButton = document.getElementById('logout-button');
+            const navButtons = document.querySelectorAll('.nav-button');
+            const pageContents = document.querySelectorAll('.page-content');
+            const authToggleLogin = document.getElementById('auth-toggle-login');
+            const authToggleSignup = document.getElementById('auth-toggle-signup');
+            const loginForm = document.getElementById('login-form');
+            const signupForm = document.getElementById('signup-form');
+            const userEmailDisplay = document.getElementById('user-email-display');
+            const loginError = document.getElementById('login-error');
+            const signupError = document.getElementById('signup-error');
+            const loginSubmitButton = document.getElementById('login-submit-button');
+            const signupSubmitButton = document.getElementById('signup-submit-button');
+
+
+            /**
+             * Met à jour l'interface utilisateur en fonction de l'état actuel.
+             */
+            function updateUI() {
+                // Gérer l'état d'authentification
+                if (isAuthenticated) {
+                    authPageContainer.classList.add('hidden');
+                    layoutContainer.classList.remove('hidden');
+                    if (currentUser && currentUser.email) {
+                        userEmailDisplay.textContent = currentUser.email; // Mettre à jour l'email
+                    }
+                } else {
+                    authPageContainer.classList.remove('hidden');
+                    layoutContainer.classList.add('hidden');
+                    userEmailDisplay.textContent = "Non connecté";
+                    // Réinitialiser la vue d'authentification par défaut
+                    isLoginView = true;
+                    updateAuthFormView();
+                    return; // Arrêter ici si non authentifié
+                }
+
+                // Gérer la navigation des pages
+                pageContents.forEach(page => {
+                    if (page.id === `page-${currentPage.replace(/ /g, '-')}`) {
+                        page.classList.remove('hidden');
+                    } else {
+                        page.classList.add('hidden');
+                    }
+                });
+
+                // Gérer l'état actif des boutons de la sidebar
+                navButtons.forEach(button => {
+                    if (button.dataset.page === currentPage) {
+                        button.classList.add('bg-cyan-400', 'text-white', 'shadow');
+                        button.classList.remove('text-gray-600', 'hover:bg-gray-100');
+                    } else {
+                        button.classList.remove('bg-cyan-400', 'text-white', 'shadow');
+                        button.classList.add('text-gray-600', 'hover:bg-gray-100');
+                    }
+                });
+            }
+
+            /**
+             * Met à jour la vue du formulaire d'authentification (Login / Signup).
+             */
+            function updateAuthFormView() {
+                // Cacher les messages d'erreur lors du basculement
+                loginError.classList.add('hidden');
+                signupError.classList.add('hidden');
+
+                if (isLoginView) {
+                    loginForm.classList.remove('hidden');
+                    signupForm.classList.add('hidden');
+                    authToggleLogin.classList.add('bg-white', 'shadow', 'text-gray-800');
+                    authToggleLogin.classList.remove('text-gray-500', 'hover:bg-gray-200');
+                    authToggleSignup.classList.remove('bg-white', 'shadow', 'text-gray-800');
+                    authToggleSignup.classList.add('text-gray-500', 'hover:bg-gray-200');
+                } else {
+                    loginForm.classList.add('hidden');
+                    signupForm.classList.remove('hidden');
+                    authToggleSignup.classList.add('bg-white', 'shadow', 'text-gray-800');
+                    authToggleSignup.classList.remove('text-gray-500', 'hover:bg-gray-200');
+                    authToggleLogin.classList.remove('bg-white', 'shadow', 'text-gray-800');
+                    authToggleLogin.classList.add('text-gray-500', 'hover:bg-gray-200');
+                }
+            }
+
+            // --- ÉCOUTEURS D'ÉVÉNEMENTS ---
+
+            // Bascule Login
+            authToggleLogin.addEventListener('click', () => {
+                isLoginView = true;
+                updateAuthFormView();
+            });
+
+            // Bascule Signup
+            authToggleSignup.addEventListener('click', () => {
+                isLoginView = false;
+                updateAuthFormView();
+            });
+
+            // Soumission du formulaire de connexion
+            loginForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const email = loginForm.email.value;
+                const password = loginForm.password.value;
+                loginError.classList.add('hidden'); // Cacher l'erreur précédente
+                loginSubmitButton.disabled = true;
+                loginSubmitButton.textContent = "Connexion...";
+
+                try {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    // onAuthStateChanged s'occupera de la mise à jour de l'UI
+                } catch (error) {
+                    console.error("Erreur de connexion:", error.message);
+                    loginError.textContent = getFirebaseAuthErrorMessage(error.code);
+                    loginError.classList.remove('hidden');
+                } finally {
+                    loginSubmitButton.disabled = false;
+                    loginSubmitButton.textContent = "Se connecter";
+                }
+            });
+
+            // Soumission du formulaire d'inscription
+            signupForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const email = signupForm['signup-email'].value;
+                const password = signupForm['signup-password'].value;
+                const fullName = signupForm.fullName.value;
+                const companyName = signupForm.companyName.value;
+
+                signupError.classList.add('hidden');
+                signupSubmitButton.disabled = true;
+                signupSubmitButton.textContent = "Création...";
+
+                if (!fullName || !companyName) {
+                    signupError.textContent = "Veuillez remplir tous les champs.";
+                    signupError.classList.remove('hidden');
+                    signupSubmitButton.disabled = false;
+                    signupSubmitButton.textContent = "Créer mon compte";
+                    return;
+                }
+
+                try {
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    const user = userCredential.user;
+
+                    // Enregistrer les informations supplémentaires dans Realtime Database
+                    await set(ref(db, 'users/' + user.uid), {
+                        fullName: fullName,
+                        companyName: companyName,
+                        email: email
+                    });
+                    
+                    // onAuthStateChanged s'occupera de la mise à jour de l'UI
+                } catch (error) {
+                    console.error("Erreur d'inscription:", error.message);
+                    signupError.textContent = getFirebaseAuthErrorMessage(error.code);
+                    signupError.classList.remove('hidden');
+                } finally {
+                    signupSubmitButton.disabled = false;
+                    signupSubmitButton.textContent = "Créer mon compte";
+                }
+            });
+
+            // Clics sur les boutons de navigation de la Sidebar
+            navButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const pageName = button.dataset.page;
+                    if (pageName) {
+                        currentPage = pageName;
+                        updateUI();
+                    }
+                });
+            });
+
+            // Déconnexion
+            logoutButton.addEventListener('click', async () => {
+                try {
+                    await signOut(auth);
+                    // onAuthStateChanged s'occupera de la mise à jour de l'UI
+                } catch (error) {
+                    console.error("Erreur de déconnexion:", error);
+                }
+            });
+            
+            // --- GESTIONNAIRE D'ÉTAT D'AUTHENTIFICATION ---
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    // L'utilisateur est connecté
+                    isAuthenticated = true;
+                    currentUser = user;
+                } else {
+                    // L'utilisateur est déconnecté
+                    isAuthenticated = false;
+                    currentUser = null;
+                    currentPage = 'Tableau de bord'; // Réinitialiser à la page d'accueil
+                }
+                
+                // Rendre les icônes (une seule fois au début)
+                if (!window.iconsRendered) {
+                    renderIcons();
+                    window.iconsRendered = true; // Marqueur pour ne pas re-rendre
+                }
+                
+                // Mettre à jour l'interface utilisateur en fonction de l'état d'authentification
+                updateUI();
+            });
+
+            // --- FONCTION UTILITAIRE ---
+            function getFirebaseAuthErrorMessage(code) {
+                switch (code) {
+                    case 'auth/invalid-email':
+                        return 'Adresse e-mail invalide.';
+                    case 'auth/user-not-found':
+                    case 'auth/wrong-password':
+                        return 'E-mail ou mot de passe incorrect.';
+                    case 'auth/email-already-in-use':
+                        return 'Cet e-mail est déjà utilisé.';
+                    case 'auth/weak-password':
+                        return 'Le mot de passe doit comporter au moins 6 caractères.';
+                    default:
+                        return 'Une erreur est survenue. Veuillez réessayer.';
+                }
+            }
+
+        });
+
+    </script>
+</body>
+</html>
