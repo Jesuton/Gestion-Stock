@@ -480,44 +480,48 @@
     });
 
     // --- INSCRIPTION ---
-    signupForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const fullName = signupForm.fullName.value.trim();
-      const companyName = signupForm.companyName.value.trim();
-      const email = signupForm["signup-email"].value.trim();
-      const password = signupForm["signup-password"].value.trim();
-
-      signupError.classList.add("hidden");
-
-      if (!fullName || !companyName || !email || !password) {
-        signupError.textContent = "Tous les champs sont requis.";
-        signupError.classList.remove("hidden");
-        return;
-      }
-
-      try {
-        const userCredential = await createUserWithEmailAndPassword(
-          auth,
-          email,
-          password
-        );
-        const user = userCredential.user;
-
-        // Sauvegarde dans la base
-        await set(ref(db, "users/" + user.uid), {
-          fullName,
-          companyName,
-          email,
-          createdAt: new Date().toISOString()
-        });
-
-        alert("✅ Compte créé avec succès !");
-      } catch (error) {
-        console.error(error);
-        signupError.textContent = getFirebaseAuthError(error.code);
-        signupError.classList.remove("hidden");
-      }
+    // Soumission du formulaire d'inscription
+    signupForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const email = signupForm['signup-email'].value;
+        const password = signupForm['signup-password'].value;
+        const fullName = signupForm.fullName.value;
+        const companyName = signupForm.companyName.value;
+    
+        signupError.classList.add('hidden');
+        signupSubmitButton.disabled = true;
+        signupSubmitButton.textContent = "Création...";
+    
+        if (!fullName || !companyName) {
+            signupError.textContent = "Veuillez remplir tous les champs.";
+            signupError.classList.remove('hidden');
+            signupSubmitButton.disabled = false;
+            signupSubmitButton.textContent = "Créer mon compte";
+            return;
+        }
+    
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+    
+            // Enregistrer les informations supplémentaires dans Realtime Database
+            await set(ref(db, 'users/' + user.uid), {
+                fullName: fullName,
+                companyName: companyName,
+                email: email
+            });
+            
+            // onAuthStateChanged s'occupera de la mise à jour de l'UI
+        } catch (error) {
+            console.error("🔥 ERREUR D’INSCRIPTION:", error);
+            signupError.textContent = `${error.code} — ${error.message}`;
+            signupError.classList.remove('hidden');
+        } finally {
+            signupSubmitButton.disabled = false;
+            signupSubmitButton.textContent = "Créer mon compte";
+        }
     });
+
 
     // --- CONNEXION ---
     loginForm.addEventListener("submit", async (e) => {
