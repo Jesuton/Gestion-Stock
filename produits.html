@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Liste des produits</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center p-10">
+  <h1 class="text-3xl font-bold mb-8">📦 Liste des produits</h1>
+
+  <ul id="liste" class="w-full max-w-md bg-white rounded shadow divide-y divide-gray-200"></ul>
+
+  <a href="index.html" class="mt-6 text-blue-600 underline">← Ajouter un produit</a>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "TA_CLE_ICI",
+      authDomain: "ton-projet.firebaseapp.com",
+      databaseURL: "https://ton-projet-default-rtdb.firebaseio.com",
+      projectId: "ton-projet",
+      storageBucket: "ton-projet.appspot.com",
+      messagingSenderId: "XXXXXX",
+      appId: "1:XXXXXX:web:XXXXXX"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const produitsRef = ref(db, "produits");
+    const liste = document.getElementById("liste");
+
+    onValue(produitsRef, (snapshot) => {
+      const data = snapshot.val();
+      liste.innerHTML = "";
+      if (!data) {
+        liste.innerHTML = "<li class='p-4 text-gray-500 text-center'>Aucun produit pour le moment</li>";
+        return;
+      }
+
+      Object.entries(data).forEach(([id, produit]) => {
+        const item = document.createElement("li");
+        item.className = "p-4 flex justify-between hover:bg-gray-50";
+        item.innerHTML = `
+          <div>
+            <strong>${produit.nom}</strong><br>
+            <span class="text-sm text-gray-600">Quantité: ${produit.quantite} | Prix: ${produit.prix}€</span>
+          </div>
+        `;
+        liste.appendChild(item);
+      });
+    });
+  </script>
+</body>
+</html>
