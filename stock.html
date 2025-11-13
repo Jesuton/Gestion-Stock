@@ -26,7 +26,21 @@
             transform: translateY(0);
             opacity: 1;
         }
+        /* Style pour la transition du margin sur le main content */
+        main {
+            transition: margin-left 0.3s ease-in-out;
+        }
     </style>
+<script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "firebase/": "https://aistudiocdn.com/firebase@^12.5.0/"
+  }
+}
+</script>
 </head>
 <body class="bg-gray-50">
 
@@ -107,59 +121,77 @@
       Initialement caché, sera affiché par JS après la connexion.
     -->
     <div id="layout-container" class="hidden">
+        <!-- Overlay pour sidebar mobile -->
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden lg:hidden"></div>
+
         <!-- Sidebar -->
-        <aside class="w-64 bg-white shadow-md flex flex-col h-screen fixed">
+        <aside id="sidebar" class="w-64 bg-white shadow-md flex flex-col h-screen fixed top-0 left-0 z-40 transition-transform duration-300 ease-in-out -translate-x-full lg:translate-x-0 lg:transition-all">
             <div class="p-6 flex items-center space-x-3 border-b border-gray-200">
                 <div class="bg-cyan-100 text-cyan-500 p-2 rounded-lg">
                     <div data-icon="logo" class="w-6 h-6"></div>
                 </div>
-                <h1 class="text-xl font-bold text-gray-800">StockPilot</h1>
+                <h1 class="sidebar-text text-xl font-bold text-gray-800">StockPilot</h1>
             </div>
             <nav class="flex-1 p-4 space-y-2">
                 <!-- Les boutons de navigation -->
                 <button data-page="Tableau de bord" class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors bg-cyan-400 text-white shadow">
                     <div data-icon="dashboard" class="w-5 h-5"></div>
-                    <span>Tableau de bord</span>
+                    <span class="sidebar-text">Tableau de bord</span>
                 </button>
                 <button data-page="Ventes" class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
                     <div data-icon="sales" class="w-5 h-5"></div>
-                    <span>Ventes</span>
+                    <span class="sidebar-text">Ventes</span>
                 </button>
                 <button data-page="Stock Boutique" class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
                     <div data-icon="box" class="w-5 h-5"></div>
-                    <span>Stock Boutique</span>
+                    <span class="sidebar-text">Stock Boutique</span>
                 </button>
                 <button data-page="Mon Magasin" class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
                     <div data-icon="box" class="w-5 h-5"></div>
-                    <span>Mon Magasin</span>
+                    <span class="sidebar-text">Mon Magasin</span>
                 </button>
                 <button data-page="Statistiques" class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
                     <div data-icon="stats" class="w-5 h-5"></div>
-                    <span>Statistiques</span>
+                    <span class="sidebar-text">Statistiques</span>
                 </button>
                 <button data-page="Paramètres" class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
                     <div data-icon="settings" class="w-5 h-5"></div>
-                    <span>Paramètres</span>
+                    <span class="sidebar-text">Paramètres</span>
                 </button>
             </nav>
             <div class="p-4 border-t border-gray-200">
-                <div class="p-4 mb-2 rounded-lg bg-gray-100">
+                <div class="sidebar-text p-4 mb-2 rounded-lg bg-gray-100">
                     <!-- Placeholder pour le profil utilisateur -->
                     <p class="text-sm font-medium text-gray-700">Utilisateur connecté</p>
                     <p id="user-email-display" class="text-xs text-gray-500 truncate">Chargement...</p> <!-- ID ajouté -->
                 </div>
                 <button id="logout-button" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">
                     <div data-icon="logout" class="w-5 h-5"></div>
-                    <span>Déconnexion</span>
+                    <span class="sidebar-text">Déconnexion</span>
+                </button>
+            </div>
+             <!-- Bouton pour réduire/agrandir la sidebar sur Desktop -->
+            <div class="hidden lg:block absolute -right-3 top-20">
+                <button id="sidebar-collapse-toggle" class="bg-white border rounded-full p-1.5 shadow-md hover:bg-gray-100 transition-colors">
+                    <div data-icon="arrowLeft" class="w-4 h-4 text-gray-600"></div>
                 </button>
             </div>
         </aside>
 
         <!-- Contenu principal (pages) -->
-        <main class="flex-1 ml-64 overflow-y-auto">
+        <main class="flex-1 lg:ml-64 overflow-y-auto">
             
+            <!-- Header pour la vue mobile -->
+            <header id="mobile-header" class="sticky top-0 bg-gray-50/75 backdrop-blur-sm z-10 p-4 border-b border-gray-200 flex items-center justify-between lg:hidden">
+                <button id="hamburger-button" class="text-gray-500 hover:text-gray-800">
+                    <div data-icon="menu" class="w-6 h-6"></div>
+                </button>
+                <h1 id="mobile-page-title" class="text-lg font-semibold text-gray-800">Tableau de bord</h1>
+                <div class="w-6"></div> <!-- Spacer -->
+            </header>
+
             <!-- Page: Tableau de bord -->
-            <div id="page-Tableau-de-bord" class="page-content p-8">
+            <div id="page-Tableau-de-bord" class="page-content p-4 md:p-8">
                 <h1 class="text-3xl font-bold text-gray-800">Bienvenue!</h1>
                 <p class="text-gray-500 mt-1">Voici un aperçu de votre activité</p>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
@@ -224,7 +256,7 @@
             </div>
 
             <!-- Page: Ventes -->
-            <div id="page-Ventes" class="page-content p-8 hidden">
+            <div id="page-Ventes" class="page-content p-4 md:p-8 hidden">
                 <h1 class="text-3xl font-bold text-gray-800">Ventes</h1>
                 <p class="text-gray-500 mt-1">Enregistrez vos ventes quotidiennes</p>
                 <div class="mt-8 bg-white p-6 rounded-lg shadow-sm">
@@ -302,7 +334,7 @@
             </div>
 
             <!-- Page: Stock Boutique -->
-            <div id="page-Stock-Boutique" class="page-content p-8 hidden">
+            <div id="page-Stock-Boutique" class="page-content p-4 md:p-8 hidden">
                 <h1 class="text-3xl font-bold text-gray-800">Stock de la Boutique</h1>
                 <div class="mt-8 bg-white p-6 rounded-lg shadow-sm">
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -315,7 +347,7 @@
                                 </svg>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 flex-wrap">
                             <button id="open-restock-modal-button" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2">
                                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h5" />
@@ -390,7 +422,7 @@
             </div>
 
             <!-- Page: Mon Magasin -->
-            <div id="page-Mon-Magasin" class="page-content p-8 hidden">
+            <div id="page-Mon-Magasin" class="page-content p-4 md:p-8 hidden">
                 <h1 class="text-3xl font-bold text-gray-800">Gestion du Magasin</h1>
                 <div class="mt-8 bg-white p-6 rounded-lg shadow-sm">
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -403,7 +435,7 @@
                                 </svg>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 flex-wrap">
                             <button id="open-entry-modal-button" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2">Entrée</button>
                             <button id="open-exit-modal-button" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2">Sortie</button>
                             <!-- ID ajouté au bouton "Nouveau Produit" -->
@@ -472,7 +504,7 @@
             </div>
 
             <!-- Page: Statistiques -->
-            <div id="page-Statistiques" class="page-content p-8 hidden">
+            <div id="page-Statistiques" class="page-content p-4 md:p-8 hidden">
                 <h1 class="text-3xl font-bold text-gray-800">Statistiques</h1>
                 <p class="text-gray-500 mt-1">Analysez vos performances commerciales</p>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
@@ -531,7 +563,7 @@
             </div>
 
             <!-- Page: Paramètres -->
-            <div id="page-Paramètres" class="page-content p-8 hidden">
+            <div id="page-Paramètres" class="page-content p-4 md:p-8 hidden">
                 <h1 class="text-3xl font-bold">Paramètres</h1>
                 <p class="text-gray-500 mt-1">Gérez les paramètres de votre compte et de l'application.</p>
                 <div class="mt-8 bg-white p-6 rounded-lg shadow-sm">
@@ -866,6 +898,18 @@
                 arrowDown: `
                     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>`,
+                menu: `
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>`,
+                arrowLeft: `
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>`,
+                arrowRight: `
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>`
             };
             return icons[name] || '';
@@ -883,7 +927,6 @@
                     tempDiv.innerHTML = svgString.trim();
                     const svgElement = tempDiv.firstChild;
                     
-                    // CORRECTION : S'assurer que svgElement existe avant de continuer
                     if (svgElement) {
                         const placeholderClasses = element.getAttribute('class') || '';
                         svgElement.setAttribute('class', placeholderClasses);
@@ -895,8 +938,6 @@
             });
         }
         
-        // Exécuter le rendu des icônes dès que le DOM est chargé
-        // Mettre dans un try...catch pour une robustesse maximale
         try {
             renderIcons();
         } catch (e) {
@@ -918,21 +959,21 @@
                 measurementId: "G-5VKP3S88F8"
             };
 
-            // Initialiser Firebase
             const app = initializeApp(firebaseConfig);
             const auth = getAuth(app);
             const db = getDatabase(app);
 
             // État de l'application
             let isAuthenticated = false;
-            let currentPage = 'Tableau de bord'; // Page par défaut
-            let isLoginView = true; // Pour le formulaire d'authentification
-            let currentUser = null; // Pour stocker l'objet utilisateur
-            let currentUserData = null; // Pour stocker les détails de l'utilisateur (nom, etc.)
-            let allStoreProducts = {}; // Cache local des produits du magasin
-            let allShopStock = {}; // Cache local du stock de la boutique
+            let currentPage = 'Tableau de bord';
+            let isLoginView = true;
+            let currentUser = null;
+            let currentUserData = null;
+            let allStoreProducts = {};
+            let allShopStock = {};
+            let isSidebarOpen = false; // Pour la visibilité sur mobile
+            let isSidebarCollapsed = false; // Pour l'état réduit sur desktop
 
-            // Écouteurs Firebase
             let storeProductsListener = null, storeMovementsListener = null, shopStockListener = null, shopMovementsListener = null, salesHistoryListener = null;
             let storeProductsRef = null, storeMovementsRef = null, shopStockRef = null, shopMovementsRef = null, salesHistoryRef = null;
 
@@ -952,6 +993,15 @@
             const loginSubmitButton = document.getElementById('login-submit-button');
             const signupSubmitButton = document.getElementById('signup-submit-button');
             
+            // Sidebar responsive
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.querySelector('main');
+            const mobileHeader = document.getElementById('mobile-header');
+            const mobilePageTitle = document.getElementById('mobile-page-title');
+            const hamburgerButton = document.getElementById('hamburger-button');
+            const sidebarOverlay = document.getElementById('sidebar-overlay');
+            const sidebarCollapseToggle = document.getElementById('sidebar-collapse-toggle');
+
             // Barres de recherche
             const storeSearchInput = document.getElementById('store-search-input');
             const shopSearchInput = document.getElementById('shop-search-input');
@@ -1472,6 +1522,9 @@
                     if (currentUser && currentUser.email && userEmailDisplay) {
                         userEmailDisplay.textContent = currentUser.email; // Mettre à jour l'email
                     }
+                     if (mobilePageTitle) {
+                        mobilePageTitle.textContent = currentPage;
+                    }
                 } else {
                     if (authPageContainer) authPageContainer.classList.remove('hidden');
                     if (layoutContainer) layoutContainer.classList.add('hidden');
@@ -1505,10 +1558,10 @@
                 // Gérer l'état actif des boutons de la sidebar
                 navButtons.forEach(button => {
                     if (button.dataset.page === currentPage) {
-                        button.classList.add('bg-cyan-400', 'text-white', 'shadow');
+                        button.classList.add('bg-cyan-500', 'text-white', 'shadow');
                         button.classList.remove('text-gray-600', 'hover:bg-gray-100');
                     } else {
-                        button.classList.remove('bg-cyan-400', 'text-white', 'shadow');
+                        button.classList.remove('bg-cyan-500', 'text-white', 'shadow');
                         button.classList.add('text-gray-600', 'hover:bg-gray-100');
                     }
                 });
@@ -1569,8 +1622,60 @@
                 }
             }
 
+            /**
+             * Gère l'affichage de la sidebar sur mobile.
+             */
+            function updateSidebarMobileState() {
+                if (isSidebarOpen) {
+                    sidebar.classList.remove('-translate-x-full');
+                    sidebarOverlay.classList.remove('hidden');
+                } else {
+                    sidebar.classList.add('-translate-x-full');
+                    sidebarOverlay.classList.add('hidden');
+                }
+            }
+
+            /**
+             * Gère l'état réduit de la sidebar sur desktop.
+             */
+            function updateSidebarDesktopState() {
+                const sidebarTexts = document.querySelectorAll('.sidebar-text');
+                const navButtonsToCenter = document.querySelectorAll('.nav-button, #logout-button');
+                const toggleButtonContainer = sidebarCollapseToggle.firstElementChild;
+
+                if (isSidebarCollapsed) {
+                    sidebar.classList.replace('w-64', 'lg:w-20');
+                    mainContent.classList.replace('lg:ml-64', 'lg:ml-20');
+                    sidebarTexts.forEach(el => el.classList.add('lg:hidden'));
+                    navButtonsToCenter.forEach(el => el.classList.add('lg:justify-center'));
+                    toggleButtonContainer.innerHTML = getIconSVG('arrowRight');
+                    renderIcons(); // Re-render to apply classes to new SVG
+                } else {
+                    sidebar.classList.replace('lg:w-20', 'w-64');
+                    mainContent.classList.replace('lg:ml-20', 'lg:ml-64');
+                    sidebarTexts.forEach(el => el.classList.remove('lg:hidden'));
+                    navButtonsToCenter.forEach(el => el.classList.remove('lg:justify-center'));
+                    toggleButtonContainer.innerHTML = getIconSVG('arrowLeft');
+                    renderIcons(); // Re-render to apply classes to new SVG
+                }
+            }
+
 
             // --- ÉCOUTEURS D'ÉVÉNEMENTS (AVEC VÉRIFICATIONS) ---
+
+            // --- Sidebar Responsive Listeners ---
+            if (hamburgerButton) hamburgerButton.addEventListener('click', () => {
+                isSidebarOpen = true;
+                updateSidebarMobileState();
+            });
+            if (sidebarOverlay) sidebarOverlay.addEventListener('click', () => {
+                isSidebarOpen = false;
+                updateSidebarMobileState();
+            });
+            if (sidebarCollapseToggle) sidebarCollapseToggle.addEventListener('click', () => {
+                isSidebarCollapsed = !isSidebarCollapsed;
+                updateSidebarDesktopState();
+            });
 
             // Bascule Login/Signup
             if(authToggleLogin) authToggleLogin.addEventListener('click', () => {
@@ -1640,7 +1745,7 @@
                     updates[`users/${currentUser.uid}/shopStock/${shopProductId}/updatedAt`] = now;
 
                     // 4b. Créer le mouvement de Sortie de Boutique
-                    const shopMoveKey = push(shopMovementsRef).key;
+                    const shopMoveKey = push(ref(db, `users/${currentUser.uid}/shopMovements`)).key;
                     updates[`users/${currentUser.uid}/shopMovements/${shopMoveKey}`] = {
                         id: shopMoveKey, shopProductId: shopProductId, productName: shopProduct.name,
                         type: "Sortie", quantityChange: quantity, oldStock: shopOldStock, newStock: shopNewStock,
@@ -1649,7 +1754,7 @@
                     };
                     
                     // 4c. Créer l'enregistrement de Vente
-                    const saleKey = push(salesHistoryRef).key;
+                    const saleKey = push(ref(db, `users/${currentUser.uid}/salesHistory`)).key;
                     updates[`users/${currentUser.uid}/salesHistory/${saleKey}`] = {
                         id: saleKey,
                         shopProductId: shopProductId,
@@ -1947,6 +2052,7 @@
                 transferSubmitButton.textContent = "Transfert en cours...";
                 
                 try {
+                    const shopStockRef = ref(db, `users/${currentUser.uid}/shopStock`);
                     const shopStockQuery = query(shopStockRef, orderByChild('sourceProductId'), equalTo(sourceProductId));
                     const snapshot = await get(shopStockQuery);
                     let existingShopItem = null;
@@ -1966,6 +2072,7 @@
 
                     updates[`users/${currentUser.uid}/storeProducts/${sourceProductId}/quantityInStore`] = storeNewStock;
                     
+                    const storeMovementsRef = ref(db, `users/${currentUser.uid}/storeMovements`);
                     const storeMoveKey = push(storeMovementsRef).key;
                     updates[`users/${currentUser.uid}/storeMovements/${storeMoveKey}`] = {
                         id: storeMoveKey, productId: sourceProductId, productName: sourceProduct.name,
@@ -1987,6 +2094,7 @@
                     };
                     updates[`users/${currentUser.uid}/shopStock/${shopProductId}`] = shopProductData;
 
+                    const shopMovementsRef = ref(db, `users/${currentUser.uid}/shopMovements`);
                     const shopMoveKey = push(shopMovementsRef).key;
                     updates[`users/${currentUser.uid}/shopMovements/${shopMoveKey}`] = {
                         id: shopMoveKey, shopProductId: shopProductId, productName: sourceProduct.name,
@@ -2094,6 +2202,7 @@
 
                     updates[`users/${currentUser.uid}/storeProducts/${sourceProduct.id}/quantityInStore`] = storeNewStock;
 
+                    const storeMovementsRef = ref(db, `users/${currentUser.uid}/storeMovements`);
                     const storeMoveKey = push(storeMovementsRef).key;
                     updates[`users/${currentUser.uid}/storeMovements/${storeMoveKey}`] = {
                         id: storeMoveKey, productId: sourceProduct.id, productName: sourceProduct.name,
@@ -2103,7 +2212,8 @@
 
                     updates[`users/${currentUser.uid}/shopStock/${shopProductId}/quantityInShop`] = shopNewStock;
                     updates[`users/${currentUser.uid}/shopStock/${shopProductId}/updatedAt`] = now;
-
+                    
+                    const shopMovementsRef = ref(db, `users/${currentUser.uid}/shopMovements`);
                     const shopMoveKey = push(shopMovementsRef).key;
                     updates[`users/${currentUser.uid}/shopMovements/${shopMoveKey}`] = {
                         id: shopMoveKey, shopProductId: shopProductId, productName: shopProduct.name,
@@ -2218,6 +2328,10 @@
                     const pageName = button.dataset.page;
                     if (pageName) {
                         currentPage = pageName;
+                        if (window.innerWidth < 1024) { // Sur mobile, ferme la sidebar
+                            isSidebarOpen = false;
+                            updateSidebarMobileState();
+                        }
                         updateUI();
                     }
                 });
