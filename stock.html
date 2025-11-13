@@ -34,10 +34,9 @@
 <script type="importmap">
 {
   "imports": {
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
     "react": "https://aistudiocdn.com/react@^19.2.0",
-    "firebase/": "https://aistudiocdn.com/firebase@^12.5.0/"
+    "firebase/": "https://aistudiocdn.com/firebase@^12.5.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/"
   }
 }
 </script>
@@ -506,14 +505,14 @@
             <!-- Page: Statistiques -->
             <div id="page-Statistiques" class="page-content p-4 md:p-8 hidden">
                 <h1 class="text-3xl font-bold text-gray-800">Statistiques</h1>
-                <p class="text-gray-500 mt-1">Analysez vos performances commerciales</p>
+                <p class="text-gray-500 mt-1">Analysez vos performances commerciales globales</p>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
                     <!-- StatCard -->
                     <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
                         <div>
                             <p class="text-sm text-gray-500">Ventes totales</p>
                             <p id="stat-total-sales" class="text-2xl font-bold text-gray-800 mt-1">0</p>
-                            <p class="text-xs text-gray-400 mt-2">+0% par rapport au mois dernier</p>
+                            <p class="text-xs text-gray-400 mt-2">Depuis le début</p>
                         </div>
                         <div class="p-3 rounded-lg bg-blue-100">
                             <div data-icon="sales" class="w-6 h-6 text-blue-500"></div>
@@ -522,9 +521,9 @@
                     <!-- StatCard -->
                     <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
                         <div>
-                            <p class="text-sm text-gray-500">Revenus</p>
+                            <p class="text-sm text-gray-500">Revenus totaux</p>
                             <p id="stat-revenue" class="text-2xl font-bold text-gray-800 mt-1">0 FCFA</p>
-                            <p class="text-xs text-gray-400 mt-2">+0% par rapport au mois dernier</p>
+                            <p class="text-xs text-gray-400 mt-2">Depuis le début</p>
                         </div>
                         <div class="p-3 rounded-lg bg-indigo-100">
                             <div data-icon="stats" class="w-6 h-6 text-indigo-500"></div>
@@ -546,18 +545,63 @@
                         <div>
                             <p class="text-sm text-gray-500">Marge moyenne</p>
                             <p id="stat-avg-margin" class="text-2xl font-bold text-gray-800 mt-1">0%</p>
-                            <p class="text-xs text-gray-400 mt-2">Sur tous les produits</p>
+                            <p class="text-xs text-gray-400 mt-2">Sur toutes les ventes</p>
                         </div>
                         <div class="p-3 rounded-lg bg-purple-100">
                             <div data-icon="chartBar" class="w-6 h-6 text-purple-500"></div>
                         </div>
                     </div>
                 </div>
-                <div class="mt-10 bg-white p-6 rounded-lg shadow-sm">
-                    <h2 class="text-xl font-bold text-gray-800">Graphiques et analyses</h2>
-                    <div class="mt-6 flex flex-col items-center justify-center text-center text-gray-500 h-64">
-                        <div data-icon="stats" class="w-16 h-16 text-gray-300 mb-4"></div>
-                        <p>Les graphiques détaillés seront disponibles prochainement</p>
+                
+                <div class="mt-10 grid grid-cols-1 xl:grid-cols-2 gap-8">
+                    <!-- Section Produits les plus vendus -->
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                        <h2 class="text-xl font-bold text-gray-800">Produits les plus vendus</h2>
+                        <p class="text-sm text-gray-500 mt-1">Classement par quantité vendue.</p>
+                        <div id="best-selling-container" class="mt-4">
+                             <div id="best-selling-placeholder" class="text-center text-gray-500 py-8">
+                                <p>Aucune donnée de vente disponible.</p>
+                            </div>
+                            <div id="best-selling-table-container" class="hidden overflow-x-auto">
+                                <table class="min-w-full bg-white">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
+                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qté Vendue</th>
+                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenu Généré</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="best-selling-tbody" class="divide-y divide-gray-200">
+                                        <!-- Données insérées par JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section Performance des vendeurs -->
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                        <h2 class="text-xl font-bold text-gray-800">Performance des vendeurs</h2>
+                        <p class="text-sm text-gray-500 mt-1">Classement par revenu généré.</p>
+                         <div id="seller-performance-container" class="mt-4">
+                             <div id="seller-performance-placeholder" class="text-center text-gray-500 py-8">
+                                <p>Aucune donnée de vente disponible.</p>
+                            </div>
+                            <div id="seller-performance-table-container" class="hidden overflow-x-auto">
+                                <table class="min-w-full bg-white">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendeur</th>
+                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nb. Ventes</th>
+                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenu Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="seller-performance-tbody" class="divide-y divide-gray-200">
+                                        <!-- Données insérées par JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -969,8 +1013,12 @@
             let isLoginView = true;
             let currentUser = null;
             let currentUserData = null;
-            let allStoreProducts = {};
-            let allShopStock = {};
+            // Centralisation des données de l'application
+            const appData = {
+                storeProducts: {},
+                shopStock: {},
+                salesHistory: {}
+            };
             let isSidebarOpen = false; // Pour la visibilité sur mobile
             let isSidebarCollapsed = false; // Pour l'état réduit sur desktop
 
@@ -1112,10 +1160,10 @@
              * @param {string} currency - Le code de la devise (ex: "CFA", "EUR").
              * @returns {string} - La chaîne formatée.
              */
-            function formatCurrency(value, currency) {
-                if(isNaN(value)) value = 0;
-                // Essayer de deviner la devise du produit source si non fournie
-                const displayCurrency = (currency || 'CFA').toUpperCase() === 'CFA' ? 'XOF' : currency;
+            function formatCurrency(value, currency = 'XOF') {
+                if(isNaN(value) || value === null) value = 0;
+                
+                const displayCurrency = currency.toUpperCase() === 'CFA' ? 'XOF' : currency;
                 try {
                     return new Intl.NumberFormat('fr-FR', { 
                         style: 'currency', 
@@ -1123,7 +1171,6 @@
                         minimumFractionDigits: 0 
                     }).format(value);
                 } catch (e) {
-                    // Fallback sur CFA/XOF si la devise n'est pas reconnue
                      return new Intl.NumberFormat('fr-FR', { 
                         style: 'currency', 
                         currency: 'XOF', 
@@ -1152,16 +1199,16 @@
 
             /**
              * Remplit les listes de sélection de produits du Magasin.
-             * @param {object | null} products - L'objet des produits ou null.
              */
-            function populateStoreProductSelects(products) {
+            function populateStoreProductSelects() {
+                const products = appData.storeProducts;
                 const selects = [entryProductSelect, exitProductSelect, transferProductSelect];
                 selects.forEach(select => {
                     if (!select) return;
                     // Garder la première option ("Sélectionnez un produit")
                     const firstOption = select.options[0];
                     select.innerHTML = '';
-                    select.appendChild(firstOption.cloneNode(true)); // Utiliser cloneNode pour la sécurité
+                    select.appendChild(firstOption.cloneNode(true));
                     
                     if (products) {
                         Object.values(products).forEach(product => {
@@ -1176,10 +1223,10 @@
             
             /**
              * Remplit les listes de sélection des produits de la Boutique.
-             * @param {object | null} products - L'objet des produits ou null.
              */
-            function populateShopProductSelects(products) {
-                const selects = [restockProductSelect, salesProductSelect]; // MAJ : inclut salesProductSelect
+            function populateShopProductSelects() {
+                const products = appData.shopStock;
+                const selects = [restockProductSelect, salesProductSelect];
                 selects.forEach(select => {
                     if (!select) return;
                     const firstOption = select.options[0];
@@ -1194,7 +1241,6 @@
                             if (select.id === 'restock-product-select') {
                                 option.textContent = `${product.name} (Actuellement : ${product.quantityInShop})`;
                             } else {
-                                // Pour le sélecteur des ventes
                                 option.textContent = `${product.name} (Stock: ${product.quantityInShop})`;
                             }
                             select.appendChild(option);
@@ -1208,7 +1254,7 @@
              * @param {string} [searchTerm=''] - Terme de recherche optionnel.
              */
             function renderStoreProducts(searchTerm = '') {
-                const products = allStoreProducts;
+                const products = appData.storeProducts;
                 const normalizedSearch = searchTerm.toLowerCase();
                 
                 const filteredProducts = Object.values(products).filter(product => {
@@ -1309,10 +1355,11 @@
              * @param {DataSnapshot} snapshot 
              */
             function onStoreProductsValue(snapshot) {
-                allStoreProducts = snapshot.val() || {};
-                populateStoreProductSelects(allStoreProducts);
+                appData.storeProducts = snapshot.val() || {};
+                populateStoreProductSelects();
                 const searchTerm = storeSearchInput ? storeSearchInput.value : '';
                 renderStoreProducts(searchTerm);
+                updateAllStats();
             }
 
             /**
@@ -1320,7 +1367,7 @@
              * @param {string} [searchTerm=''] - Terme de recherche optionnel.
              */
             function renderShopStock(searchTerm = '') {
-                const stock = allShopStock;
+                const stock = appData.shopStock;
                 const normalizedSearch = searchTerm.toLowerCase();
 
                 const filteredStock = Object.values(stock).filter(item => {
@@ -1336,7 +1383,7 @@
                     
                     sortedStock.forEach(item => {
                         const isLowStock = item.quantityInShop <= item.alertThreshold;
-                        const currency = allStoreProducts[item.sourceProductId]?.currency || 'CFA';
+                        const currency = appData.storeProducts[item.sourceProductId]?.currency || 'CFA';
                         html += `
                             <tr class="hover:bg-gray-50 ${isLowStock ? 'bg-red-50' : ''}">
                                 <td class="px-6 py-4 whitespace-nowrap">
@@ -1376,10 +1423,11 @@
              * @param {DataSnapshot} snapshot 
              */
             function onShopStockValue(snapshot) {
-                allShopStock = snapshot.val() || {};
-                populateShopProductSelects(allShopStock); // MAJ
+                appData.shopStock = snapshot.val() || {};
+                populateShopProductSelects(); // MAJ
                 const searchTerm = shopSearchInput ? shopSearchInput.value : '';
                 renderShopStock(searchTerm);
+                updateAllStats();
             }
 
             /**
@@ -1439,15 +1487,17 @@
              * @param {DataSnapshot} snapshot - Le snapshot Firebase.
              */
             function onSalesHistoryValue(snapshot) {
-                const sales = snapshot.val();
-                if (sales) {
+                appData.salesHistory = snapshot.val() || {};
+                const sales = appData.salesHistory;
+                if (sales && Object.keys(sales).length > 0) {
                     salesHistoryPlaceholder.classList.add('hidden');
                     salesHistoryTableContainer.classList.remove('hidden');
                     let html = '';
                     const sortedSales = Object.values(sales).sort((a, b) => new Date(b.date) - new Date(a.date));
 
                     sortedSales.forEach(sale => {
-                        const currency = allStoreProducts[allShopStock[sale.shopProductId]?.sourceProductId]?.currency || 'CFA';
+                        const shopItem = appData.shopStock[sale.shopProductId];
+                        const currency = shopItem ? (appData.storeProducts[shopItem.sourceProductId]?.currency || 'CFA') : 'CFA';
                         html += `
                             <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${sale.productName}</td>
@@ -1465,6 +1515,7 @@
                     salesHistoryTableContainer.classList.add('hidden');
                     salesHistoryTbody.innerHTML = '';
                 }
+                updateAllStats();
             }
 
             /**
@@ -1504,10 +1555,11 @@
                 storeProductsListener = null; storeMovementsListener = null; shopStockListener = null; shopMovementsListener = null; salesHistoryListener = null;
                 storeProductsRef = null; storeMovementsRef = null; shopStockRef = null; shopMovementsRef = null; salesHistoryRef = null;
 
-                allStoreProducts = {};
-                allShopStock = {};
-                populateStoreProductSelects(null);
-                populateShopProductSelects(null); // MAJ
+                appData.storeProducts = {};
+                appData.shopStock = {};
+                appData.salesHistory = {};
+                populateStoreProductSelects();
+                populateShopProductSelects();
             }
 
 
@@ -1520,7 +1572,7 @@
                     if (authPageContainer) authPageContainer.classList.add('hidden');
                     if (layoutContainer) layoutContainer.classList.remove('hidden');
                     if (currentUser && currentUser.email && userEmailDisplay) {
-                        userEmailDisplay.textContent = currentUser.email; // Mettre à jour l'email
+                        userEmailDisplay.textContent = currentUser.email;
                     }
                      if (mobilePageTitle) {
                         mobilePageTitle.textContent = currentPage;
@@ -1529,11 +1581,10 @@
                     if (authPageContainer) authPageContainer.classList.remove('hidden');
                     if (layoutContainer) layoutContainer.classList.add('hidden');
                     if (userEmailDisplay) userEmailDisplay.textContent = "Non connecté";
-                    if (sellerNameInput) sellerNameInput.value = ''; // Vider le nom du vendeur
+                    if (sellerNameInput) sellerNameInput.value = '';
                     isLoginView = true;
                     updateAuthFormView();
                     
-                    // Nettoyer les données de l'interface
                     if (storeProductsTbody) storeProductsTbody.innerHTML = '';
                     if (storeMovementsTbody) storeMovementsTbody.innerHTML = '';
                     if (shopStockTbody) shopStockTbody.innerHTML = '';
@@ -1543,7 +1594,7 @@
                     [storeProductsPlaceholder, storeMovementsPlaceholder, shopStockPlaceholder, shopMovementsPlaceholder, salesHistoryPlaceholder].forEach(p => p && p.classList.remove('hidden'));
                     [storeProductsTableContainer, storeMovementsTableContainer, shopStockTableContainer, shopMovementsTableContainer, salesHistoryTableContainer].forEach(t => t && t.classList.add('hidden'));
                     
-                    return; // Arrêter ici si non authentifié
+                    return;
                 }
 
                 // Gérer la navigation des pages
@@ -1558,10 +1609,10 @@
                 // Gérer l'état actif des boutons de la sidebar
                 navButtons.forEach(button => {
                     if (button.dataset.page === currentPage) {
-                        button.classList.add('bg-cyan-500', 'text-white', 'shadow');
+                        button.classList.add('bg-cyan-400', 'text-white', 'shadow');
                         button.classList.remove('text-gray-600', 'hover:bg-gray-100');
                     } else {
-                        button.classList.remove('bg-cyan-500', 'text-white', 'shadow');
+                        button.classList.remove('bg-cyan-400', 'text-white', 'shadow');
                         button.classList.add('text-gray-600', 'hover:bg-gray-100');
                     }
                 });
@@ -1571,7 +1622,6 @@
              * Met à jour la vue du formulaire d'authentification (Login / Signup).
              */
             function updateAuthFormView() {
-                // Cacher les messages d'erreur lors du basculement
                 if(loginError) loginError.classList.add('hidden');
                 if(signupError) signupError.classList.add('hidden');
 
@@ -1610,14 +1660,14 @@
                 const quantity = parseInt(salesQuantityInput.value, 10);
                 
                 if (!shopProductId || isNaN(quantity) || quantity <= 0) {
-                    salesTotalAmount.value = formatCurrency(0, 'CFA'); // Défaut
+                    salesTotalAmount.value = formatCurrency(0);
                     return;
                 }
                 
-                const shopProduct = allShopStock[shopProductId];
+                const shopProduct = appData.shopStock[shopProductId];
                 if (shopProduct) {
                     const total = shopProduct.sellingPrice * quantity;
-                    const currency = allStoreProducts[shopProduct.sourceProductId]?.currency || 'CFA';
+                    const currency = appData.storeProducts[shopProduct.sourceProductId]?.currency;
                     salesTotalAmount.value = formatCurrency(total, currency);
                 }
             }
@@ -1649,21 +1699,20 @@
                     sidebarTexts.forEach(el => el.classList.add('lg:hidden'));
                     navButtonsToCenter.forEach(el => el.classList.add('lg:justify-center'));
                     toggleButtonContainer.innerHTML = getIconSVG('arrowRight');
-                    renderIcons(); // Re-render to apply classes to new SVG
                 } else {
                     sidebar.classList.replace('lg:w-20', 'w-64');
                     mainContent.classList.replace('lg:ml-20', 'lg:ml-64');
                     sidebarTexts.forEach(el => el.classList.remove('lg:hidden'));
                     navButtonsToCenter.forEach(el => el.classList.remove('lg:justify-center'));
                     toggleButtonContainer.innerHTML = getIconSVG('arrowLeft');
-                    renderIcons(); // Re-render to apply classes to new SVG
                 }
+                // Il faut ré-appliquer les classes SVG après changement d'innerHTML
+                renderIcons();
             }
 
 
-            // --- ÉCOUTEURS D'ÉVÉNEMENTS (AVEC VÉRIFICATIONS) ---
+            // --- ÉCOUTEURS D'ÉVÉNEMENTS ---
 
-            // --- Sidebar Responsive Listeners ---
             if (hamburgerButton) hamburgerButton.addEventListener('click', () => {
                 isSidebarOpen = true;
                 updateSidebarMobileState();
@@ -1677,7 +1726,6 @@
                 updateSidebarDesktopState();
             });
 
-            // Bascule Login/Signup
             if(authToggleLogin) authToggleLogin.addEventListener('click', () => {
                 isLoginView = true;
                 updateAuthFormView();
@@ -1688,7 +1736,6 @@
                 updateAuthFormView();
             });
 
-            // --- Formulaire de Vente ---
             if(salesProductSelect) salesProductSelect.addEventListener('change', updateSalesTotal);
             if(salesQuantityInput) salesQuantityInput.addEventListener('input', updateSalesTotal);
             
@@ -1701,27 +1748,24 @@
                     return;
                 }
                 
-                // 1. Récupérer les données
                 const shopProductId = salesProductSelect.value;
                 const quantity = parseInt(salesQuantityInput.value, 10);
                 const comment = salesComment.value || "";
                 const sellerName = currentUserData.fullName || currentUser.email;
 
-                // 2. Valider les données
                 if (!shopProductId || isNaN(quantity) || quantity <= 0) {
                     salesError.textContent = "Veuillez sélectionner un produit et une quantité valide.";
                     salesError.classList.remove('hidden');
                     return;
                 }
                 
-                const shopProduct = allShopStock[shopProductId];
+                const shopProduct = appData.shopStock[shopProductId];
                 if (!shopProduct) {
                     salesError.textContent = "Produit non trouvé.";
                     salesError.classList.remove('hidden');
                     return;
                 }
 
-                // 3. Valider le stock
                 if (quantity > shopProduct.quantityInShop) {
                     salesError.textContent = `Stock insuffisant. (Disponible: ${shopProduct.quantityInShop})`;
                     salesError.classList.remove('hidden');
@@ -1732,7 +1776,6 @@
                 salesSubmitButton.textContent = "Enregistrement...";
                 
                 try {
-                    // 4. Préparer la transaction atomique
                     const updates = {};
                     const now = new Date().toISOString();
                     
@@ -1740,11 +1783,9 @@
                     const shopNewStock = shopOldStock - quantity;
                     const totalAmount = shopProduct.sellingPrice * quantity;
 
-                    // 4a. Mettre à jour le stock de la Boutique
                     updates[`users/${currentUser.uid}/shopStock/${shopProductId}/quantityInShop`] = shopNewStock;
                     updates[`users/${currentUser.uid}/shopStock/${shopProductId}/updatedAt`] = now;
 
-                    // 4b. Créer le mouvement de Sortie de Boutique
                     const shopMoveKey = push(ref(db, `users/${currentUser.uid}/shopMovements`)).key;
                     updates[`users/${currentUser.uid}/shopMovements/${shopMoveKey}`] = {
                         id: shopMoveKey, shopProductId: shopProductId, productName: shopProduct.name,
@@ -1753,7 +1794,6 @@
                         userEmail: currentUser.email
                     };
                     
-                    // 4c. Créer l'enregistrement de Vente
                     const saleKey = push(ref(db, `users/${currentUser.uid}/salesHistory`)).key;
                     updates[`users/${currentUser.uid}/salesHistory/${saleKey}`] = {
                         id: saleKey,
@@ -1767,13 +1807,11 @@
                         date: now
                     };
                     
-                    // 5. Exécuter la transaction
                     await update(ref(db), updates);
                     
-                    // 6. Succès
                     showSuccessToast("Vente enregistrée avec succès!");
                     salesForm.reset();
-                    updateSalesTotal(); // Réinitialiser le montant
+                    updateSalesTotal();
                     
                 } catch (error) {
                     console.error("Erreur lors de l'enregistrement de la vente:", error);
@@ -1786,7 +1824,6 @@
             });
 
 
-            // --- Modal "Nouveau Produit" ---
             if(openNewProductModalButton) openNewProductModalButton.addEventListener('click', () => {
                 if(newProductModal) newProductModal.classList.remove('hidden');
                 if(newProductError) newProductError.classList.add('hidden');
@@ -1846,7 +1883,6 @@
                 }
             });
             
-            // --- Modal "Entrée" ---
             if(openEntryModalButton) openEntryModalButton.addEventListener('click', () => {
                 if(entryModal) entryModal.classList.remove('hidden');
                 if(entryError) entryError.classList.add('hidden');
@@ -1873,7 +1909,7 @@
                     return;
                 }
                 
-                const product = allStoreProducts[productId];
+                const product = appData.storeProducts[productId];
                 if (!product) {
                     entryError.textContent = "Produit non trouvé.";
                     entryError.classList.remove('hidden');
@@ -1913,7 +1949,6 @@
                 }
             });
             
-            // --- Modal "Sortie" ---
             if(openExitModalButton) openExitModalButton.addEventListener('click', () => {
                 if(exitModal) exitModal.classList.remove('hidden');
                 if(exitError) exitError.classList.add('hidden');
@@ -1940,7 +1975,7 @@
                     return;
                 }
                 
-                const product = allStoreProducts[productId];
+                const product = appData.storeProducts[productId];
                 if (!product) {
                     exitError.textContent = "Produit non trouvé.";
                     exitError.classList.remove('hidden');
@@ -1986,7 +2021,6 @@
                 }
             });
             
-            // --- Modal "Transférer" ---
             if(openTransferModalButton) openTransferModalButton.addEventListener('click', () => {
                 if(transferModal) transferModal.classList.remove('hidden');
                 if(transferError) transferError.classList.add('hidden');
@@ -2006,7 +2040,7 @@
                     transferSourceInfo.classList.add('hidden');
                     return;
                 }
-                const product = allStoreProducts[productId];
+                const product = appData.storeProducts[productId];
                 if (product) {
                     transferCostDisplay.textContent = formatCurrency(product.purchaseCost, product.currency);
                     transferSourceInfo.classList.remove('hidden');
@@ -2035,7 +2069,7 @@
                     return;
                 }
                 
-                const sourceProduct = allStoreProducts[sourceProductId];
+                const sourceProduct = appData.storeProducts[sourceProductId];
                 if (!sourceProduct) {
                     transferError.textContent = "Produit source non trouvé.";
                     transferError.classList.remove('hidden');
@@ -2119,7 +2153,6 @@
                 }
             });
             
-            // --- Modal "Réapprovisionner" ---
             if(openRestockModalButton) openRestockModalButton.addEventListener('click', () => {
                 if(restockModal) restockModal.classList.remove('hidden');
                 if(restockError) restockError.classList.add('hidden');
@@ -2136,8 +2169,8 @@
                     restockSourceInfo.classList.add('hidden');
                     return;
                 }
-                const shopProduct = allShopStock[shopProductId];
-                const sourceProduct = allStoreProducts[shopProduct.sourceProductId];
+                const shopProduct = appData.shopStock[shopProductId];
+                const sourceProduct = appData.storeProducts[shopProduct.sourceProductId];
                 
                 if (shopProduct && sourceProduct) {
                     restockSourceName.textContent = sourceProduct.name;
@@ -2169,14 +2202,14 @@
                     return;
                 }
 
-                const shopProduct = allShopStock[shopProductId];
+                const shopProduct = appData.shopStock[shopProductId];
                 if (!shopProduct) {
                     restockError.textContent = "Produit de boutique non trouvé.";
                     restockError.classList.remove('hidden');
                     return;
                 }
                 
-                const sourceProduct = allStoreProducts[shopProduct.sourceProductId];
+                const sourceProduct = appData.storeProducts[shopProduct.sourceProductId];
                 if (!sourceProduct) {
                     restockError.textContent = "Produit source (magasin) non trouvé. Impossible de réapprovisionner.";
                     restockError.classList.remove('hidden');
@@ -2238,7 +2271,6 @@
                 }
             });
 
-            // Soumission du formulaire de connexion
             if(loginForm) loginForm.addEventListener('submit', async (event) => {
                 event.preventDefault();
                 const email = loginForm.email.value;
@@ -2264,7 +2296,6 @@
                 }
             });
 
-            // Soumission du formulaire d'inscription
             if(signupForm) signupForm.addEventListener('submit', async (event) => {
                 event.preventDefault();
                 const email = signupForm['signup-email'].value;
@@ -2290,7 +2321,6 @@
                 try {
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     const user = userCredential.user;
-                    // Enregistrer les infos utilisateur dans la DB
                     await set(ref(db, 'users/' + user.uid), {
                         fullName: fullName,
                         companyName: companyName,
@@ -2310,7 +2340,6 @@
                 }
             });
             
-            // Barres de recherche
             if (storeSearchInput) {
                 storeSearchInput.addEventListener('input', (e) => {
                     renderStoreProducts(e.target.value);
@@ -2322,13 +2351,12 @@
                 });
             }
 
-            // Clics sur les boutons de navigation de la Sidebar
             navButtons.forEach(button => {
                 button.addEventListener('click', () => {
                     const pageName = button.dataset.page;
                     if (pageName) {
                         currentPage = pageName;
-                        if (window.innerWidth < 1024) { // Sur mobile, ferme la sidebar
+                        if (window.innerWidth < 1024) {
                             isSidebarOpen = false;
                             updateSidebarMobileState();
                         }
@@ -2337,11 +2365,9 @@
                 });
             });
 
-            // Déconnexion
             if(logoutButton) logoutButton.addEventListener('click', async () => {
                 try {
                     await signOut(auth);
-                    cleanupFirebaseListeners(); // Nettoyer les écouteurs lors de la déconnexion
                 } catch (error) {
                     console.error("Erreur de déconnexion:", error);
                 }
@@ -2353,8 +2379,7 @@
                     isAuthenticated = true;
                     currentUser = user;
                     
-                    // Récupérer les données de l'utilisateur (nom, etc.)
-                    currentUserData = null; // Réinitialiser
+                    currentUserData = null;
                     const userProfileRef = ref(db, `users/${user.uid}`);
                     get(userProfileRef).then((snapshot) => {
                         if (snapshot.exists()) {
@@ -2362,23 +2387,141 @@
                             if (sellerNameInput && currentUserData.fullName) {
                                 sellerNameInput.value = currentUserData.fullName;
                             }
-                        } else {
-                            console.warn("Aucun profil trouvé pour l'utilisateur:", user.uid);
                         }
-                    }).catch((error) => {
-                        console.error("Erreur de récupération du profil:", error);
-                    });
+                    }).catch(console.error);
 
-                    setupFirebaseListeners(user.uid); // Démarrer les écouteurs
+                    setupFirebaseListeners(user.uid);
                 } else {
                     isAuthenticated = false;
                     currentUser = null;
-                    currentUserData = null; // Vider les données utilisateur
+                    currentUserData = null;
                     currentPage = 'Tableau de bord';
-                    cleanupFirebaseListeners(); // Assurer que tout est nettoyé
+                    cleanupFirebaseListeners();
                 }
                 updateUI();
             });
+
+            // --- FONCTIONS DE STATISTIQUES ---
+
+            /**
+             * Calcule et met à jour toutes les statistiques (Dashboard & Page Stats).
+             */
+            function updateAllStats() {
+                updateDashboardStats();
+                updateStatisticsPage();
+            }
+
+            /**
+             * Met à jour les statistiques du Tableau de bord.
+             */
+            function updateDashboardStats() {
+                const sales = Object.values(appData.salesHistory);
+                const shopStock = Object.values(appData.shopStock);
+                const storeStock = Object.values(appData.storeProducts);
+                const now = new Date();
+                const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+                // Ventes du jour
+                const dailySales = sales.filter(s => s.date >= startOfDay).length;
+                document.getElementById('stat-daily-sales').textContent = dailySales;
+
+                // Revenus du mois
+                const monthlyRevenue = sales
+                    .filter(s => s.date >= startOfMonth)
+                    .reduce((acc, s) => acc + s.totalAmount, 0);
+                document.getElementById('stat-monthly-revenue').textContent = formatCurrency(monthlyRevenue);
+
+                // Stock Boutique
+                const shopStockCount = shopStock.reduce((sum, item) => sum + item.quantityInShop, 0);
+                document.getElementById('stat-shop-stock').textContent = `${shopStockCount} produits`;
+
+                // Stock Magasin
+                const storeStockCount = storeStock.reduce((sum, item) => sum + item.quantityInStore, 0);
+                document.getElementById('stat-store-stock').textContent = `${storeStockCount} produits`;
+            }
+            
+            /**
+             * Met à jour les statistiques de la page Statistiques.
+             */
+            function updateStatisticsPage() {
+                const sales = Object.values(appData.salesHistory);
+                const shopStock = appData.shopStock;
+                const shopStockItems = Object.values(shopStock);
+
+                // --- Cartes du haut ---
+                const totalSalesCount = sales.length;
+                const totalRevenue = sales.reduce((sum, s) => sum + s.totalAmount, 0);
+                const productsInStock = shopStockItems.reduce((sum, item) => sum + item.quantityInShop, 0);
+
+                let totalCostOfGoods = 0;
+                sales.forEach(sale => {
+                    const shopItem = shopStock[sale.shopProductId];
+                    if(shopItem) {
+                        totalCostOfGoods += sale.quantity * shopItem.purchaseCost;
+                    }
+                });
+                const totalProfit = totalRevenue - totalCostOfGoods;
+                const avgMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+
+                document.getElementById('stat-total-sales').textContent = totalSalesCount;
+                document.getElementById('stat-revenue').textContent = formatCurrency(totalRevenue);
+                document.getElementById('stat-products-in-stock').textContent = productsInStock;
+                document.getElementById('stat-avg-margin').textContent = `${avgMargin.toFixed(1)}%`;
+                
+                // --- Produits les plus vendus ---
+                const productSales = sales.reduce((acc, sale) => {
+                    acc[sale.productName] = acc[sale.productName] || { name: sale.productName, quantity: 0, revenue: 0 };
+                    acc[sale.productName].quantity += sale.quantity;
+                    acc[sale.productName].revenue += sale.totalAmount;
+                    return acc;
+                }, {});
+
+                const sortedProducts = Object.values(productSales).sort((a, b) => b.quantity - a.quantity);
+                const bestSellingTbody = document.getElementById('best-selling-tbody');
+                
+                if (sortedProducts.length > 0) {
+                    document.getElementById('best-selling-placeholder').classList.add('hidden');
+                    document.getElementById('best-selling-table-container').classList.remove('hidden');
+                    bestSellingTbody.innerHTML = sortedProducts.slice(0, 5).map(p => `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 text-sm font-medium text-gray-800">${p.name}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600">${p.quantity}</td>
+                            <td class="px-4 py-3 text-sm font-semibold text-gray-700">${formatCurrency(p.revenue)}</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    document.getElementById('best-selling-placeholder').classList.remove('hidden');
+                    document.getElementById('best-selling-table-container').classList.add('hidden');
+                }
+
+                // --- Performance des vendeurs ---
+                const sellerPerformance = sales.reduce((acc, sale) => {
+                    acc[sale.sellerName] = acc[sale.sellerName] || { name: sale.sellerName, salesCount: 0, revenue: 0 };
+                    acc[sale.sellerName].salesCount += 1;
+                    acc[sale.sellerName].revenue += sale.totalAmount;
+                    return acc;
+                }, {});
+
+                const sortedSellers = Object.values(sellerPerformance).sort((a, b) => b.revenue - a.revenue);
+                const sellerPerfTbody = document.getElementById('seller-performance-tbody');
+
+                 if (sortedSellers.length > 0) {
+                    document.getElementById('seller-performance-placeholder').classList.add('hidden');
+                    document.getElementById('seller-performance-table-container').classList.remove('hidden');
+                    sellerPerfTbody.innerHTML = sortedSellers.slice(0, 5).map(s => `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 text-sm font-medium text-gray-800">${s.name}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600">${s.salesCount}</td>
+                            <td class="px-4 py-3 text-sm font-semibold text-gray-700">${formatCurrency(s.revenue)}</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    document.getElementById('seller-performance-placeholder').classList.remove('hidden');
+                    document.getElementById('seller-performance-table-container').classList.add('hidden');
+                }
+            }
+
 
             // --- FONCTION UTILITAIRE ---
             function getFirebaseAuthErrorMessage(code) {
@@ -2399,7 +2542,6 @@
                 }
             }
             
-            // Mettre à jour l'UI une première fois au cas où l'état d'auth est déjà connu
             updateUI();
 
         });
