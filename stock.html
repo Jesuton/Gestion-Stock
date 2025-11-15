@@ -34,9 +34,9 @@
 <script type="importmap">
 {
   "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "firebase/": "https://aistudiocdn.com/firebase@^12.5.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/"
+    "firebase/app": "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js",
+    "firebase/auth": "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js",
+    "firebase/database": "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js"
   }
 }
 </script>
@@ -73,11 +73,11 @@
                     <div class="space-y-4">
                         <div>
                             <label class="text-sm font-medium text-gray-600" for="email">Email</label>
-                            <input type="email" id="email" value="votre@email.com" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" />
+                            <input type="email" id="email" name="email" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
                         </div>
                         <div>
                             <label class="text-sm font-medium text-gray-600" for="password">Mot de passe</label>
-                            <input type="password" id="password" value="********" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" />
+                            <input type="password" id="password" name="password" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
                         </div>
                         <p id="login-error" class="text-red-500 text-sm mt-2 hidden"></p> <!-- Ajout pour les erreurs -->
                         <button type="submit" id="login-submit-button" class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
@@ -91,21 +91,24 @@
                     <div class="space-y-4">
                         <div>
                             <label class="text-sm font-medium text-gray-600" for="fullName">Nom complet</label>
-                            <input type="text" id="fullName" placeholder="Jean Dupont" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" />
+                            <input type="text" id="fullName" name="fullName" placeholder="Jean Dupont" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
                         </div>
                         <div>
                             <label class="text-sm font-medium text-gray-600" for="companyName">Nom de l'entreprise</label>
-                            <input type="text" id="companyName" placeholder="Ma Société" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" />
+                            <input type="text" id="companyName" name="companyName" placeholder="Ma Société" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
+                            <p class="text-xs text-gray-500 mt-1">Si le nom correspond à une entreprise existante, vous la rejoindrez.</p>
                         </div>
                         <div>
                             <label class="text-sm font-medium text-gray-600" for="signup-email">Email</label>
-                            <input type="email" id="signup-email" placeholder="votre@email.com" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" />
+                            <input type="email" id="signup-email" name="signup-email" placeholder="votre@email.com" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
                         </div>
                         <div>
                             <label class="text-sm font-medium text-gray-600" for="signup-password">Mot de passe</label>
-                            <input type="password" id="signup-password" placeholder="********" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" />
+                            <input type="password" id="signup-password" name="signup-password" placeholder="********" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
                         </div>
-                        <p id="signup-error" class="text-red-500 text-sm mt-2 hidden"></p> <!-- Ajout pour les erreurs -->
+                        <div id="signup-error-container" class="hidden p-3 bg-red-50 border border-red-200 rounded-lg">
+                             <p id="signup-error" class="text-red-500 text-sm"></p>
+                        </div>
                         <button type="submit" id="signup-submit-button" class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
                             Créer mon compte
                         </button>
@@ -161,8 +164,9 @@
             <div class="p-4 border-t border-gray-200">
                 <div class="sidebar-text p-4 mb-2 rounded-lg bg-gray-100">
                     <!-- Placeholder pour le profil utilisateur -->
-                    <p class="text-sm font-medium text-gray-700">Utilisateur connecté</p>
-                    <p id="user-email-display" class="text-xs text-gray-500 truncate">Chargement...</p> <!-- ID ajouté -->
+                    <p id="user-name-display" class="text-sm font-medium text-gray-700">Utilisateur connecté</p>
+                    <p id="user-company-display" class="text-xs text-gray-500 font-semibold truncate mt-1"></p>
+                    <p id="user-email-display" class="text-xs text-gray-400 truncate">Chargement...</p>
                 </div>
                 <button id="logout-button" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">
                     <div data-icon="logout" class="w-5 h-5"></div>
@@ -178,7 +182,7 @@
         </aside>
 
         <!-- Contenu principal (pages) -->
-        <main class="flex-1 lg:ml-64 overflow-y-auto">
+        <main class="flex-1 lg:ml-64 overflow-y-auto h-screen">
             
             <!-- Header pour la vue mobile -->
             <header id="mobile-header" class="sticky top-0 bg-gray-50/75 backdrop-blur-sm z-10 p-4 border-b border-gray-200 flex items-center justify-between lg:hidden">
@@ -865,15 +869,14 @@
 
     <script type="module">
         // --- SDK Firebase ---
-        // Importer les fonctions nécessaires des SDK Firebase
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { initializeApp } from "firebase/app";
         import { 
             getAuth, 
             createUserWithEmailAndPassword, 
             signInWithEmailAndPassword, 
             signOut, 
             onAuthStateChanged 
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        } from "firebase/auth";
         import { 
             getDatabase, 
             ref, 
@@ -886,112 +889,53 @@
             orderByChild,
             equalTo,
             get
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+        } from "firebase/database";
 
         // --- GESTION DES ICÔNES SVG ---
-        
-        /**
-         * Renvoie le code SVG pour une icône donnée.
-         * @param {string} name - Le nom de l'icône.
-         * @returns {string} - La chaîne de caractères SVG.
-         */
-        function getIconSVG(name) {
+        function getIconSVG(name, className = '') {
             const icons = {
-                logo: `
-                    <svg viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2L4 6.5V17.5L12 22L20 17.5V6.5L12 2ZM11 15.5V10.5H13V15.5H11ZM11.5 8.5C10.67 8.5 10 7.83 10 7C10 6.17 10.67 5.5 11.5 5.5C12.33 5.5 13 6.17 13 7C13 7.83 12.33 8.5 11.5 8.5Z" />
-                    </svg>`,
-                dashboard: `
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                    </svg>`,
-                sales: `
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>`,
-                box: `
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                    </svg>`,
-                stats: `
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>`,
-                settings: `
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>`,
-                logout: `
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>`,
-                chartBar: `
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-4m3 4v-2m3 2v-6m3 2V7" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 20h14" />
-                    </svg>`,
-                trash: `
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>`,
-                arrowUp: `
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-                    </svg>`,
-                arrowDown: `
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                    </svg>`,
-                menu: `
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>`,
-                arrowLeft: `
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                    </svg>`,
-                arrowRight: `
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                    </svg>`
+                logo: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L4 6.5V17.5L12 22L20 17.5V6.5L12 2ZM11 15.5V10.5H13V15.5H11ZM11.5 8.5C10.67 8.5 10 7.83 10 7C10 6.17 10.67 5.5 11.5 5.5C12.33 5.5 13 6.17 13 7C13 7.83 12.33 8.5 11.5 8.5Z" /></svg>`,
+                dashboard: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>`,
+                sales: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>`,
+                box: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>`,
+                stats: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>`,
+                settings: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>`,
+                logout: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>`,
+                chartBar: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-4m3 4v-2m3 2v-6m3 2V7" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 20h14" /></svg>`,
+                trash: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>`,
+                arrowUp: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>`,
+                arrowDown: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>`,
+                menu: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>`,
+                arrowLeft: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>`,
+                arrowRight: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>`
             };
-            return icons[name] || '';
+            const svg = icons[name] || '';
+            if (className && svg) {
+                return svg.replace('<svg', `<svg class="${className}"`);
+            }
+            return svg;
         }
 
-        /**
-         * Remplace tous les placeholders d'icônes [data-icon] par le SVG réel.
-         */
         function renderIcons() {
             document.querySelectorAll('[data-icon]').forEach(element => {
                 const iconName = element.getAttribute('data-icon');
-                const svgString = getIconSVG(iconName);
+                // Pass the placeholder's class directly to the SVG generator
+                const svgString = getIconSVG(iconName, element.className);
                 if (svgString) {
                     const tempDiv = document.createElement('div');
                     tempDiv.innerHTML = svgString.trim();
                     const svgElement = tempDiv.firstChild;
-                    
                     if (svgElement) {
-                        const placeholderClasses = element.getAttribute('class') || '';
-                        svgElement.setAttribute('class', placeholderClasses);
                         element.replaceWith(svgElement);
-                    } else {
-                        console.error("Impossible de créer l'élément SVG pour l'icône:", iconName);
                     }
                 }
             });
         }
-        
-        try {
-            renderIcons();
-        } catch (e) {
-            console.error("Erreur critique lors du rendu des icônes:", e);
-        }
+        renderIcons();
 
         // --- GESTION DE L'APPLICATION ---
 
         document.addEventListener('DOMContentLoaded', () => {
-            // --- Configuration et initialisation de Firebase ---
             const firebaseConfig = {
                 apiKey: "AIzaSyB65Iye8YMpxXsPthdBYmNojBMpaTPZS3A",
                 authDomain: "gestion-stock-c9484.firebaseapp.com",
@@ -1007,23 +951,19 @@
             const auth = getAuth(app);
             const db = getDatabase(app);
 
-            // État de l'application
             let isAuthenticated = false;
             let currentPage = 'Tableau de bord';
             let isLoginView = true;
             let currentUser = null;
             let currentUserData = null;
-            // Centralisation des données de l'application
-            const appData = {
-                storeProducts: {},
-                shopStock: {},
-                salesHistory: {}
-            };
-            let isSidebarOpen = false; // Pour la visibilité sur mobile
-            let isSidebarCollapsed = false; // Pour l'état réduit sur desktop
+            let dbBasePath = ''; 
 
-            let storeProductsListener = null, storeMovementsListener = null, shopStockListener = null, shopMovementsListener = null, salesHistoryListener = null;
-            let storeProductsRef = null, storeMovementsRef = null, shopStockRef = null, shopMovementsRef = null, salesHistoryRef = null;
+            const appData = { storeProducts: {}, shopStock: {}, salesHistory: {} };
+            let isSidebarOpen = false; 
+            let isSidebarCollapsed = false;
+
+            let storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, salesHistoryListener;
+            let storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, salesHistoryRef;
 
             // Références DOM
             const authPageContainer = document.getElementById('auth-page-container');
@@ -1036,12 +976,14 @@
             const loginForm = document.getElementById('login-form');
             const signupForm = document.getElementById('signup-form');
             const userEmailDisplay = document.getElementById('user-email-display');
+            const userNameDisplay = document.getElementById('user-name-display');
+            const userCompanyDisplay = document.getElementById('user-company-display');
             const loginError = document.getElementById('login-error');
             const signupError = document.getElementById('signup-error');
+            const signupErrorContainer = document.getElementById('signup-error-container');
             const loginSubmitButton = document.getElementById('login-submit-button');
             const signupSubmitButton = document.getElementById('signup-submit-button');
             
-            // Sidebar responsive
             const sidebar = document.getElementById('sidebar');
             const mainContent = document.querySelector('main');
             const mobileHeader = document.getElementById('mobile-header');
@@ -1050,11 +992,9 @@
             const sidebarOverlay = document.getElementById('sidebar-overlay');
             const sidebarCollapseToggle = document.getElementById('sidebar-collapse-toggle');
 
-            // Barres de recherche
             const storeSearchInput = document.getElementById('store-search-input');
             const shopSearchInput = document.getElementById('shop-search-input');
 
-            // Références DOM pour "Mon Magasin"
             const storeProductsPlaceholder = document.getElementById('store-products-placeholder');
             const storeProductsTableContainer = document.getElementById('store-products-table-container');
             const storeProductsTbody = document.getElementById('store-products-tbody');
@@ -1062,7 +1002,6 @@
             const storeMovementsTableContainer = document.getElementById('store-movements-table-container');
             const storeMovementsTbody = document.getElementById('store-movements-tbody');
             
-            // Références DOM pour "Stock Boutique"
             const shopStockPlaceholder = document.getElementById('shop-stock-placeholder');
             const shopStockTableContainer = document.getElementById('shop-stock-table-container');
             const shopStockTbody = document.getElementById('shop-stock-tbody');
@@ -1070,7 +1009,6 @@
             const shopMovementsTableContainer = document.getElementById('shop-movements-table-container');
             const shopMovementsTbody = document.getElementById('shop-movements-tbody');
 
-            // Références DOM pour "Ventes"
             const salesForm = document.getElementById('sales-form');
             const salesProductSelect = document.getElementById('sales-product-select');
             const salesQuantityInput = document.getElementById('sales-quantity-input');
@@ -1083,7 +1021,7 @@
             const salesHistoryTableContainer = document.getElementById('sales-history-table-container');
             const salesHistoryTbody = document.getElementById('sales-history-tbody');
 
-            // Références DOM pour le modal "Nouveau Produit"
+            // Modals
             const openNewProductModalButton = document.getElementById('open-new-product-modal-button');
             const newProductModal = document.getElementById('new-product-modal');
             const closeNewProductModalButton = document.getElementById('close-new-product-modal-button');
@@ -1091,7 +1029,6 @@
             const newProductError = document.getElementById('new-product-error');
             const newProductSubmitButton = document.getElementById('new-product-submit-button');
 
-            // Références DOM pour le modal "Entrée"
             const openEntryModalButton = document.getElementById('open-entry-modal-button');
             const entryModal = document.getElementById('entry-modal');
             const closeEntryModalButton = document.getElementById('close-entry-modal-button');
@@ -1100,7 +1037,6 @@
             const entryError = document.getElementById('entry-error');
             const entrySubmitButton = document.getElementById('entry-submit-button');
             
-            // Références DOM pour le modal "Sortie"
             const openExitModalButton = document.getElementById('open-exit-modal-button');
             const exitModal = document.getElementById('exit-modal');
             const closeExitModalButton = document.getElementById('close-exit-modal-button');
@@ -1109,7 +1045,6 @@
             const exitError = document.getElementById('exit-error');
             const exitSubmitButton = document.getElementById('exit-submit-button');
             
-            // Références DOM pour le modal "Transférer"
             const openTransferModalButton = document.getElementById('open-transfer-modal-button');
             const transferModal = document.getElementById('transfer-modal');
             const closeTransferModalButton = document.getElementById('close-transfer-modal-button');
@@ -1121,7 +1056,6 @@
             const transferError = document.getElementById('transfer-error');
             const transferSubmitButton = document.getElementById('transfer-submit-button');
 
-            // Références DOM pour le modal "Réapprovisionner"
             const openRestockModalButton = document.getElementById('open-restock-modal-button');
             const restockModal = document.getElementById('restock-modal');
             const closeRestockModalButton = document.getElementById('close-restock-modal-button');
@@ -1134,82 +1068,40 @@
             const restockError = document.getElementById('restock-error');
             const restockSubmitButton = document.getElementById('restock-submit-button');
             
-            // Références DOM pour le Toast de Succès
             const successToast = document.getElementById('success-toast');
             const successToastMessage = document.getElementById('success-toast-message');
 
-            /**
-             * Affiche un toast de succès avec un message.
-             * @param {string} message - Le message à afficher.
-             */
             function showSuccessToast(message) {
-                if (successToastMessage) {
-                    successToastMessage.textContent = message;
-                }
+                if (successToastMessage) successToastMessage.textContent = message;
                 if (successToast) {
                     successToast.classList.add('show');
-                    setTimeout(() => {
-                        successToast.classList.remove('show');
-                    }, 3000); // Cacher après 3 secondes
+                    setTimeout(() => successToast.classList.remove('show'), 3000);
                 }
             }
 
-            /**
-             * Formate un nombre en devise.
-             * @param {number} value - La valeur numérique.
-             * @param {string} currency - Le code de la devise (ex: "CFA", "EUR").
-             * @returns {string} - La chaîne formatée.
-             */
             function formatCurrency(value, currency = 'XOF') {
                 if(isNaN(value) || value === null) value = 0;
-                
                 const displayCurrency = currency.toUpperCase() === 'CFA' ? 'XOF' : currency;
                 try {
-                    return new Intl.NumberFormat('fr-FR', { 
-                        style: 'currency', 
-                        currency: displayCurrency, 
-                        minimumFractionDigits: 0 
-                    }).format(value);
+                    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: displayCurrency, minimumFractionDigits: 0 }).format(value);
                 } catch (e) {
-                     return new Intl.NumberFormat('fr-FR', { 
-                        style: 'currency', 
-                        currency: 'XOF', 
-                        minimumFractionDigits: 0 
-                    }).format(value);
+                     return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', minimumFractionDigits: 0 }).format(value);
                 }
             }
             
-            /**
-             * Formate une date ISO en format lisible.
-             * @param {string} isoString - La date en format ISO.
-             * @returns {string} - La date formatée.
-             */
             function formatDateForDisplay(isoString) {
                 const date = new Date(isoString);
-                // Format: "11 nov. 2025, 22:35"
-                return date.toLocaleString('fr-FR', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                }).replace(' à', ',');
+                return date.toLocaleString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace(' à', ',');
             }
 
-
-            /**
-             * Remplit les listes de sélection de produits du Magasin.
-             */
             function populateStoreProductSelects() {
                 const products = appData.storeProducts;
                 const selects = [entryProductSelect, exitProductSelect, transferProductSelect];
                 selects.forEach(select => {
                     if (!select) return;
-                    // Garder la première option ("Sélectionnez un produit")
                     const firstOption = select.options[0];
                     select.innerHTML = '';
                     select.appendChild(firstOption.cloneNode(true));
-                    
                     if (products) {
                         Object.values(products).forEach(product => {
                             const option = document.createElement('option');
@@ -1221,9 +1113,6 @@
                 });
             }
             
-            /**
-             * Remplit les listes de sélection des produits de la Boutique.
-             */
             function populateShopProductSelects() {
                 const products = appData.shopStock;
                 const selects = [restockProductSelect, salesProductSelect];
@@ -1232,82 +1121,55 @@
                     const firstOption = select.options[0];
                     select.innerHTML = '';
                     select.appendChild(firstOption.cloneNode(true));
-                    
                     if (products) {
                         Object.values(products).forEach(product => {
                             const option = document.createElement('option');
                             option.value = product.id;
-                            // Personnaliser le texte en fonction du sélecteur
-                            if (select.id === 'restock-product-select') {
-                                option.textContent = `${product.name} (Actuellement : ${product.quantityInShop})`;
-                            } else {
-                                option.textContent = `${product.name} (Stock: ${product.quantityInShop})`;
-                            }
+                            if (select.id === 'restock-product-select') option.textContent = `${product.name} (Actuellement : ${product.quantityInShop})`;
+                            else option.textContent = `${product.name} (Stock: ${product.quantityInShop})`;
                             select.appendChild(option);
                         });
                     }
                 });
             }
 
-            /**
-             * Affiche les produits du magasin dans le tableau.
-             * @param {string} [searchTerm=''] - Terme de recherche optionnel.
-             */
             function renderStoreProducts(searchTerm = '') {
                 const products = appData.storeProducts;
                 const normalizedSearch = searchTerm.toLowerCase();
-                
-                const filteredProducts = Object.values(products).filter(product => {
-                    const nameMatch = product.name?.toLowerCase().includes(normalizedSearch);
-                    const descMatch = product.description?.toLowerCase().includes(normalizedSearch);
-                    return nameMatch || descMatch;
-                });
+                const filteredProducts = Object.values(products).filter(product => 
+                    product.name?.toLowerCase().includes(normalizedSearch) || product.description?.toLowerCase().includes(normalizedSearch)
+                );
 
                 if (filteredProducts.length > 0) {
                     storeProductsPlaceholder.classList.add('hidden');
                     storeProductsTableContainer.classList.remove('hidden');
                     let html = '';
                     const sortedProducts = filteredProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                    
                     sortedProducts.forEach(product => {
+                        // FIXED: Pass classes directly to getIconSVG
+                        const iconBox = getIconSVG('box', 'w-5 h-5 text-gray-600');
+                        const iconTrash = getIconSVG('trash', 'w-5 h-5');
                         html += `
                             <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="p-2 bg-gray-100 rounded-lg mr-3">
-                                            <svg class="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
-                                        </div>
-                                        <span class="text-sm font-medium text-gray-900">${product.name}</span>
-                                    </div>
-                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap"><div class="flex items-center"><div class="p-2 bg-gray-100 rounded-lg mr-3">${iconBox}</div><span class="text-sm font-medium text-gray-900">${product.name}</span></div></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.description || ''}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">${product.quantityInStore}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatCurrency(product.purchaseCost, product.currency)}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
                                     <button class="delete-icon text-gray-400 hover:text-red-500" data-product-id="${product.id}">
-                                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                        ${iconTrash}
                                     </button>
                                 </td>
-                            </tr>
-                        `;
+                            </tr>`;
                     });
                     storeProductsTbody.innerHTML = html;
                 } else {
                     storeProductsTableContainer.classList.add('hidden');
                     storeProductsPlaceholder.classList.remove('hidden');
-                    if (searchTerm) {
-                        storeProductsPlaceholder.textContent = 'Aucun résultat trouvé.';
-                    } else {
-                        storeProductsPlaceholder.textContent = 'Aucun article dans le magasin.';
-                    }
                     storeProductsTbody.innerHTML = '';
                 }
             }
 
-            /**
-             * Affiche les mouvements du magasin dans le tableau.
-             * @param {DataSnapshot} snapshot - Le snapshot Firebase.
-             */
             function onStoreMovementsValue(snapshot) {
                 const movements = snapshot.val();
                 if (movements) {
@@ -1315,32 +1177,18 @@
                     storeMovementsTableContainer.classList.remove('hidden');
                     let html = '';
                     const sortedMovements = Object.values(movements).sort((a, b) => new Date(b.date) - new Date(a.date));
-
                     sortedMovements.forEach(move => {
                         const isEntry = move.type === 'Entrée';
-                        const arrowIcon = isEntry ? getIconSVG('arrowUp') : getIconSVG('arrowDown');
-                        
+                        const arrowIcon = isEntry ? getIconSVG('arrowUp', 'w-4 h-4') : getIconSVG('arrowDown', 'w-4 h-4');
                         html += `
                             <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${move.productName}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <span class="flex items-center ${isEntry ? 'text-green-600' : 'text-red-600'}">
-                                        <span class="w-4 h-4 mr-1.5">${arrowIcon.replace('class="w-6 h-6"', '')}</span>
-                                        ${move.type}
-                                    </span>
-                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><span class="flex items-center ${isEntry ? 'text-green-600' : 'text-red-600'}"><span class="mr-1.5">${arrowIcon}</span>${move.type}</span></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${isEntry ? 'text-green-600' : 'text-red-600'}">${isEntry ? '+' : '-'}${move.quantityChange}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <span class="flex items-center">
-                                        <span class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md">${move.oldStock}</span>
-                                        <svg class="w-4 h-4 mx-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7-7 7" /></svg>
-                                        <span class="px-2 py-0.5 ${isEntry ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} rounded-md">${move.newStock}</span>
-                                    </span>
-                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><span class="flex items-center"><span class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md">${move.oldStock}</span><span class="mx-1 text-gray-400">-></span><span class="px-2 py-0.5 ${isEntry ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} rounded-md">${move.newStock}</span></span></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${move.comment}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(move.date)}</td>
-                            </tr>
-                        `;
+                            </tr>`;
                     });
                     storeMovementsTbody.innerHTML = html;
                 } else {
@@ -1350,90 +1198,57 @@
                 }
             }
             
-            /**
-             * Met à jour le cache local et déclenche le rendu du stock magasin.
-             * @param {DataSnapshot} snapshot 
-             */
             function onStoreProductsValue(snapshot) {
                 appData.storeProducts = snapshot.val() || {};
                 populateStoreProductSelects();
-                const searchTerm = storeSearchInput ? storeSearchInput.value : '';
-                renderStoreProducts(searchTerm);
+                renderStoreProducts(storeSearchInput ? storeSearchInput.value : '');
                 updateAllStats();
             }
 
-            /**
-             * Affiche le stock de la boutique dans le tableau.
-             * @param {string} [searchTerm=''] - Terme de recherche optionnel.
-             */
             function renderShopStock(searchTerm = '') {
                 const stock = appData.shopStock;
                 const normalizedSearch = searchTerm.toLowerCase();
-
-                const filteredStock = Object.values(stock).filter(item => {
-                    const nameMatch = item.name?.toLowerCase().includes(normalizedSearch);
-                    return nameMatch;
-                });
+                const filteredStock = Object.values(stock).filter(item => item.name?.toLowerCase().includes(normalizedSearch));
 
                 if (filteredStock.length > 0) {
                     shopStockPlaceholder.classList.add('hidden');
                     shopStockTableContainer.classList.remove('hidden');
                     let html = '';
                     const sortedStock = filteredStock.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                    
                     sortedStock.forEach(item => {
                         const isLowStock = item.quantityInShop <= item.alertThreshold;
                         const currency = appData.storeProducts[item.sourceProductId]?.currency || 'CFA';
+                        // FIXED: Pass classes directly to getIconSVG
+                        const iconBox = getIconSVG('box', 'w-5 h-5 text-gray-600');
+                        const iconTrash = getIconSVG('trash', 'w-5 h-5');
                         html += `
                             <tr class="hover:bg-gray-50 ${isLowStock ? 'bg-red-50' : ''}">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="p-2 bg-gray-100 rounded-lg mr-3">
-                                            <svg class="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
-                                        </div>
-                                        <span class="text-sm font-medium text-gray-900">${item.name}</span>
-                                    </div>
-                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap"><div class="flex items-center"><div class="p-2 bg-gray-100 rounded-lg mr-3">${iconBox}</div><span class="text-sm font-medium text-gray-900">${item.name}</span></div></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${isLowStock ? 'text-red-600' : 'text-gray-700'}">${item.quantityInShop}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatCurrency(item.sellingPrice, currency)}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.alertThreshold}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
                                     <button class="delete-icon text-gray-400 hover:text-red-500" data-stock-id="${item.id}">
-                                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                        ${iconTrash}
                                     </button>
                                 </td>
-                            </tr>
-                        `;
+                            </tr>`;
                     });
                     shopStockTbody.innerHTML = html;
                 } else {
                     shopStockTableContainer.classList.add('hidden');
                     shopStockPlaceholder.classList.remove('hidden');
-                    if (searchTerm) {
-                        shopStockPlaceholder.textContent = 'Aucun résultat trouvé.';
-                    } else {
-                        shopStockPlaceholder.textContent = 'Aucun article en inventaire.';
-                    }
                     shopStockTbody.innerHTML = '';
                 }
             }
             
-            /**
-             * Met à jour le cache local et déclenche le rendu du stock boutique.
-             * @param {DataSnapshot} snapshot 
-             */
             function onShopStockValue(snapshot) {
                 appData.shopStock = snapshot.val() || {};
-                populateShopProductSelects(); // MAJ
-                const searchTerm = shopSearchInput ? shopSearchInput.value : '';
-                renderShopStock(searchTerm);
+                populateShopProductSelects();
+                renderShopStock(shopSearchInput ? shopSearchInput.value : '');
                 updateAllStats();
             }
 
-            /**
-             * Affiche les mouvements de la boutique dans le tableau.
-             * @param {DataSnapshot} snapshot - Le snapshot Firebase.
-             */
             function onShopMovementsValue(snapshot) {
                 const movements = snapshot.val();
                 if (movements) {
@@ -1441,38 +1256,21 @@
                     shopMovementsTableContainer.classList.remove('hidden');
                     let html = '';
                     const sortedMovements = Object.values(movements).sort((a, b) => new Date(b.date) - new Date(a.date));
-
                     sortedMovements.forEach(move => {
                         const isEntry = move.type === 'Entrée';
-                        const arrowIcon = isEntry ? getIconSVG('arrowUp') : getIconSVG('arrowDown');
                         const qteClass = isEntry ? 'text-green-600' : 'text-red-600';
-                        const qtePrefix = isEntry ? '+' : '-';
-                        const stockClass = isEntry ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
-
+                        const arrowIcon = isEntry ? getIconSVG('arrowUp', 'w-4 h-4') : getIconSVG('arrowDown', 'w-4 h-4');
+                        const userDisplay = move.userEmail ? move.userEmail.split('@')[0] : 'N/A';
                         html += `
                             <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${move.productName}</td>
-                                <!-- Colonne Type -->
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <span class="flex items-center ${qteClass}">
-                                        <span class="w-4 h-4 mr-1.5">${arrowIcon.replace('class="w-6 h-6"', '')}</span>
-                                        ${move.type}
-                                    </span>
-                                </td>
-                                <!-- Colonne Qte Changée -->
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${qteClass}">${qtePrefix}${move.quantityChange}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <span class="flex items-center">
-                                        <span class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md">${move.oldStock}</span>
-                                        <svg class="w-4 h-4 mx-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7-7 7" /></svg>
-                                        <span class="px-2 py-0.5 ${stockClass} rounded-md">${move.newStock}</span>
-                                    </span>
-                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><span class="flex items-center ${qteClass}"><span class="mr-1.5">${arrowIcon}</span>${move.type}</span></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${qteClass}">${isEntry ? '+' : '-'}${move.quantityChange}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><span class="flex items-center"><span class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md">${move.oldStock}</span><span class="mx-1 text-gray-400">-></span><span class="px-2 py-0.5 ${isEntry ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} rounded-md">${move.newStock}</span></span></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${move.comment}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${move.userEmail.split('@')[0]}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${userDisplay}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(move.date)}</td>
-                            </tr>
-                        `;
+                            </tr>`;
                     });
                     shopMovementsTbody.innerHTML = html;
                 } else {
@@ -1482,10 +1280,6 @@
                 }
             }
 
-            /**
-             * Affiche l'historique des ventes dans le tableau.
-             * @param {DataSnapshot} snapshot - Le snapshot Firebase.
-             */
             function onSalesHistoryValue(snapshot) {
                 appData.salesHistory = snapshot.val() || {};
                 const sales = appData.salesHistory;
@@ -1494,7 +1288,6 @@
                     salesHistoryTableContainer.classList.remove('hidden');
                     let html = '';
                     const sortedSales = Object.values(sales).sort((a, b) => new Date(b.date) - new Date(a.date));
-
                     sortedSales.forEach(sale => {
                         const shopItem = appData.shopStock[sale.shopProductId];
                         const currency = shopItem ? (appData.storeProducts[shopItem.sourceProductId]?.currency || 'CFA') : 'CFA';
@@ -1506,8 +1299,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">${formatCurrency(sale.totalAmount, currency)}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.comment}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(sale.date)}</td>
-                            </tr>
-                        `;
+                            </tr>`;
                     });
                     salesHistoryTbody.innerHTML = html;
                 } else {
@@ -1518,33 +1310,26 @@
                 updateAllStats();
             }
 
-            /**
-             * Met en place les écouteurs Firebase pour les données de l'utilisateur.
-             * @param {string} uid - L'ID de l'utilisateur.
-             */
-            function setupFirebaseListeners(uid) {
+            function setupFirebaseListeners() {
                 cleanupFirebaseListeners();
-                
-                // Magasin
-                storeProductsRef = ref(db, `users/${uid}/storeProducts`);
+                if (!dbBasePath) return;
+
+                storeProductsRef = ref(db, `${dbBasePath}/storeProducts`);
                 storeProductsListener = onValue(storeProductsRef, onStoreProductsValue);
-                storeMovementsRef = ref(db, `users/${uid}/storeMovements`);
+                
+                storeMovementsRef = ref(db, `${dbBasePath}/storeMovements`);
                 storeMovementsListener = onValue(storeMovementsRef, onStoreMovementsValue);
                 
-                // Boutique
-                shopStockRef = ref(db, `users/${uid}/shopStock`);
+                shopStockRef = ref(db, `${dbBasePath}/shopStock`);
                 shopStockListener = onValue(shopStockRef, onShopStockValue);
-                shopMovementsRef = ref(db, `users/${uid}/shopMovements`);
+                
+                shopMovementsRef = ref(db, `${dbBasePath}/shopMovements`);
                 shopMovementsListener = onValue(shopMovementsRef, onShopMovementsValue);
 
-                // Ventes
-                salesHistoryRef = ref(db, `users/${uid}/salesHistory`);
+                salesHistoryRef = ref(db, `${dbBasePath}/salesHistory`);
                 salesHistoryListener = onValue(salesHistoryRef, onSalesHistoryValue);
             }
 
-            /**
-             * Nettoie (détache) tous les écouteurs Firebase actifs.
-             */
             function cleanupFirebaseListeners() {
                 if (storeProductsListener && storeProductsRef) off(storeProductsRef, storeProductsListener);
                 if (storeMovementsListener && storeMovementsRef) off(storeMovementsRef, storeMovementsListener);
@@ -1562,21 +1347,16 @@
                 populateShopProductSelects();
             }
 
-
-            /**
-             * Met à jour l'interface utilisateur en fonction de l'état actuel.
-             */
             function updateUI() {
-                // Gérer l'état d'authentification
                 if (isAuthenticated) {
                     if (authPageContainer) authPageContainer.classList.add('hidden');
                     if (layoutContainer) layoutContainer.classList.remove('hidden');
-                    if (currentUser && currentUser.email && userEmailDisplay) {
-                        userEmailDisplay.textContent = currentUser.email;
+                    if (currentUser && currentUser.email && userEmailDisplay) userEmailDisplay.textContent = currentUser.email;
+                    if (currentUserData) {
+                        if(userNameDisplay) userNameDisplay.textContent = currentUserData.fullName || 'Utilisateur';
+                        if(userCompanyDisplay) userCompanyDisplay.textContent = currentUserData.companyName || '';
                     }
-                     if (mobilePageTitle) {
-                        mobilePageTitle.textContent = currentPage;
-                    }
+                    if (mobilePageTitle) mobilePageTitle.textContent = currentPage;
                 } else {
                     if (authPageContainer) authPageContainer.classList.remove('hidden');
                     if (layoutContainer) layoutContainer.classList.add('hidden');
@@ -1584,29 +1364,21 @@
                     if (sellerNameInput) sellerNameInput.value = '';
                     isLoginView = true;
                     updateAuthFormView();
-                    
                     if (storeProductsTbody) storeProductsTbody.innerHTML = '';
                     if (storeMovementsTbody) storeMovementsTbody.innerHTML = '';
                     if (shopStockTbody) shopStockTbody.innerHTML = '';
                     if (shopMovementsTbody) shopMovementsTbody.innerHTML = '';
                     if (salesHistoryTbody) salesHistoryTbody.innerHTML = '';
-                    
                     [storeProductsPlaceholder, storeMovementsPlaceholder, shopStockPlaceholder, shopMovementsPlaceholder, salesHistoryPlaceholder].forEach(p => p && p.classList.remove('hidden'));
                     [storeProductsTableContainer, storeMovementsTableContainer, shopStockTableContainer, shopMovementsTableContainer, salesHistoryTableContainer].forEach(t => t && t.classList.add('hidden'));
-                    
                     return;
                 }
 
-                // Gérer la navigation des pages
                 pageContents.forEach(page => {
-                    if (page.id === `page-${currentPage.replace(/ /g, '-')}`) {
-                        page.classList.remove('hidden');
-                    } else {
-                        page.classList.add('hidden');
-                    }
+                    if (page.id === `page-${currentPage.replace(/ /g, '-')}`) page.classList.remove('hidden');
+                    else page.classList.add('hidden');
                 });
 
-                // Gérer l'état actif des boutons de la sidebar
                 navButtons.forEach(button => {
                     if (button.dataset.page === currentPage) {
                         button.classList.add('bg-cyan-400', 'text-white', 'shadow');
@@ -1618,52 +1390,31 @@
                 });
             }
 
-            /**
-             * Met à jour la vue du formulaire d'authentification (Login / Signup).
-             */
             function updateAuthFormView() {
                 if(loginError) loginError.classList.add('hidden');
-                if(signupError) signupError.classList.add('hidden');
-
+                if(signupError) signupError.textContent = '';
+                if(signupErrorContainer) signupErrorContainer.classList.add('hidden');
                 if (isLoginView) {
                     if(loginForm) loginForm.classList.remove('hidden');
                     if(signupForm) signupForm.classList.add('hidden');
-                    if(authToggleLogin) {
-                        authToggleLogin.classList.add('bg-white', 'shadow', 'text-gray-800');
-                        authToggleLogin.classList.remove('text-gray-500', 'hover:bg-gray-200');
-                    }
-                    if(authToggleSignup) {
-                        authToggleSignup.classList.remove('bg-white', 'shadow', 'text-gray-800');
-                        authToggleSignup.classList.add('text-gray-500', 'hover:bg-gray-200');
-                    }
+                    if(authToggleLogin) { authToggleLogin.classList.add('bg-white', 'shadow', 'text-gray-800'); authToggleLogin.classList.remove('text-gray-500', 'hover:bg-gray-200'); }
+                    if(authToggleSignup) { authToggleSignup.classList.remove('bg-white', 'shadow', 'text-gray-800'); authToggleSignup.classList.add('text-gray-500', 'hover:bg-gray-200'); }
                 } else {
                     if(loginForm) loginForm.classList.add('hidden');
                     if(signupForm) signupForm.classList.remove('hidden');
-                    if(authToggleSignup) {
-                        authToggleSignup.classList.add('bg-white', 'shadow', 'text-gray-800');
-                        authToggleSignup.classList.remove('text-gray-500', 'hover:bg-gray-200');
-                    }
-                    if(authToggleLogin) {
-                        authToggleLogin.classList.remove('bg-white', 'shadow', 'text-gray-800');
-                        authToggleLogin.classList.add('text-gray-500', 'hover:bg-gray-200');
-                    }
+                    if(authToggleSignup) { authToggleSignup.classList.add('bg-white', 'shadow', 'text-gray-800'); authToggleSignup.classList.remove('text-gray-500', 'hover:bg-gray-200'); }
+                    if(authToggleLogin) { authToggleLogin.classList.remove('bg-white', 'shadow', 'text-gray-800'); authToggleLogin.classList.add('text-gray-500', 'hover:bg-gray-200'); }
                 }
             }
             
-            /**
-             * Calcule et met à jour le montant total sur le formulaire de vente.
-             */
             function updateSalesTotal() {
                 if (!salesProductSelect || !salesQuantityInput || !salesTotalAmount) return;
-
                 const shopProductId = salesProductSelect.value;
                 const quantity = parseInt(salesQuantityInput.value, 10);
-                
                 if (!shopProductId || isNaN(quantity) || quantity <= 0) {
                     salesTotalAmount.value = formatCurrency(0);
                     return;
                 }
-                
                 const shopProduct = appData.shopStock[shopProductId];
                 if (shopProduct) {
                     const total = shopProduct.sellingPrice * quantity;
@@ -1672,9 +1423,6 @@
                 }
             }
 
-            /**
-             * Gère l'affichage de la sidebar sur mobile.
-             */
             function updateSidebarMobileState() {
                 if (isSidebarOpen) {
                     sidebar.classList.remove('-translate-x-full');
@@ -1685,614 +1433,47 @@
                 }
             }
 
-            /**
-             * Gère l'état réduit de la sidebar sur desktop.
-             */
             function updateSidebarDesktopState() {
                 const sidebarTexts = document.querySelectorAll('.sidebar-text');
                 const navButtonsToCenter = document.querySelectorAll('.nav-button, #logout-button');
                 const toggleButtonContainer = sidebarCollapseToggle.firstElementChild;
-
                 if (isSidebarCollapsed) {
                     sidebar.classList.replace('w-64', 'lg:w-20');
                     mainContent.classList.replace('lg:ml-64', 'lg:ml-20');
                     sidebarTexts.forEach(el => el.classList.add('lg:hidden'));
                     navButtonsToCenter.forEach(el => el.classList.add('lg:justify-center'));
-                    toggleButtonContainer.innerHTML = getIconSVG('arrowRight');
+                    toggleButtonContainer.innerHTML = getIconSVG('arrowRight', 'w-4 h-4 text-gray-600');
                 } else {
                     sidebar.classList.replace('lg:w-20', 'w-64');
                     mainContent.classList.replace('lg:ml-20', 'lg:ml-64');
                     sidebarTexts.forEach(el => el.classList.remove('lg:hidden'));
                     navButtonsToCenter.forEach(el => el.classList.remove('lg:justify-center'));
-                    toggleButtonContainer.innerHTML = getIconSVG('arrowLeft');
+                    toggleButtonContainer.innerHTML = getIconSVG('arrowLeft', 'w-4 h-4 text-gray-600');
                 }
-                // Il faut ré-appliquer les classes SVG après changement d'innerHTML
-                renderIcons();
             }
 
-
-            // --- ÉCOUTEURS D'ÉVÉNEMENTS ---
-
-            if (hamburgerButton) hamburgerButton.addEventListener('click', () => {
-                isSidebarOpen = true;
-                updateSidebarMobileState();
-            });
-            if (sidebarOverlay) sidebarOverlay.addEventListener('click', () => {
-                isSidebarOpen = false;
-                updateSidebarMobileState();
-            });
-            if (sidebarCollapseToggle) sidebarCollapseToggle.addEventListener('click', () => {
-                isSidebarCollapsed = !isSidebarCollapsed;
-                updateSidebarDesktopState();
-            });
-
-            if(authToggleLogin) authToggleLogin.addEventListener('click', () => {
-                isLoginView = true;
-                updateAuthFormView();
-            });
-
-            if(authToggleSignup) authToggleSignup.addEventListener('click', () => {
-                isLoginView = false;
-                updateAuthFormView();
-            });
-
+            // Event Listeners
+            if (hamburgerButton) hamburgerButton.addEventListener('click', () => { isSidebarOpen = true; updateSidebarMobileState(); });
+            if (sidebarOverlay) sidebarOverlay.addEventListener('click', () => { isSidebarOpen = false; updateSidebarMobileState(); });
+            if (sidebarCollapseToggle) sidebarCollapseToggle.addEventListener('click', () => { isSidebarCollapsed = !isSidebarCollapsed; updateSidebarDesktopState(); });
+            if(authToggleLogin) authToggleLogin.addEventListener('click', () => { isLoginView = true; updateAuthFormView(); });
+            if(authToggleSignup) authToggleSignup.addEventListener('click', () => { isLoginView = false; updateAuthFormView(); });
             if(salesProductSelect) salesProductSelect.addEventListener('change', updateSalesTotal);
             if(salesQuantityInput) salesQuantityInput.addEventListener('input', updateSalesTotal);
             
-            if(salesForm) salesForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                salesError.classList.add('hidden');
-                if (!currentUser || !currentUserData) {
-                    salesError.textContent = "Vous devez être connecté.";
-                    salesError.classList.remove('hidden');
-                    return;
-                }
-                
-                const shopProductId = salesProductSelect.value;
-                const quantity = parseInt(salesQuantityInput.value, 10);
-                const comment = salesComment.value || "";
-                const sellerName = currentUserData.fullName || currentUser.email;
-
-                if (!shopProductId || isNaN(quantity) || quantity <= 0) {
-                    salesError.textContent = "Veuillez sélectionner un produit et une quantité valide.";
-                    salesError.classList.remove('hidden');
-                    return;
-                }
-                
-                const shopProduct = appData.shopStock[shopProductId];
-                if (!shopProduct) {
-                    salesError.textContent = "Produit non trouvé.";
-                    salesError.classList.remove('hidden');
-                    return;
-                }
-
-                if (quantity > shopProduct.quantityInShop) {
-                    salesError.textContent = `Stock insuffisant. (Disponible: ${shopProduct.quantityInShop})`;
-                    salesError.classList.remove('hidden');
-                    return;
-                }
-                
-                salesSubmitButton.disabled = true;
-                salesSubmitButton.textContent = "Enregistrement...";
-                
-                try {
-                    const updates = {};
-                    const now = new Date().toISOString();
-                    
-                    const shopOldStock = shopProduct.quantityInShop;
-                    const shopNewStock = shopOldStock - quantity;
-                    const totalAmount = shopProduct.sellingPrice * quantity;
-
-                    updates[`users/${currentUser.uid}/shopStock/${shopProductId}/quantityInShop`] = shopNewStock;
-                    updates[`users/${currentUser.uid}/shopStock/${shopProductId}/updatedAt`] = now;
-
-                    const shopMoveKey = push(ref(db, `users/${currentUser.uid}/shopMovements`)).key;
-                    updates[`users/${currentUser.uid}/shopMovements/${shopMoveKey}`] = {
-                        id: shopMoveKey, shopProductId: shopProductId, productName: shopProduct.name,
-                        type: "Sortie", quantityChange: quantity, oldStock: shopOldStock, newStock: shopNewStock,
-                        comment: `Vente: ${comment}`, date: now,
-                        userEmail: currentUser.email
-                    };
-                    
-                    const saleKey = push(ref(db, `users/${currentUser.uid}/salesHistory`)).key;
-                    updates[`users/${currentUser.uid}/salesHistory/${saleKey}`] = {
-                        id: saleKey,
-                        shopProductId: shopProductId,
-                        productName: shopProduct.name,
-                        quantity: quantity,
-                        sellingPrice: shopProduct.sellingPrice,
-                        totalAmount: totalAmount,
-                        sellerName: sellerName,
-                        comment: comment,
-                        date: now
-                    };
-                    
-                    await update(ref(db), updates);
-                    
-                    showSuccessToast("Vente enregistrée avec succès!");
-                    salesForm.reset();
-                    updateSalesTotal();
-                    
-                } catch (error) {
-                    console.error("Erreur lors de l'enregistrement de la vente:", error);
-                    salesError.textContent = `Erreur: ${error.message}`;
-                    salesError.classList.remove('hidden');
-                } finally {
-                    salesSubmitButton.disabled = false;
-                    salesSubmitButton.textContent = "+ Enregistrer la vente";
-                }
-            });
-
-
-            if(openNewProductModalButton) openNewProductModalButton.addEventListener('click', () => {
-                if(newProductModal) newProductModal.classList.remove('hidden');
-                if(newProductError) newProductError.classList.add('hidden');
-                if(newProductForm) newProductForm.reset();
-            });
-            if(closeNewProductModalButton) closeNewProductModalButton.addEventListener('click', () => newProductModal.classList.add('hidden'));
-            if(newProductModal) newProductModal.addEventListener('click', (e) => e.target === newProductModal && newProductModal.classList.add('hidden'));
-            
-            if(newProductForm) newProductForm.addEventListener('submit', async (event) => {
-                event.preventDefault();
-                newProductError.classList.add('hidden');
-                if (!currentUser) {
-                    newProductError.textContent = "Vous devez être connecté.";
-                    newProductError.classList.remove('hidden');
-                    return;
-                }
-                const productName = newProductForm['product-name'].value;
-                const description = newProductForm['product-description'].value;
-                const cost = parseFloat(newProductForm['product-cost'].value);
-                const currency = newProductForm['product-currency'].value;
-                const quantity = parseInt(newProductForm['product-quantity'].value, 10);
-                if (!productName || !currency || isNaN(cost) || isNaN(quantity)) {
-                    newProductError.textContent = "Veuillez remplir tous les champs obligatoires.";
-                    newProductError.classList.remove('hidden');
-                    return;
-                }
-                newProductSubmitButton.disabled = true;
-                newProductSubmitButton.textContent = "Ajout en cours...";
-                try {
-                    const storeProductsRef = ref(db, `users/${currentUser.uid}/storeProducts`);
-                    const newProductRef = push(storeProductsRef);
-                    const newProduct = {
-                        id: newProductRef.key, name: productName, description: description,
-                        purchaseCost: cost, currency: currency, quantityInStore: quantity,
-                        createdAt: new Date().toISOString()
-                    };
-                    await set(newProductRef, newProduct);
-                    const movementsRef = ref(db, `users/${currentUser.uid}/storeMovements`);
-                    const newMovementRef = push(movementsRef);
-                    const newMovement = {
-                        id: newMovementRef.key, productId: newProduct.id, productName: newProduct.name,
-                        type: "Entrée", quantityChange: quantity, oldStock: 0, newStock: quantity,
-                        comment: "Création initiale", date: new Date().toISOString()
-                    };
-                    await set(newMovementRef, newMovement);
-                    
-                    showSuccessToast("Produit ajouté avec succès!");
-                    newProductForm.reset();
-                    newProductModal.classList.add('hidden');
-                } catch (error) {
-                    console.error("Erreur lors de l'ajout du produit:", error);
-                    newProductError.textContent = `Erreur: ${error.message}`;
-                    newProductError.classList.remove('hidden');
-                } finally {
-                    newProductSubmitButton.disabled = false;
-                    newProductSubmitButton.textContent = "Ajouter le produit";
-                }
-            });
-            
-            if(openEntryModalButton) openEntryModalButton.addEventListener('click', () => {
-                if(entryModal) entryModal.classList.remove('hidden');
-                if(entryError) entryError.classList.add('hidden');
-                if(entryForm) entryForm.reset();
-            });
-            if(closeEntryModalButton) closeEntryModalButton.addEventListener('click', () => entryModal.classList.add('hidden'));
-            if(entryModal) entryModal.addEventListener('click', (e) => e.target === entryModal && entryModal.classList.add('hidden'));
-            
-            if(entryForm) entryForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                entryError.classList.add('hidden');
-                if (!currentUser) {
-                    entryError.textContent = "Vous devez être connecté.";
-                    entryError.classList.remove('hidden');
-                    return;
-                }
-                const productId = entryProductSelect.value;
-                const quantity = parseInt(entryForm['entry-quantity'].value, 10);
-                const comment = entryForm['entry-comment'].value || "Entrée manuelle";
-                
-                if (!productId || isNaN(quantity) || quantity <= 0) {
-                    entryError.textContent = "Veuillez sélectionner un produit et une quantité valide.";
-                    entryError.classList.remove('hidden');
-                    return;
-                }
-                
-                const product = appData.storeProducts[productId];
-                if (!product) {
-                    entryError.textContent = "Produit non trouvé.";
-                    entryError.classList.remove('hidden');
-                    return;
-                }
-                
-                entrySubmitButton.disabled = true;
-                entrySubmitButton.textContent = "Enregistrement...";
-                
-                try {
-                    const oldStock = product.quantityInStore;
-                    const newStock = oldStock + quantity;
-                    
-                    const productRef = ref(db, `users/${currentUser.uid}/storeProducts/${productId}`);
-                    await update(productRef, { quantityInStore: newStock });
-                    
-                    const movementsRef = ref(db, `users/${currentUser.uid}/storeMovements`);
-                    const newMovementRef = push(movementsRef);
-                    const newMovement = {
-                        id: newMovementRef.key, productId: product.id, productName: product.name,
-                        type: "Entrée", quantityChange: quantity, oldStock: oldStock, newStock: newStock,
-                        comment: comment, date: new Date().toISOString()
-                    };
-                    await set(newMovementRef, newMovement);
-                    
-                    showSuccessToast("Entrée enregistrée!");
-                    entryForm.reset();
-                    entryModal.classList.add('hidden');
-                    
-                } catch (error) {
-                    console.error("Erreur d'enregistrement d'entrée:", error);
-                    entryError.textContent = `Erreur: ${error.message}`;
-                    entryError.classList.remove('hidden');
-                } finally {
-                    entrySubmitButton.disabled = false;
-                    entrySubmitButton.textContent = "Enregistrer l'entrée";
-                }
-            });
-            
-            if(openExitModalButton) openExitModalButton.addEventListener('click', () => {
-                if(exitModal) exitModal.classList.remove('hidden');
-                if(exitError) exitError.classList.add('hidden');
-                if(exitForm) exitForm.reset();
-            });
-            if(closeExitModalButton) closeExitModalButton.addEventListener('click', () => exitModal.classList.add('hidden'));
-            if(exitModal) exitModal.addEventListener('click', (e) => e.target === exitModal && exitModal.classList.add('hidden'));
-            
-            if(exitForm) exitForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                exitError.classList.add('hidden');
-                if (!currentUser) {
-                    exitError.textContent = "Vous devez être connecté.";
-                    exitError.classList.remove('hidden');
-                    return;
-                }
-                const productId = exitProductSelect.value;
-                const quantity = parseInt(exitForm['exit-quantity'].value, 10);
-                const comment = exitForm['exit-comment'].value || "Sortie manuelle";
-                
-                if (!productId || isNaN(quantity) || quantity <= 0) {
-                    exitError.textContent = "Veuillez sélectionner un produit et une quantité valide.";
-                    exitError.classList.remove('hidden');
-                    return;
-                }
-                
-                const product = appData.storeProducts[productId];
-                if (!product) {
-                    exitError.textContent = "Produit non trouvé.";
-                    exitError.classList.remove('hidden');
-                    return;
-                }
-                
-                const oldStock = product.quantityInStore;
-                if (quantity > oldStock) {
-                    exitError.textContent = `Stock insuffisant. (Actuel: ${oldStock})`;
-                    exitError.classList.remove('hidden');
-                    return;
-                }
-                
-                exitSubmitButton.disabled = true;
-                exitSubmitButton.textContent = "Enregistrement...";
-                
-                try {
-                    const newStock = oldStock - quantity;
-                    
-                    const productRef = ref(db, `users/${currentUser.uid}/storeProducts/${productId}`);
-                    await update(productRef, { quantityInStore: newStock });
-                    
-                    const movementsRef = ref(db, `users/${currentUser.uid}/storeMovements`);
-                    const newMovementRef = push(movementsRef);
-                    const newMovement = {
-                        id: newMovementRef.key, productId: product.id, productName: product.name,
-                        type: "Sortie", quantityChange: quantity, oldStock: oldStock, newStock: newStock,
-                        comment: comment, date: new Date().toISOString()
-                    };
-                    await set(newMovementRef, newMovement);
-                    
-                    showSuccessToast("Sortie enregistrée!");
-                    exitForm.reset();
-                    exitModal.classList.add('hidden');
-                    
-                } catch (error) {
-                    console.error("Erreur d'enregistrement de sortie:", error);
-                    exitError.textContent = `Erreur: ${error.message}`;
-                    exitError.classList.remove('hidden');
-                } finally {
-                    exitSubmitButton.disabled = false;
-                    exitSubmitButton.textContent = "Enregistrer la sortie";
-                }
-            });
-            
-            if(openTransferModalButton) openTransferModalButton.addEventListener('click', () => {
-                if(transferModal) transferModal.classList.remove('hidden');
-                if(transferError) transferError.classList.add('hidden');
-                if(transferStockWarning) transferStockWarning.classList.add('hidden');
-                if(transferSourceInfo) transferSourceInfo.classList.add('hidden');
-                if(transferForm) {
-                    transferForm.reset();
-                    transferForm['transfer-alert-threshold'].value = '10'; // Default value
-                }
-            });
-            if(closeTransferModalButton) closeTransferModalButton.addEventListener('click', () => transferModal.classList.add('hidden'));
-            if(transferModal) transferModal.addEventListener('click', (e) => e.target === transferModal && transferModal.classList.add('hidden'));
-            
-            if(transferProductSelect) transferProductSelect.addEventListener('change', () => {
-                const productId = transferProductSelect.value;
-                if (!productId) {
-                    transferSourceInfo.classList.add('hidden');
-                    return;
-                }
-                const product = appData.storeProducts[productId];
-                if (product) {
-                    transferCostDisplay.textContent = formatCurrency(product.purchaseCost, product.currency);
-                    transferSourceInfo.classList.remove('hidden');
-                }
-            });
-            
-            if(transferForm) transferForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                transferError.classList.add('hidden');
-                transferStockWarning.classList.add('hidden');
-                
-                if (!currentUser) {
-                    transferError.textContent = "Vous devez être connecté.";
-                    transferError.classList.remove('hidden');
-                    return;
-                }
-
-                const sourceProductId = transferProductSelect.value;
-                const transferQty = parseInt(transferForm['transfer-quantity'].value, 10);
-                const sellingPrice = parseFloat(transferForm['transfer-selling-price'].value);
-                const alertThreshold = parseInt(transferForm['transfer-alert-threshold'].value, 10);
-                
-                if (!sourceProductId || isNaN(transferQty) || transferQty <= 0 || isNaN(sellingPrice) || sellingPrice < 0) {
-                    transferError.textContent = "Veuillez remplir tous les champs obligatoires.";
-                    transferError.classList.remove('hidden');
-                    return;
-                }
-                
-                const sourceProduct = appData.storeProducts[sourceProductId];
-                if (!sourceProduct) {
-                    transferError.textContent = "Produit source non trouvé.";
-                    transferError.classList.remove('hidden');
-                    return;
-                }
-                
-                if (transferQty > sourceProduct.quantityInStore) {
-                    transferStockWarning.querySelector('p').textContent = `Cette valeur doit être inférieure ou égale à ${sourceProduct.quantityInStore}.`;
-                    transferStockWarning.classList.remove('hidden');
-                    return;
-                }
-                
-                transferSubmitButton.disabled = true;
-                transferSubmitButton.textContent = "Transfert en cours...";
-                
-                try {
-                    const shopStockRef = ref(db, `users/${currentUser.uid}/shopStock`);
-                    const shopStockQuery = query(shopStockRef, orderByChild('sourceProductId'), equalTo(sourceProductId));
-                    const snapshot = await get(shopStockQuery);
-                    let existingShopItem = null;
-                    let existingShopItemId = null;
-                    if (snapshot.exists()) {
-                        existingShopItemId = Object.keys(snapshot.val())[0];
-                        existingShopItem = snapshot.val()[existingShopItemId];
-                    }
-
-                    const updates = {};
-                    const now = new Date().toISOString();
-                    
-                    const storeOldStock = sourceProduct.quantityInStore;
-                    const storeNewStock = storeOldStock - transferQty;
-                    const shopOldStock = existingShopItem ? existingShopItem.quantityInShop : 0;
-                    const shopNewStock = shopOldStock + transferQty;
-
-                    updates[`users/${currentUser.uid}/storeProducts/${sourceProductId}/quantityInStore`] = storeNewStock;
-                    
-                    const storeMovementsRef = ref(db, `users/${currentUser.uid}/storeMovements`);
-                    const storeMoveKey = push(storeMovementsRef).key;
-                    updates[`users/${currentUser.uid}/storeMovements/${storeMoveKey}`] = {
-                        id: storeMoveKey, productId: sourceProductId, productName: sourceProduct.name,
-                        type: "Sortie", quantityChange: transferQty, oldStock: storeOldStock, newStock: storeNewStock,
-                        comment: "Transfert vers boutique", date: now
-                    };
-                    
-                    const shopProductId = existingShopItem ? existingShopItemId : push(shopStockRef).key;
-                    const shopProductData = {
-                        id: shopProductId,
-                        sourceProductId: sourceProductId,
-                        name: sourceProduct.name,
-                        purchaseCost: sourceProduct.purchaseCost, 
-                        sellingPrice: sellingPrice,
-                        quantityInShop: shopNewStock,
-                        alertThreshold: isNaN(alertThreshold) ? 10 : alertThreshold,
-                        createdAt: existingShopItem ? existingShopItem.createdAt : now,
-                        updatedAt: now
-                    };
-                    updates[`users/${currentUser.uid}/shopStock/${shopProductId}`] = shopProductData;
-
-                    const shopMovementsRef = ref(db, `users/${currentUser.uid}/shopMovements`);
-                    const shopMoveKey = push(shopMovementsRef).key;
-                    updates[`users/${currentUser.uid}/shopMovements/${shopMoveKey}`] = {
-                        id: shopMoveKey, shopProductId: shopProductId, productName: sourceProduct.name,
-                        type: "Entrée", quantityChange: transferQty, oldStock: shopOldStock, newStock: shopNewStock,
-                        comment: "Transfert depuis le magasin", date: now,
-                        userEmail: currentUser.email
-                    };
-
-                    await update(ref(db), updates);
-                    
-                    showSuccessToast("Transfert réussi!");
-                    transferForm.reset();
-                    transferModal.classList.add('hidden');
-
-                } catch (error) {
-                    console.error("Erreur lors du transfert:", error);
-                    transferError.textContent = `Erreur: ${error.message}`;
-                    transferError.classList.remove('hidden');
-                } finally {
-                    transferSubmitButton.disabled = false;
-                    transferSubmitButton.textContent = "Transférer et Créer/Mettre à jour l'article";
-                }
-            });
-            
-            if(openRestockModalButton) openRestockModalButton.addEventListener('click', () => {
-                if(restockModal) restockModal.classList.remove('hidden');
-                if(restockError) restockError.classList.add('hidden');
-                if(restockStockWarning) restockStockWarning.classList.add('hidden');
-                if(restockSourceInfo) restockSourceInfo.classList.add('hidden');
-                if(restockForm) restockForm.reset();
-            });
-            if(closeRestockModalButton) closeRestockModalButton.addEventListener('click', () => restockModal.classList.add('hidden'));
-            if(restockModal) restockModal.addEventListener('click', (e) => e.target === restockModal && restockModal.classList.add('hidden'));
-            
-            if(restockProductSelect) restockProductSelect.addEventListener('change', () => {
-                const shopProductId = restockProductSelect.value;
-                if (!shopProductId) {
-                    restockSourceInfo.classList.add('hidden');
-                    return;
-                }
-                const shopProduct = appData.shopStock[shopProductId];
-                const sourceProduct = appData.storeProducts[shopProduct.sourceProductId];
-                
-                if (shopProduct && sourceProduct) {
-                    restockSourceName.textContent = sourceProduct.name;
-                    restockSourceStock.textContent = sourceProduct.quantityInStore;
-                    restockSourceInfo.classList.remove('hidden');
-                } else {
-                    restockSourceInfo.classList.add('hidden');
-                }
-            });
-            
-            if(restockForm) restockForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                restockError.classList.add('hidden');
-                restockStockWarning.classList.add('hidden');
-
-                if (!currentUser) {
-                    restockError.textContent = "Vous devez être connecté.";
-                    restockError.classList.remove('hidden');
-                    return;
-                }
-
-                const shopProductId = restockProductSelect.value;
-                const restockQty = parseInt(restockForm['restock-quantity'].value, 10);
-                const comment = restockForm['restock-comment'].value || "Réapprovisionnement";
-
-                if (!shopProductId || isNaN(restockQty) || restockQty <= 0) {
-                    restockError.textContent = "Veuillez sélectionner un produit et une quantité valide.";
-                    restockError.classList.remove('hidden');
-                    return;
-                }
-
-                const shopProduct = appData.shopStock[shopProductId];
-                if (!shopProduct) {
-                    restockError.textContent = "Produit de boutique non trouvé.";
-                    restockError.classList.remove('hidden');
-                    return;
-                }
-                
-                const sourceProduct = appData.storeProducts[shopProduct.sourceProductId];
-                if (!sourceProduct) {
-                    restockError.textContent = "Produit source (magasin) non trouvé. Impossible de réapprovisionner.";
-                    restockError.classList.remove('hidden');
-                    return;
-                }
-
-                if (restockQty > sourceProduct.quantityInStore) {
-                    restockStockWarning.querySelector('p').textContent = `Stock magasin insuffisant (disponible: ${sourceProduct.quantityInStore}).`;
-                    restockStockWarning.classList.remove('hidden');
-                    return;
-                }
-
-                restockSubmitButton.disabled = true;
-                restockSubmitButton.textContent = "Enregistrement...";
-
-                try {
-                    const updates = {};
-                    const now = new Date().toISOString();
-                    const storeOldStock = sourceProduct.quantityInStore;
-                    const storeNewStock = storeOldStock - restockQty;
-                    const shopOldStock = shopProduct.quantityInShop;
-                    const shopNewStock = shopOldStock + restockQty;
-
-                    updates[`users/${currentUser.uid}/storeProducts/${sourceProduct.id}/quantityInStore`] = storeNewStock;
-
-                    const storeMovementsRef = ref(db, `users/${currentUser.uid}/storeMovements`);
-                    const storeMoveKey = push(storeMovementsRef).key;
-                    updates[`users/${currentUser.uid}/storeMovements/${storeMoveKey}`] = {
-                        id: storeMoveKey, productId: sourceProduct.id, productName: sourceProduct.name,
-                        type: "Sortie", quantityChange: restockQty, oldStock: storeOldStock, newStock: storeNewStock,
-                        comment: comment, date: now
-                    };
-
-                    updates[`users/${currentUser.uid}/shopStock/${shopProductId}/quantityInShop`] = shopNewStock;
-                    updates[`users/${currentUser.uid}/shopStock/${shopProductId}/updatedAt`] = now;
-                    
-                    const shopMovementsRef = ref(db, `users/${currentUser.uid}/shopMovements`);
-                    const shopMoveKey = push(shopMovementsRef).key;
-                    updates[`users/${currentUser.uid}/shopMovements/${shopMoveKey}`] = {
-                        id: shopMoveKey, shopProductId: shopProductId, productName: shopProduct.name,
-                        type: "Entrée", quantityChange: restockQty, oldStock: shopOldStock, newStock: shopNewStock,
-                        comment: comment, date: now,
-                        userEmail: currentUser.email
-                    };
-
-                    await update(ref(db), updates);
-
-                    showSuccessToast("Réapprovisionnement réussi!");
-                    restockForm.reset();
-                    restockModal.classList.add('hidden');
-
-                } catch (error) {
-                    console.error("Erreur lors du réapprovisionnement:", error);
-                    restockError.textContent = `Erreur: ${error.message}`;
-                    restockError.classList.remove('hidden');
-                } finally {
-                    restockSubmitButton.disabled = false;
-                    restockSubmitButton.textContent = "Confirmer le réapprovisionnement";
-                }
-            });
-
+            // Auth Logic
             if(loginForm) loginForm.addEventListener('submit', async (event) => {
                 event.preventDefault();
                 const email = loginForm.email.value;
                 const password = loginForm.password.value;
                 if(loginError) loginError.classList.add('hidden'); 
-                if(loginSubmitButton) {
-                    loginSubmitButton.disabled = true;
-                    loginSubmitButton.textContent = "Connexion...";
-                }
+                if(loginSubmitButton) { loginSubmitButton.disabled = true; loginSubmitButton.textContent = "Connexion..."; }
                 try {
                     await signInWithEmailAndPassword(auth, email, password);
                 } catch (error) {
-                    console.error("Erreur de connexion:", error.message);
-                    if(loginError) {
-                        loginError.textContent = getFirebaseAuthErrorMessage(error.code);
-                        loginError.classList.remove('hidden');
-                    }
+                    if(loginError) { loginError.textContent = "Email ou mot de passe incorrect."; loginError.classList.remove('hidden'); }
                 } finally {
-                    if(loginSubmitButton) {
-                        loginSubmitButton.disabled = false;
-                        loginSubmitButton.textContent = "Se connecter";
-                    }
+                    if(loginSubmitButton) { loginSubmitButton.disabled = false; loginSubmitButton.textContent = "Se connecter"; }
                 }
             });
 
@@ -2302,250 +1483,288 @@
                 const password = signupForm['signup-password'].value;
                 const fullName = signupForm.fullName.value;
                 const companyName = signupForm.companyName.value;
-                if(signupError) signupError.classList.add('hidden');
-                if(signupSubmitButton) {
-                    signupSubmitButton.disabled = true;
-                    signupSubmitButton.textContent = "Création...";
-                }
-                if (!fullName || !companyName) {
-                    if(signupError) {
-                        signupError.textContent = "Veuillez remplir tous les champs.";
-                        signupError.classList.remove('hidden');
-                    }
-                    if(signupSubmitButton) {
-                        signupSubmitButton.disabled = false;
-                        signupSubmitButton.textContent = "Créer mon compte";
-                    }
-                    return;
-                }
+                
+                if(signupError) signupError.textContent = '';
+                if(signupErrorContainer) signupErrorContainer.classList.add('hidden');
+                if(signupSubmitButton) { signupSubmitButton.disabled = true; signupSubmitButton.textContent = "Création..."; }
+                
                 try {
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     const user = userCredential.user;
-                    await set(ref(db, 'users/' + user.uid), {
+
+                    const companiesRef = ref(db, 'companies');
+                    const snapshot = await get(companiesRef);
+                    let companyId = null;
+                    let matchedCompanyName = companyName.trim();
+
+                    if (snapshot.exists()) {
+                        const companies = snapshot.val();
+                        const existingCompanyKey = Object.keys(companies).find(key =>
+                            companies[key].name && companies[key].name.trim().toLowerCase() === companyName.trim().toLowerCase()
+                        );
+                        if (existingCompanyKey) {
+                            companyId = existingCompanyKey;
+                            matchedCompanyName = companies[existingCompanyKey].name;
+                        }
+                    }
+
+                    if (!companyId) {
+                        const newCompRef = push(companiesRef);
+                        companyId = newCompRef.key;
+                        await set(newCompRef, {
+                            name: matchedCompanyName,
+                            createdAt: new Date().toISOString(),
+                            createdBy: user.uid
+                        });
+                    }
+
+                    await set(ref(db, `users/${user.uid}`), {
+                        uid: user.uid,
+                        email: email,
                         fullName: fullName,
-                        companyName: companyName,
-                        email: email
+                        companyName: matchedCompanyName,
+                        companyId: companyId
                     });
+
+                    await set(ref(db, `companies/${companyId}/members/${user.uid}`), {
+                        email: email,
+                        fullName: fullName
+                    });
+
                 } catch (error) {
-                    console.error("Erreur d'inscription:", error.message);
+                    console.error("Erreur d'inscription:", error);
                     if(signupError) {
-                        signupError.textContent = getFirebaseAuthErrorMessage(error.code);
-                        signupError.classList.remove('hidden');
+                        if (error.code === 'auth/email-already-in-use') {
+                             signupError.innerHTML = `
+                                Cet email existe déjà.<br>
+                                <button id="error-switch-login" class="underline font-bold hover:text-red-700 mt-1 focus:outline-none">
+                                    Se connecter à la place ?
+                                </button>
+                             `;
+                             // Setup the listener immediately after showing the message
+                             setTimeout(() => {
+                                 const switchBtn = document.getElementById('error-switch-login');
+                                 if(switchBtn) {
+                                     switchBtn.onclick = (e) => {
+                                         e.preventDefault();
+                                         isLoginView = true;
+                                         updateAuthFormView();
+                                     };
+                                 }
+                             }, 0);
+                        } else if (error.code === 'auth/weak-password') {
+                             signupError.textContent = "Le mot de passe doit contenir au moins 6 caractères.";
+                        } else {
+                             signupError.textContent = "Une erreur est survenue: " + error.message;
+                        }
+                        if(signupErrorContainer) signupErrorContainer.classList.remove('hidden');
                     }
                 } finally {
-                    if(signupSubmitButton) {
-                        signupSubmitButton.disabled = false;
-                        signupSubmitButton.textContent = "Créer mon compte";
-                    }
+                    if(signupSubmitButton) { signupSubmitButton.disabled = false; signupSubmitButton.textContent = "Créer mon compte"; }
                 }
             });
-            
-            if (storeSearchInput) {
-                storeSearchInput.addEventListener('input', (e) => {
-                    renderStoreProducts(e.target.value);
-                });
-            }
-            if (shopSearchInput) {
-                shopSearchInput.addEventListener('input', (e) => {
-                    renderShopStock(e.target.value);
-                });
-            }
 
-            navButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    const pageName = button.dataset.page;
-                    if (pageName) {
-                        currentPage = pageName;
-                        if (window.innerWidth < 1024) {
-                            isSidebarOpen = false;
-                            updateSidebarMobileState();
-                        }
-                        updateUI();
-                    }
-                });
-            });
-
-            if(logoutButton) logoutButton.addEventListener('click', async () => {
+            // Listeners pour les actions (Vente, Ajout Produit, etc.)
+            if(salesForm) salesForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                salesError.classList.add('hidden');
+                if (!currentUser || !dbBasePath) { salesError.textContent = "Vous devez être connecté."; salesError.classList.remove('hidden'); return; }
+                const shopProductId = salesProductSelect.value;
+                const quantity = parseInt(salesQuantityInput.value, 10);
+                const comment = salesComment.value || "";
+                const sellerName = currentUserData?.fullName || currentUser.email;
+                if (!shopProductId || isNaN(quantity) || quantity <= 0) { salesError.textContent = "Quantité invalide."; salesError.classList.remove('hidden'); return; }
+                const shopProduct = appData.shopStock[shopProductId];
+                if (!shopProduct || quantity > shopProduct.quantityInShop) { salesError.textContent = "Stock insuffisant."; salesError.classList.remove('hidden'); return; }
+                salesSubmitButton.disabled = true;
                 try {
-                    await signOut(auth);
-                } catch (error) {
-                    console.error("Erreur de déconnexion:", error);
-                }
+                    const updates = {}; const now = new Date().toISOString();
+                    const shopNewStock = shopProduct.quantityInShop - quantity;
+                    updates[`${dbBasePath}/shopStock/${shopProductId}/quantityInShop`] = shopNewStock;
+                    const shopMoveKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
+                    updates[`${dbBasePath}/shopMovements/${shopMoveKey}`] = { id: shopMoveKey, shopProductId, productName: shopProduct.name, type: "Sortie", quantityChange: quantity, oldStock: shopProduct.quantityInShop, newStock: shopNewStock, comment: `Vente: ${comment}`, date: now, userEmail: currentUser.email };
+                    const saleKey = push(ref(db, `${dbBasePath}/salesHistory`)).key;
+                    updates[`${dbBasePath}/salesHistory/${saleKey}`] = { id: saleKey, shopProductId, productName: shopProduct.name, quantity, sellingPrice: shopProduct.sellingPrice, totalAmount: shopProduct.sellingPrice * quantity, sellerName, comment, date: now };
+                    await update(ref(db), updates); showSuccessToast("Vente enregistrée!"); salesForm.reset(); updateSalesTotal();
+                } catch (error) { salesError.textContent = error.message; salesError.classList.remove('hidden'); } finally { salesSubmitButton.disabled = false; }
             });
+
+            if(newProductForm) newProductForm.addEventListener('submit', async (e) => {
+                e.preventDefault(); newProductError.classList.add('hidden');
+                if (!currentUser || !dbBasePath) return;
+                const name = newProductForm['product-name'].value; const desc = newProductForm['product-description'].value; const cost = parseFloat(newProductForm['product-cost'].value); const currency = newProductForm['product-currency'].value; const qty = parseInt(newProductForm['product-quantity'].value, 10);
+                if (!name || isNaN(cost)) return;
+                newProductSubmitButton.disabled = true;
+                try {
+                    const newRef = push(ref(db, `${dbBasePath}/storeProducts`));
+                    const newProd = { id: newRef.key, name, description: desc, purchaseCost: cost, currency, quantityInStore: qty, createdAt: new Date().toISOString() };
+                    await set(newRef, newProd);
+                    const moveRef = push(ref(db, `${dbBasePath}/storeMovements`));
+                    await set(moveRef, { id: moveRef.key, productId: newProd.id, productName: name, type: "Entrée", quantityChange: qty, oldStock: 0, newStock: qty, comment: "Création", date: new Date().toISOString() });
+                    showSuccessToast("Produit ajouté!"); newProductForm.reset(); newProductModal.classList.add('hidden');
+                } catch (err) { newProductError.textContent = err.message; newProductError.classList.remove('hidden'); } finally { newProductSubmitButton.disabled = false; }
+            });
+
+            if(entryForm) entryForm.addEventListener('submit', async (e) => {
+                e.preventDefault(); entryError.classList.add('hidden'); if(!currentUser || !dbBasePath) return;
+                const pid = entryProductSelect.value; const qty = parseInt(entryForm['entry-quantity'].value, 10); const comment = entryForm['entry-comment'].value;
+                const prod = appData.storeProducts[pid];
+                if(!prod || qty <= 0) return;
+                entrySubmitButton.disabled = true;
+                try {
+                   const newStock = prod.quantityInStore + qty;
+                   const updates = {}; updates[`${dbBasePath}/storeProducts/${pid}/quantityInStore`] = newStock;
+                   const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
+                   updates[`${dbBasePath}/storeMovements/${moveKey}`] = { id: moveKey, productId: pid, productName: prod.name, type: "Entrée", quantityChange: qty, oldStock: prod.quantityInStore, newStock, comment, date: new Date().toISOString() };
+                   await update(ref(db), updates); showSuccessToast("Entrée ok"); entryForm.reset(); entryModal.classList.add('hidden');
+                } catch(err) { entryError.textContent = err.message; entryError.classList.remove('hidden'); } finally { entrySubmitButton.disabled = false; }
+            });
+
+            if(exitForm) exitForm.addEventListener('submit', async (e) => {
+                 e.preventDefault(); exitError.classList.add('hidden'); if(!currentUser || !dbBasePath) return;
+                 const pid = exitProductSelect.value; const qty = parseInt(exitForm['exit-quantity'].value, 10); const comment = exitForm['exit-comment'].value;
+                 const prod = appData.storeProducts[pid];
+                 if(!prod || qty <= 0) return;
+                 if(qty > prod.quantityInStore) { exitError.textContent = "Stock insuffisant"; exitError.classList.remove('hidden'); return; }
+                 exitSubmitButton.disabled = true;
+                 try {
+                    const newStock = prod.quantityInStore - qty;
+                    const updates = {}; updates[`${dbBasePath}/storeProducts/${pid}/quantityInStore`] = newStock;
+                    const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
+                    updates[`${dbBasePath}/storeMovements/${moveKey}`] = { id: moveKey, productId: pid, productName: prod.name, type: "Sortie", quantityChange: qty, oldStock: prod.quantityInStore, newStock, comment, date: new Date().toISOString() };
+                    await update(ref(db), updates); showSuccessToast("Sortie ok"); exitForm.reset(); exitModal.classList.add('hidden');
+                 } catch(err) { exitError.textContent = err.message; exitError.classList.remove('hidden'); } finally { exitSubmitButton.disabled = false; }
+            });
+
+            if(transferForm) transferForm.addEventListener('submit', async (e) => {
+                e.preventDefault(); transferError.classList.add('hidden'); if(!currentUser || !dbBasePath) return;
+                const sourceId = transferProductSelect.value; const qty = parseInt(transferForm['transfer-quantity'].value, 10); const price = parseFloat(transferForm['transfer-selling-price'].value);
+                const sourceProd = appData.storeProducts[sourceId];
+                if(!sourceProd || qty > sourceProd.quantityInStore) { transferError.textContent = "Erreur stock"; transferError.classList.remove('hidden'); return; }
+                transferSubmitButton.disabled = true;
+                try {
+                    let existingItem = Object.values(appData.shopStock).find(i => i.sourceProductId === sourceId);
+                    const updates = {}; const now = new Date().toISOString();
+                    const storeNew = sourceProd.quantityInStore - qty;
+                    const shopOld = existingItem ? existingItem.quantityInShop : 0; const shopNew = shopOld + qty;
+                    
+                    updates[`${dbBasePath}/storeProducts/${sourceId}/quantityInStore`] = storeNew;
+                    const smKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
+                    updates[`${dbBasePath}/storeMovements/${smKey}`] = { id: smKey, productId: sourceId, productName: sourceProd.name, type: "Sortie", quantityChange: qty, oldStock: sourceProd.quantityInStore, newStock: storeNew, comment: "Vers boutique", date: now };
+
+                    const shopId = existingItem ? existingItem.id : push(ref(db, `${dbBasePath}/shopStock`)).key;
+                    updates[`${dbBasePath}/shopStock/${shopId}`] = { id: shopId, sourceProductId: sourceId, name: sourceProd.name, purchaseCost: sourceProd.purchaseCost, sellingPrice: price, quantityInShop: shopNew, alertThreshold: 10, createdAt: existingItem ? existingItem.createdAt : now, updatedAt: now };
+
+                    const shmKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
+                    updates[`${dbBasePath}/shopMovements/${shmKey}`] = { id: shmKey, shopProductId: shopId, productName: sourceProd.name, type: "Entrée", quantityChange: qty, oldStock: shopOld, newStock: shopNew, comment: "Depuis magasin", date: now, userEmail: currentUser.email };
+                    
+                    await update(ref(db), updates); showSuccessToast("Transfert ok"); transferForm.reset(); transferModal.classList.add('hidden');
+                } catch(err) { transferError.textContent = err.message; transferError.classList.remove('hidden'); } finally { transferSubmitButton.disabled = false; }
+            });
+
+            if(restockForm) restockForm.addEventListener('submit', async (e) => {
+                e.preventDefault(); restockError.classList.add('hidden'); if(!currentUser || !dbBasePath) return;
+                const sid = restockProductSelect.value; const qty = parseInt(restockForm['restock-quantity'].value, 10);
+                const shopProd = appData.shopStock[sid];
+                if(!shopProd) return;
+                const sourceProd = appData.storeProducts[shopProd.sourceProductId];
+                if(!sourceProd || qty > sourceProd.quantityInStore) { restockError.textContent = "Stock magasin insuffisant"; restockError.classList.remove('hidden'); return; }
+                restockSubmitButton.disabled = true;
+                try {
+                    const updates = {}; const now = new Date().toISOString();
+                    const storeNew = sourceProd.quantityInStore - qty;
+                    const shopNew = shopProd.quantityInShop + qty;
+                    
+                    updates[`${dbBasePath}/storeProducts/${sourceProd.id}/quantityInStore`] = storeNew;
+                    const smKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
+                    updates[`${dbBasePath}/storeMovements/${smKey}`] = { id: smKey, productId: sourceProd.id, productName: sourceProd.name, type: "Sortie", quantityChange: qty, oldStock: sourceProd.quantityInStore, newStock: storeNew, comment: "Restock", date: now };
+
+                    updates[`${dbBasePath}/shopStock/${sid}/quantityInShop`] = shopNew;
+                    updates[`${dbBasePath}/shopStock/${sid}/updatedAt`] = now;
+                    const shmKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
+                    updates[`${dbBasePath}/shopMovements/${shmKey}`] = { id: shmKey, shopProductId: sid, productName: shopProd.name, type: "Entrée", quantityChange: qty, oldStock: shopProd.quantityInShop, newStock: shopNew, comment: "Restock", date: now, userEmail: currentUser.email };
+                    
+                    await update(ref(db), updates); showSuccessToast("Restock ok"); restockForm.reset(); restockModal.classList.add('hidden');
+                } catch(err) { restockError.textContent = err.message; restockError.classList.remove('hidden'); } finally { restockSubmitButton.disabled = false; }
+            });
+
+            // UI Event Bindings
+            if (storeSearchInput) storeSearchInput.addEventListener('input', (e) => renderStoreProducts(e.target.value));
+            if (shopSearchInput) shopSearchInput.addEventListener('input', (e) => renderShopStock(e.target.value));
+            navButtons.forEach(btn => btn.addEventListener('click', () => { currentPage = btn.dataset.page; if(window.innerWidth < 1024) { isSidebarOpen = false; updateSidebarMobileState(); } updateUI(); }));
+            if(logoutButton) logoutButton.addEventListener('click', () => signOut(auth));
             
-            // --- GESTIONNAIRE D'ÉTAT D'AUTHENTIFICATION ---
+            // Modals Close
+            [newProductModal, entryModal, exitModal, transferModal, restockModal].forEach(m => { if(m) m.addEventListener('click', e => { if(e.target === m) m.classList.add('hidden'); }); });
+            if(closeNewProductModalButton) closeNewProductModalButton.addEventListener('click', () => newProductModal.classList.add('hidden'));
+            if(closeEntryModalButton) closeEntryModalButton.addEventListener('click', () => entryModal.classList.add('hidden'));
+            if(closeExitModalButton) closeExitModalButton.addEventListener('click', () => exitModal.classList.add('hidden'));
+            if(closeTransferModalButton) closeTransferModalButton.addEventListener('click', () => transferModal.classList.add('hidden'));
+            if(closeRestockModalButton) closeRestockModalButton.addEventListener('click', () => restockModal.classList.add('hidden'));
+
+            // Modals Open
+            if(openNewProductModalButton) openNewProductModalButton.addEventListener('click', () => { newProductModal.classList.remove('hidden'); newProductForm.reset(); });
+            if(openEntryModalButton) openEntryModalButton.addEventListener('click', () => { entryModal.classList.remove('hidden'); entryForm.reset(); });
+            if(openExitModalButton) openExitModalButton.addEventListener('click', () => { exitModal.classList.remove('hidden'); exitForm.reset(); });
+            if(openTransferModalButton) openTransferModalButton.addEventListener('click', () => { transferModal.classList.remove('hidden'); transferForm.reset(); transferSourceInfo.classList.add('hidden'); });
+            if(openRestockModalButton) openRestockModalButton.addEventListener('click', () => { restockModal.classList.remove('hidden'); restockForm.reset(); restockSourceInfo.classList.add('hidden'); });
+
+            // Select changes
+            if(transferProductSelect) transferProductSelect.addEventListener('change', () => { const p = appData.storeProducts[transferProductSelect.value]; if(p) { transferCostDisplay.textContent = formatCurrency(p.purchaseCost, p.currency); transferSourceInfo.classList.remove('hidden'); } else transferSourceInfo.classList.add('hidden'); });
+            if(restockProductSelect) restockProductSelect.addEventListener('change', () => { const si = appData.shopStock[restockProductSelect.value]; if(si && appData.storeProducts[si.sourceProductId]) { const sp = appData.storeProducts[si.sourceProductId]; restockSourceName.textContent = sp.name; restockSourceStock.textContent = sp.quantityInStore; restockSourceInfo.classList.remove('hidden'); } else restockSourceInfo.classList.add('hidden'); });
+
+            function updateAllStats() {
+                const sales = Object.values(appData.salesHistory);
+                const shopItems = Object.values(appData.shopStock);
+                const storeItems = Object.values(appData.storeProducts);
+                const now = new Date();
+                const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+                
+                document.getElementById('stat-daily-sales').textContent = sales.filter(s => s.date >= startOfDay).length;
+                document.getElementById('stat-monthly-revenue').textContent = formatCurrency(sales.filter(s => s.date >= startOfMonth).reduce((acc, s) => acc + s.totalAmount, 0));
+                const shopCount = shopItems.reduce((acc, i) => acc + i.quantityInShop, 0);
+                document.getElementById('stat-shop-stock').textContent = shopCount;
+                document.getElementById('stat-store-stock').textContent = storeItems.reduce((acc, i) => acc + i.quantityInStore, 0);
+                
+                document.getElementById('stat-total-sales').textContent = sales.length;
+                document.getElementById('stat-revenue').textContent = formatCurrency(sales.reduce((acc, s) => acc + s.totalAmount, 0));
+                document.getElementById('stat-products-in-stock').textContent = shopCount;
+                
+                // Best Selling & Seller Perf (Simplified logic)
+                const bestSellingContainer = document.getElementById('best-selling-tbody');
+                const productSales = sales.reduce((acc, s) => { acc[s.productName] = (acc[s.productName] || 0) + s.quantity; return acc; }, {});
+                const sortedProd = Object.entries(productSales).sort((a,b) => b[1]-a[1]).slice(0,5);
+                bestSellingContainer.innerHTML = sortedProd.length ? sortedProd.map(([name, qty]) => `<tr class="hover:bg-gray-50"><td class="px-4 py-3 text-sm text-gray-800">${name}</td><td class="px-4 py-3 text-sm text-gray-600">${qty}</td><td class="px-4 py-3"></td></tr>`).join('') : '';
+                if(sortedProd.length) { document.getElementById('best-selling-placeholder').classList.add('hidden'); document.getElementById('best-selling-table-container').classList.remove('hidden'); }
+                
+                const sellerPerfContainer = document.getElementById('seller-performance-tbody');
+                const sellerSales = sales.reduce((acc, s) => { acc[s.sellerName] = (acc[s.sellerName] || 0) + s.totalAmount; return acc; }, {});
+                const sortedSeller = Object.entries(sellerSales).sort((a,b) => b[1]-a[1]).slice(0,5);
+                sellerPerfContainer.innerHTML = sortedSeller.length ? sortedSeller.map(([name, total]) => `<tr class="hover:bg-gray-50"><td class="px-4 py-3 text-sm text-gray-800">${name}</td><td class="px-4 py-3"></td><td class="px-4 py-3 text-sm font-semibold text-gray-700">${formatCurrency(total)}</td></tr>`).join('') : '';
+                if(sortedSeller.length) { document.getElementById('seller-performance-placeholder').classList.add('hidden'); document.getElementById('seller-performance-table-container').classList.remove('hidden'); }
+            }
+
             onAuthStateChanged(auth, (user) => {
                 if (user) {
                     isAuthenticated = true;
                     currentUser = user;
-                    
-                    currentUserData = null;
-                    const userProfileRef = ref(db, `users/${user.uid}`);
-                    get(userProfileRef).then((snapshot) => {
+                    get(ref(db, `users/${user.uid}`)).then((snapshot) => {
                         if (snapshot.exists()) {
                             currentUserData = snapshot.val();
-                            if (sellerNameInput && currentUserData.fullName) {
-                                sellerNameInput.value = currentUserData.fullName;
-                            }
+                            if (sellerNameInput) sellerNameInput.value = currentUserData.fullName || user.email;
+                            dbBasePath = currentUserData.companyId ? `companies/${currentUserData.companyId}` : `users/${user.uid}`;
+                            setupFirebaseListeners();
+                            updateUI();
                         }
-                    }).catch(console.error);
-
-                    setupFirebaseListeners(user.uid);
+                    });
                 } else {
-                    isAuthenticated = false;
-                    currentUser = null;
-                    currentUserData = null;
-                    currentPage = 'Tableau de bord';
-                    cleanupFirebaseListeners();
+                    isAuthenticated = false; currentUser = null; currentUserData = null; dbBasePath = ''; currentPage = 'Tableau de bord'; cleanupFirebaseListeners(); updateUI();
                 }
-                updateUI();
             });
 
-            // --- FONCTIONS DE STATISTIQUES ---
-
-            /**
-             * Calcule et met à jour toutes les statistiques (Dashboard & Page Stats).
-             */
-            function updateAllStats() {
-                updateDashboardStats();
-                updateStatisticsPage();
-            }
-
-            /**
-             * Met à jour les statistiques du Tableau de bord.
-             */
-            function updateDashboardStats() {
-                const sales = Object.values(appData.salesHistory);
-                const shopStock = Object.values(appData.shopStock);
-                const storeStock = Object.values(appData.storeProducts);
-                const now = new Date();
-                const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-
-                // Ventes du jour
-                const dailySales = sales.filter(s => s.date >= startOfDay).length;
-                document.getElementById('stat-daily-sales').textContent = dailySales;
-
-                // Revenus du mois
-                const monthlyRevenue = sales
-                    .filter(s => s.date >= startOfMonth)
-                    .reduce((acc, s) => acc + s.totalAmount, 0);
-                document.getElementById('stat-monthly-revenue').textContent = formatCurrency(monthlyRevenue);
-
-                // Stock Boutique
-                const shopStockCount = shopStock.reduce((sum, item) => sum + item.quantityInShop, 0);
-                document.getElementById('stat-shop-stock').textContent = `${shopStockCount} produits`;
-
-                // Stock Magasin
-                const storeStockCount = storeStock.reduce((sum, item) => sum + item.quantityInStore, 0);
-                document.getElementById('stat-store-stock').textContent = `${storeStockCount} produits`;
-            }
-            
-            /**
-             * Met à jour les statistiques de la page Statistiques.
-             */
-            function updateStatisticsPage() {
-                const sales = Object.values(appData.salesHistory);
-                const shopStock = appData.shopStock;
-                const shopStockItems = Object.values(shopStock);
-
-                // --- Cartes du haut ---
-                const totalSalesCount = sales.length;
-                const totalRevenue = sales.reduce((sum, s) => sum + s.totalAmount, 0);
-                const productsInStock = shopStockItems.reduce((sum, item) => sum + item.quantityInShop, 0);
-
-                let totalCostOfGoods = 0;
-                sales.forEach(sale => {
-                    const shopItem = shopStock[sale.shopProductId];
-                    if(shopItem) {
-                        totalCostOfGoods += sale.quantity * shopItem.purchaseCost;
-                    }
-                });
-                const totalProfit = totalRevenue - totalCostOfGoods;
-                const avgMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
-
-                document.getElementById('stat-total-sales').textContent = totalSalesCount;
-                document.getElementById('stat-revenue').textContent = formatCurrency(totalRevenue);
-                document.getElementById('stat-products-in-stock').textContent = productsInStock;
-                document.getElementById('stat-avg-margin').textContent = `${avgMargin.toFixed(1)}%`;
-                
-                // --- Produits les plus vendus ---
-                const productSales = sales.reduce((acc, sale) => {
-                    acc[sale.productName] = acc[sale.productName] || { name: sale.productName, quantity: 0, revenue: 0 };
-                    acc[sale.productName].quantity += sale.quantity;
-                    acc[sale.productName].revenue += sale.totalAmount;
-                    return acc;
-                }, {});
-
-                const sortedProducts = Object.values(productSales).sort((a, b) => b.quantity - a.quantity);
-                const bestSellingTbody = document.getElementById('best-selling-tbody');
-                
-                if (sortedProducts.length > 0) {
-                    document.getElementById('best-selling-placeholder').classList.add('hidden');
-                    document.getElementById('best-selling-table-container').classList.remove('hidden');
-                    bestSellingTbody.innerHTML = sortedProducts.slice(0, 5).map(p => `
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-4 py-3 text-sm font-medium text-gray-800">${p.name}</td>
-                            <td class="px-4 py-3 text-sm text-gray-600">${p.quantity}</td>
-                            <td class="px-4 py-3 text-sm font-semibold text-gray-700">${formatCurrency(p.revenue)}</td>
-                        </tr>
-                    `).join('');
-                } else {
-                    document.getElementById('best-selling-placeholder').classList.remove('hidden');
-                    document.getElementById('best-selling-table-container').classList.add('hidden');
-                }
-
-                // --- Performance des vendeurs ---
-                const sellerPerformance = sales.reduce((acc, sale) => {
-                    acc[sale.sellerName] = acc[sale.sellerName] || { name: sale.sellerName, salesCount: 0, revenue: 0 };
-                    acc[sale.sellerName].salesCount += 1;
-                    acc[sale.sellerName].revenue += sale.totalAmount;
-                    return acc;
-                }, {});
-
-                const sortedSellers = Object.values(sellerPerformance).sort((a, b) => b.revenue - a.revenue);
-                const sellerPerfTbody = document.getElementById('seller-performance-tbody');
-
-                 if (sortedSellers.length > 0) {
-                    document.getElementById('seller-performance-placeholder').classList.add('hidden');
-                    document.getElementById('seller-performance-table-container').classList.remove('hidden');
-                    sellerPerfTbody.innerHTML = sortedSellers.slice(0, 5).map(s => `
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-4 py-3 text-sm font-medium text-gray-800">${s.name}</td>
-                            <td class="px-4 py-3 text-sm text-gray-600">${s.salesCount}</td>
-                            <td class="px-4 py-3 text-sm font-semibold text-gray-700">${formatCurrency(s.revenue)}</td>
-                        </tr>
-                    `).join('');
-                } else {
-                    document.getElementById('seller-performance-placeholder').classList.remove('hidden');
-                    document.getElementById('seller-performance-table-container').classList.add('hidden');
-                }
-            }
-
-
-            // --- FONCTION UTILITAIRE ---
-            function getFirebaseAuthErrorMessage(code) {
-                switch (code) {
-                    case 'auth/invalid-email':
-                        return 'Adresse e-mail invalide.';
-                    case 'auth/user-not-found':
-                    case 'auth/wrong-password':
-                        return 'E-mail ou mot de passe incorrect.';
-                    case 'auth/email-already-in-use':
-                        return 'Cet e-mail est déjà utilisé.';
-                    case 'auth/weak-password':
-                        return 'Le mot de passe doit comporter au moins 6 caractères.';
-                    case 'auth/configuration-not-found':
-                        return "Erreur de configuration. Avez-vous activé 'Email/Mot de passe' dans la console Firebase?";
-                    default:
-                        return `Une erreur est survenue (${code}). Veuillez réessayer.`;
-                }
-            }
-            
             updateUI();
-
         });
-
     </script>
 </body>
 </html>
