@@ -74,13 +74,22 @@
                 <!-- Formulaire de connexion (initialement visible) -->
                 <form id="login-form">
                     <div class="space-y-4">
+                        <div class="flex bg-gray-100 rounded-lg p-1 text-xs font-semibold">
+                            <button type="button" id="login-mode-admin" class="flex-1 px-3 py-2 rounded-md bg-white text-gray-800 shadow">Admin</button>
+                            <button type="button" id="login-mode-code" class="flex-1 px-3 py-2 rounded-md text-gray-500 hover:text-gray-700">Collaborateur</button>
+                        </div>
                         <div>
                             <label class="text-sm font-medium text-gray-600" for="email">Email</label>
                             <input type="email" id="email" name="email" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
                         </div>
-                        <div>
+                        <div id="login-password-field">
                             <label class="text-sm font-medium text-gray-600" for="password">Mot de passe</label>
                             <input type="password" id="password" name="password" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
+                        </div>
+                        <div id="login-access-code-field" class="hidden">
+                            <label class="text-sm font-medium text-gray-600" for="access-code">Code d'accès</label>
+                            <input type="text" id="access-code" name="access-code" placeholder="Ex: Z4T7-9Q3S" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition uppercase tracking-widest" />
+                            <p class="text-xs text-gray-500 mt-1">Demandez ce code à l'administrateur de votre entreprise.</p>
                         </div>
                         <p id="login-error" class="text-red-500 text-sm mt-2 hidden"></p> <!-- Ajout pour les erreurs -->
                         <button type="submit" id="login-submit-button" class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
@@ -874,7 +883,7 @@
                             <div class="p-4 rounded-2xl border border-gray-200 space-y-4">
                                 <div>
                                     <p class="font-semibold text-gray-800">Ajouter un collaborateur</p>
-                                    <p class="text-sm text-gray-500">Envoyez une invitation et attribuez un rôle immédiatement.</p>
+                                    <p class="text-sm text-gray-500">Générez un code d'accès personnel et attribuez un rôle immédiatement.</p>
                                 </div>
                                 <form id="access-add-member-form" class="grid md:grid-cols-4 gap-4">
                                     <input type="text" id="access-member-name" placeholder="Nom complet" class="col-span-2 md:col-span-1 rounded-xl border-gray-200 focus:ring-cyan-400 focus:border-cyan-400" required>
@@ -884,7 +893,7 @@
                                         <option value="vendeur">Vendeur</option>
                                         <option value="consultation">Consultation</option>
                                     </select>
-                                    <button type="submit" class="col-span-2 md:col-span-1 bg-cyan-500 text-white rounded-xl font-semibold hover:bg-cyan-600">Envoyer l'invitation</button>
+                                    <button type="submit" class="col-span-2 md:col-span-1 bg-cyan-500 text-white rounded-xl font-semibold hover:bg-cyan-600">Générer le code</button>
                                 </form>
                             </div>
 
@@ -1187,7 +1196,8 @@
             query,
             orderByChild,
             equalTo,
-            get
+            get,
+            remove
         } from "firebase/database";
 
         // --- GESTION DES ICÔNES SVG ---
@@ -1260,17 +1270,14 @@
             const appData = { storeProducts: {}, shopStock: {}, salesHistory: {} };
             let isSidebarOpen = false; 
             let isSidebarCollapsed = false;
+            let isCodeLoginMode = false;
+            let isCodeSession = false;
 
-            let storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, salesHistoryListener;
-            let storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, salesHistoryRef;
+            let storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, salesHistoryListener, companyMembersListener;
+            let storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, salesHistoryRef, companyMembersRef;
 
             const accessModules = ['Tableau de bord', 'Ventes', 'Stock Boutique', 'Mon Magasin', 'Statistiques', 'Paramètres'];
-            let teamMembersState = [
-                { id: 'seed-admin', name: 'Turibe Bayomi', email: 'turibeabayomi@gmail.com', role: 'admin', status: 'actif', permissions: [...accessModules], isCurrentUser: false, accessCode: 'ADM-4592' },
-                { id: 'seed-manager', name: 'Salimata Traoré', email: 'salimata@turibe.com', role: 'manager', status: 'actif', permissions: ['Tableau de bord', 'Ventes', 'Statistiques'], isCurrentUser: false, accessCode: 'MNG-7815' },
-                { id: 'seed-seller', name: 'Yao Michel', email: 'yao@turibe.com', role: 'vendeur', status: 'actif', permissions: ['Ventes', 'Stock Boutique'], isCurrentUser: false, accessCode: 'VND-2023' },
-                { id: 'seed-analytics', name: 'Kadidia Koné', email: 'kadidia@turibe.com', role: 'consultation', status: 'pending', permissions: ['Tableau de bord', 'Statistiques'], isCurrentUser: false, accessCode: 'ANA-6118' }
-            ];
+            let teamMembersState = [];
 
             // Références DOM
             const authPageContainer = document.getElementById('auth-page-container');
@@ -1290,6 +1297,12 @@
             const signupErrorContainer = document.getElementById('signup-error-container');
             const loginSubmitButton = document.getElementById('login-submit-button');
             const signupSubmitButton = document.getElementById('signup-submit-button');
+            const loginPasswordInput = document.getElementById('password');
+            const loginAccessCodeInput = document.getElementById('access-code');
+            const loginPasswordField = document.getElementById('login-password-field');
+            const loginAccessCodeField = document.getElementById('login-access-code-field');
+            const loginModeAdminButton = document.getElementById('login-mode-admin');
+            const loginModeCodeButton = document.getElementById('login-mode-code');
             
             const sidebar = document.getElementById('sidebar');
             const mainContent = document.querySelector('main');
@@ -1437,6 +1450,16 @@
                 if (settingsAdminBadge) settingsAdminBadge.textContent = `Rôle : ${isAdmin ? 'Admin' : 'Accès limité'}`;
             }
 
+            function handleManualLogout() {
+                isAuthenticated = false;
+                isCodeSession = false;
+                currentUser = null;
+                currentUserData = null;
+                dbBasePath = '';
+                cleanupFirebaseListeners();
+                updateUI();
+            }
+
             function setActiveSettingsTab(tabId = 'compte') {
                 if (!settingsTabButtons.length) return;
                 settingsTabButtons.forEach(button => {
@@ -1448,28 +1471,55 @@
                 settingsPanels.forEach(panel => panel.classList.toggle('hidden', panel.dataset.settingsPanel !== tabId));
             }
 
+            function updateLoginModeUI() {
+                if (!loginPasswordField || !loginAccessCodeField) return;
+                if (isCodeLoginMode) {
+                    loginPasswordField.classList.add('hidden');
+                    loginAccessCodeField.classList.remove('hidden');
+                    if (loginPasswordInput) loginPasswordInput.required = false;
+                    if (loginAccessCodeInput) {
+                        loginAccessCodeInput.required = true;
+                        loginAccessCodeInput.value = '';
+                    }
+                    if (loginModeAdminButton) {
+                        loginModeAdminButton.classList.remove('bg-white', 'shadow', 'text-gray-800');
+                        loginModeAdminButton.classList.add('text-gray-500', 'hover:text-gray-700');
+                    }
+                    if (loginModeCodeButton) {
+                        loginModeCodeButton.classList.remove('text-gray-500', 'hover:text-gray-700');
+                        loginModeCodeButton.classList.add('bg-white', 'shadow', 'text-gray-800');
+                    }
+                } else {
+                    loginPasswordField.classList.remove('hidden');
+                    loginAccessCodeField.classList.add('hidden');
+                    if (loginPasswordInput) loginPasswordInput.required = true;
+                    if (loginAccessCodeInput) loginAccessCodeInput.required = false;
+                    if (loginModeCodeButton) {
+                        loginModeCodeButton.classList.remove('bg-white', 'shadow', 'text-gray-800');
+                        loginModeCodeButton.classList.add('text-gray-500', 'hover:text-gray-700');
+                    }
+                    if (loginModeAdminButton) {
+                        loginModeAdminButton.classList.remove('text-gray-500', 'hover:text-gray-700');
+                        loginModeAdminButton.classList.add('bg-white', 'shadow', 'text-gray-800');
+                    }
+                }
+            }
+
             function ensureCurrentUserInTeam() {
-                if (!currentUser) return;
-                teamMembersState = teamMembersState.filter(member => !member.isCurrentUser);
-                const name = currentUserData?.fullName || 'Utilisateur';
-                const email = currentUser?.email || currentUserData?.email;
-                teamMembersState.unshift({
-                    id: currentUser.uid,
-                    name,
-                    email,
-                    role: getCurrentUserRole(),
-                    status: 'actif',
-                    permissions: [...accessModules],
-                    isCurrentUser: true,
-                    accessCode: currentUserData?.accessCode || 'ADMIN'
-                });
+                if (currentUserData && teamMembersState.length) {
+                    const normalizedEmail = currentUserData.email?.toLowerCase();
+                    teamMembersState = teamMembersState.map(member => ({
+                        ...member,
+                        isCurrentUser: member.email?.toLowerCase() === normalizedEmail
+                    }));
+                }
                 renderAccessMembers();
             }
 
             function renderAccessMembers() {
                 if (!accessMembersTbody) return;
                 if (!teamMembersState.length) {
-                    accessMembersTbody.innerHTML = `<tr><td colspan="5" class="px-4 py-6 text-center text-gray-400">Aucun collaborateur pour le moment.</td></tr>`;
+                    accessMembersTbody.innerHTML = `<tr><td colspan="6" class="px-4 py-6 text-center text-gray-400">Aucun collaborateur pour le moment.</td></tr>`;
                 } else {
                     const rows = teamMembersState.map(member => {
                         const permissionButtons = accessModules.map(module => {
@@ -1483,13 +1533,15 @@
                                 <button type="button" data-copy-code="${member.accessCode}" class="px-2 py-1 text-xs font-semibold rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200">Copier</button>
                             </div>
                         ` : `<span class="text-xs text-gray-400">Non défini</span>`;
+                        const statusLabel = member.status === 'pending' ? 'Code partagé' : 'Actif';
+                        const actionCell = member.isCurrentUser ? `<span class="text-xs text-gray-400">Vous</span>` : `<button type="button" data-remove-member="${member.id}" class="text-sm text-red-500 hover:text-red-600 font-semibold">Retirer</button>`;
                         return `
                             <tr class="hover:bg-gray-50">
                                 <td class="px-4 py-3">
-                                    <p class="font-semibold text-gray-900">${member.name}</p>
-                                    <p class="text-xs text-gray-400">${member.status === 'pending' ? 'Invitation envoyée' : 'Actif'}</p>
+                                    <p class="font-semibold text-gray-900">${member.fullName || member.name || '-'}</p>
+                                    <p class="text-xs text-gray-400">${statusLabel}</p>
                                 </td>
-                                <td class="px-4 py-3 text-sm text-gray-500">${member.email}</td>
+                                <td class="px-4 py-3 text-sm text-gray-500">${member.email || '-'}</td>
                                 <td class="px-4 py-3">
                                     <select data-role-select="${member.id}" class="rounded-lg border-gray-200 focus:ring-cyan-400 focus:border-cyan-400 text-sm">
                                         <option value="admin" ${member.role === 'admin' ? 'selected' : ''}>Admin</option>
@@ -1505,7 +1557,7 @@
                                     ${accessCodeBlock}
                                 </td>
                                 <td class="px-4 py-3 text-right">
-                                    <button type="button" data-remove-member="${member.id}" class="text-sm text-red-500 hover:text-red-600 font-semibold">Retirer</button>
+                                    ${actionCell}
                                 </td>
                             </tr>
                         `;
@@ -1530,7 +1582,8 @@
                 } else {
                     member.permissions.push(permission);
                 }
-                renderAccessMembers();
+                saveMemberState(member);
+                ensureCurrentUserInTeam();
             }
 
             function setMemberRole(memberId, role) {
@@ -1543,12 +1596,104 @@
                 if (role !== 'admin') {
                     member.permissions = member.permissions.filter(permission => permission !== 'Paramètres');
                 }
-                renderAccessMembers();
+                saveMemberState(member);
+                ensureCurrentUserInTeam();
             }
 
             if (settingsTabButtons.length) {
                 settingsTabButtons.forEach(button => button.addEventListener('click', () => setActiveSettingsTab(button.dataset.settingsTab)));
                 setActiveSettingsTab('compte');
+            }
+
+            async function findMemberByEmailAndCode(email, code) {
+                const companiesSnapshot = await get(ref(db, 'companies'));
+                if (!companiesSnapshot.exists()) return null;
+                const normalizedEmail = email.trim().toLowerCase();
+                const normalizedCode = code.trim().toUpperCase();
+                const companies = companiesSnapshot.val();
+                for (const [companyId, companyData] of Object.entries(companies)) {
+                    if (!companyData.members) continue;
+                    for (const [memberId, memberData] of Object.entries(companyData.members)) {
+                        if ((memberData.email || '').toLowerCase() === normalizedEmail && (memberData.accessCode || '').toUpperCase() === normalizedCode) {
+                            return {
+                                companyId,
+                                companyName: companyData.name || '',
+                                memberId,
+                                member: memberData
+                            };
+                        }
+                    }
+                }
+                return null;
+            }
+
+            async function handleAccessCodeLogin(email, code) {
+                if (!email || !code) {
+                    if (loginError) {
+                        loginError.textContent = "Email et code requis.";
+                        loginError.classList.remove('hidden');
+                    }
+                    return;
+                }
+                try {
+                    const match = await findMemberByEmailAndCode(email, code);
+                    if (!match) {
+                        if (loginError) {
+                            loginError.textContent = "Code d'accès invalide.";
+                            loginError.classList.remove('hidden');
+                        }
+                        return;
+                    }
+                    isAuthenticated = true;
+                    isCodeSession = true;
+                    currentUser = { email, uid: match.memberId };
+                    currentUserData = {
+                        uid: match.memberId,
+                        email,
+                        fullName: match.member.fullName || match.member.name || 'Collaborateur',
+                        companyId: match.companyId,
+                        companyName: match.companyName,
+                        role: match.member.role || 'consultation',
+                        accessCode: match.member.accessCode
+                    };
+                    dbBasePath = `companies/${match.companyId}`;
+                    if (match.member.status !== 'actif') {
+                        await update(ref(db, `${dbBasePath}/members/${match.memberId}`), { status: 'actif' });
+                    }
+                    setupFirebaseListeners();
+                    if (sellerNameInput) sellerNameInput.value = currentUserData.fullName || email;
+                    updateSettingsAccess();
+                    updateUI();
+                    showSuccessToast("Connexion réussie !");
+                } catch (error) {
+                    if (loginError) {
+                        loginError.textContent = "Impossible de vérifier ce code pour le moment.";
+                        loginError.classList.remove('hidden');
+                    }
+                } finally {
+                    if (loginSubmitButton) { loginSubmitButton.disabled = false; loginSubmitButton.textContent = "Se connecter"; }
+                }
+            }
+
+            function saveMemberState(member) {
+                if (!member || !member.id || !dbBasePath) return;
+                const memberCopy = { ...member };
+                delete memberCopy.isCurrentUser;
+                set(ref(db, `${dbBasePath}/members/${member.id}`), memberCopy);
+            }
+
+            function deleteMember(memberId) {
+                if (!dbBasePath || !memberId) return;
+                remove(ref(db, `${dbBasePath}/members/${memberId}`));
+            }
+
+            function onCompanyMembersValue(snapshot) {
+                const membersData = snapshot.val() || {};
+                teamMembersState = Object.keys(membersData).map(key => ({
+                    id: key,
+                    ...membersData[key],
+                }));
+                ensureCurrentUserInTeam();
             }
 
             if (accessMembersTbody) {
@@ -1560,8 +1705,7 @@
                     }
                     const removeButton = event.target.closest('button[data-remove-member]');
                     if (removeButton) {
-                        teamMembersState = teamMembersState.filter(member => member.id !== removeButton.dataset.removeMember || member.isCurrentUser);
-                        renderAccessMembers();
+                        deleteMember(removeButton.dataset.removeMember);
                         return;
                     }
                     const copyButton = event.target.closest('button[data-copy-code]');
@@ -1590,26 +1734,33 @@
             if (accessAddMemberForm) {
                 accessAddMemberForm.addEventListener('submit', (event) => {
                     event.preventDefault();
+                    if (!dbBasePath) {
+                        showSuccessToast("Veuillez sélectionner une entreprise valide.");
+                        return;
+                    }
                     const name = accessMemberNameInput.value.trim();
                     const email = accessMemberEmailInput.value.trim();
                     const role = accessMemberRoleInput.value;
                     if (!name || !email) return;
                     const basePermissions = role === 'consultation' ? ['Tableau de bord', 'Statistiques'] : ['Tableau de bord', 'Ventes', 'Stock Boutique'];
                     const accessCode = generateAccessCode();
-                    const newMember = {
-                        id: `member-${Date.now()}`,
-                        name,
+                    const newMemberRef = push(ref(db, `${dbBasePath}/members`));
+                    set(newMemberRef, {
+                        id: newMemberRef.key,
+                        fullName: name,
                         email,
                         role,
                         status: 'pending',
                         permissions: role === 'admin' ? [...accessModules] : basePermissions,
-                        isCurrentUser: false,
-                        accessCode
-                    };
-                    teamMembersState.push(newMember);
-                    renderAccessMembers();
-                    accessAddMemberForm.reset();
-                    showSuccessToast(`Employé ajouté. Code: ${accessCode}`);
+                        accessCode,
+                        createdAt: new Date().toISOString(),
+                        invitedBy: currentUser?.email || 'admin'
+                    }).then(() => {
+                        accessAddMemberForm.reset();
+                        showSuccessToast(`Collaborateur ajouté. Code: ${accessCode}`);
+                    }).catch(() => {
+                        showSuccessToast("Impossible d'ajouter ce collaborateur pour le moment.");
+                    });
                 });
             }
 
@@ -1849,6 +2000,9 @@
 
                 salesHistoryRef = ref(db, `${dbBasePath}/salesHistory`);
                 salesHistoryListener = onValue(salesHistoryRef, onSalesHistoryValue);
+
+                companyMembersRef = ref(db, `${dbBasePath}/members`);
+                companyMembersListener = onValue(companyMembersRef, onCompanyMembersValue);
             }
 
             function cleanupFirebaseListeners() {
@@ -1857,15 +2011,18 @@
                 if (shopStockListener && shopStockRef) off(shopStockRef, shopStockListener);
                 if (shopMovementsListener && shopMovementsRef) off(shopMovementsRef, shopMovementsListener);
                 if (salesHistoryListener && salesHistoryRef) off(salesHistoryRef, salesHistoryListener);
+                if (companyMembersListener && companyMembersRef) off(companyMembersRef, companyMembersListener);
                 
-                storeProductsListener = null; storeMovementsListener = null; shopStockListener = null; shopMovementsListener = null; salesHistoryListener = null;
-                storeProductsRef = null; storeMovementsRef = null; shopStockRef = null; shopMovementsRef = null; salesHistoryRef = null;
+                storeProductsListener = null; storeMovementsListener = null; shopStockListener = null; shopMovementsListener = null; salesHistoryListener = null; companyMembersListener = null;
+                storeProductsRef = null; storeMovementsRef = null; shopStockRef = null; shopMovementsRef = null; salesHistoryRef = null; companyMembersRef = null;
 
                 appData.storeProducts = {};
                 appData.shopStock = {};
                 appData.salesHistory = {};
                 populateStoreProductSelects();
                 populateShopProductSelects();
+                teamMembersState = [];
+                renderAccessMembers();
             }
 
             function updateUI() {
@@ -1918,6 +2075,7 @@
                 if(loginError) loginError.classList.add('hidden');
                 if(signupError) signupError.textContent = '';
                 if(signupErrorContainer) signupErrorContainer.classList.add('hidden');
+                updateLoginModeUI();
                 if (isLoginView) {
                     if(loginForm) loginForm.classList.remove('hidden');
                     if(signupForm) signupForm.classList.add('hidden');
@@ -1982,16 +2140,23 @@
             if (sidebarCollapseToggle) sidebarCollapseToggle.addEventListener('click', () => { isSidebarCollapsed = !isSidebarCollapsed; updateSidebarDesktopState(); });
             if(authToggleLogin) authToggleLogin.addEventListener('click', () => { isLoginView = true; updateAuthFormView(); });
             if(authToggleSignup) authToggleSignup.addEventListener('click', () => { isLoginView = false; updateAuthFormView(); });
+            if (loginModeAdminButton) loginModeAdminButton.addEventListener('click', () => { isCodeLoginMode = false; updateLoginModeUI(); });
+            if (loginModeCodeButton) loginModeCodeButton.addEventListener('click', () => { isCodeLoginMode = true; updateLoginModeUI(); });
             if(salesProductSelect) salesProductSelect.addEventListener('change', updateSalesTotal);
             if(salesQuantityInput) salesQuantityInput.addEventListener('input', updateSalesTotal);
             
             // Auth Logic
             if(loginForm) loginForm.addEventListener('submit', async (event) => {
                 event.preventDefault();
-                const email = loginForm.email.value;
-                const password = loginForm.password.value;
+                const email = loginForm.email.value.trim();
+                const password = loginPasswordInput ? loginPasswordInput.value : '';
+                const accessCode = loginAccessCodeInput ? loginAccessCodeInput.value.trim() : '';
                 if(loginError) loginError.classList.add('hidden'); 
                 if(loginSubmitButton) { loginSubmitButton.disabled = true; loginSubmitButton.textContent = "Connexion..."; }
+                if (isCodeLoginMode) {
+                    await handleAccessCodeLogin(email, accessCode);
+                    return;
+                }
                 try {
                     await signInWithEmailAndPassword(auth, email, password);
                 } catch (error) {
@@ -2240,7 +2405,14 @@
             if (storeSearchInput) storeSearchInput.addEventListener('input', (e) => renderStoreProducts(e.target.value));
             if (shopSearchInput) shopSearchInput.addEventListener('input', (e) => renderShopStock(e.target.value));
             navButtons.forEach(btn => btn.addEventListener('click', () => { currentPage = btn.dataset.page; if(window.innerWidth < 1024) { isSidebarOpen = false; updateSidebarMobileState(); } updateUI(); }));
-            if(logoutButton) logoutButton.addEventListener('click', () => signOut(auth));
+            if(logoutButton) logoutButton.addEventListener('click', () => {
+                if (isCodeSession) {
+                    handleManualLogout();
+                    showSuccessToast('Déconnecté');
+                    return;
+                }
+                signOut(auth);
+            });
             
             // Modals Close
             [newProductModal, entryModal, exitModal, transferModal, restockModal].forEach(m => { if(m) m.addEventListener('click', e => { if(e.target === m) m.classList.add('hidden'); }); });
@@ -2294,7 +2466,9 @@
             }
 
             onAuthStateChanged(auth, (user) => {
+                if (!user && isCodeSession) return;
                 if (user) {
+                    isCodeSession = false;
                     isAuthenticated = true;
                     currentUser = user;
                     get(ref(db, `users/${user.uid}`)).then((snapshot) => {
