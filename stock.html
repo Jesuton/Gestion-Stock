@@ -901,12 +901,13 @@
                                                 <th class="px-4 py-3">Email</th>
                                                 <th class="px-4 py-3">Rôle</th>
                                                 <th class="px-4 py-3">Modules autorisés</th>
+                                                <th class="px-4 py-3">Code d'accès</th>
                                                 <th class="px-4 py-3 text-right">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody id="access-members-tbody" class="divide-y divide-gray-100 text-sm text-gray-700">
                                             <tr>
-                                                <td colspan="5" class="px-4 py-6 text-center text-gray-400">Chargement des collaborateurs...</td>
+                                                <td colspan="6" class="px-4 py-6 text-center text-gray-400">Chargement des collaborateurs...</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -1265,10 +1266,10 @@
 
             const accessModules = ['Tableau de bord', 'Ventes', 'Stock Boutique', 'Mon Magasin', 'Statistiques', 'Paramètres'];
             let teamMembersState = [
-                { id: 'seed-admin', name: 'Turibe Bayomi', email: 'turibeabayomi@gmail.com', role: 'admin', status: 'actif', permissions: [...accessModules], isCurrentUser: false },
-                { id: 'seed-manager', name: 'Salimata Traoré', email: 'salimata@turibe.com', role: 'manager', status: 'actif', permissions: ['Tableau de bord', 'Ventes', 'Statistiques'], isCurrentUser: false },
-                { id: 'seed-seller', name: 'Yao Michel', email: 'yao@turibe.com', role: 'vendeur', status: 'actif', permissions: ['Ventes', 'Stock Boutique'], isCurrentUser: false },
-                { id: 'seed-analytics', name: 'Kadidia Koné', email: 'kadidia@turibe.com', role: 'consultation', status: 'pending', permissions: ['Tableau de bord', 'Statistiques'], isCurrentUser: false }
+                { id: 'seed-admin', name: 'Turibe Bayomi', email: 'turibeabayomi@gmail.com', role: 'admin', status: 'actif', permissions: [...accessModules], isCurrentUser: false, accessCode: 'ADM-4592' },
+                { id: 'seed-manager', name: 'Salimata Traoré', email: 'salimata@turibe.com', role: 'manager', status: 'actif', permissions: ['Tableau de bord', 'Ventes', 'Statistiques'], isCurrentUser: false, accessCode: 'MNG-7815' },
+                { id: 'seed-seller', name: 'Yao Michel', email: 'yao@turibe.com', role: 'vendeur', status: 'actif', permissions: ['Ventes', 'Stock Boutique'], isCurrentUser: false, accessCode: 'VND-2023' },
+                { id: 'seed-analytics', name: 'Kadidia Koné', email: 'kadidia@turibe.com', role: 'consultation', status: 'pending', permissions: ['Tableau de bord', 'Statistiques'], isCurrentUser: false, accessCode: 'ANA-6118' }
             ];
 
             // Références DOM
@@ -1415,6 +1416,15 @@
                 return date.toLocaleString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace(' à', ',');
             }
 
+            function generateAccessCode() {
+                const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+                let code = '';
+                for (let i = 0; i < 8; i += 1) {
+                    code += alphabet[Math.floor(Math.random() * alphabet.length)];
+                }
+                return code;
+            }
+
             function getCurrentUserRole() {
                 if (!isAuthenticated || !currentUserData) return 'invite';
                 return (currentUserData.role || 'admin').toLowerCase();
@@ -1450,7 +1460,8 @@
                     role: getCurrentUserRole(),
                     status: 'actif',
                     permissions: [...accessModules],
-                    isCurrentUser: true
+                    isCurrentUser: true,
+                    accessCode: currentUserData?.accessCode || 'ADMIN'
                 });
                 renderAccessMembers();
             }
@@ -1466,6 +1477,12 @@
                             const classes = `px-3 py-1 rounded-full border text-xs font-semibold mr-2 mb-2 inline-flex ${isActive ? 'bg-cyan-50 border-cyan-200 text-cyan-600' : 'bg-gray-100 border-gray-200 text-gray-500'}`;
                             return `<button type="button" data-member-id="${member.id}" data-permission="${module}" class="${classes}">${module}</button>`;
                         }).join('');
+                        const accessCodeBlock = member.accessCode ? `
+                            <div class="flex items-center gap-2">
+                                <span class="font-mono text-sm text-gray-900">${member.accessCode}</span>
+                                <button type="button" data-copy-code="${member.accessCode}" class="px-2 py-1 text-xs font-semibold rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200">Copier</button>
+                            </div>
+                        ` : `<span class="text-xs text-gray-400">Non défini</span>`;
                         return `
                             <tr class="hover:bg-gray-50">
                                 <td class="px-4 py-3">
@@ -1483,6 +1500,9 @@
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex flex-wrap">${permissionButtons}</div>
+                                </td>
+                                <td class="px-4 py-3">
+                                    ${accessCodeBlock}
                                 </td>
                                 <td class="px-4 py-3 text-right">
                                     <button type="button" data-remove-member="${member.id}" class="text-sm text-red-500 hover:text-red-600 font-semibold">Retirer</button>
@@ -1542,6 +1562,23 @@
                     if (removeButton) {
                         teamMembersState = teamMembersState.filter(member => member.id !== removeButton.dataset.removeMember || member.isCurrentUser);
                         renderAccessMembers();
+                        return;
+                    }
+                    const copyButton = event.target.closest('button[data-copy-code]');
+                    if (copyButton) {
+                        const code = copyButton.dataset.copyCode;
+                        if (!code) return;
+                        if (navigator.clipboard && navigator.clipboard.writeText) {
+                            navigator.clipboard.writeText(code).then(() => showSuccessToast('Code copié dans le presse-papiers'));
+                        } else {
+                            const tempInput = document.createElement('input');
+                            tempInput.value = code;
+                            document.body.appendChild(tempInput);
+                            tempInput.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(tempInput);
+                            showSuccessToast('Code copié');
+                        }
                     }
                 });
                 accessMembersTbody.addEventListener('change', (event) => {
@@ -1558,6 +1595,7 @@
                     const role = accessMemberRoleInput.value;
                     if (!name || !email) return;
                     const basePermissions = role === 'consultation' ? ['Tableau de bord', 'Statistiques'] : ['Tableau de bord', 'Ventes', 'Stock Boutique'];
+                    const accessCode = generateAccessCode();
                     const newMember = {
                         id: `member-${Date.now()}`,
                         name,
@@ -1565,12 +1603,13 @@
                         role,
                         status: 'pending',
                         permissions: role === 'admin' ? [...accessModules] : basePermissions,
-                        isCurrentUser: false
+                        isCurrentUser: false,
+                        accessCode
                     };
                     teamMembersState.push(newMember);
                     renderAccessMembers();
                     accessAddMemberForm.reset();
-                    showSuccessToast('Invitation envoyée');
+                    showSuccessToast(`Employé ajouté. Code: ${accessCode}`);
                 });
             }
 
@@ -2270,7 +2309,7 @@
                             updateUI();
                         }
                     });
-                } else {
+                } else{
                     isAuthenticated = false; currentUser = null; currentUserData = null; dbBasePath = ''; currentPage = 'Tableau de bord'; cleanupFirebaseListeners(); updateUI();
                 }
             });
