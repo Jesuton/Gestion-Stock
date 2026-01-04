@@ -615,10 +615,305 @@
 
             <!-- Page: Paramètres -->
             <div id="page-Paramètres" class="page-content p-4 md:p-8 hidden">
-                <h1 class="text-3xl font-bold">Paramètres</h1>
-                <p class="text-gray-500 mt-1">Gérez les paramètres de votre compte et de l'application.</p>
-                <div class="mt-8 bg-white p-6 rounded-lg shadow-sm">
-                    <p>Les options de paramètres seront bientôt disponibles ici.</p>
+                <div class="flex flex-col gap-2">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-2xl bg-cyan-100 flex items-center justify-center text-cyan-500">
+                            <div data-icon="settings" class="w-6 h-6 text-cyan-500"></div>
+                        </div>
+                        <div>
+                            <h1 class="text-3xl font-bold">Paramètres</h1>
+                            <p class="text-gray-500 mt-1">Gérez les préférences de votre compte, de votre équipe et du SaaS.</p>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-400">
+                        Seuls les administrateurs ont accès complet à cette zone. Les autres rôles peuvent être limités via l'onglet
+                        <span class="font-semibold text-gray-600">Accès</span>.
+                    </p>
+                </div>
+
+                <div id="settings-restricted-state" class="mt-8 bg-white p-6 rounded-xl shadow-sm border border-red-100 hidden">
+                    <div class="flex items-start gap-4">
+                        <div class="p-2 rounded-full bg-red-50 text-red-500">
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L4.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-semibold text-gray-900">Accès restreint</h2>
+                            <p class="text-gray-500 mt-1">Vous devez être administrateur de l'entreprise pour modifier les paramètres globaux. Contactez un administrateur pour revoir vos droits.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="settings-tabs-wrapper" class="mt-8 space-y-6 hidden">
+                    <div class="bg-white p-6 rounded-xl shadow-sm">
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                            <div>
+                                <p class="text-sm uppercase tracking-wide text-gray-400">Plan actuel</p>
+                                <p class="text-2xl font-semibold text-gray-800">StockPilot Pro</p>
+                                <p class="text-gray-500 text-sm">Facturé mensuellement · 5 utilisateurs inclus</p>
+                            </div>
+                            <div class="flex flex-wrap gap-3 text-sm">
+                                <div class="px-3 py-2 bg-cyan-50 text-cyan-700 rounded-lg font-medium" id="settings-admin-badge">Rôle : Admin</div>
+                                <button class="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 font-semibold">Mettre à niveau</button>
+                                <button class="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 font-semibold">Télécharger la politique d'accès</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex flex-wrap gap-2 bg-white p-2 rounded-2xl shadow-sm">
+                            <button type="button" data-settings-tab="compte" class="settings-tab-button px-4 py-2 rounded-xl text-sm font-semibold bg-cyan-500 text-white">Compte</button>
+                            <button type="button" data-settings-tab="application" class="settings-tab-button px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 hover:text-gray-900">Application</button>
+                            <button type="button" data-settings-tab="notifications" class="settings-tab-button px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 hover:text-gray-900">Notifications</button>
+                            <button type="button" data-settings-tab="facturation" class="settings-tab-button px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 hover:text-gray-900">Facturation</button>
+                            <button type="button" data-settings-tab="acces" class="settings-tab-button px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 hover:text-gray-900 flex items-center gap-2">
+                                Accès
+                                <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-cyan-50 text-cyan-600 border border-cyan-100">Admin</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <!-- Onglet Compte -->
+                        <div data-settings-panel="compte" class="bg-white rounded-2xl shadow-sm p-6 space-y-6">
+                            <div class="flex flex-col gap-1">
+                                <h2 class="text-xl font-semibold text-gray-900">Profil & Identité</h2>
+                                <p class="text-sm text-gray-500">Coordonnées de l'entreprise et du responsable légal.</p>
+                            </div>
+                            <div class="grid gap-6 md:grid-cols-2">
+                                <div>
+                                    <label class="text-sm font-medium text-gray-600">Nom de l'entreprise</label>
+                                    <input type="text" class="mt-2 w-full rounded-lg border-gray-200 focus:ring-cyan-400 focus:border-cyan-400" placeholder="Nom de votre entreprise" id="settings-company-name">
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-gray-600">Fuseau horaire</label>
+                                    <select class="mt-2 w-full rounded-lg border-gray-200 focus:ring-cyan-400 focus:border-cyan-400" id="settings-timezone">
+                                        <option value="Africa/Abidjan">(GMT) Afrique de l'Ouest</option>
+                                        <option value="Europe/Paris">(GMT+1) Europe Centrale</option>
+                                        <option value="America/New_York">(GMT-5) New York</option>
+                                        <option value="Asia/Dubai">(GMT+4) Dubaï</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-gray-600">Email de support</label>
+                                    <input type="email" class="mt-2 w-full rounded-lg border-gray-200 focus:ring-cyan-400 focus:border-cyan-400" placeholder="support@entreprise.com">
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-gray-600">Numéro WhatsApp</label>
+                                    <input type="tel" class="mt-2 w-full rounded-lg border-gray-200 focus:ring-cyan-400 focus:border-cyan-400" placeholder="+225 xx xx xx xx">
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap gap-3">
+                                <button class="px-5 py-2.5 bg-cyan-500 text-white rounded-xl text-sm font-semibold hover:bg-cyan-600">Enregistrer</button>
+                                <button class="px-5 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50">Annuler</button>
+                            </div>
+                        </div>
+
+                        <!-- Onglet Application -->
+                        <div data-settings-panel="application" class="bg-white rounded-2xl shadow-sm p-6 space-y-6 hidden">
+                            <div>
+                                <h2 class="text-xl font-semibold text-gray-900">Fonctionnalités activées</h2>
+                                <p class="text-sm text-gray-500">Activez uniquement les modules nécessaires à votre entreprise.</p>
+                            </div>
+                            <div class="space-y-4">
+                                <label class="flex items-start justify-between gap-4 p-4 rounded-xl border border-gray-200 hover:border-cyan-200 cursor-pointer">
+                                    <div>
+                                        <p class="text-sm font-semibold text-gray-800">Gestion multi-boutiques</p>
+                                        <p class="text-sm text-gray-500">Synchroniser plusieurs points de vente.</p>
+                                    </div>
+                                    <input type="checkbox" class="w-5 h-5 text-cyan-500 rounded border-gray-300 focus:ring-cyan-500" checked>
+                                </label>
+                                <label class="flex items-start justify-between gap-4 p-4 rounded-xl border border-gray-200 hover:border-cyan-200 cursor-pointer">
+                                    <div>
+                                        <p class="text-sm font-semibold text-gray-800">Mode hors ligne</p>
+                                        <p class="text-sm text-gray-500">Continuer les ventes même sans connexion.</p>
+                                    </div>
+                                    <input type="checkbox" class="w-5 h-5 text-cyan-500 rounded border-gray-300 focus:ring-cyan-500">
+                                </label>
+                                <label class="flex items-start justify-between gap-4 p-4 rounded-xl border border-gray-200 hover:border-cyan-200 cursor-pointer">
+                                    <div>
+                                        <p class="text-sm font-semibold text-gray-800">Synchronisation comptable</p>
+                                        <p class="text-sm text-gray-500">Export automatique vers votre ERP.</p>
+                                    </div>
+                                    <input type="checkbox" class="w-5 h-5 text-cyan-500 rounded border-gray-300 focus:ring-cyan-500" checked>
+                                </label>
+                            </div>
+                            <div class="flex justify-end">
+                                <button class="px-5 py-2.5 bg-cyan-500 text-white rounded-xl text-sm font-semibold hover:bg-cyan-600">Sauvegarder</button>
+                            </div>
+                        </div>
+
+                        <!-- Onglet Notifications -->
+                        <div data-settings-panel="notifications" class="bg-white rounded-2xl shadow-sm p-6 space-y-6 hidden">
+                            <div>
+                                <h2 class="text-xl font-semibold text-gray-900">Alertes & Notifications</h2>
+                                <p class="text-sm text-gray-500">Notifiez vos équipes lors des évènements critiques.</p>
+                            </div>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div class="p-4 border border-gray-200 rounded-2xl space-y-3">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="font-semibold text-gray-800">Stock critique</p>
+                                            <p class="text-sm text-gray-500">Email + push</p>
+                                        </div>
+                                        <label class="inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" class="sr-only peer" checked>
+                                            <span class="w-12 h-6 bg-gray-200 rounded-full peer peer-checked:bg-cyan-500 relative transition">
+                                                <span class="absolute top-0.5 left-1 w-5 h-5 bg-white rounded-full shadow transition-all peer-checked:translate-x-6"></span>
+                                            </span>
+                                        </label>
+                                    </div>
+                                    <p class="text-xs text-gray-500">Envoyer aussi aux responsables magasin.</p>
+                                </div>
+                                <div class="p-4 border border-gray-200 rounded-2xl space-y-3">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="font-semibold text-gray-800">Rapport quotidien</p>
+                                            <p class="text-sm text-gray-500">Email 7h GMT</p>
+                                        </div>
+                                        <label class="inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" class="sr-only peer" checked>
+                                            <span class="w-12 h-6 bg-gray-200 rounded-full peer peer-checked:bg-cyan-500 relative transition">
+                                                <span class="absolute top-0.5 left-1 w-5 h-5 bg-white rounded-full shadow transition-all peer-checked:translate-x-6"></span>
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="p-4 border border-gray-200 rounded-2xl space-y-3">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="font-semibold text-gray-800">Objectifs de ventes</p>
+                                            <p class="text-sm text-gray-500">Slack + push</p>
+                                        </div>
+                                        <label class="inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" class="sr-only peer">
+                                            <span class="w-12 h-6 bg-gray-200 rounded-full peer peer-checked:bg-cyan-500 relative transition">
+                                                <span class="absolute top-0.5 left-1 w-5 h-5 bg-white rounded-full shadow transition-all peer-checked:translate-x-6"></span>
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="p-4 border border-gray-200 rounded-2xl space-y-3">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="font-semibold text-gray-800">Facturation & retard</p>
+                                            <p class="text-sm text-gray-500">Email + SMS</p>
+                                        </div>
+                                        <label class="inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" class="sr-only peer" checked>
+                                            <span class="w-12 h-6 bg-gray-200 rounded-full peer peer-checked:bg-cyan-500 relative transition">
+                                                <span class="absolute top-0.5 left-1 w-5 h-5 bg-white rounded-full shadow transition-all peer-checked:translate-x-6"></span>
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex justify-end">
+                                <button class="px-5 py-2.5 bg-cyan-500 text-white rounded-xl text-sm font-semibold hover:bg-cyan-600">Mettre à jour</button>
+                            </div>
+                        </div>
+
+                        <!-- Onglet Facturation -->
+                        <div data-settings-panel="facturation" class="bg-white rounded-2xl shadow-sm p-6 space-y-6 hidden">
+                            <div>
+                                <h2 class="text-xl font-semibold text-gray-900">Facturation & moyens de paiement</h2>
+                                <p class="text-sm text-gray-500">Visualisez votre consommation et vos prochaines échéances.</p>
+                            </div>
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div class="p-5 border border-gray-200 rounded-2xl space-y-4">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="text-sm uppercase text-gray-400">Prochaine facture</p>
+                                            <p class="text-2xl font-semibold text-gray-800">24 000 F CFA</p>
+                                        </div>
+                                        <span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-50 text-green-700">Le 01/12</span>
+                                    </div>
+                                    <p class="text-sm text-gray-500">Basée sur 3 boutiques actives et 7 utilisateurs.</p>
+                                    <button class="px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50">Télécharger la dernière facture</button>
+                                </div>
+                                <div class="p-5 border border-gray-200 rounded-2xl space-y-4">
+                                    <div>
+                                        <p class="text-sm uppercase text-gray-400">Carte principale</p>
+                                        <p class="text-lg font-semibold text-gray-800">**** 4587 · Ecobank</p>
+                                        <p class="text-sm text-gray-500">Titulaire : Turibe Bayomi</p>
+                                    </div>
+                                    <div class="flex gap-3">
+                                        <button class="px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50">Modifier</button>
+                                        <button class="px-4 py-2 rounded-xl border border-red-200 text-sm font-semibold text-red-600 hover:bg-red-50">Supprimer</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex justify-end">
+                                <button class="px-5 py-2.5 bg-cyan-500 text-white rounded-xl text-sm font-semibold hover:bg-cyan-600">Ajouter un moyen de paiement</button>
+                            </div>
+                        </div>
+
+                        <!-- Onglet Accès -->
+                        <div data-settings-panel="acces" class="bg-white rounded-2xl shadow-sm p-6 space-y-6 hidden">
+                            <div class="flex flex-col gap-1">
+                                <div class="flex items-center gap-3">
+                                    <h2 class="text-xl font-semibold text-gray-900">Gestion des accès</h2>
+                                    <span class="px-2.5 py-0.5 text-xs rounded-full bg-cyan-50 text-cyan-600 border border-cyan-100">Admins uniquement</span>
+                                </div>
+                                <p class="text-sm text-gray-500">Définissez les rôles de vos collaborateurs et choisissez les modules qu'ils peuvent voir.</p>
+                            </div>
+                            <div class="grid md:grid-cols-3 gap-4">
+                                <div class="p-4 rounded-2xl border border-gray-200">
+                                    <p class="text-sm uppercase text-gray-400">Employés</p>
+                                    <p class="text-3xl font-semibold text-gray-800" id="access-total-users">0</p>
+                                </div>
+                                <div class="p-4 rounded-2xl border border-gray-200">
+                                    <p class="text-sm uppercase text-gray-400">Admins</p>
+                                    <p class="text-3xl font-semibold text-gray-800" id="access-total-admins">0</p>
+                                </div>
+                                <div class="p-4 rounded-2xl border border-gray-200">
+                                    <p class="text-sm uppercase text-gray-400">Invitations en attente</p>
+                                    <p class="text-3xl font-semibold text-gray-800" id="access-total-pending">0</p>
+                                </div>
+                            </div>
+
+                            <div class="p-4 rounded-2xl border border-gray-200 space-y-4">
+                                <div>
+                                    <p class="font-semibold text-gray-800">Ajouter un collaborateur</p>
+                                    <p class="text-sm text-gray-500">Envoyez une invitation et attribuez un rôle immédiatement.</p>
+                                </div>
+                                <form id="access-add-member-form" class="grid md:grid-cols-4 gap-4">
+                                    <input type="text" id="access-member-name" placeholder="Nom complet" class="col-span-2 md:col-span-1 rounded-xl border-gray-200 focus:ring-cyan-400 focus:border-cyan-400" required>
+                                    <input type="email" id="access-member-email" placeholder="Email professionnel" class="col-span-2 md:col-span-1 rounded-xl border-gray-200 focus:ring-cyan-400 focus:border-cyan-400" required>
+                                    <select id="access-member-role" class="col-span-2 md:col-span-1 rounded-xl border-gray-200 focus:ring-cyan-400 focus:border-cyan-400">
+                                        <option value="manager">Manager</option>
+                                        <option value="vendeur">Vendeur</option>
+                                        <option value="consultation">Consultation</option>
+                                    </select>
+                                    <button type="submit" class="col-span-2 md:col-span-1 bg-cyan-500 text-white rounded-xl font-semibold hover:bg-cyan-600">Envoyer l'invitation</button>
+                                </form>
+                            </div>
+
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <p class="font-semibold text-gray-800">Collaborateurs actifs</p>
+                                    <span class="text-sm text-gray-500">Cliquez sur un module pour l'activer/désactiver.</span>
+                                </div>
+                                <div class="overflow-x-auto border border-gray-200 rounded-2xl">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                            <tr>
+                                                <th class="px-4 py-3">Nom</th>
+                                                <th class="px-4 py-3">Email</th>
+                                                <th class="px-4 py-3">Rôle</th>
+                                                <th class="px-4 py-3">Modules autorisés</th>
+                                                <th class="px-4 py-3 text-right">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="access-members-tbody" class="divide-y divide-gray-100 text-sm text-gray-700">
+                                            <tr>
+                                                <td colspan="5" class="px-4 py-6 text-center text-gray-400">Chargement des collaborateurs...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -968,6 +1263,14 @@
             let storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, salesHistoryListener;
             let storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, salesHistoryRef;
 
+            const accessModules = ['Tableau de bord', 'Ventes', 'Stock Boutique', 'Mon Magasin', 'Statistiques', 'Paramètres'];
+            let teamMembersState = [
+                { id: 'seed-admin', name: 'Turibe Bayomi', email: 'turibeabayomi@gmail.com', role: 'admin', status: 'actif', permissions: [...accessModules], isCurrentUser: false },
+                { id: 'seed-manager', name: 'Salimata Traoré', email: 'salimata@turibe.com', role: 'manager', status: 'actif', permissions: ['Tableau de bord', 'Ventes', 'Statistiques'], isCurrentUser: false },
+                { id: 'seed-seller', name: 'Yao Michel', email: 'yao@turibe.com', role: 'vendeur', status: 'actif', permissions: ['Ventes', 'Stock Boutique'], isCurrentUser: false },
+                { id: 'seed-analytics', name: 'Kadidia Koné', email: 'kadidia@turibe.com', role: 'consultation', status: 'pending', permissions: ['Tableau de bord', 'Statistiques'], isCurrentUser: false }
+            ];
+
             // Références DOM
             const authPageContainer = document.getElementById('auth-page-container');
             const layoutContainer = document.getElementById('layout-container');
@@ -1074,6 +1377,21 @@
             const successToast = document.getElementById('success-toast');
             const successToastMessage = document.getElementById('success-toast-message');
 
+            // Paramètres & accès
+            const settingsRestrictedState = document.getElementById('settings-restricted-state');
+            const settingsTabsWrapper = document.getElementById('settings-tabs-wrapper');
+            const settingsTabButtons = document.querySelectorAll('.settings-tab-button');
+            const settingsPanels = document.querySelectorAll('[data-settings-panel]');
+            const settingsAdminBadge = document.getElementById('settings-admin-badge');
+            const accessMembersTbody = document.getElementById('access-members-tbody');
+            const accessAddMemberForm = document.getElementById('access-add-member-form');
+            const accessMemberNameInput = document.getElementById('access-member-name');
+            const accessMemberEmailInput = document.getElementById('access-member-email');
+            const accessMemberRoleInput = document.getElementById('access-member-role');
+            const accessTotalUsers = document.getElementById('access-total-users');
+            const accessTotalAdmins = document.getElementById('access-total-admins');
+            const accessTotalPending = document.getElementById('access-total-pending');
+
             function showSuccessToast(message) {
                 if (successToastMessage) successToastMessage.textContent = message;
                 if (successToast) {
@@ -1096,6 +1414,167 @@
                 const date = new Date(isoString);
                 return date.toLocaleString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace(' à', ',');
             }
+
+            function getCurrentUserRole() {
+                if (!isAuthenticated || !currentUserData) return 'invite';
+                return (currentUserData.role || 'admin').toLowerCase();
+            }
+
+            function updateSettingsAccess() {
+                const isAdmin = getCurrentUserRole() === 'admin';
+                if (settingsRestrictedState) settingsRestrictedState.classList.toggle('hidden', isAdmin);
+                if (settingsTabsWrapper) settingsTabsWrapper.classList.toggle('hidden', !isAdmin);
+                if (settingsAdminBadge) settingsAdminBadge.textContent = `Rôle : ${isAdmin ? 'Admin' : 'Accès limité'}`;
+            }
+
+            function setActiveSettingsTab(tabId = 'compte') {
+                if (!settingsTabButtons.length) return;
+                settingsTabButtons.forEach(button => {
+                    const isActive = button.dataset.settingsTab === tabId;
+                    button.classList.toggle('bg-cyan-500', isActive);
+                    button.classList.toggle('text-white', isActive);
+                    button.classList.toggle('text-gray-600', !isActive);
+                });
+                settingsPanels.forEach(panel => panel.classList.toggle('hidden', panel.dataset.settingsPanel !== tabId));
+            }
+
+            function ensureCurrentUserInTeam() {
+                if (!currentUser) return;
+                teamMembersState = teamMembersState.filter(member => !member.isCurrentUser);
+                const name = currentUserData?.fullName || 'Utilisateur';
+                const email = currentUser?.email || currentUserData?.email;
+                teamMembersState.unshift({
+                    id: currentUser.uid,
+                    name,
+                    email,
+                    role: getCurrentUserRole(),
+                    status: 'actif',
+                    permissions: [...accessModules],
+                    isCurrentUser: true
+                });
+                renderAccessMembers();
+            }
+
+            function renderAccessMembers() {
+                if (!accessMembersTbody) return;
+                if (!teamMembersState.length) {
+                    accessMembersTbody.innerHTML = `<tr><td colspan="5" class="px-4 py-6 text-center text-gray-400">Aucun collaborateur pour le moment.</td></tr>`;
+                } else {
+                    const rows = teamMembersState.map(member => {
+                        const permissionButtons = accessModules.map(module => {
+                            const isActive = member.permissions?.includes(module);
+                            const classes = `px-3 py-1 rounded-full border text-xs font-semibold mr-2 mb-2 inline-flex ${isActive ? 'bg-cyan-50 border-cyan-200 text-cyan-600' : 'bg-gray-100 border-gray-200 text-gray-500'}`;
+                            return `<button type="button" data-member-id="${member.id}" data-permission="${module}" class="${classes}">${module}</button>`;
+                        }).join('');
+                        return `
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3">
+                                    <p class="font-semibold text-gray-900">${member.name}</p>
+                                    <p class="text-xs text-gray-400">${member.status === 'pending' ? 'Invitation envoyée' : 'Actif'}</p>
+                                </td>
+                                <td class="px-4 py-3 text-sm text-gray-500">${member.email}</td>
+                                <td class="px-4 py-3">
+                                    <select data-role-select="${member.id}" class="rounded-lg border-gray-200 focus:ring-cyan-400 focus:border-cyan-400 text-sm">
+                                        <option value="admin" ${member.role === 'admin' ? 'selected' : ''}>Admin</option>
+                                        <option value="manager" ${member.role === 'manager' ? 'selected' : ''}>Manager</option>
+                                        <option value="vendeur" ${member.role === 'vendeur' ? 'selected' : ''}>Vendeur</option>
+                                        <option value="consultation" ${member.role === 'consultation' ? 'selected' : ''}>Consultation</option>
+                                    </select>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div class="flex flex-wrap">${permissionButtons}</div>
+                                </td>
+                                <td class="px-4 py-3 text-right">
+                                    <button type="button" data-remove-member="${member.id}" class="text-sm text-red-500 hover:text-red-600 font-semibold">Retirer</button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                    accessMembersTbody.innerHTML = rows;
+                }
+                if (accessTotalUsers) accessTotalUsers.textContent = teamMembersState.length;
+                if (accessTotalAdmins) accessTotalAdmins.textContent = teamMembersState.filter(m => m.role === 'admin').length;
+                if (accessTotalPending) accessTotalPending.textContent = teamMembersState.filter(m => m.status === 'pending').length;
+            }
+
+            function toggleMemberPermission(memberId, permission) {
+                const member = teamMembersState.find(m => m.id === memberId);
+                if (!member) return;
+                member.permissions = member.permissions || [];
+                if (permission === 'Paramètres' && member.role !== 'admin') {
+                    showSuccessToast("Seuls les administrateurs peuvent accéder aux paramètres.");
+                    return;
+                }
+                if (member.permissions.includes(permission)) {
+                    member.permissions = member.permissions.filter(p => p !== permission);
+                } else {
+                    member.permissions.push(permission);
+                }
+                renderAccessMembers();
+            }
+
+            function setMemberRole(memberId, role) {
+                const member = teamMembersState.find(m => m.id === memberId);
+                if (!member) return;
+                member.role = role;
+                if (role === 'admin' && !member.permissions.includes('Paramètres')) {
+                    member.permissions.push('Paramètres');
+                }
+                if (role !== 'admin') {
+                    member.permissions = member.permissions.filter(permission => permission !== 'Paramètres');
+                }
+                renderAccessMembers();
+            }
+
+            if (settingsTabButtons.length) {
+                settingsTabButtons.forEach(button => button.addEventListener('click', () => setActiveSettingsTab(button.dataset.settingsTab)));
+                setActiveSettingsTab('compte');
+            }
+
+            if (accessMembersTbody) {
+                accessMembersTbody.addEventListener('click', (event) => {
+                    const permissionButton = event.target.closest('button[data-permission]');
+                    if (permissionButton) {
+                        toggleMemberPermission(permissionButton.dataset.memberId, permissionButton.dataset.permission);
+                        return;
+                    }
+                    const removeButton = event.target.closest('button[data-remove-member]');
+                    if (removeButton) {
+                        teamMembersState = teamMembersState.filter(member => member.id !== removeButton.dataset.removeMember || member.isCurrentUser);
+                        renderAccessMembers();
+                    }
+                });
+                accessMembersTbody.addEventListener('change', (event) => {
+                    const roleSelect = event.target.closest('select[data-role-select]');
+                    if (roleSelect) setMemberRole(roleSelect.dataset.roleSelect, roleSelect.value);
+                });
+            }
+
+            if (accessAddMemberForm) {
+                accessAddMemberForm.addEventListener('submit', (event) => {
+                    event.preventDefault();
+                    const name = accessMemberNameInput.value.trim();
+                    const email = accessMemberEmailInput.value.trim();
+                    const role = accessMemberRoleInput.value;
+                    if (!name || !email) return;
+                    const basePermissions = role === 'consultation' ? ['Tableau de bord', 'Statistiques'] : ['Tableau de bord', 'Ventes', 'Stock Boutique'];
+                    const newMember = {
+                        id: `member-${Date.now()}`,
+                        name,
+                        email,
+                        role,
+                        status: 'pending',
+                        permissions: role === 'admin' ? [...accessModules] : basePermissions,
+                        isCurrentUser: false
+                    };
+                    teamMembersState.push(newMember);
+                    renderAccessMembers();
+                    accessAddMemberForm.reset();
+                    showSuccessToast('Invitation envoyée');
+                });
+            }
+
+            renderAccessMembers();
 
             function populateStoreProductSelects() {
                 const products = appData.storeProducts;
@@ -1374,6 +1853,7 @@
                     if (salesHistoryTbody) salesHistoryTbody.innerHTML = '';
                     [storeProductsPlaceholder, storeMovementsPlaceholder, shopStockPlaceholder, shopMovementsPlaceholder, salesHistoryPlaceholder].forEach(p => p && p.classList.remove('hidden'));
                     [storeProductsTableContainer, storeMovementsTableContainer, shopStockTableContainer, shopMovementsTableContainer, salesHistoryTableContainer].forEach(t => t && t.classList.add('hidden'));
+                    updateSettingsAccess();
                     return;
                 }
 
@@ -1391,6 +1871,8 @@
                         button.classList.add('text-gray-600', 'hover:bg-gray-100');
                     }
                 });
+
+                updateSettingsAccess();
             }
 
             function updateAuthFormView() {
@@ -1526,12 +2008,16 @@
                         email: email,
                         fullName: fullName,
                         companyName: matchedCompanyName,
-                        companyId: companyId
+                        companyId: companyId,
+                        role: 'admin'
                     });
 
                     await set(ref(db, `companies/${companyId}/members/${user.uid}`), {
                         email: email,
-                        fullName: fullName
+                        fullName: fullName,
+                        role: 'admin',
+                        status: 'actif',
+                        permissions: [...accessModules]
                     });
 
                     // --- AJOUT POUR LE RAFRAICHISSEMENT IMMEDIAT ---
@@ -1543,10 +2029,13 @@
                         email: email,
                         fullName: fullName,
                         companyName: matchedCompanyName,
-                        companyId: companyId
+                        companyId: companyId,
+                        role: 'admin'
                     };
                     dbBasePath = `companies/${companyId}`;
                     setupFirebaseListeners();
+                    ensureCurrentUserInTeam();
+                    updateSettingsAccess();
                     updateUI();
                     showSuccessToast("Compte créé avec succès !");
                     // ------------------------------------------------
@@ -1772,9 +2261,12 @@
                     get(ref(db, `users/${user.uid}`)).then((snapshot) => {
                         if (snapshot.exists()) {
                             currentUserData = snapshot.val();
+                            currentUserData.role = currentUserData.role || 'admin';
                             if (sellerNameInput) sellerNameInput.value = currentUserData.fullName || user.email;
                             dbBasePath = currentUserData.companyId ? `companies/${currentUserData.companyId}` : `users/${user.uid}`;
                             setupFirebaseListeners();
+                            ensureCurrentUserInTeam();
+                            updateSettingsAccess();
                             updateUI();
                         }
                     });
