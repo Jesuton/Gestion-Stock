@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>StockPilot</title>
-    <!-- Chargement de TailwindCSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Ajout de la police Inter pour une meilleure apparence */
@@ -46,9 +45,6 @@
 </head>
 <body class="bg-gray-50">
 
-    <!-- 
-      CONTENEUR DE LA PAGE D'AUTHENTIFICATION
-    -->
     <div id="auth-page-container">
         <div class="min-h-screen bg-gray-50 flex flex-col justify-center items-center p-4">
             <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
@@ -71,7 +67,6 @@
                     </button>
                 </div>
 
-                <!-- Formulaire de connexion (initialement visible) -->
                 <form id="login-form">
                     <div class="space-y-4">
                         <div class="flex bg-gray-100 rounded-lg p-1 text-xs font-semibold">
@@ -91,32 +86,30 @@
                             <input type="text" id="access-code" name="access-code" placeholder="Ex: Z4T7-9Q3S" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition uppercase tracking-widest" />
                             <p class="text-xs text-gray-500 mt-1">Demandez ce code à l'administrateur de votre entreprise.</p>
                         </div>
-                        <p id="login-error" class="text-red-500 text-sm mt-2 hidden"></p> <!-- Ajout pour les erreurs -->
-                        <button type="submit" id="login-submit-button" class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
+                        <p id="login-error" class="text-red-500 text-sm mt-2 hidden"></p> <button type="submit" id="login-submit-button" class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
                             Se connecter
                         </button>
                     </div>
                 </form>
 
-                <!-- Formulaire d'inscription (initialement caché) -->
                 <form id="signup-form" class="hidden">
                     <div class="space-y-4">
                         <div>
                             <label class="text-sm font-medium text-gray-600" for="fullName">Nom complet</label>
-                            <input type="text" id="fullName" name="fullName" placeholder="Jean Dupont" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
+                            <input type="text" id="fullName" name="fullName" placeholder="Jean Dupont" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required />
                         </div>
                         <div>
                             <label class="text-sm font-medium text-gray-600" for="companyName">Nom de l'entreprise</label>
-                            <input type="text" id="companyName" name="companyName" placeholder="Ma Société" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
+                            <input type="text" id="companyName" name="companyName" placeholder="Ma Société" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required />
                             <p class="text-xs text-gray-500 mt-1">Si le nom correspond à une entreprise existante, vous la rejoindrez.</p>
                         </div>
                         <div>
                             <label class="text-sm font-medium text-gray-600" for="signup-email">Email</label>
-                            <input type="email" id="signup-email" name="signup-email" placeholder="votre@email.com" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
+                            <input type="email" id="signup-email" name="signup-email" placeholder="votre@email.com" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required />
                         </div>
                         <div>
                             <label class="text-sm font-medium text-gray-600" for="signup-password">Mot de passe</label>
-                            <input type="password" id="signup-password" name="signup-password" placeholder="********" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
+                            <input type="password" id="signup-password" name="signup-password" placeholder="********" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required />
                         </div>
                         <div id="signup-error-container" class="hidden p-3 bg-red-50 border border-red-200 rounded-lg">
                              <p id="signup-error" class="text-red-500 text-sm"></p>
@@ -130,15 +123,9 @@
         </div>
     </div>
 
-    <!-- 
-      CONTENEUR DE L'APPLICATION (LAYOUT)
-      Initialement caché, sera affiché par JS après la connexion.
-    -->
     <div id="layout-container" class="hidden">
-        <!-- Overlay pour sidebar mobile -->
         <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden lg:hidden"></div>
 
-        <!-- Sidebar -->
         <aside id="sidebar" class="w-64 bg-white shadow-md flex flex-col h-screen fixed top-0 left-0 z-40 transition-transform duration-300 ease-in-out -translate-x-full lg:translate-x-0 lg:transition-all">
             <div class="p-6 flex items-center space-x-3 border-b border-gray-200">
                 <div class="bg-cyan-100 text-cyan-500 p-2 rounded-lg">
@@ -147,7 +134,6 @@
                 <h1 class="sidebar-text text-xl font-bold text-gray-800">StockPilot</h1>
             </div>
             <nav class="flex-1 p-4 space-y-2">
-                <!-- Les boutons de navigation -->
                 <button data-page="Tableau de bord" class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors bg-cyan-400 text-white shadow">
                     <div data-icon="dashboard" class="w-5 h-5"></div>
                     <span class="sidebar-text">Tableau de bord</span>
@@ -175,7 +161,6 @@
             </nav>
             <div class="p-4 border-t border-gray-200">
                 <div class="sidebar-text p-4 mb-2 rounded-lg bg-gray-100">
-                    <!-- Placeholder pour le profil utilisateur -->
                     <p id="user-name-display" class="text-sm font-medium text-gray-700">Utilisateur connecté</p>
                     <p id="user-company-display" class="text-xs text-gray-500 font-semibold truncate mt-1"></p>
                     <p id="user-email-display" class="text-xs text-gray-400 truncate">Chargement...</p>
@@ -185,32 +170,26 @@
                     <span class="sidebar-text">Déconnexion</span>
                 </button>
             </div>
-             <!-- Bouton pour réduire/agrandir la sidebar sur Desktop -->
-            <div class="hidden lg:block absolute -right-3 top-20">
+             <div class="hidden lg:block absolute -right-3 top-20">
                 <button id="sidebar-collapse-toggle" class="bg-white border rounded-full p-1.5 shadow-md hover:bg-gray-100 transition-colors">
                     <div data-icon="arrowLeft" class="w-4 h-4 text-gray-600"></div>
                 </button>
             </div>
         </aside>
 
-        <!-- Contenu principal (pages) -->
         <main class="flex-1 lg:ml-64 overflow-y-auto h-screen">
             
-            <!-- Header pour la vue mobile -->
             <header id="mobile-header" class="sticky top-0 bg-gray-50/75 backdrop-blur-sm z-10 p-4 border-b border-gray-200 flex items-center justify-between lg:hidden">
                 <button id="hamburger-button" class="text-gray-500 hover:text-gray-800">
                     <div data-icon="menu" class="w-6 h-6"></div>
                 </button>
                 <h1 id="mobile-page-title" class="text-lg font-semibold text-gray-800">Tableau de bord</h1>
-                <div class="w-6"></div> <!-- Spacer -->
-            </header>
+                <div class="w-6"></div> </header>
 
-            <!-- Page: Tableau de bord -->
             <div id="page-Tableau-de-bord" class="page-content p-4 md:p-8">
                 <h1 class="text-3xl font-bold text-gray-800">Bienvenue!</h1>
                 <p class="text-gray-500 mt-1">Voici un aperçu de votre activité</p>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
-                    <!-- StatCard -->
                     <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
                         <div>
                             <p class="text-sm text-gray-500">Ventes du jour</p>
@@ -220,7 +199,6 @@
                             <div data-icon="sales" class="w-6 h-6 text-blue-500"></div>
                         </div>
                     </div>
-                    <!-- StatCard -->
                     <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
                         <div>
                             <p class="text-sm text-gray-500">Stock Boutique</p>
@@ -230,7 +208,6 @@
                             <div data-icon="box" class="w-6 h-6 text-green-500"></div>
                         </div>
                     </div>
-                    <!-- StatCard -->
                     <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
                         <div>
                             <p class="text-sm text-gray-500">Stock Magasin</p>
@@ -240,7 +217,6 @@
                             <div data-icon="box" class="w-6 h-6 text-yellow-500"></div>
                         </div>
                     </div>
-                    <!-- StatCard -->
                     <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
                         <div>
                             <p class="text-sm text-gray-500">Revenus du mois</p>
@@ -270,7 +246,6 @@
                 </div>
             </div>
 
-            <!-- Page: Ventes -->
             <div id="page-Ventes" class="page-content p-4 md:p-8 hidden">
                 <h1 class="text-3xl font-bold text-gray-800">Ventes</h1>
                 <p class="text-gray-500 mt-1">Enregistrez vos ventes quotidiennes</p>
@@ -291,7 +266,6 @@
                             <input type="number" name="quantity" id="sales-quantity-input" value="1" min="1" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500" />
                         </div>
                         
-                        <!-- Nouveau champ : Montant total -->
                         <div class="col-span-1">
                             <label for="sales-total-amount" class="block text-sm font-medium text-gray-700 mb-1">Montant total</label>
                             <input type="text" id="sales-total-amount" value="0 FCFA" class="w-full border-gray-300 rounded-lg shadow-sm bg-gray-100 focus:ring-0 focus:border-gray-300" readonly />
@@ -320,13 +294,10 @@
                     <h2 class="text-xl font-bold text-gray-800">Historique des ventes</h2>
                     <p class="text-sm text-gray-500 mt-1">Liste de toutes les transactions enregistrées.</p>
                     
-                    <!-- Conteneur pour l'historique des ventes -->
                     <div id="sales-history-container" class="mt-6">
-                        <!-- Message si vide -->
                         <div id="sales-history-placeholder" class="flex flex-col items-center justify-center text-center text-gray-500 h-32">
                             <p>Aucune vente enregistrée</p>
                         </div>
-                        <!-- Tableau si non vide -->
                         <div id="sales-history-table-container" class="hidden overflow-x-auto rounded-lg border border-gray-200">
                             <table class="min-w-full bg-white divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
@@ -340,21 +311,18 @@
                                     </tr>
                                 </thead>
                                 <tbody id="sales-history-tbody" class="divide-y divide-gray-200">
-                                    <!-- Lignes de ventes insérées par JS -->
-                                </tbody>
+                                    </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Page: Stock Boutique -->
             <div id="page-Stock-Boutique" class="page-content p-4 md:p-8 hidden">
                 <h1 class="text-3xl font-bold text-gray-800">Stock de la Boutique</h1>
                 <div class="mt-8 bg-white p-6 rounded-lg shadow-sm">
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div class="relative flex-grow">
-                            <!-- ID AJOUTÉ ICI -->
                             <input type="text" id="shop-search-input" placeholder="Rechercher par nom ou description..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500" />
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -379,13 +347,10 @@
                             </button>
                         </div>
                     </div>
-                    <!-- Conteneur pour la liste des produits de la boutique -->
                     <div id="shop-stock-container" class="mt-6">
-                        <!-- Message si vide (visible par défaut) -->
                         <div id="shop-stock-placeholder" class="flex flex-col items-center justify-center text-center text-gray-500 h-40">
                             <p>Aucun article en inventaire.</p>
                         </div>
-                        <!-- Tableau si non vide (caché par défaut) -->
                         <div id="shop-stock-table-container" class="hidden overflow-x-auto rounded-lg border border-gray-200">
                             <table class="min-w-full bg-white divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
@@ -398,8 +363,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="shop-stock-tbody" class="divide-y divide-gray-200">
-                                    <!-- Lignes de produits insérées par JS -->
-                                </tbody>
+                                    </tbody>
                             </table>
                         </div>
                     </div>
@@ -407,43 +371,35 @@
                 <div class="mt-10 bg-white p-6 rounded-lg shadow-sm">
                     <h2 class="text-xl font-bold text-gray-800">Mouvements du Stock Boutique</h2>
                     <p class="text-sm text-gray-500 mt-1">Historique de tous les ajouts et réapprovisionnements de stock.</p>
-                     <!-- Conteneur pour les mouvements de la boutique -->
-                    <div id="shop-movements-container" class="mt-6">
-                        <!-- Message si vide (visible par défaut) -->
+                     <div id="shop-movements-container" class="mt-6">
                         <div id="shop-movements-placeholder" class="flex flex-col items-center justify-center text-center text-gray-500 h-32">
                             <p>Aucun mouvement de stock enregistré.</p>
                         </div>
-                        <!-- Tableau si non vide (caché par défaut) -->
                         <div id="shop-movements-table-container" class="hidden overflow-x-auto rounded-lg border border-gray-200">
                             <table class="min-w-full bg-white divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
                                     <tr>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th> <!-- AJOUTÉ -->
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qte Changée</th> <!-- Renommé -->
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Changement</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th> <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qte Changée</th> <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Changement</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Commentaire</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Utilisateur</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                                     </tr>
                                 </thead>
                                 <tbody id="shop-movements-tbody" class="divide-y divide-gray-200">
-                                    <!-- Lignes de mouvements insérées par JS -->
-                                </tbody>
+                                    </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Page: Mon Magasin -->
             <div id="page-Mon-Magasin" class="page-content p-4 md:p-8 hidden">
                 <h1 class="text-3xl font-bold text-gray-800">Gestion du Magasin</h1>
                 <div class="mt-8 bg-white p-6 rounded-lg shadow-sm">
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div class="relative flex-grow">
-                             <!-- ID AJOUTÉ ICI -->
-                            <input type="text" id="store-search-input" placeholder="Rechercher par nom ou description..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500" />
+                             <input type="text" id="store-search-input" placeholder="Rechercher par nom ou description..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500" />
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
@@ -453,20 +409,16 @@
                         <div class="flex items-center gap-2 flex-wrap">
                             <button id="open-entry-modal-button" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2">Entrée</button>
                             <button id="open-exit-modal-button" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2">Sortie</button>
-                            <!-- ID ajouté au bouton "Nouveau Produit" -->
                             <button id="open-new-product-modal-button" class="px-4 py-2 bg-cyan-400 text-white font-semibold rounded-lg shadow-md hover:bg-cyan-500 transition-colors flex items-center gap-2">
                                 + Nouveau Produit
                             </button>
                         </div>
                     </div>
                     
-                    <!-- Conteneur pour la liste des produits du magasin -->
                     <div id="store-products-container" class="mt-6">
-                        <!-- Message si vide (visible par défaut) -->
                         <div id="store-products-placeholder" class="flex flex-col items-center justify-center text-center text-gray-500 h-40">
                             <p>Aucun article dans le magasin.</p>
                         </div>
-                        <!-- Tableau si non vide (caché par défaut) -->
                         <div id="store-products-table-container" class="hidden overflow-x-auto rounded-lg border border-gray-200">
                             <table class="min-w-full bg-white divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
@@ -479,8 +431,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="store-products-tbody" class="divide-y divide-gray-200">
-                                    <!-- Lignes de produits insérées par JS -->
-                                </tbody>
+                                    </tbody>
                             </table>
                         </div>
                     </div>
@@ -490,13 +441,10 @@
                     <h2 class="text-xl font-bold text-gray-800">Mouvements du Magasin</h2>
                     <p class="text-sm text-gray-500 mt-1">Historique de toutes les entrées et sorties du magasin.</p>
 
-                    <!-- Conteneur pour les mouvements du magasin -->
                     <div id="store-movements-container" class="mt-6">
-                        <!-- Message si vide (visible par défaut) -->
                         <div id="store-movements-placeholder" class="flex flex-col items-center justify-center text-center text-gray-500 h-32">
                             <p>Aucun mouvement enregistré.</p>
                         </div>
-                        <!-- Tableau si non vide (caché par défaut) -->
                         <div id="store-movements-table-container" class="hidden overflow-x-auto rounded-lg border border-gray-200">
                             <table class="min-w-full bg-white divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
@@ -510,20 +458,17 @@
                                     </tr>
                                 </thead>
                                 <tbody id="store-movements-tbody" class="divide-y divide-gray-200">
-                                    <!-- Lignes de mouvements insérées par JS -->
-                                </tbody>
+                                    </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Page: Statistiques -->
             <div id="page-Statistiques" class="page-content p-4 md:p-8 hidden">
                 <h1 class="text-3xl font-bold text-gray-800">Statistiques</h1>
                 <p class="text-gray-500 mt-1">Analysez vos performances commerciales globales</p>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
-                    <!-- StatCard -->
                     <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
                         <div>
                             <p class="text-sm text-gray-500">Ventes totales</p>
@@ -534,7 +479,6 @@
                             <div data-icon="sales" class="w-6 h-6 text-blue-500"></div>
                         </div>
                     </div>
-                    <!-- StatCard -->
                     <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
                         <div>
                             <p class="text-sm text-gray-500">Revenus totaux</p>
@@ -545,7 +489,6 @@
                             <div data-icon="stats" class="w-6 h-6 text-indigo-500"></div>
                         </div>
                     </div>
-                    <!-- StatCard -->
                     <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
                         <div>
                             <p class="text-sm text-gray-500">Produits en stock</p>
@@ -556,7 +499,6 @@
                             <div data-icon="box" class="w-6 h-6 text-green-500"></div>
                         </div>
                     </div>
-                    <!-- StatCard -->
                     <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
                         <div>
                             <p class="text-sm text-gray-500">Marge moyenne</p>
@@ -570,7 +512,6 @@
                 </div>
                 
                 <div class="mt-10 grid grid-cols-1 xl:grid-cols-2 gap-8">
-                    <!-- Section Produits les plus vendus -->
                     <div class="bg-white p-6 rounded-lg shadow-sm">
                         <h2 class="text-xl font-bold text-gray-800">Produits les plus vendus</h2>
                         <p class="text-sm text-gray-500 mt-1">Classement par quantité vendue.</p>
@@ -588,14 +529,12 @@
                                         </tr>
                                     </thead>
                                     <tbody id="best-selling-tbody" class="divide-y divide-gray-200">
-                                        <!-- Données insérées par JS -->
-                                    </tbody>
+                                        </tbody>
                                 </table>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Section Performance des vendeurs -->
                     <div class="bg-white p-6 rounded-lg shadow-sm">
                         <h2 class="text-xl font-bold text-gray-800">Performance des vendeurs</h2>
                         <p class="text-sm text-gray-500 mt-1">Classement par revenu généré.</p>
@@ -613,8 +552,7 @@
                                         </tr>
                                     </thead>
                                     <tbody id="seller-performance-tbody" class="divide-y divide-gray-200">
-                                        <!-- Données insérées par JS -->
-                                    </tbody>
+                                        </tbody>
                                 </table>
                             </div>
                         </div>
@@ -622,7 +560,6 @@
                 </div>
             </div>
 
-            <!-- Page: Paramètres -->
             <div id="page-Paramètres" class="page-content p-4 md:p-8 hidden">
                 <div class="flex flex-col gap-2">
                     <div class="flex items-center gap-3">
@@ -682,7 +619,6 @@
                     </div>
 
                     <div class="space-y-6">
-                        <!-- Onglet Compte -->
                         <div data-settings-panel="compte" class="bg-white rounded-2xl shadow-sm p-6 space-y-6">
                             <div class="flex flex-col gap-1">
                                 <h2 class="text-xl font-semibold text-gray-900">Profil & Identité</h2>
@@ -717,7 +653,6 @@
                             </div>
                         </div>
 
-                        <!-- Onglet Application -->
                         <div data-settings-panel="application" class="bg-white rounded-2xl shadow-sm p-6 space-y-6 hidden">
                             <div>
                                 <h2 class="text-xl font-semibold text-gray-900">Fonctionnalités activées</h2>
@@ -751,7 +686,6 @@
                             </div>
                         </div>
 
-                        <!-- Onglet Notifications -->
                         <div data-settings-panel="notifications" class="bg-white rounded-2xl shadow-sm p-6 space-y-6 hidden">
                             <div>
                                 <h2 class="text-xl font-semibold text-gray-900">Alertes & Notifications</h2>
@@ -821,7 +755,6 @@
                             </div>
                         </div>
 
-                        <!-- Onglet Facturation -->
                         <div data-settings-panel="facturation" class="bg-white rounded-2xl shadow-sm p-6 space-y-6 hidden">
                             <div>
                                 <h2 class="text-xl font-semibold text-gray-900">Facturation & moyens de paiement</h2>
@@ -856,7 +789,6 @@
                             </div>
                         </div>
 
-                        <!-- Onglet Accès -->
                         <div data-settings-panel="acces" class="bg-white rounded-2xl shadow-sm p-6 space-y-6 hidden">
                             <div class="flex flex-col gap-1">
                                 <div class="flex items-center gap-3">
@@ -930,19 +862,14 @@
         </main>
     </div>
 
-    <!-- 
-      MODAL "AJOUTER UN NOUVEAU PRODUIT"
-    -->
     <div id="new-product-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 m-4">
-            <!-- En-tête -->
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold text-gray-800">Ajouter un nouveau produit au magasin</h2>
                 <button id="close-new-product-modal-button" class="text-gray-400 hover:text-gray-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
-            <!-- Formulaire -->
             <form id="new-product-form">
                 <div class="space-y-4">
                     <div>
@@ -976,9 +903,6 @@
         </div>
     </div>
     
-    <!-- 
-      MODAL "ENREGISTRER UNE ENTRÉE"
-    -->
     <div id="entry-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 m-4">
             <div class="flex justify-between items-center mb-4">
@@ -993,8 +917,7 @@
                         <label for="entry-product-select" class="block text-sm font-medium text-gray-700">Produit *</label>
                         <select id="entry-product-select" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
                             <option value="">Sélectionnez un produit</option>
-                            <!-- Options remplies par JS -->
-                        </select>
+                            </select>
                     </div>
                     <div>
                         <label for="entry-quantity" class="block text-sm font-medium text-gray-700">Quantité *</label>
@@ -1013,9 +936,6 @@
         </div>
     </div>
     
-    <!-- 
-      MODAL "ENREGISTRER UNE SORTIE"
-    -->
     <div id="exit-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 m-4">
             <div class="flex justify-between items-center mb-4">
@@ -1030,8 +950,7 @@
                         <label for="exit-product-select" class="block text-sm font-medium text-gray-700">Produit *</label>
                         <select id="exit-product-select" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
                             <option value="">Sélectionnez un produit</option>
-                            <!-- Options remplies par JS -->
-                        </select>
+                            </select>
                     </div>
                     <div>
                         <label for="exit-quantity" class="block text-sm font-medium text-gray-700">Quantité *</label>
@@ -1050,9 +969,6 @@
         </div>
     </div>
     
-    <!-- 
-      MODAL "TRANSFÉRER UN ARTICLE DEPUIS LE MAGASIN"
-    -->
     <div id="transfer-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 m-4">
             <div class="flex justify-between items-center mb-4">
@@ -1067,8 +983,7 @@
                         <label for="transfer-product-select" class="block text-sm font-medium text-gray-700">Article Source (depuis le Magasin) *</label>
                         <select id="transfer-product-select" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
                             <option value="">Sélectionnez un article à transférer...</option>
-                            <!-- Options remplies par JS -->
-                        </select>
+                            </select>
                     </div>
                     
                     <div id="transfer-source-info" class="hidden">
@@ -1112,9 +1027,6 @@
         </div>
     </div>
 
-    <!-- 
-      MODAL "RÉAPPROVISIONNER UN ARTICLE"
-    -->
     <div id="restock-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 m-4">
             <div class="flex justify-between items-center mb-4">
@@ -1129,8 +1041,7 @@
                         <label for="restock-product-select" class="block text-sm font-medium text-gray-700">Produit de la Boutique *</label>
                         <select id="restock-product-select" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
                             <option value="">Sélectionnez un produit à réapprovisionner</option>
-                            <!-- Options remplies par JS -->
-                        </select>
+                            </select>
                     </div>
 
                     <div id="restock-source-info" class="hidden">
@@ -1164,9 +1075,6 @@
         </div>
     </div>
     
-    <!-- 
-      TOAST DE SUCCÈS GLOBAL
-    -->
     <div id="success-toast" class="fixed bottom-5 right-5 z-50">
         <div class="flex items-center bg-green-500 text-white text-sm font-medium px-4 py-3 rounded-lg shadow-lg">
             <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -1818,7 +1726,6 @@
                     let html = '';
                     const sortedProducts = filteredProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                     sortedProducts.forEach(product => {
-                        // FIXED: Pass classes directly to getIconSVG
                         const iconBox = getIconSVG('box', 'w-5 h-5 text-gray-600');
                         const iconTrash = getIconSVG('trash', 'w-5 h-5');
                         html += `
@@ -1890,7 +1797,6 @@
                     sortedStock.forEach(item => {
                         const isLowStock = item.quantityInShop <= item.alertThreshold;
                         const currency = appData.storeProducts[item.sourceProductId]?.currency || 'CFA';
-                        // FIXED: Pass classes directly to getIconSVG
                         const iconBox = getIconSVG('box', 'w-5 h-5 text-gray-600');
                         const iconTrash = getIconSVG('trash', 'w-5 h-5');
                         html += `
@@ -2224,8 +2130,6 @@
                         permissions: [...accessModules]
                     });
 
-                    // --- AJOUT POUR LE RAFRAICHISSEMENT IMMEDIAT ---
-                    // Mise à jour manuelle de l'état local car onAuthStateChanged peut rater les données si elles ne sont pas encore écrites
                     currentUser = user;
                     isAuthenticated = true;
                     currentUserData = {
@@ -2242,7 +2146,6 @@
                     updateSettingsAccess();
                     updateUI();
                     showSuccessToast("Compte créé avec succès !");
-                    // ------------------------------------------------
 
                 } catch (error) {
                     console.error("Erreur d'inscription:", error);
@@ -2254,7 +2157,6 @@
                                     Se connecter à la place ?
                                 </button>
                              `;
-                             // Setup the listener immediately after showing the message
                              setTimeout(() => {
                                  const switchBtn = document.getElementById('error-switch-login');
                                  if(switchBtn) {
@@ -2302,20 +2204,72 @@
                 } catch (error) { salesError.textContent = error.message; salesError.classList.remove('hidden'); } finally { salesSubmitButton.disabled = false; }
             });
 
+            // MODIFICATION ICI POUR LA FUSION DES PRODUITS
             if(newProductForm) newProductForm.addEventListener('submit', async (e) => {
-                e.preventDefault(); newProductError.classList.add('hidden');
+                e.preventDefault(); 
+                newProductError.classList.add('hidden');
                 if (!currentUser || !dbBasePath) return;
-                const name = newProductForm['product-name'].value; const desc = newProductForm['product-description'].value; const cost = parseFloat(newProductForm['product-cost'].value); const currency = newProductForm['product-currency'].value; const qty = parseInt(newProductForm['product-quantity'].value, 10);
+
+                const name = newProductForm['product-name'].value.trim(); 
+                const desc = newProductForm['product-description'].value; 
+                const cost = parseFloat(newProductForm['product-cost'].value); 
+                const currency = newProductForm['product-currency'].value; 
+                const qty = parseInt(newProductForm['product-quantity'].value, 10);
+
                 if (!name || isNaN(cost)) return;
                 newProductSubmitButton.disabled = true;
+
                 try {
-                    const newRef = push(ref(db, `${dbBasePath}/storeProducts`));
-                    const newProd = { id: newRef.key, name, description: desc, purchaseCost: cost, currency, quantityInStore: qty, createdAt: new Date().toISOString() };
-                    await set(newRef, newProd);
+                    // Recherche d'un produit identique (Nom + Prix + Devise)
+                    const existingProduct = Object.values(appData.storeProducts).find(p => 
+                        p.name.toLowerCase() === name.toLowerCase() && 
+                        p.purchaseCost === cost && 
+                        p.currency === currency
+                    );
+
+                    let targetId;
+                    let oldQty = 0;
+                    const now = new Date().toISOString();
+
+                    if (existingProduct) {
+                        targetId = existingProduct.id;
+                        oldQty = existingProduct.quantityInStore;
+                        const newTotal = oldQty + qty;
+                        // On met à jour le produit existant
+                        await update(ref(db, `${dbBasePath}/storeProducts/${targetId}`), {
+                            quantityInStore: newTotal,
+                            description: desc || existingProduct.description
+                        });
+                    } else {
+                        // On crée un nouveau produit
+                        const newRef = push(ref(db, `${dbBasePath}/storeProducts`));
+                        targetId = newRef.key;
+                        await set(newRef, { id: targetId, name, description: desc, purchaseCost: cost, currency, quantityInStore: qty, createdAt: now });
+                    }
+
+                    // Enregistrement du mouvement
                     const moveRef = push(ref(db, `${dbBasePath}/storeMovements`));
-                    await set(moveRef, { id: moveRef.key, productId: newProd.id, productName: name, type: "Entrée", quantityChange: qty, oldStock: 0, newStock: qty, comment: "Création", date: new Date().toISOString() });
-                    showSuccessToast("Produit ajouté!"); newProductForm.reset(); newProductModal.classList.add('hidden');
-                } catch (err) { newProductError.textContent = err.message; newProductError.classList.remove('hidden'); } finally { newProductSubmitButton.disabled = false; }
+                    await set(moveRef, { 
+                        id: moveRef.key, 
+                        productId: targetId, 
+                        productName: name, 
+                        type: "Entrée", 
+                        quantityChange: qty, 
+                        oldStock: oldQty, 
+                        newStock: oldQty + qty, 
+                        comment: existingProduct ? "Fusion (Produit identique)" : "Création", 
+                        date: now 
+                    });
+
+                    showSuccessToast(existingProduct ? "Quantité ajoutée au produit existant !" : "Produit ajouté !"); 
+                    newProductForm.reset(); 
+                    newProductModal.classList.add('hidden');
+                } catch (err) { 
+                    newProductError.textContent = err.message; 
+                    newProductError.classList.remove('hidden'); 
+                } finally { 
+                    newProductSubmitButton.disabled = false; 
+                }
             });
 
             if(entryForm) entryForm.addEventListener('submit', async (e) => {
@@ -2401,6 +2355,37 @@
                 } catch(err) { restockError.textContent = err.message; restockError.classList.remove('hidden'); } finally { restockSubmitButton.disabled = false; }
             });
 
+            // MODIFICATION ICI POUR LES BOUTONS SUPPRIMER (DÉLÉGATION)
+            if (storeProductsTbody) {
+                storeProductsTbody.addEventListener('click', async (e) => {
+                    const btn = e.target.closest('button[data-product-id]');
+                    if (btn) {
+                        const pid = btn.dataset.productId;
+                        if (confirm("Supprimer définitivement ce produit du magasin ?")) {
+                            try {
+                                await remove(ref(db, `${dbBasePath}/storeProducts/${pid}`));
+                                showSuccessToast("Produit supprimé !");
+                            } catch(err) { alert("Erreur: " + err.message); }
+                        }
+                    }
+                });
+            }
+
+            if (shopStockTbody) {
+                shopStockTbody.addEventListener('click', async (e) => {
+                    const btn = e.target.closest('button[data-stock-id]');
+                    if (btn) {
+                        const sid = btn.dataset.stockId;
+                        if (confirm("Retirer cet article de l'inventaire boutique ?")) {
+                            try {
+                                await remove(ref(db, `${dbBasePath}/shopStock/${sid}`));
+                                showSuccessToast("Article retiré de la boutique !");
+                            } catch(err) { alert("Erreur: " + err.message); }
+                        }
+                    }
+                });
+            }
+
             // UI Event Bindings
             if (storeSearchInput) storeSearchInput.addEventListener('input', (e) => renderStoreProducts(e.target.value));
             if (shopSearchInput) shopSearchInput.addEventListener('input', (e) => renderShopStock(e.target.value));
@@ -2451,17 +2436,17 @@
                 document.getElementById('stat-revenue').textContent = formatCurrency(sales.reduce((acc, s) => acc + s.totalAmount, 0));
                 document.getElementById('stat-products-in-stock').textContent = shopCount;
                 
-                // Best Selling & Seller Perf (Simplified logic)
-                const bestSellingContainer = document.getElementById('best-selling-tbody');
+                // Best Selling & Seller Perf
                 const productSales = sales.reduce((acc, s) => { acc[s.productName] = (acc[s.productName] || 0) + s.quantity; return acc; }, {});
                 const sortedProd = Object.entries(productSales).sort((a,b) => b[1]-a[1]).slice(0,5);
-                bestSellingContainer.innerHTML = sortedProd.length ? sortedProd.map(([name, qty]) => `<tr class="hover:bg-gray-50"><td class="px-4 py-3 text-sm text-gray-800">${name}</td><td class="px-4 py-3 text-sm text-gray-600">${qty}</td><td class="px-4 py-3"></td></tr>`).join('') : '';
+                const bsTbody = document.getElementById('best-selling-tbody');
+                bsTbody.innerHTML = sortedProd.length ? sortedProd.map(([name, qty]) => `<tr class="hover:bg-gray-50"><td class="px-4 py-3 text-sm text-gray-800">${name}</td><td class="px-4 py-3 text-sm text-gray-600">${qty}</td><td class="px-4 py-3"></td></tr>`).join('') : '';
                 if(sortedProd.length) { document.getElementById('best-selling-placeholder').classList.add('hidden'); document.getElementById('best-selling-table-container').classList.remove('hidden'); }
                 
-                const sellerPerfContainer = document.getElementById('seller-performance-tbody');
                 const sellerSales = sales.reduce((acc, s) => { acc[s.sellerName] = (acc[s.sellerName] || 0) + s.totalAmount; return acc; }, {});
                 const sortedSeller = Object.entries(sellerSales).sort((a,b) => b[1]-a[1]).slice(0,5);
-                sellerPerfContainer.innerHTML = sortedSeller.length ? sortedSeller.map(([name, total]) => `<tr class="hover:bg-gray-50"><td class="px-4 py-3 text-sm text-gray-800">${name}</td><td class="px-4 py-3"></td><td class="px-4 py-3 text-sm font-semibold text-gray-700">${formatCurrency(total)}</td></tr>`).join('') : '';
+                const spTbody = document.getElementById('seller-performance-tbody');
+                spTbody.innerHTML = sortedSeller.length ? sortedSeller.map(([name, total]) => `<tr class="hover:bg-gray-50"><td class="px-4 py-3 text-sm text-gray-800">${name}</td><td class="px-4 py-3"></td><td class="px-4 py-3 text-sm font-semibold text-gray-700">${formatCurrency(total)}</td></tr>`).join('') : '';
                 if(sortedSeller.length) { document.getElementById('seller-performance-placeholder').classList.add('hidden'); document.getElementById('seller-performance-table-container').classList.remove('hidden'); }
             }
 
