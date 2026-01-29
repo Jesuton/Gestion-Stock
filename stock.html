@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>StockPilot</title>
+    <!-- Chargement de TailwindCSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Ajout de la police Inter pour une meilleure apparence */
@@ -45,6 +46,9 @@
 </head>
 <body class="bg-gray-50">
 
+    <!-- 
+      CONTENEUR DE LA PAGE D'AUTHENTIFICATION
+    -->
     <div id="auth-page-container">
         <div class="min-h-screen bg-gray-50 flex flex-col justify-center items-center p-4">
             <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
@@ -67,49 +71,43 @@
                     </button>
                 </div>
 
+                <!-- Formulaire de connexion (initialement visible) -->
                 <form id="login-form">
                     <div class="space-y-4">
-                        <div class="flex bg-gray-100 rounded-lg p-1 text-xs font-semibold">
-                            <button type="button" id="login-mode-admin" class="flex-1 px-3 py-2 rounded-md bg-white text-gray-800 shadow">Admin</button>
-                            <button type="button" id="login-mode-code" class="flex-1 px-3 py-2 rounded-md text-gray-500 hover:text-gray-700">Collaborateur</button>
-                        </div>
                         <div>
                             <label class="text-sm font-medium text-gray-600" for="email">Email</label>
                             <input type="email" id="email" name="email" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
                         </div>
-                        <div id="login-password-field">
+                        <div>
                             <label class="text-sm font-medium text-gray-600" for="password">Mot de passe</label>
                             <input type="password" id="password" name="password" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
                         </div>
-                        <div id="login-access-code-field" class="hidden">
-                            <label class="text-sm font-medium text-gray-600" for="access-code">Code d'accès</label>
-                            <input type="text" id="access-code" name="access-code" placeholder="Ex: Z4T7-9Q3S" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition uppercase tracking-widest" />
-                            <p class="text-xs text-gray-500 mt-1">Demandez ce code à l'administrateur de votre entreprise.</p>
-                        </div>
-                        <p id="login-error" class="text-red-500 text-sm mt-2 hidden"></p> <button type="submit" id="login-submit-button" class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
+                        <p id="login-error" class="text-red-500 text-sm mt-2 hidden"></p> <!-- Ajout pour les erreurs -->
+                        <button type="submit" id="login-submit-button" class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
                             Se connecter
                         </button>
                     </div>
                 </form>
 
+                <!-- Formulaire d'inscription (initialement caché) -->
                 <form id="signup-form" class="hidden">
                     <div class="space-y-4">
                         <div>
                             <label class="text-sm font-medium text-gray-600" for="fullName">Nom complet</label>
-                            <input type="text" id="fullName" name="fullName" placeholder="Jean Dupont" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required />
+                            <input type="text" id="fullName" name="fullName" placeholder="Jean Dupont" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
                         </div>
                         <div>
                             <label class="text-sm font-medium text-gray-600" for="companyName">Nom de l'entreprise</label>
-                            <input type="text" id="companyName" name="companyName" placeholder="Ma Société" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required />
+                            <input type="text" id="companyName" name="companyName" placeholder="Ma Société" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
                             <p class="text-xs text-gray-500 mt-1">Si le nom correspond à une entreprise existante, vous la rejoindrez.</p>
                         </div>
                         <div>
                             <label class="text-sm font-medium text-gray-600" for="signup-email">Email</label>
-                            <input type="email" id="signup-email" name="signup-email" placeholder="votre@email.com" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required />
+                            <input type="email" id="signup-email" name="signup-email" placeholder="votre@email.com" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
                         </div>
                         <div>
                             <label class="text-sm font-medium text-gray-600" for="signup-password">Mot de passe</label>
-                            <input type="password" id="signup-password" name="signup-password" placeholder="********" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required />
+                            <input type="password" id="signup-password" name="signup-password" placeholder="********" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
                         </div>
                         <div id="signup-error-container" class="hidden p-3 bg-red-50 border border-red-200 rounded-lg">
                              <p id="signup-error" class="text-red-500 text-sm"></p>
@@ -123,9 +121,15 @@
         </div>
     </div>
 
+    <!-- 
+      CONTENEUR DE L'APPLICATION (LAYOUT)
+      Initialement caché, sera affiché par JS après la connexion.
+    -->
     <div id="layout-container" class="hidden">
+        <!-- Overlay pour sidebar mobile -->
         <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden lg:hidden"></div>
 
+        <!-- Sidebar -->
         <aside id="sidebar" class="w-64 bg-white shadow-md flex flex-col h-screen fixed top-0 left-0 z-40 transition-transform duration-300 ease-in-out -translate-x-full lg:translate-x-0 lg:transition-all">
             <div class="p-6 flex items-center space-x-3 border-b border-gray-200">
                 <div class="bg-cyan-100 text-cyan-500 p-2 rounded-lg">
@@ -134,6 +138,7 @@
                 <h1 class="sidebar-text text-xl font-bold text-gray-800">StockPilot</h1>
             </div>
             <nav class="flex-1 p-4 space-y-2">
+                <!-- Les boutons de navigation -->
                 <button data-page="Tableau de bord" class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors bg-cyan-400 text-white shadow">
                     <div data-icon="dashboard" class="w-5 h-5"></div>
                     <span class="sidebar-text">Tableau de bord</span>
@@ -161,6 +166,7 @@
             </nav>
             <div class="p-4 border-t border-gray-200">
                 <div class="sidebar-text p-4 mb-2 rounded-lg bg-gray-100">
+                    <!-- Placeholder pour le profil utilisateur -->
                     <p id="user-name-display" class="text-sm font-medium text-gray-700">Utilisateur connecté</p>
                     <p id="user-company-display" class="text-xs text-gray-500 font-semibold truncate mt-1"></p>
                     <p id="user-email-display" class="text-xs text-gray-400 truncate">Chargement...</p>
@@ -170,26 +176,32 @@
                     <span class="sidebar-text">Déconnexion</span>
                 </button>
             </div>
-             <div class="hidden lg:block absolute -right-3 top-20">
+             <!-- Bouton pour réduire/agrandir la sidebar sur Desktop -->
+            <div class="hidden lg:block absolute -right-3 top-20">
                 <button id="sidebar-collapse-toggle" class="bg-white border rounded-full p-1.5 shadow-md hover:bg-gray-100 transition-colors">
                     <div data-icon="arrowLeft" class="w-4 h-4 text-gray-600"></div>
                 </button>
             </div>
         </aside>
 
+        <!-- Contenu principal (pages) -->
         <main class="flex-1 lg:ml-64 overflow-y-auto h-screen">
             
+            <!-- Header pour la vue mobile -->
             <header id="mobile-header" class="sticky top-0 bg-gray-50/75 backdrop-blur-sm z-10 p-4 border-b border-gray-200 flex items-center justify-between lg:hidden">
                 <button id="hamburger-button" class="text-gray-500 hover:text-gray-800">
                     <div data-icon="menu" class="w-6 h-6"></div>
                 </button>
                 <h1 id="mobile-page-title" class="text-lg font-semibold text-gray-800">Tableau de bord</h1>
-                <div class="w-6"></div> </header>
+                <div class="w-6"></div> <!-- Spacer -->
+            </header>
 
+            <!-- Page: Tableau de bord -->
             <div id="page-Tableau-de-bord" class="page-content p-4 md:p-8">
                 <h1 class="text-3xl font-bold text-gray-800">Bienvenue!</h1>
                 <p class="text-gray-500 mt-1">Voici un aperçu de votre activité</p>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+                    <!-- StatCard -->
                     <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
                         <div>
                             <p class="text-sm text-gray-500">Ventes du jour</p>
@@ -199,6 +211,7 @@
                             <div data-icon="sales" class="w-6 h-6 text-blue-500"></div>
                         </div>
                     </div>
+                    <!-- StatCard -->
                     <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
                         <div>
                             <p class="text-sm text-gray-500">Stock Boutique</p>
@@ -208,6 +221,7 @@
                             <div data-icon="box" class="w-6 h-6 text-green-500"></div>
                         </div>
                     </div>
+                    <!-- StatCard -->
                     <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
                         <div>
                             <p class="text-sm text-gray-500">Stock Magasin</p>
@@ -217,6 +231,7 @@
                             <div data-icon="box" class="w-6 h-6 text-yellow-500"></div>
                         </div>
                     </div>
+                    <!-- StatCard -->
                     <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
                         <div>
                             <p class="text-sm text-gray-500">Revenus du mois</p>
@@ -246,6 +261,7 @@
                 </div>
             </div>
 
+            <!-- Page: Ventes -->
             <div id="page-Ventes" class="page-content p-4 md:p-8 hidden">
                 <h1 class="text-3xl font-bold text-gray-800">Ventes</h1>
                 <p class="text-gray-500 mt-1">Enregistrez vos ventes quotidiennes</p>
@@ -266,6 +282,7 @@
                             <input type="number" name="quantity" id="sales-quantity-input" value="1" min="1" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500" />
                         </div>
                         
+                        <!-- Nouveau champ : Montant total -->
                         <div class="col-span-1">
                             <label for="sales-total-amount" class="block text-sm font-medium text-gray-700 mb-1">Montant total</label>
                             <input type="text" id="sales-total-amount" value="0 FCFA" class="w-full border-gray-300 rounded-lg shadow-sm bg-gray-100 focus:ring-0 focus:border-gray-300" readonly />
@@ -294,10 +311,13 @@
                     <h2 class="text-xl font-bold text-gray-800">Historique des ventes</h2>
                     <p class="text-sm text-gray-500 mt-1">Liste de toutes les transactions enregistrées.</p>
                     
+                    <!-- Conteneur pour l'historique des ventes -->
                     <div id="sales-history-container" class="mt-6">
+                        <!-- Message si vide -->
                         <div id="sales-history-placeholder" class="flex flex-col items-center justify-center text-center text-gray-500 h-32">
                             <p>Aucune vente enregistrée</p>
                         </div>
+                        <!-- Tableau si non vide -->
                         <div id="sales-history-table-container" class="hidden overflow-x-auto rounded-lg border border-gray-200">
                             <table class="min-w-full bg-white divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
@@ -311,18 +331,21 @@
                                     </tr>
                                 </thead>
                                 <tbody id="sales-history-tbody" class="divide-y divide-gray-200">
-                                    </tbody>
+                                    <!-- Lignes de ventes insérées par JS -->
+                                </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- Page: Stock Boutique -->
             <div id="page-Stock-Boutique" class="page-content p-4 md:p-8 hidden">
                 <h1 class="text-3xl font-bold text-gray-800">Stock de la Boutique</h1>
                 <div class="mt-8 bg-white p-6 rounded-lg shadow-sm">
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div class="relative flex-grow">
+                            <!-- ID AJOUTÉ ICI -->
                             <input type="text" id="shop-search-input" placeholder="Rechercher par nom ou description..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500" />
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -347,10 +370,13 @@
                             </button>
                         </div>
                     </div>
+                    <!-- Conteneur pour la liste des produits de la boutique -->
                     <div id="shop-stock-container" class="mt-6">
+                        <!-- Message si vide (visible par défaut) -->
                         <div id="shop-stock-placeholder" class="flex flex-col items-center justify-center text-center text-gray-500 h-40">
                             <p>Aucun article en inventaire.</p>
                         </div>
+                        <!-- Tableau si non vide (caché par défaut) -->
                         <div id="shop-stock-table-container" class="hidden overflow-x-auto rounded-lg border border-gray-200">
                             <table class="min-w-full bg-white divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
@@ -363,7 +389,8 @@
                                     </tr>
                                 </thead>
                                 <tbody id="shop-stock-tbody" class="divide-y divide-gray-200">
-                                    </tbody>
+                                    <!-- Lignes de produits insérées par JS -->
+                                </tbody>
                             </table>
                         </div>
                     </div>
@@ -371,35 +398,43 @@
                 <div class="mt-10 bg-white p-6 rounded-lg shadow-sm">
                     <h2 class="text-xl font-bold text-gray-800">Mouvements du Stock Boutique</h2>
                     <p class="text-sm text-gray-500 mt-1">Historique de tous les ajouts et réapprovisionnements de stock.</p>
-                     <div id="shop-movements-container" class="mt-6">
+                     <!-- Conteneur pour les mouvements de la boutique -->
+                    <div id="shop-movements-container" class="mt-6">
+                        <!-- Message si vide (visible par défaut) -->
                         <div id="shop-movements-placeholder" class="flex flex-col items-center justify-center text-center text-gray-500 h-32">
                             <p>Aucun mouvement de stock enregistré.</p>
                         </div>
+                        <!-- Tableau si non vide (caché par défaut) -->
                         <div id="shop-movements-table-container" class="hidden overflow-x-auto rounded-lg border border-gray-200">
                             <table class="min-w-full bg-white divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
                                     <tr>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th> <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qte Changée</th> <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Changement</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th> <!-- AJOUTÉ -->
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qte Changée</th> <!-- Renommé -->
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Changement</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Commentaire</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Utilisateur</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                                     </tr>
                                 </thead>
                                 <tbody id="shop-movements-tbody" class="divide-y divide-gray-200">
-                                    </tbody>
+                                    <!-- Lignes de mouvements insérées par JS -->
+                                </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- Page: Mon Magasin -->
             <div id="page-Mon-Magasin" class="page-content p-4 md:p-8 hidden">
                 <h1 class="text-3xl font-bold text-gray-800">Gestion du Magasin</h1>
                 <div class="mt-8 bg-white p-6 rounded-lg shadow-sm">
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div class="relative flex-grow">
-                             <input type="text" id="store-search-input" placeholder="Rechercher par nom ou description..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500" />
+                             <!-- ID AJOUTÉ ICI -->
+                            <input type="text" id="store-search-input" placeholder="Rechercher par nom ou description..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500" />
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
@@ -409,16 +444,20 @@
                         <div class="flex items-center gap-2 flex-wrap">
                             <button id="open-entry-modal-button" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2">Entrée</button>
                             <button id="open-exit-modal-button" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2">Sortie</button>
+                            <!-- ID ajouté au bouton "Nouveau Produit" -->
                             <button id="open-new-product-modal-button" class="px-4 py-2 bg-cyan-400 text-white font-semibold rounded-lg shadow-md hover:bg-cyan-500 transition-colors flex items-center gap-2">
                                 + Nouveau Produit
                             </button>
                         </div>
                     </div>
                     
+                    <!-- Conteneur pour la liste des produits du magasin -->
                     <div id="store-products-container" class="mt-6">
+                        <!-- Message si vide (visible par défaut) -->
                         <div id="store-products-placeholder" class="flex flex-col items-center justify-center text-center text-gray-500 h-40">
                             <p>Aucun article dans le magasin.</p>
                         </div>
+                        <!-- Tableau si non vide (caché par défaut) -->
                         <div id="store-products-table-container" class="hidden overflow-x-auto rounded-lg border border-gray-200">
                             <table class="min-w-full bg-white divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
@@ -431,7 +470,8 @@
                                     </tr>
                                 </thead>
                                 <tbody id="store-products-tbody" class="divide-y divide-gray-200">
-                                    </tbody>
+                                    <!-- Lignes de produits insérées par JS -->
+                                </tbody>
                             </table>
                         </div>
                     </div>
@@ -441,10 +481,13 @@
                     <h2 class="text-xl font-bold text-gray-800">Mouvements du Magasin</h2>
                     <p class="text-sm text-gray-500 mt-1">Historique de toutes les entrées et sorties du magasin.</p>
 
+                    <!-- Conteneur pour les mouvements du magasin -->
                     <div id="store-movements-container" class="mt-6">
+                        <!-- Message si vide (visible par défaut) -->
                         <div id="store-movements-placeholder" class="flex flex-col items-center justify-center text-center text-gray-500 h-32">
                             <p>Aucun mouvement enregistré.</p>
                         </div>
+                        <!-- Tableau si non vide (caché par défaut) -->
                         <div id="store-movements-table-container" class="hidden overflow-x-auto rounded-lg border border-gray-200">
                             <table class="min-w-full bg-white divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
@@ -458,17 +501,20 @@
                                     </tr>
                                 </thead>
                                 <tbody id="store-movements-tbody" class="divide-y divide-gray-200">
-                                    </tbody>
+                                    <!-- Lignes de mouvements insérées par JS -->
+                                </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- Page: Statistiques -->
             <div id="page-Statistiques" class="page-content p-4 md:p-8 hidden">
                 <h1 class="text-3xl font-bold text-gray-800">Statistiques</h1>
                 <p class="text-gray-500 mt-1">Analysez vos performances commerciales globales</p>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+                    <!-- StatCard -->
                     <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
                         <div>
                             <p class="text-sm text-gray-500">Ventes totales</p>
@@ -479,6 +525,7 @@
                             <div data-icon="sales" class="w-6 h-6 text-blue-500"></div>
                         </div>
                     </div>
+                    <!-- StatCard -->
                     <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
                         <div>
                             <p class="text-sm text-gray-500">Revenus totaux</p>
@@ -489,6 +536,7 @@
                             <div data-icon="stats" class="w-6 h-6 text-indigo-500"></div>
                         </div>
                     </div>
+                    <!-- StatCard -->
                     <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
                         <div>
                             <p class="text-sm text-gray-500">Produits en stock</p>
@@ -499,6 +547,7 @@
                             <div data-icon="box" class="w-6 h-6 text-green-500"></div>
                         </div>
                     </div>
+                    <!-- StatCard -->
                     <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
                         <div>
                             <p class="text-sm text-gray-500">Marge moyenne</p>
@@ -512,6 +561,7 @@
                 </div>
                 
                 <div class="mt-10 grid grid-cols-1 xl:grid-cols-2 gap-8">
+                    <!-- Section Produits les plus vendus -->
                     <div class="bg-white p-6 rounded-lg shadow-sm">
                         <h2 class="text-xl font-bold text-gray-800">Produits les plus vendus</h2>
                         <p class="text-sm text-gray-500 mt-1">Classement par quantité vendue.</p>
@@ -529,12 +579,14 @@
                                         </tr>
                                     </thead>
                                     <tbody id="best-selling-tbody" class="divide-y divide-gray-200">
-                                        </tbody>
+                                        <!-- Données insérées par JS -->
+                                    </tbody>
                                 </table>
                             </div>
                         </div>
                     </div>
 
+                    <!-- Section Performance des vendeurs -->
                     <div class="bg-white p-6 rounded-lg shadow-sm">
                         <h2 class="text-xl font-bold text-gray-800">Performance des vendeurs</h2>
                         <p class="text-sm text-gray-500 mt-1">Classement par revenu généré.</p>
@@ -552,7 +604,8 @@
                                         </tr>
                                     </thead>
                                     <tbody id="seller-performance-tbody" class="divide-y divide-gray-200">
-                                        </tbody>
+                                        <!-- Données insérées par JS -->
+                                    </tbody>
                                 </table>
                             </div>
                         </div>
@@ -560,316 +613,31 @@
                 </div>
             </div>
 
+            <!-- Page: Paramètres -->
             <div id="page-Paramètres" class="page-content p-4 md:p-8 hidden">
-                <div class="flex flex-col gap-2">
-                    <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 rounded-2xl bg-cyan-100 flex items-center justify-center text-cyan-500">
-                            <div data-icon="settings" class="w-6 h-6 text-cyan-500"></div>
-                        </div>
-                        <div>
-                            <h1 class="text-3xl font-bold">Paramètres</h1>
-                            <p class="text-gray-500 mt-1">Gérez les préférences de votre compte, de votre équipe et du SaaS.</p>
-                        </div>
-                    </div>
-                    <p class="text-sm text-gray-400">
-                        Seuls les administrateurs ont accès complet à cette zone. Les autres rôles peuvent être limités via l'onglet
-                        <span class="font-semibold text-gray-600">Accès</span>.
-                    </p>
-                </div>
-
-                <div id="settings-restricted-state" class="mt-8 bg-white p-6 rounded-xl shadow-sm border border-red-100 hidden">
-                    <div class="flex items-start gap-4">
-                        <div class="p-2 rounded-full bg-red-50 text-red-500">
-                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L4.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                        </div>
-                        <div>
-                            <h2 class="text-lg font-semibold text-gray-900">Accès restreint</h2>
-                            <p class="text-gray-500 mt-1">Vous devez être administrateur de l'entreprise pour modifier les paramètres globaux. Contactez un administrateur pour revoir vos droits.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="settings-tabs-wrapper" class="mt-8 space-y-6 hidden">
-                    <div class="bg-white p-6 rounded-xl shadow-sm">
-                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                            <div>
-                                <p class="text-sm uppercase tracking-wide text-gray-400">Plan actuel</p>
-                                <p class="text-2xl font-semibold text-gray-800">StockPilot Pro</p>
-                                <p class="text-gray-500 text-sm">Facturé mensuellement · 5 utilisateurs inclus</p>
-                            </div>
-                            <div class="flex flex-wrap gap-3 text-sm">
-                                <div class="px-3 py-2 bg-cyan-50 text-cyan-700 rounded-lg font-medium" id="settings-admin-badge">Rôle : Admin</div>
-                                <button class="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 font-semibold">Mettre à niveau</button>
-                                <button class="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 font-semibold">Télécharger la politique d'accès</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div class="flex flex-wrap gap-2 bg-white p-2 rounded-2xl shadow-sm">
-                            <button type="button" data-settings-tab="compte" class="settings-tab-button px-4 py-2 rounded-xl text-sm font-semibold bg-cyan-500 text-white">Compte</button>
-                            <button type="button" data-settings-tab="application" class="settings-tab-button px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 hover:text-gray-900">Application</button>
-                            <button type="button" data-settings-tab="notifications" class="settings-tab-button px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 hover:text-gray-900">Notifications</button>
-                            <button type="button" data-settings-tab="facturation" class="settings-tab-button px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 hover:text-gray-900">Facturation</button>
-                            <button type="button" data-settings-tab="acces" class="settings-tab-button px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 hover:text-gray-900 flex items-center gap-2">
-                                Accès
-                                <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-cyan-50 text-cyan-600 border border-cyan-100">Admin</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="space-y-6">
-                        <div data-settings-panel="compte" class="bg-white rounded-2xl shadow-sm p-6 space-y-6">
-                            <div class="flex flex-col gap-1">
-                                <h2 class="text-xl font-semibold text-gray-900">Profil & Identité</h2>
-                                <p class="text-sm text-gray-500">Coordonnées de l'entreprise et du responsable légal.</p>
-                            </div>
-                            <div class="grid gap-6 md:grid-cols-2">
-                                <div>
-                                    <label class="text-sm font-medium text-gray-600">Nom de l'entreprise</label>
-                                    <input type="text" class="mt-2 w-full rounded-lg border-gray-200 focus:ring-cyan-400 focus:border-cyan-400" placeholder="Nom de votre entreprise" id="settings-company-name">
-                                </div>
-                                <div>
-                                    <label class="text-sm font-medium text-gray-600">Fuseau horaire</label>
-                                    <select class="mt-2 w-full rounded-lg border-gray-200 focus:ring-cyan-400 focus:border-cyan-400" id="settings-timezone">
-                                        <option value="Africa/Abidjan">(GMT) Afrique de l'Ouest</option>
-                                        <option value="Europe/Paris">(GMT+1) Europe Centrale</option>
-                                        <option value="America/New_York">(GMT-5) New York</option>
-                                        <option value="Asia/Dubai">(GMT+4) Dubaï</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="text-sm font-medium text-gray-600">Email de support</label>
-                                    <input type="email" class="mt-2 w-full rounded-lg border-gray-200 focus:ring-cyan-400 focus:border-cyan-400" placeholder="support@entreprise.com">
-                                </div>
-                                <div>
-                                    <label class="text-sm font-medium text-gray-600">Numéro WhatsApp</label>
-                                    <input type="tel" class="mt-2 w-full rounded-lg border-gray-200 focus:ring-cyan-400 focus:border-cyan-400" placeholder="+225 xx xx xx xx">
-                                </div>
-                            </div>
-                            <div class="flex flex-wrap gap-3">
-                                <button class="px-5 py-2.5 bg-cyan-500 text-white rounded-xl text-sm font-semibold hover:bg-cyan-600">Enregistrer</button>
-                                <button class="px-5 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50">Annuler</button>
-                            </div>
-                        </div>
-
-                        <div data-settings-panel="application" class="bg-white rounded-2xl shadow-sm p-6 space-y-6 hidden">
-                            <div>
-                                <h2 class="text-xl font-semibold text-gray-900">Fonctionnalités activées</h2>
-                                <p class="text-sm text-gray-500">Activez uniquement les modules nécessaires à votre entreprise.</p>
-                            </div>
-                            <div class="space-y-4">
-                                <label class="flex items-start justify-between gap-4 p-4 rounded-xl border border-gray-200 hover:border-cyan-200 cursor-pointer">
-                                    <div>
-                                        <p class="text-sm font-semibold text-gray-800">Gestion multi-boutiques</p>
-                                        <p class="text-sm text-gray-500">Synchroniser plusieurs points de vente.</p>
-                                    </div>
-                                    <input type="checkbox" class="w-5 h-5 text-cyan-500 rounded border-gray-300 focus:ring-cyan-500" checked>
-                                </label>
-                                <label class="flex items-start justify-between gap-4 p-4 rounded-xl border border-gray-200 hover:border-cyan-200 cursor-pointer">
-                                    <div>
-                                        <p class="text-sm font-semibold text-gray-800">Mode hors ligne</p>
-                                        <p class="text-sm text-gray-500">Continuer les ventes même sans connexion.</p>
-                                    </div>
-                                    <input type="checkbox" class="w-5 h-5 text-cyan-500 rounded border-gray-300 focus:ring-cyan-500">
-                                </label>
-                                <label class="flex items-start justify-between gap-4 p-4 rounded-xl border border-gray-200 hover:border-cyan-200 cursor-pointer">
-                                    <div>
-                                        <p class="text-sm font-semibold text-gray-800">Synchronisation comptable</p>
-                                        <p class="text-sm text-gray-500">Export automatique vers votre ERP.</p>
-                                    </div>
-                                    <input type="checkbox" class="w-5 h-5 text-cyan-500 rounded border-gray-300 focus:ring-cyan-500" checked>
-                                </label>
-                            </div>
-                            <div class="flex justify-end">
-                                <button class="px-5 py-2.5 bg-cyan-500 text-white rounded-xl text-sm font-semibold hover:bg-cyan-600">Sauvegarder</button>
-                            </div>
-                        </div>
-
-                        <div data-settings-panel="notifications" class="bg-white rounded-2xl shadow-sm p-6 space-y-6 hidden">
-                            <div>
-                                <h2 class="text-xl font-semibold text-gray-900">Alertes & Notifications</h2>
-                                <p class="text-sm text-gray-500">Notifiez vos équipes lors des évènements critiques.</p>
-                            </div>
-                            <div class="grid md:grid-cols-2 gap-4">
-                                <div class="p-4 border border-gray-200 rounded-2xl space-y-3">
-                                    <div class="flex items-center justify-between">
-                                        <div>
-                                            <p class="font-semibold text-gray-800">Stock critique</p>
-                                            <p class="text-sm text-gray-500">Email + push</p>
-                                        </div>
-                                        <label class="inline-flex items-center cursor-pointer">
-                                            <input type="checkbox" class="sr-only peer" checked>
-                                            <span class="w-12 h-6 bg-gray-200 rounded-full peer peer-checked:bg-cyan-500 relative transition">
-                                                <span class="absolute top-0.5 left-1 w-5 h-5 bg-white rounded-full shadow transition-all peer-checked:translate-x-6"></span>
-                                            </span>
-                                        </label>
-                                    </div>
-                                    <p class="text-xs text-gray-500">Envoyer aussi aux responsables magasin.</p>
-                                </div>
-                                <div class="p-4 border border-gray-200 rounded-2xl space-y-3">
-                                    <div class="flex items-center justify-between">
-                                        <div>
-                                            <p class="font-semibold text-gray-800">Rapport quotidien</p>
-                                            <p class="text-sm text-gray-500">Email 7h GMT</p>
-                                        </div>
-                                        <label class="inline-flex items-center cursor-pointer">
-                                            <input type="checkbox" class="sr-only peer" checked>
-                                            <span class="w-12 h-6 bg-gray-200 rounded-full peer peer-checked:bg-cyan-500 relative transition">
-                                                <span class="absolute top-0.5 left-1 w-5 h-5 bg-white rounded-full shadow transition-all peer-checked:translate-x-6"></span>
-                                            </span>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="p-4 border border-gray-200 rounded-2xl space-y-3">
-                                    <div class="flex items-center justify-between">
-                                        <div>
-                                            <p class="font-semibold text-gray-800">Objectifs de ventes</p>
-                                            <p class="text-sm text-gray-500">Slack + push</p>
-                                        </div>
-                                        <label class="inline-flex items-center cursor-pointer">
-                                            <input type="checkbox" class="sr-only peer">
-                                            <span class="w-12 h-6 bg-gray-200 rounded-full peer peer-checked:bg-cyan-500 relative transition">
-                                                <span class="absolute top-0.5 left-1 w-5 h-5 bg-white rounded-full shadow transition-all peer-checked:translate-x-6"></span>
-                                            </span>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="p-4 border border-gray-200 rounded-2xl space-y-3">
-                                    <div class="flex items-center justify-between">
-                                        <div>
-                                            <p class="font-semibold text-gray-800">Facturation & retard</p>
-                                            <p class="text-sm text-gray-500">Email + SMS</p>
-                                        </div>
-                                        <label class="inline-flex items-center cursor-pointer">
-                                            <input type="checkbox" class="sr-only peer" checked>
-                                            <span class="w-12 h-6 bg-gray-200 rounded-full peer peer-checked:bg-cyan-500 relative transition">
-                                                <span class="absolute top-0.5 left-1 w-5 h-5 bg-white rounded-full shadow transition-all peer-checked:translate-x-6"></span>
-                                            </span>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="flex justify-end">
-                                <button class="px-5 py-2.5 bg-cyan-500 text-white rounded-xl text-sm font-semibold hover:bg-cyan-600">Mettre à jour</button>
-                            </div>
-                        </div>
-
-                        <div data-settings-panel="facturation" class="bg-white rounded-2xl shadow-sm p-6 space-y-6 hidden">
-                            <div>
-                                <h2 class="text-xl font-semibold text-gray-900">Facturation & moyens de paiement</h2>
-                                <p class="text-sm text-gray-500">Visualisez votre consommation et vos prochaines échéances.</p>
-                            </div>
-                            <div class="grid md:grid-cols-2 gap-6">
-                                <div class="p-5 border border-gray-200 rounded-2xl space-y-4">
-                                    <div class="flex items-center justify-between">
-                                        <div>
-                                            <p class="text-sm uppercase text-gray-400">Prochaine facture</p>
-                                            <p class="text-2xl font-semibold text-gray-800">24 000 F CFA</p>
-                                        </div>
-                                        <span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-50 text-green-700">Le 01/12</span>
-                                    </div>
-                                    <p class="text-sm text-gray-500">Basée sur 3 boutiques actives et 7 utilisateurs.</p>
-                                    <button class="px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50">Télécharger la dernière facture</button>
-                                </div>
-                                <div class="p-5 border border-gray-200 rounded-2xl space-y-4">
-                                    <div>
-                                        <p class="text-sm uppercase text-gray-400">Carte principale</p>
-                                        <p class="text-lg font-semibold text-gray-800">**** 4587 · Ecobank</p>
-                                        <p class="text-sm text-gray-500">Titulaire : Turibe Bayomi</p>
-                                    </div>
-                                    <div class="flex gap-3">
-                                        <button class="px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50">Modifier</button>
-                                        <button class="px-4 py-2 rounded-xl border border-red-200 text-sm font-semibold text-red-600 hover:bg-red-50">Supprimer</button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="flex justify-end">
-                                <button class="px-5 py-2.5 bg-cyan-500 text-white rounded-xl text-sm font-semibold hover:bg-cyan-600">Ajouter un moyen de paiement</button>
-                            </div>
-                        </div>
-
-                        <div data-settings-panel="acces" class="bg-white rounded-2xl shadow-sm p-6 space-y-6 hidden">
-                            <div class="flex flex-col gap-1">
-                                <div class="flex items-center gap-3">
-                                    <h2 class="text-xl font-semibold text-gray-900">Gestion des accès</h2>
-                                    <span class="px-2.5 py-0.5 text-xs rounded-full bg-cyan-50 text-cyan-600 border border-cyan-100">Admins uniquement</span>
-                                </div>
-                                <p class="text-sm text-gray-500">Définissez les rôles de vos collaborateurs et choisissez les modules qu'ils peuvent voir.</p>
-                            </div>
-                            <div class="grid md:grid-cols-3 gap-4">
-                                <div class="p-4 rounded-2xl border border-gray-200">
-                                    <p class="text-sm uppercase text-gray-400">Employés</p>
-                                    <p class="text-3xl font-semibold text-gray-800" id="access-total-users">0</p>
-                                </div>
-                                <div class="p-4 rounded-2xl border border-gray-200">
-                                    <p class="text-sm uppercase text-gray-400">Admins</p>
-                                    <p class="text-3xl font-semibold text-gray-800" id="access-total-admins">0</p>
-                                </div>
-                                <div class="p-4 rounded-2xl border border-gray-200">
-                                    <p class="text-sm uppercase text-gray-400">Invitations en attente</p>
-                                    <p class="text-3xl font-semibold text-gray-800" id="access-total-pending">0</p>
-                                </div>
-                            </div>
-
-                            <div class="p-4 rounded-2xl border border-gray-200 space-y-4">
-                                <div>
-                                    <p class="font-semibold text-gray-800">Ajouter un collaborateur</p>
-                                    <p class="text-sm text-gray-500">Générez un code d'accès personnel et attribuez un rôle immédiatement.</p>
-                                </div>
-                                <form id="access-add-member-form" class="grid md:grid-cols-4 gap-4">
-                                    <input type="text" id="access-member-name" placeholder="Nom complet" class="col-span-2 md:col-span-1 rounded-xl border-gray-200 focus:ring-cyan-400 focus:border-cyan-400" required>
-                                    <input type="email" id="access-member-email" placeholder="Email professionnel" class="col-span-2 md:col-span-1 rounded-xl border-gray-200 focus:ring-cyan-400 focus:border-cyan-400" required>
-                                    <select id="access-member-role" class="col-span-2 md:col-span-1 rounded-xl border-gray-200 focus:ring-cyan-400 focus:border-cyan-400">
-                                        <option value="manager">Manager</option>
-                                        <option value="vendeur">Vendeur</option>
-                                        <option value="consultation">Consultation</option>
-                                    </select>
-                                    <button type="submit" class="col-span-2 md:col-span-1 bg-cyan-500 text-white rounded-xl font-semibold hover:bg-cyan-600">Générer le code</button>
-                                </form>
-                            </div>
-
-                            <div class="space-y-3">
-                                <div class="flex items-center justify-between">
-                                    <p class="font-semibold text-gray-800">Collaborateurs actifs</p>
-                                    <span class="text-sm text-gray-500">Cliquez sur un module pour l'activer/désactiver.</span>
-                                </div>
-                                <div class="overflow-x-auto border border-gray-200 rounded-2xl">
-                                    <table class="min-w-full divide-y divide-gray-200">
-                                        <thead class="bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                                            <tr>
-                                                <th class="px-4 py-3">Nom</th>
-                                                <th class="px-4 py-3">Email</th>
-                                                <th class="px-4 py-3">Rôle</th>
-                                                <th class="px-4 py-3">Modules autorisés</th>
-                                                <th class="px-4 py-3">Code d'accès</th>
-                                                <th class="px-4 py-3 text-right">Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="access-members-tbody" class="divide-y divide-gray-100 text-sm text-gray-700">
-                                            <tr>
-                                                <td colspan="6" class="px-4 py-6 text-center text-gray-400">Chargement des collaborateurs...</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <h1 class="text-3xl font-bold">Paramètres</h1>
+                <p class="text-gray-500 mt-1">Gérez les paramètres de votre compte et de l'application.</p>
+                <div class="mt-8 bg-white p-6 rounded-lg shadow-sm">
+                    <p>Les options de paramètres seront bientôt disponibles ici.</p>
                 </div>
             </div>
 
         </main>
     </div>
 
+    <!-- 
+      MODAL "AJOUTER UN NOUVEAU PRODUIT"
+    -->
     <div id="new-product-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 m-4">
+            <!-- En-tête -->
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold text-gray-800">Ajouter un nouveau produit au magasin</h2>
                 <button id="close-new-product-modal-button" class="text-gray-400 hover:text-gray-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
+            <!-- Formulaire -->
             <form id="new-product-form">
                 <div class="space-y-4">
                     <div>
@@ -903,6 +671,9 @@
         </div>
     </div>
     
+    <!-- 
+      MODAL "ENREGISTRER UNE ENTRÉE"
+    -->
     <div id="entry-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 m-4">
             <div class="flex justify-between items-center mb-4">
@@ -917,7 +688,8 @@
                         <label for="entry-product-select" class="block text-sm font-medium text-gray-700">Produit *</label>
                         <select id="entry-product-select" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
                             <option value="">Sélectionnez un produit</option>
-                            </select>
+                            <!-- Options remplies par JS -->
+                        </select>
                     </div>
                     <div>
                         <label for="entry-quantity" class="block text-sm font-medium text-gray-700">Quantité *</label>
@@ -936,6 +708,9 @@
         </div>
     </div>
     
+    <!-- 
+      MODAL "ENREGISTRER UNE SORTIE"
+    -->
     <div id="exit-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 m-4">
             <div class="flex justify-between items-center mb-4">
@@ -950,7 +725,8 @@
                         <label for="exit-product-select" class="block text-sm font-medium text-gray-700">Produit *</label>
                         <select id="exit-product-select" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
                             <option value="">Sélectionnez un produit</option>
-                            </select>
+                            <!-- Options remplies par JS -->
+                        </select>
                     </div>
                     <div>
                         <label for="exit-quantity" class="block text-sm font-medium text-gray-700">Quantité *</label>
@@ -969,6 +745,9 @@
         </div>
     </div>
     
+    <!-- 
+      MODAL "TRANSFÉRER UN ARTICLE DEPUIS LE MAGASIN"
+    -->
     <div id="transfer-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 m-4">
             <div class="flex justify-between items-center mb-4">
@@ -983,7 +762,8 @@
                         <label for="transfer-product-select" class="block text-sm font-medium text-gray-700">Article Source (depuis le Magasin) *</label>
                         <select id="transfer-product-select" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
                             <option value="">Sélectionnez un article à transférer...</option>
-                            </select>
+                            <!-- Options remplies par JS -->
+                        </select>
                     </div>
                     
                     <div id="transfer-source-info" class="hidden">
@@ -1027,6 +807,9 @@
         </div>
     </div>
 
+    <!-- 
+      MODAL "RÉAPPROVISIONNER UN ARTICLE"
+    -->
     <div id="restock-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 m-4">
             <div class="flex justify-between items-center mb-4">
@@ -1041,7 +824,8 @@
                         <label for="restock-product-select" class="block text-sm font-medium text-gray-700">Produit de la Boutique *</label>
                         <select id="restock-product-select" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
                             <option value="">Sélectionnez un produit à réapprovisionner</option>
-                            </select>
+                            <!-- Options remplies par JS -->
+                        </select>
                     </div>
 
                     <div id="restock-source-info" class="hidden">
@@ -1075,6 +859,9 @@
         </div>
     </div>
     
+    <!-- 
+      TOAST DE SUCCÈS GLOBAL
+    -->
     <div id="success-toast" class="fixed bottom-5 right-5 z-50">
         <div class="flex items-center bg-green-500 text-white text-sm font-medium px-4 py-3 rounded-lg shadow-lg">
             <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -1116,7 +903,7 @@
                 sales: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>`,
                 box: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>`,
                 stats: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>`,
-                settings: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>`,
+                settings: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>`,
                 logout: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>`,
                 chartBar: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-4m3 4v-2m3 2v-6m3 2V7" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 20h14" /></svg>`,
                 trash: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>`,
@@ -1178,14 +965,9 @@
             const appData = { storeProducts: {}, shopStock: {}, salesHistory: {} };
             let isSidebarOpen = false; 
             let isSidebarCollapsed = false;
-            let isCodeLoginMode = false;
-            let isCodeSession = false;
 
-            let storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, salesHistoryListener, companyMembersListener;
-            let storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, salesHistoryRef, companyMembersRef;
-
-            const accessModules = ['Tableau de bord', 'Ventes', 'Stock Boutique', 'Mon Magasin', 'Statistiques', 'Paramètres'];
-            let teamMembersState = [];
+            let storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, salesHistoryListener;
+            let storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, salesHistoryRef;
 
             // Références DOM
             const authPageContainer = document.getElementById('auth-page-container');
@@ -1205,12 +987,6 @@
             const signupErrorContainer = document.getElementById('signup-error-container');
             const loginSubmitButton = document.getElementById('login-submit-button');
             const signupSubmitButton = document.getElementById('signup-submit-button');
-            const loginPasswordInput = document.getElementById('password');
-            const loginAccessCodeInput = document.getElementById('access-code');
-            const loginPasswordField = document.getElementById('login-password-field');
-            const loginAccessCodeField = document.getElementById('login-access-code-field');
-            const loginModeAdminButton = document.getElementById('login-mode-admin');
-            const loginModeCodeButton = document.getElementById('login-mode-code');
             
             const sidebar = document.getElementById('sidebar');
             const mainContent = document.querySelector('main');
@@ -1299,21 +1075,6 @@
             const successToast = document.getElementById('success-toast');
             const successToastMessage = document.getElementById('success-toast-message');
 
-            // Paramètres & accès
-            const settingsRestrictedState = document.getElementById('settings-restricted-state');
-            const settingsTabsWrapper = document.getElementById('settings-tabs-wrapper');
-            const settingsTabButtons = document.querySelectorAll('.settings-tab-button');
-            const settingsPanels = document.querySelectorAll('[data-settings-panel]');
-            const settingsAdminBadge = document.getElementById('settings-admin-badge');
-            const accessMembersTbody = document.getElementById('access-members-tbody');
-            const accessAddMemberForm = document.getElementById('access-add-member-form');
-            const accessMemberNameInput = document.getElementById('access-member-name');
-            const accessMemberEmailInput = document.getElementById('access-member-email');
-            const accessMemberRoleInput = document.getElementById('access-member-role');
-            const accessTotalUsers = document.getElementById('access-total-users');
-            const accessTotalAdmins = document.getElementById('access-total-admins');
-            const accessTotalPending = document.getElementById('access-total-pending');
-
             function showSuccessToast(message) {
                 if (successToastMessage) successToastMessage.textContent = message;
                 if (successToast) {
@@ -1336,343 +1097,6 @@
                 const date = new Date(isoString);
                 return date.toLocaleString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace(' à', ',');
             }
-
-            function generateAccessCode() {
-                const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-                let code = '';
-                for (let i = 0; i < 8; i += 1) {
-                    code += alphabet[Math.floor(Math.random() * alphabet.length)];
-                }
-                return code;
-            }
-
-            function getCurrentUserRole() {
-                if (!isAuthenticated || !currentUserData) return 'invite';
-                return (currentUserData.role || 'admin').toLowerCase();
-            }
-
-            function updateSettingsAccess() {
-                const isAdmin = getCurrentUserRole() === 'admin';
-                if (settingsRestrictedState) settingsRestrictedState.classList.toggle('hidden', isAdmin);
-                if (settingsTabsWrapper) settingsTabsWrapper.classList.toggle('hidden', !isAdmin);
-                if (settingsAdminBadge) settingsAdminBadge.textContent = `Rôle : ${isAdmin ? 'Admin' : 'Accès limité'}`;
-            }
-
-            function handleManualLogout() {
-                isAuthenticated = false;
-                isCodeSession = false;
-                currentUser = null;
-                currentUserData = null;
-                dbBasePath = '';
-                cleanupFirebaseListeners();
-                updateUI();
-            }
-
-            function setActiveSettingsTab(tabId = 'compte') {
-                if (!settingsTabButtons.length) return;
-                settingsTabButtons.forEach(button => {
-                    const isActive = button.dataset.settingsTab === tabId;
-                    button.classList.toggle('bg-cyan-500', isActive);
-                    button.classList.toggle('text-white', isActive);
-                    button.classList.toggle('text-gray-600', !isActive);
-                });
-                settingsPanels.forEach(panel => panel.classList.toggle('hidden', panel.dataset.settingsPanel !== tabId));
-            }
-
-            function updateLoginModeUI() {
-                if (!loginPasswordField || !loginAccessCodeField) return;
-                if (isCodeLoginMode) {
-                    loginPasswordField.classList.add('hidden');
-                    loginAccessCodeField.classList.remove('hidden');
-                    if (loginPasswordInput) loginPasswordInput.required = false;
-                    if (loginAccessCodeInput) {
-                        loginAccessCodeInput.required = true;
-                        loginAccessCodeInput.value = '';
-                    }
-                    if (loginModeAdminButton) {
-                        loginModeAdminButton.classList.remove('bg-white', 'shadow', 'text-gray-800');
-                        loginModeAdminButton.classList.add('text-gray-500', 'hover:text-gray-700');
-                    }
-                    if (loginModeCodeButton) {
-                        loginModeCodeButton.classList.remove('text-gray-500', 'hover:text-gray-700');
-                        loginModeCodeButton.classList.add('bg-white', 'shadow', 'text-gray-800');
-                    }
-                } else {
-                    loginPasswordField.classList.remove('hidden');
-                    loginAccessCodeField.classList.add('hidden');
-                    if (loginPasswordInput) loginPasswordInput.required = true;
-                    if (loginAccessCodeInput) loginAccessCodeInput.required = false;
-                    if (loginModeCodeButton) {
-                        loginModeCodeButton.classList.remove('bg-white', 'shadow', 'text-gray-800');
-                        loginModeCodeButton.classList.add('text-gray-500', 'hover:text-gray-700');
-                    }
-                    if (loginModeAdminButton) {
-                        loginModeAdminButton.classList.remove('text-gray-500', 'hover:text-gray-700');
-                        loginModeAdminButton.classList.add('bg-white', 'shadow', 'text-gray-800');
-                    }
-                }
-            }
-
-            function ensureCurrentUserInTeam() {
-                if (currentUserData && teamMembersState.length) {
-                    const normalizedEmail = currentUserData.email?.toLowerCase();
-                    teamMembersState = teamMembersState.map(member => ({
-                        ...member,
-                        isCurrentUser: member.email?.toLowerCase() === normalizedEmail
-                    }));
-                }
-                renderAccessMembers();
-            }
-
-            function renderAccessMembers() {
-                if (!accessMembersTbody) return;
-                if (!teamMembersState.length) {
-                    accessMembersTbody.innerHTML = `<tr><td colspan="6" class="px-4 py-6 text-center text-gray-400">Aucun collaborateur pour le moment.</td></tr>`;
-                } else {
-                    const rows = teamMembersState.map(member => {
-                        const permissionButtons = accessModules.map(module => {
-                            const isActive = member.permissions?.includes(module);
-                            const classes = `px-3 py-1 rounded-full border text-xs font-semibold mr-2 mb-2 inline-flex ${isActive ? 'bg-cyan-50 border-cyan-200 text-cyan-600' : 'bg-gray-100 border-gray-200 text-gray-500'}`;
-                            return `<button type="button" data-member-id="${member.id}" data-permission="${module}" class="${classes}">${module}</button>`;
-                        }).join('');
-                        const accessCodeBlock = member.accessCode ? `
-                            <div class="flex items-center gap-2">
-                                <span class="font-mono text-sm text-gray-900">${member.accessCode}</span>
-                                <button type="button" data-copy-code="${member.accessCode}" class="px-2 py-1 text-xs font-semibold rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200">Copier</button>
-                            </div>
-                        ` : `<span class="text-xs text-gray-400">Non défini</span>`;
-                        const statusLabel = member.status === 'pending' ? 'Code partagé' : 'Actif';
-                        const actionCell = member.isCurrentUser ? `<span class="text-xs text-gray-400">Vous</span>` : `<button type="button" data-remove-member="${member.id}" class="text-sm text-red-500 hover:text-red-600 font-semibold">Retirer</button>`;
-                        return `
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3">
-                                    <p class="font-semibold text-gray-900">${member.fullName || member.name || '-'}</p>
-                                    <p class="text-xs text-gray-400">${statusLabel}</p>
-                                </td>
-                                <td class="px-4 py-3 text-sm text-gray-500">${member.email || '-'}</td>
-                                <td class="px-4 py-3">
-                                    <select data-role-select="${member.id}" class="rounded-lg border-gray-200 focus:ring-cyan-400 focus:border-cyan-400 text-sm">
-                                        <option value="admin" ${member.role === 'admin' ? 'selected' : ''}>Admin</option>
-                                        <option value="manager" ${member.role === 'manager' ? 'selected' : ''}>Manager</option>
-                                        <option value="vendeur" ${member.role === 'vendeur' ? 'selected' : ''}>Vendeur</option>
-                                        <option value="consultation" ${member.role === 'consultation' ? 'selected' : ''}>Consultation</option>
-                                    </select>
-                                </td>
-                                <td class="px-4 py-3">
-                                    <div class="flex flex-wrap">${permissionButtons}</div>
-                                </td>
-                                <td class="px-4 py-3">
-                                    ${accessCodeBlock}
-                                </td>
-                                <td class="px-4 py-3 text-right">
-                                    ${actionCell}
-                                </td>
-                            </tr>
-                        `;
-                    }).join('');
-                    accessMembersTbody.innerHTML = rows;
-                }
-                if (accessTotalUsers) accessTotalUsers.textContent = teamMembersState.length;
-                if (accessTotalAdmins) accessTotalAdmins.textContent = teamMembersState.filter(m => m.role === 'admin').length;
-                if (accessTotalPending) accessTotalPending.textContent = teamMembersState.filter(m => m.status === 'pending').length;
-            }
-
-            function toggleMemberPermission(memberId, permission) {
-                const member = teamMembersState.find(m => m.id === memberId);
-                if (!member) return;
-                member.permissions = member.permissions || [];
-                if (permission === 'Paramètres' && member.role !== 'admin') {
-                    showSuccessToast("Seuls les administrateurs peuvent accéder aux paramètres.");
-                    return;
-                }
-                if (member.permissions.includes(permission)) {
-                    member.permissions = member.permissions.filter(p => p !== permission);
-                } else {
-                    member.permissions.push(permission);
-                }
-                saveMemberState(member);
-                ensureCurrentUserInTeam();
-            }
-
-            function setMemberRole(memberId, role) {
-                const member = teamMembersState.find(m => m.id === memberId);
-                if (!member) return;
-                member.role = role;
-                if (role === 'admin' && !member.permissions.includes('Paramètres')) {
-                    member.permissions.push('Paramètres');
-                }
-                if (role !== 'admin') {
-                    member.permissions = member.permissions.filter(permission => permission !== 'Paramètres');
-                }
-                saveMemberState(member);
-                ensureCurrentUserInTeam();
-            }
-
-            if (settingsTabButtons.length) {
-                settingsTabButtons.forEach(button => button.addEventListener('click', () => setActiveSettingsTab(button.dataset.settingsTab)));
-                setActiveSettingsTab('compte');
-            }
-
-            async function findMemberByEmailAndCode(email, code) {
-                const companiesSnapshot = await get(ref(db, 'companies'));
-                if (!companiesSnapshot.exists()) return null;
-                const normalizedEmail = email.trim().toLowerCase();
-                const normalizedCode = code.trim().toUpperCase();
-                const companies = companiesSnapshot.val();
-                for (const [companyId, companyData] of Object.entries(companies)) {
-                    if (!companyData.members) continue;
-                    for (const [memberId, memberData] of Object.entries(companyData.members)) {
-                        if ((memberData.email || '').toLowerCase() === normalizedEmail && (memberData.accessCode || '').toUpperCase() === normalizedCode) {
-                            return {
-                                companyId,
-                                companyName: companyData.name || '',
-                                memberId,
-                                member: memberData
-                            };
-                        }
-                    }
-                }
-                return null;
-            }
-
-            async function handleAccessCodeLogin(email, code) {
-                if (!email || !code) {
-                    if (loginError) {
-                        loginError.textContent = "Email et code requis.";
-                        loginError.classList.remove('hidden');
-                    }
-                    return;
-                }
-                try {
-                    const match = await findMemberByEmailAndCode(email, code);
-                    if (!match) {
-                        if (loginError) {
-                            loginError.textContent = "Code d'accès invalide.";
-                            loginError.classList.remove('hidden');
-                        }
-                        return;
-                    }
-                    isAuthenticated = true;
-                    isCodeSession = true;
-                    currentUser = { email, uid: match.memberId };
-                    currentUserData = {
-                        uid: match.memberId,
-                        email,
-                        fullName: match.member.fullName || match.member.name || 'Collaborateur',
-                        companyId: match.companyId,
-                        companyName: match.companyName,
-                        role: match.member.role || 'consultation',
-                        accessCode: match.member.accessCode
-                    };
-                    dbBasePath = `companies/${match.companyId}`;
-                    if (match.member.status !== 'actif') {
-                        await update(ref(db, `${dbBasePath}/members/${match.memberId}`), { status: 'actif' });
-                    }
-                    setupFirebaseListeners();
-                    if (sellerNameInput) sellerNameInput.value = currentUserData.fullName || email;
-                    updateSettingsAccess();
-                    updateUI();
-                    showSuccessToast("Connexion réussie !");
-                } catch (error) {
-                    if (loginError) {
-                        loginError.textContent = "Impossible de vérifier ce code pour le moment.";
-                        loginError.classList.remove('hidden');
-                    }
-                } finally {
-                    if (loginSubmitButton) { loginSubmitButton.disabled = false; loginSubmitButton.textContent = "Se connecter"; }
-                }
-            }
-
-            function saveMemberState(member) {
-                if (!member || !member.id || !dbBasePath) return;
-                const memberCopy = { ...member };
-                delete memberCopy.isCurrentUser;
-                set(ref(db, `${dbBasePath}/members/${member.id}`), memberCopy);
-            }
-
-            function deleteMember(memberId) {
-                if (!dbBasePath || !memberId) return;
-                remove(ref(db, `${dbBasePath}/members/${memberId}`));
-            }
-
-            function onCompanyMembersValue(snapshot) {
-                const membersData = snapshot.val() || {};
-                teamMembersState = Object.keys(membersData).map(key => ({
-                    id: key,
-                    ...membersData[key],
-                }));
-                ensureCurrentUserInTeam();
-            }
-
-            if (accessMembersTbody) {
-                accessMembersTbody.addEventListener('click', (event) => {
-                    const permissionButton = event.target.closest('button[data-permission]');
-                    if (permissionButton) {
-                        toggleMemberPermission(permissionButton.dataset.memberId, permissionButton.dataset.permission);
-                        return;
-                    }
-                    const removeButton = event.target.closest('button[data-remove-member]');
-                    if (removeButton) {
-                        deleteMember(removeButton.dataset.removeMember);
-                        return;
-                    }
-                    const copyButton = event.target.closest('button[data-copy-code]');
-                    if (copyButton) {
-                        const code = copyButton.dataset.copyCode;
-                        if (!code) return;
-                        if (navigator.clipboard && navigator.clipboard.writeText) {
-                            navigator.clipboard.writeText(code).then(() => showSuccessToast('Code copié dans le presse-papiers'));
-                        } else {
-                            const tempInput = document.createElement('input');
-                            tempInput.value = code;
-                            document.body.appendChild(tempInput);
-                            tempInput.select();
-                            document.execCommand('copy');
-                            document.body.removeChild(tempInput);
-                            showSuccessToast('Code copié');
-                        }
-                    }
-                });
-                accessMembersTbody.addEventListener('change', (event) => {
-                    const roleSelect = event.target.closest('select[data-role-select]');
-                    if (roleSelect) setMemberRole(roleSelect.dataset.roleSelect, roleSelect.value);
-                });
-            }
-
-            if (accessAddMemberForm) {
-                accessAddMemberForm.addEventListener('submit', (event) => {
-                    event.preventDefault();
-                    if (!dbBasePath) {
-                        showSuccessToast("Veuillez sélectionner une entreprise valide.");
-                        return;
-                    }
-                    const name = accessMemberNameInput.value.trim();
-                    const email = accessMemberEmailInput.value.trim();
-                    const role = accessMemberRoleInput.value;
-                    if (!name || !email) return;
-                    const basePermissions = role === 'consultation' ? ['Tableau de bord', 'Statistiques'] : ['Tableau de bord', 'Ventes', 'Stock Boutique'];
-                    const accessCode = generateAccessCode();
-                    const newMemberRef = push(ref(db, `${dbBasePath}/members`));
-                    set(newMemberRef, {
-                        id: newMemberRef.key,
-                        fullName: name,
-                        email,
-                        role,
-                        status: 'pending',
-                        permissions: role === 'admin' ? [...accessModules] : basePermissions,
-                        accessCode,
-                        createdAt: new Date().toISOString(),
-                        invitedBy: currentUser?.email || 'admin'
-                    }).then(() => {
-                        accessAddMemberForm.reset();
-                        showSuccessToast(`Collaborateur ajouté. Code: ${accessCode}`);
-                    }).catch(() => {
-                        showSuccessToast("Impossible d'ajouter ce collaborateur pour le moment.");
-                    });
-                });
-            }
-
-            renderAccessMembers();
 
             function populateStoreProductSelects() {
                 const products = appData.storeProducts;
@@ -1726,6 +1150,7 @@
                     let html = '';
                     const sortedProducts = filteredProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                     sortedProducts.forEach(product => {
+                        // FIXED: Pass classes directly to getIconSVG
                         const iconBox = getIconSVG('box', 'w-5 h-5 text-gray-600');
                         const iconTrash = getIconSVG('trash', 'w-5 h-5');
                         html += `
@@ -1797,6 +1222,7 @@
                     sortedStock.forEach(item => {
                         const isLowStock = item.quantityInShop <= item.alertThreshold;
                         const currency = appData.storeProducts[item.sourceProductId]?.currency || 'CFA';
+                        // FIXED: Pass classes directly to getIconSVG
                         const iconBox = getIconSVG('box', 'w-5 h-5 text-gray-600');
                         const iconTrash = getIconSVG('trash', 'w-5 h-5');
                         html += `
@@ -1906,9 +1332,6 @@
 
                 salesHistoryRef = ref(db, `${dbBasePath}/salesHistory`);
                 salesHistoryListener = onValue(salesHistoryRef, onSalesHistoryValue);
-
-                companyMembersRef = ref(db, `${dbBasePath}/members`);
-                companyMembersListener = onValue(companyMembersRef, onCompanyMembersValue);
             }
 
             function cleanupFirebaseListeners() {
@@ -1917,18 +1340,15 @@
                 if (shopStockListener && shopStockRef) off(shopStockRef, shopStockListener);
                 if (shopMovementsListener && shopMovementsRef) off(shopMovementsRef, shopMovementsListener);
                 if (salesHistoryListener && salesHistoryRef) off(salesHistoryRef, salesHistoryListener);
-                if (companyMembersListener && companyMembersRef) off(companyMembersRef, companyMembersListener);
                 
-                storeProductsListener = null; storeMovementsListener = null; shopStockListener = null; shopMovementsListener = null; salesHistoryListener = null; companyMembersListener = null;
-                storeProductsRef = null; storeMovementsRef = null; shopStockRef = null; shopMovementsRef = null; salesHistoryRef = null; companyMembersRef = null;
+                storeProductsListener = null; storeMovementsListener = null; shopStockListener = null; shopMovementsListener = null; salesHistoryListener = null;
+                storeProductsRef = null; storeMovementsRef = null; shopStockRef = null; shopMovementsRef = null; salesHistoryRef = null;
 
                 appData.storeProducts = {};
                 appData.shopStock = {};
                 appData.salesHistory = {};
                 populateStoreProductSelects();
                 populateShopProductSelects();
-                teamMembersState = [];
-                renderAccessMembers();
             }
 
             function updateUI() {
@@ -1955,7 +1375,6 @@
                     if (salesHistoryTbody) salesHistoryTbody.innerHTML = '';
                     [storeProductsPlaceholder, storeMovementsPlaceholder, shopStockPlaceholder, shopMovementsPlaceholder, salesHistoryPlaceholder].forEach(p => p && p.classList.remove('hidden'));
                     [storeProductsTableContainer, storeMovementsTableContainer, shopStockTableContainer, shopMovementsTableContainer, salesHistoryTableContainer].forEach(t => t && t.classList.add('hidden'));
-                    updateSettingsAccess();
                     return;
                 }
 
@@ -1973,15 +1392,12 @@
                         button.classList.add('text-gray-600', 'hover:bg-gray-100');
                     }
                 });
-
-                updateSettingsAccess();
             }
 
             function updateAuthFormView() {
                 if(loginError) loginError.classList.add('hidden');
                 if(signupError) signupError.textContent = '';
                 if(signupErrorContainer) signupErrorContainer.classList.add('hidden');
-                updateLoginModeUI();
                 if (isLoginView) {
                     if(loginForm) loginForm.classList.remove('hidden');
                     if(signupForm) signupForm.classList.add('hidden');
@@ -2046,23 +1462,16 @@
             if (sidebarCollapseToggle) sidebarCollapseToggle.addEventListener('click', () => { isSidebarCollapsed = !isSidebarCollapsed; updateSidebarDesktopState(); });
             if(authToggleLogin) authToggleLogin.addEventListener('click', () => { isLoginView = true; updateAuthFormView(); });
             if(authToggleSignup) authToggleSignup.addEventListener('click', () => { isLoginView = false; updateAuthFormView(); });
-            if (loginModeAdminButton) loginModeAdminButton.addEventListener('click', () => { isCodeLoginMode = false; updateLoginModeUI(); });
-            if (loginModeCodeButton) loginModeCodeButton.addEventListener('click', () => { isCodeLoginMode = true; updateLoginModeUI(); });
             if(salesProductSelect) salesProductSelect.addEventListener('change', updateSalesTotal);
             if(salesQuantityInput) salesQuantityInput.addEventListener('input', updateSalesTotal);
             
             // Auth Logic
             if(loginForm) loginForm.addEventListener('submit', async (event) => {
                 event.preventDefault();
-                const email = loginForm.email.value.trim();
-                const password = loginPasswordInput ? loginPasswordInput.value : '';
-                const accessCode = loginAccessCodeInput ? loginAccessCodeInput.value.trim() : '';
+                const email = loginForm.email.value;
+                const password = loginForm.password.value;
                 if(loginError) loginError.classList.add('hidden'); 
                 if(loginSubmitButton) { loginSubmitButton.disabled = true; loginSubmitButton.textContent = "Connexion..."; }
-                if (isCodeLoginMode) {
-                    await handleAccessCodeLogin(email, accessCode);
-                    return;
-                }
                 try {
                     await signInWithEmailAndPassword(auth, email, password);
                 } catch (error) {
@@ -2118,18 +1527,16 @@
                         email: email,
                         fullName: fullName,
                         companyName: matchedCompanyName,
-                        companyId: companyId,
-                        role: 'admin'
+                        companyId: companyId
                     });
 
                     await set(ref(db, `companies/${companyId}/members/${user.uid}`), {
                         email: email,
-                        fullName: fullName,
-                        role: 'admin',
-                        status: 'actif',
-                        permissions: [...accessModules]
+                        fullName: fullName
                     });
 
+                    // --- AJOUT POUR LE RAFRAICHISSEMENT IMMEDIAT ---
+                    // Mise à jour manuelle de l'état local car onAuthStateChanged peut rater les données si elles ne sont pas encore écrites
                     currentUser = user;
                     isAuthenticated = true;
                     currentUserData = {
@@ -2137,15 +1544,13 @@
                         email: email,
                         fullName: fullName,
                         companyName: matchedCompanyName,
-                        companyId: companyId,
-                        role: 'admin'
+                        companyId: companyId
                     };
                     dbBasePath = `companies/${companyId}`;
                     setupFirebaseListeners();
-                    ensureCurrentUserInTeam();
-                    updateSettingsAccess();
                     updateUI();
                     showSuccessToast("Compte créé avec succès !");
+                    // ------------------------------------------------
 
                 } catch (error) {
                     console.error("Erreur d'inscription:", error);
@@ -2157,6 +1562,7 @@
                                     Se connecter à la place ?
                                 </button>
                              `;
+                             // Setup the listener immediately after showing the message
                              setTimeout(() => {
                                  const switchBtn = document.getElementById('error-switch-login');
                                  if(switchBtn) {
@@ -2204,64 +1610,60 @@
                 } catch (error) { salesError.textContent = error.message; salesError.classList.remove('hidden'); } finally { salesSubmitButton.disabled = false; }
             });
 
-            // MODIFICATION ICI POUR LA FUSION DES PRODUITS
             if(newProductForm) newProductForm.addEventListener('submit', async (e) => {
-                e.preventDefault(); 
-                newProductError.classList.add('hidden');
+                e.preventDefault(); newProductError.classList.add('hidden');
                 if (!currentUser || !dbBasePath) return;
-
+                
                 const name = newProductForm['product-name'].value.trim(); 
-                const desc = newProductForm['product-description'].value; 
+                const desc = newProductForm['product-description'].value.trim(); 
                 const cost = parseFloat(newProductForm['product-cost'].value); 
-                const currency = newProductForm['product-currency'].value; 
+                const currency = newProductForm['product-currency'].value.trim(); 
                 const qty = parseInt(newProductForm['product-quantity'].value, 10);
-
+                
                 if (!name || isNaN(cost)) return;
+                
                 newProductSubmitButton.disabled = true;
-
                 try {
-                    // Recherche d'un produit identique (Nom + Prix + Devise)
+                    // --- MODIFICATION: FUSION DES DOUBLONS ---
                     const existingProduct = Object.values(appData.storeProducts).find(p => 
                         p.name.toLowerCase() === name.toLowerCase() && 
                         p.purchaseCost === cost && 
                         p.currency === currency
                     );
 
-                    let targetId;
-                    let oldQty = 0;
-                    const now = new Date().toISOString();
-
                     if (existingProduct) {
-                        targetId = existingProduct.id;
-                        oldQty = existingProduct.quantityInStore;
-                        const newTotal = oldQty + qty;
-                        // On met à jour le produit existant
-                        await update(ref(db, `${dbBasePath}/storeProducts/${targetId}`), {
-                            quantityInStore: newTotal,
-                            description: desc || existingProduct.description
-                        });
+                        // Mise à jour de la quantité
+                        const oldQty = existingProduct.quantityInStore;
+                        const newQty = oldQty + qty;
+                        
+                        const updates = {};
+                        updates[`${dbBasePath}/storeProducts/${existingProduct.id}/quantityInStore`] = newQty;
+                        
+                        const moveRef = push(ref(db, `${dbBasePath}/storeMovements`));
+                        updates[`${dbBasePath}/storeMovements/${moveRef.key}`] = { 
+                            id: moveRef.key, 
+                            productId: existingProduct.id, 
+                            productName: existingProduct.name, 
+                            type: "Entrée", 
+                            quantityChange: qty, 
+                            oldStock: oldQty, 
+                            newStock: newQty, 
+                            comment: "Fusion automatique (Produit existant)", 
+                            date: new Date().toISOString() 
+                        };
+                        
+                        await update(ref(db), updates);
+                        showSuccessToast("Quantité ajoutée au produit existant !");
                     } else {
-                        // On crée un nouveau produit
+                        // Création d'un nouveau produit
                         const newRef = push(ref(db, `${dbBasePath}/storeProducts`));
-                        targetId = newRef.key;
-                        await set(newRef, { id: targetId, name, description: desc, purchaseCost: cost, currency, quantityInStore: qty, createdAt: now });
+                        const newProd = { id: newRef.key, name, description: desc, purchaseCost: cost, currency, quantityInStore: qty, createdAt: new Date().toISOString() };
+                        await set(newRef, newProd);
+                        const moveRef = push(ref(db, `${dbBasePath}/storeMovements`));
+                        await set(moveRef, { id: moveRef.key, productId: newProd.id, productName: name, type: "Entrée", quantityChange: qty, oldStock: 0, newStock: qty, comment: "Création", date: new Date().toISOString() });
+                        showSuccessToast("Produit ajouté!");
                     }
-
-                    // Enregistrement du mouvement
-                    const moveRef = push(ref(db, `${dbBasePath}/storeMovements`));
-                    await set(moveRef, { 
-                        id: moveRef.key, 
-                        productId: targetId, 
-                        productName: name, 
-                        type: "Entrée", 
-                        quantityChange: qty, 
-                        oldStock: oldQty, 
-                        newStock: oldQty + qty, 
-                        comment: existingProduct ? "Fusion (Produit identique)" : "Création", 
-                        date: now 
-                    });
-
-                    showSuccessToast(existingProduct ? "Quantité ajoutée au produit existant !" : "Produit ajouté !"); 
+                    
                     newProductForm.reset(); 
                     newProductModal.classList.add('hidden');
                 } catch (err) { 
@@ -2355,50 +1757,41 @@
                 } catch(err) { restockError.textContent = err.message; restockError.classList.remove('hidden'); } finally { restockSubmitButton.disabled = false; }
             });
 
-            // MODIFICATION ICI POUR LES BOUTONS SUPPRIMER (DÉLÉGATION)
-            if (storeProductsTbody) {
-                storeProductsTbody.addEventListener('click', async (e) => {
-                    const btn = e.target.closest('button[data-product-id]');
-                    if (btn) {
-                        const pid = btn.dataset.productId;
-                        if (confirm("Supprimer définitivement ce produit du magasin ?")) {
-                            try {
-                                await remove(ref(db, `${dbBasePath}/storeProducts/${pid}`));
-                                showSuccessToast("Produit supprimé !");
-                            } catch(err) { alert("Erreur: " + err.message); }
-                        }
-                    }
-                });
-            }
-
-            if (shopStockTbody) {
-                shopStockTbody.addEventListener('click', async (e) => {
-                    const btn = e.target.closest('button[data-stock-id]');
-                    if (btn) {
-                        const sid = btn.dataset.stockId;
-                        if (confirm("Retirer cet article de l'inventaire boutique ?")) {
-                            try {
-                                await remove(ref(db, `${dbBasePath}/shopStock/${sid}`));
-                                showSuccessToast("Article retiré de la boutique !");
-                            } catch(err) { alert("Erreur: " + err.message); }
-                        }
-                    }
-                });
-            }
-
             // UI Event Bindings
             if (storeSearchInput) storeSearchInput.addEventListener('input', (e) => renderStoreProducts(e.target.value));
             if (shopSearchInput) shopSearchInput.addEventListener('input', (e) => renderShopStock(e.target.value));
             navButtons.forEach(btn => btn.addEventListener('click', () => { currentPage = btn.dataset.page; if(window.innerWidth < 1024) { isSidebarOpen = false; updateSidebarMobileState(); } updateUI(); }));
-            if(logoutButton) logoutButton.addEventListener('click', () => {
-                if (isCodeSession) {
-                    handleManualLogout();
-                    showSuccessToast('Déconnecté');
-                    return;
-                }
-                signOut(auth);
-            });
+            if(logoutButton) logoutButton.addEventListener('click', () => signOut(auth));
             
+            // --- MODIFICATION: SUPPRESSION DES PRODUITS ---
+            storeProductsTbody.addEventListener('click', async (e) => {
+                const btn = e.target.closest('.delete-icon');
+                if (!btn || !dbBasePath) return;
+                const pid = btn.dataset.productId;
+                if (confirm("Supprimer définitivement ce produit du magasin ? Cela n'affectera pas le stock déjà en boutique.")) {
+                    try {
+                        await remove(ref(db, `${dbBasePath}/storeProducts/${pid}`));
+                        showSuccessToast("Produit supprimé du magasin");
+                    } catch (err) {
+                        console.error(err);
+                    }
+                }
+            });
+
+            shopStockTbody.addEventListener('click', async (e) => {
+                const btn = e.target.closest('.delete-icon');
+                if (!btn || !dbBasePath) return;
+                const sid = btn.dataset.stockId;
+                if (confirm("Retirer ce produit de la boutique ? Le stock ne sera PAS renvoyé au magasin.")) {
+                    try {
+                        await remove(ref(db, `${dbBasePath}/shopStock/${sid}`));
+                        showSuccessToast("Article retiré de la boutique");
+                    } catch (err) {
+                        console.error(err);
+                    }
+                }
+            });
+
             // Modals Close
             [newProductModal, entryModal, exitModal, transferModal, restockModal].forEach(m => { if(m) m.addEventListener('click', e => { if(e.target === m) m.classList.add('hidden'); }); });
             if(closeNewProductModalButton) closeNewProductModalButton.addEventListener('click', () => newProductModal.classList.add('hidden'));
@@ -2436,39 +1829,34 @@
                 document.getElementById('stat-revenue').textContent = formatCurrency(sales.reduce((acc, s) => acc + s.totalAmount, 0));
                 document.getElementById('stat-products-in-stock').textContent = shopCount;
                 
-                // Best Selling & Seller Perf
+                // Best Selling & Seller Perf (Simplified logic)
+                const bestSellingContainer = document.getElementById('best-selling-tbody');
                 const productSales = sales.reduce((acc, s) => { acc[s.productName] = (acc[s.productName] || 0) + s.quantity; return acc; }, {});
                 const sortedProd = Object.entries(productSales).sort((a,b) => b[1]-a[1]).slice(0,5);
-                const bsTbody = document.getElementById('best-selling-tbody');
-                bsTbody.innerHTML = sortedProd.length ? sortedProd.map(([name, qty]) => `<tr class="hover:bg-gray-50"><td class="px-4 py-3 text-sm text-gray-800">${name}</td><td class="px-4 py-3 text-sm text-gray-600">${qty}</td><td class="px-4 py-3"></td></tr>`).join('') : '';
+                bestSellingContainer.innerHTML = sortedProd.length ? sortedProd.map(([name, qty]) => `<tr class="hover:bg-gray-50"><td class="px-4 py-3 text-sm text-gray-800">${name}</td><td class="px-4 py-3 text-sm text-gray-600">${qty}</td><td class="px-4 py-3"></td></tr>`).join('') : '';
                 if(sortedProd.length) { document.getElementById('best-selling-placeholder').classList.add('hidden'); document.getElementById('best-selling-table-container').classList.remove('hidden'); }
                 
+                const sellerPerfContainer = document.getElementById('seller-performance-tbody');
                 const sellerSales = sales.reduce((acc, s) => { acc[s.sellerName] = (acc[s.sellerName] || 0) + s.totalAmount; return acc; }, {});
                 const sortedSeller = Object.entries(sellerSales).sort((a,b) => b[1]-a[1]).slice(0,5);
-                const spTbody = document.getElementById('seller-performance-tbody');
-                spTbody.innerHTML = sortedSeller.length ? sortedSeller.map(([name, total]) => `<tr class="hover:bg-gray-50"><td class="px-4 py-3 text-sm text-gray-800">${name}</td><td class="px-4 py-3"></td><td class="px-4 py-3 text-sm font-semibold text-gray-700">${formatCurrency(total)}</td></tr>`).join('') : '';
+                sellerPerfContainer.innerHTML = sortedSeller.length ? sortedSeller.map(([name, total]) => `<tr class="hover:bg-gray-50"><td class="px-4 py-3 text-sm text-gray-800">${name}</td><td class="px-4 py-3"></td><td class="px-4 py-3 text-sm font-semibold text-gray-700">${formatCurrency(total)}</td></tr>`).join('') : '';
                 if(sortedSeller.length) { document.getElementById('seller-performance-placeholder').classList.add('hidden'); document.getElementById('seller-performance-table-container').classList.remove('hidden'); }
             }
 
             onAuthStateChanged(auth, (user) => {
-                if (!user && isCodeSession) return;
                 if (user) {
-                    isCodeSession = false;
                     isAuthenticated = true;
                     currentUser = user;
                     get(ref(db, `users/${user.uid}`)).then((snapshot) => {
                         if (snapshot.exists()) {
                             currentUserData = snapshot.val();
-                            currentUserData.role = currentUserData.role || 'admin';
                             if (sellerNameInput) sellerNameInput.value = currentUserData.fullName || user.email;
                             dbBasePath = currentUserData.companyId ? `companies/${currentUserData.companyId}` : `users/${user.uid}`;
                             setupFirebaseListeners();
-                            ensureCurrentUserInTeam();
-                            updateSettingsAccess();
                             updateUI();
                         }
                     });
-                } else{
+                } else {
                     isAuthenticated = false; currentUser = null; currentUserData = null; dbBasePath = ''; currentPage = 'Tableau de bord'; cleanupFirebaseListeners(); updateUI();
                 }
             });
