@@ -333,6 +333,65 @@
                             </div>
                         </div>
                     </div>
+<!-- MODAL POUR LA FACTURE -->
+<div id="invoice-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl p-6 m-4 max-h-screen overflow-y-auto">
+        <!-- En-tête -->
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">📄 Facture</h2>
+            <button id="close-invoice-modal" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Zone d'impression de la facture -->
+        <div id="invoice-content" class="bg-white p-8 border border-gray-300 rounded-lg">
+            <!-- Le contenu de la facture sera généré ici par JavaScript -->
+        </div>
+
+        <!-- Boutons d'action -->
+        <div class="flex gap-4 mt-6">
+            <button id="print-invoice-button" class="flex-1 bg-cyan-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-cyan-600 transition-colors flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                </svg>
+                Imprimer
+            </button>
+            <button id="download-invoice-button" class="flex-1 bg-green-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                Télécharger PDF
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Ajouter juste après la fermeture de la section panier et avant l'historique des ventes -->
+<div id="invoice-generation-section" class="mt-6 hidden">
+    <div class="bg-green-50 border-2 border-green-200 rounded-lg p-6 text-center">
+        <div class="text-green-600 mb-3">
+            <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+        </div>
+        <h3 class="text-xl font-bold text-gray-800 mb-2">Vente enregistrée avec succès !</h3>
+        <p class="text-gray-600 mb-4">Souhaitez-vous générer une facture pour cette vente ?</p>
+        <div class="flex gap-4 justify-center">
+            <button id="generate-invoice-button" class="bg-cyan-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-cyan-600 transition-colors flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                Générer la facture
+            </button>
+            <button id="skip-invoice-button" class="bg-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-lg hover:bg-gray-400 transition-colors">
+                Passer
+            </button>
+        </div>
+    </div>
+</div>
                 </div>
                 <div class="mt-10 bg-white p-6 rounded-lg shadow-sm">
                     <h2 class="text-xl font-bold text-gray-800">Historique des ventes</h2>
@@ -1319,19 +1378,76 @@
                     salesHistoryTableContainer.classList.remove('hidden');
                     let html = '';
                     const sortedSales = Object.values(sales).sort((a, b) => new Date(b.date) - new Date(a.date));
+                    
+                    // Grouper les ventes par date + commentaire (pour identifier les ventes groupées)
+                    const groupedSales = {};
                     sortedSales.forEach(sale => {
-                        const shopItem = appData.shopStock[sale.shopProductId];
-                        const currency = shopItem ? (appData.storeProducts[shopItem.sourceProductId]?.currency || 'CFA') : 'CFA';
-                        html += `
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${sale.productName}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.sellerName}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.quantity}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">${formatCurrency(sale.totalAmount, currency)}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.comment}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(sale.date)}</td>
-                            </tr>`;
+                        const groupKey = `${sale.date}_${sale.comment || 'no-comment'}_${sale.sellerName}`;
+                        if (!groupedSales[groupKey]) {
+                            groupedSales[groupKey] = [];
+                        }
+                        groupedSales[groupKey].push(sale);
                     });
+                    
+                    Object.values(groupedSales).forEach(group => {
+                        const firstSale = group[0];
+                        const shopItem = appData.shopStock[firstSale.shopProductId];
+                        const currency = shopItem ? (appData.storeProducts[shopItem.sourceProductId]?.currency || 'FCFA') : 'FCFA';
+                        
+                        // Si plusieurs produits dans le groupe, afficher en tant que vente groupée
+                        if (group.length > 1) {
+                            const totalAmount = group.reduce((sum, s) => sum + s.totalAmount, 0);
+                            const totalQty = group.reduce((sum, s) => sum + s.quantity, 0);
+                            const productNames = group.map(s => s.productName).join(', ');
+                            
+                            html += `
+                                <tr class="hover:bg-gray-50 bg-blue-50">
+                                    <td class="px-6 py-4 text-sm font-medium text-gray-900">
+                                        <div class="flex items-center gap-2">
+                                            <span class="bg-blue-500 text-white text-xs px-2 py-1 rounded">Groupée</span>
+                                            <span>${group.length} produits</span>
+                                        </div>
+                                        <div class="text-xs text-gray-500 mt-1">${productNames}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${firstSale.sellerName}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${totalQty}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">${formatCurrency(totalAmount, currency)}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${firstSale.comment}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(firstSale.date)}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <button onclick='generateInvoiceFromHistory(${JSON.stringify(group).replace(/'/g, "\\'")})'
+                                            class="bg-cyan-500 hover:bg-cyan-600 text-white px-3 py-1 rounded text-xs font-semibold flex items-center gap-1">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                            </svg>
+                                            Facture
+                                        </button>
+                                    </td>
+                                </tr>`;
+                        } else {
+                            // Vente simple
+                            const sale = firstSale;
+                            html += `
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${sale.productName}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.sellerName}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.quantity}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">${formatCurrency(sale.totalAmount, currency)}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.comment}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(sale.date)}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <button onclick='generateInvoiceFromHistory(${JSON.stringify([sale]).replace(/'/g, "\\'")})'
+                                            class="bg-cyan-500 hover:bg-cyan-600 text-white px-3 py-1 rounded text-xs font-semibold flex items-center gap-1">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                            </svg>
+                                            Facture
+                                        </button>
+                                    </td>
+                                </tr>`;
+                        }
+                    });
+                    
                     salesHistoryTbody.innerHTML = html;
                 } else {
                     salesHistoryPlaceholder.classList.remove('hidden');
@@ -1854,10 +1970,21 @@
                         
                         showSuccessToast(`Vente groupée enregistrée! ${cart.length} produit(s) vendu(s)`);
                         
+                        // Préparer les données pour la facture
+                        const saleDataForInvoice = {
+                            items: [...cart], // Copie du panier avant réinitialisation
+                            sellerName: sellerName,
+                            comment: comment,
+                            date: now
+                        };
+                        
                         // Réinitialiser le panier et le formulaire
                         cart = [];
                         salesComment.value = '';
                         updateCartDisplay();
+                        
+                        // Afficher l'option de génération de facture
+                        showInvoiceGenerationOption(saleDataForInvoice);
                         
                     } catch (error) {
                         salesError.textContent = error.message;
@@ -1868,6 +1995,258 @@
                 });
             }
             // ===== FIN DU SYSTÈME DE PANIER =====
+
+// ===== SYSTÈME DE GÉNÉRATION DE FACTURES =====
+let lastSaleData = null; // Stocke les données de la dernière vente pour générer la facture
+
+const invoiceModal = document.getElementById('invoice-modal');
+const closeInvoiceModal = document.getElementById('close-invoice-modal');
+const invoiceContent = document.getElementById('invoice-content');
+const printInvoiceButton = document.getElementById('print-invoice-button');
+const downloadInvoiceButton = document.getElementById('download-invoice-button');
+const invoiceGenerationSection = document.getElementById('invoice-generation-section');
+const generateInvoiceButton = document.getElementById('generate-invoice-button');
+const skipInvoiceButton = document.getElementById('skip-invoice-button');
+
+// Fonction pour générer un numéro de facture unique
+function generateInvoiceNumber() {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const timestamp = Date.now().toString().slice(-6);
+    return `FAC-${year}${month}${day}-${timestamp}`;
+}
+
+// Fonction pour générer le HTML de la facture
+function generateInvoiceHTML(saleData) {
+    const invoiceNumber = generateInvoiceNumber();
+    const companyName = currentUserData?.companyName || 'Ma Société';
+    const date = new Date(saleData.date);
+    const formattedDate = date.toLocaleDateString('fr-FR', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    let itemsHTML = '';
+    let subtotal = 0;
+    
+    saleData.items.forEach(item => {
+        const itemTotal = item.sellingPrice * item.quantity;
+        subtotal += itemTotal;
+        itemsHTML += `
+            <tr class="border-b">
+                <td class="py-3 px-4">${item.name}</td>
+                <td class="py-3 px-4 text-center">${item.quantity}</td>
+                <td class="py-3 px-4 text-right">${formatCurrency(item.sellingPrice)}</td>
+                <td class="py-3 px-4 text-right font-semibold">${formatCurrency(itemTotal)}</td>
+            </tr>
+        `;
+    });
+    
+    return `
+        <div class="invoice-document">
+            <!-- En-tête de la facture -->
+            <div class="flex justify-between items-start mb-8">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2">${companyName}</h1>
+                    <p class="text-gray-600">Gestion de stock et ventes</p>
+                </div>
+                <div class="text-right">
+                    <h2 class="text-2xl font-bold text-cyan-600 mb-2">FACTURE</h2>
+                    <p class="text-gray-600">N° ${invoiceNumber}</p>
+                    <p class="text-gray-600">${formattedDate}</p>
+                </div>
+            </div>
+            
+            <!-- Informations vendeur -->
+            <div class="mb-8 bg-gray-50 p-4 rounded-lg">
+                <p class="text-sm text-gray-500 mb-1">Vendeur</p>
+                <p class="font-semibold text-gray-800">${saleData.sellerName}</p>
+            </div>
+            
+            <!-- Commentaire si présent -->
+            ${saleData.comment ? `
+                <div class="mb-6 bg-blue-50 border-l-4 border-blue-400 p-4">
+                    <p class="text-sm text-gray-600"><strong>Note :</strong> ${saleData.comment}</p>
+                </div>
+            ` : ''}
+            
+            <!-- Tableau des articles -->
+            <table class="w-full mb-8">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Produit</th>
+                        <th class="py-3 px-4 text-center font-semibold text-gray-700">Quantité</th>
+                        <th class="py-3 px-4 text-right font-semibold text-gray-700">Prix unitaire</th>
+                        <th class="py-3 px-4 text-right font-semibold text-gray-700">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${itemsHTML}
+                </tbody>
+            </table>
+            
+            <!-- Total -->
+            <div class="flex justify-end mb-8">
+                <div class="w-64">
+                    <div class="flex justify-between py-2 border-b">
+                        <span class="text-gray-600">Sous-total</span>
+                        <span class="font-semibold">${formatCurrency(subtotal)}</span>
+                    </div>
+                    <div class="flex justify-between py-3 bg-gray-100 px-4 rounded-lg mt-2">
+                        <span class="text-lg font-bold text-gray-800">TOTAL</span>
+                        <span class="text-lg font-bold text-green-600">${formatCurrency(subtotal)}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pied de page -->
+            <div class="text-center text-gray-500 text-sm border-t pt-4">
+                <p>Merci pour votre achat !</p>
+                <p class="mt-2">Cette facture a été générée par StockPilot</p>
+            </div>
+        </div>
+    `;
+}
+
+// Fonction pour afficher la facture dans le modal
+function showInvoice(saleData) {
+    invoiceContent.innerHTML = generateInvoiceHTML(saleData);
+    invoiceModal.classList.remove('hidden');
+}
+
+// Fonction pour imprimer la facture
+if (printInvoiceButton) {
+    printInvoiceButton.addEventListener('click', () => {
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Facture - ${generateInvoiceNumber()}</title>
+                <script src="https://cdn.tailwindcss.com"></script>
+                <style>
+                    @media print {
+                        body { padding: 20px; }
+                        .no-print { display: none; }
+                    }
+                </style>
+            </head>
+            <body>
+                ${invoiceContent.innerHTML}
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+        setTimeout(() => {
+            printWindow.print();
+        }, 250);
+    });
+}
+
+// Fonction pour télécharger la facture en PDF (utilise print to PDF du navigateur)
+if (downloadInvoiceButton) {
+    downloadInvoiceButton.addEventListener('click', () => {
+        const printWindow = window.open('', '_blank');
+        const invoiceNum = generateInvoiceNumber();
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Facture - ${invoiceNum}</title>
+                <script src="https://cdn.tailwindcss.com"></script>
+                <style>
+                    @page { margin: 20mm; }
+                    body { padding: 20px; }
+                </style>
+            </head>
+            <body>
+                ${invoiceContent.innerHTML}
+                <script>
+                    window.onload = function() {
+                        setTimeout(() => {
+                            window.print();
+                        }, 500);
+                    }
+                </script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+        alert('Utilisez "Enregistrer au format PDF" dans la boîte de dialogue d\'impression pour sauvegarder la facture.');
+    });
+}
+
+// Fermer le modal de facture
+if (closeInvoiceModal) {
+    closeInvoiceModal.addEventListener('click', () => {
+        invoiceModal.classList.add('hidden');
+    });
+}
+
+// Clic en dehors du modal pour fermer
+if (invoiceModal) {
+    invoiceModal.addEventListener('click', (e) => {
+        if (e.target === invoiceModal) {
+            invoiceModal.classList.add('hidden');
+        }
+    });
+}
+
+// Bouton pour générer la facture après une vente
+if (generateInvoiceButton) {
+    generateInvoiceButton.addEventListener('click', () => {
+        if (lastSaleData) {
+            showInvoice(lastSaleData);
+            invoiceGenerationSection.classList.add('hidden');
+        }
+    });
+}
+
+// Bouton pour passer la génération de facture
+if (skipInvoiceButton) {
+    skipInvoiceButton.addEventListener('click', () => {
+        invoiceGenerationSection.classList.add('hidden');
+        lastSaleData = null;
+    });
+}
+
+// Fonction pour afficher la section de génération de facture après une vente
+function showInvoiceGenerationOption(saleData) {
+    lastSaleData = saleData;
+    invoiceGenerationSection.classList.remove('hidden');
+    
+    // Faire défiler vers la section
+    setTimeout(() => {
+        invoiceGenerationSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+}
+// Fonction globale pour générer une facture depuis l'historique
+window.generateInvoiceFromHistory = function(salesGroup) {
+    // Reconstituer les données au format attendu par la fonction de génération
+    const items = salesGroup.map(sale => ({
+        shopProductId: sale.shopProductId,
+        name: sale.productName,
+        quantity: sale.quantity,
+        sellingPrice: sale.sellingPrice,
+        maxStock: 999 // Non utilisé pour la facture
+    }));
+    
+    const saleDataForInvoice = {
+        items: items,
+        sellerName: salesGroup[0].sellerName,
+        comment: salesGroup[0].comment || '',
+        date: salesGroup[0].date
+    };
+    
+    showInvoice(saleDataForInvoice);
+};
+
+// ===== FIN DU SYSTÈME DE GÉNÉRATION DE FACTURES =====
 
             if(newProductForm) newProductForm.addEventListener('submit', async (e) => {
                 e.preventDefault(); newProductError.classList.add('hidden');
