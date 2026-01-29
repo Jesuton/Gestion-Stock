@@ -270,128 +270,42 @@
                         <div data-icon="sales" class="w-6 h-6 mr-3 text-cyan-500"></div>
                         Enregistrer une vente
                     </h2>
-                    <!-- Formulaire d'ajout au panier -->
-                    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <form id="sales-form" class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="col-span-1">
                             <label for="sales-product-select" class="block text-sm font-medium text-gray-700 mb-1">Produit *</label>
-                            <select id="sales-product-select" name="product" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500 p-3">
+                            <select id="sales-product-select" name="product" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500">
                                 <option value="">Sélectionner un produit</option>
                             </select>
                         </div>
                         <div class="col-span-1">
                             <label for="sales-quantity-input" class="block text-sm font-medium text-gray-700 mb-1">Quantité *</label>
-                            <input type="number" name="quantity" id="sales-quantity-input" value="1" min="1" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500 p-3" />
+                            <input type="number" name="quantity" id="sales-quantity-input" value="1" min="1" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500" />
                         </div>
                         
+                        <!-- Nouveau champ : Montant total -->
+                        <div class="col-span-1">
+                            <label for="sales-total-amount" class="block text-sm font-medium text-gray-700 mb-1">Montant total</label>
+                            <input type="text" id="sales-total-amount" value="0 FCFA" class="w-full border-gray-300 rounded-lg shadow-sm bg-gray-100 focus:ring-0 focus:border-gray-300" readonly />
+                        </div>
+                        
+                        <div class="col-span-1">
+                            <label for="seller-name" class="block text-sm font-medium text-gray-700 mb-1">Vendeur *</label>
+                            <input type="text" name="seller" id="seller-name" class="w-full border-gray-300 rounded-lg shadow-sm bg-gray-100 focus:ring-0 focus:border-gray-300" readonly />
+                        </div>
+
                         <div class="col-span-2">
-                            <button type="button" id="add-to-cart-button" class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
-                                🛒 Ajouter au panier
+                            <label for="sales-comment" class="block text-sm font-medium text-gray-700 mb-1">Commentaire (optionnel)</label>
+                            <textarea name="comment" id="sales-comment" rows="3" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500"></textarea>
+                        </div>
+                        
+                        <p id="sales-error" class="text-red-500 text-sm mt-2 hidden col-span-2"></p>
+                        
+                        <div class="col-span-2">
+                            <button type="submit" id="sales-submit-button" class="inline-flex items-center px-4 py-2 bg-cyan-400 text-white font-semibold rounded-lg shadow-md hover:bg-cyan-500 transition-colors">
+                                + Enregistrer la vente
                             </button>
                         </div>
-                    </div>
-
-                    <!-- Panier -->
-                    <div id="cart-section" class="mt-8 hidden">
-                        <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-6">
-                            <div class="flex justify-between items-center mb-4">
-                                <h3 class="text-lg font-bold text-gray-800">🛒 Panier</h3>
-                                <button id="clear-cart-button" class="text-sm text-red-500 hover:text-red-700 font-semibold">
-                                    Vider le panier
-                                </button>
-                            </div>
-                            
-                            <div id="cart-items" class="space-y-3 mb-4">
-                                <!-- Les articles du panier seront insérés ici -->
-                            </div>
-                            
-                            <div class="border-t-2 border-blue-300 pt-4 mb-4">
-                                <div class="flex justify-between items-center text-lg font-bold">
-                                    <span>Total:</span>
-                                    <span id="cart-total" class="text-green-600">0 FCFA</span>
-                                </div>
-                                <div class="text-sm text-gray-600 mt-1">
-                                    <span id="cart-items-count">0</span> article(s)
-                                </div>
-                            </div>
-                            
-                            <div class="grid grid-cols-1 gap-3">
-                                <div>
-                                    <label for="seller-name" class="block text-sm font-medium text-gray-700 mb-1">Vendeur *</label>
-                                    <input type="text" name="seller" id="seller-name" class="w-full border-gray-300 rounded-lg shadow-sm bg-gray-100 focus:ring-0 focus:border-gray-300 p-3" readonly />
-                                </div>
-                                
-                                <div>
-                                    <label for="sales-comment" class="block text-sm font-medium text-gray-700 mb-1">Commentaire (optionnel)</label>
-                                    <textarea name="comment" id="sales-comment" rows="2" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500 p-3"></textarea>
-                                </div>
-                                
-                                <p id="sales-error" class="text-red-500 text-sm hidden"></p>
-                                
-                                <button type="button" id="validate-sale-button" class="w-full bg-green-500 text-white font-bold py-4 px-4 rounded-lg hover:bg-green-600 transition-colors shadow-md hover:shadow-lg text-lg">
-                                    ✓ Valider la vente
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-<!-- MODAL POUR LA FACTURE -->
-<div id="invoice-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl p-6 m-4 max-h-screen overflow-y-auto">
-        <!-- En-tête -->
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold text-gray-800">📄 Facture</h2>
-            <button id="close-invoice-modal" class="text-gray-400 hover:text-gray-600">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
-        </div>
-
-        <!-- Zone d'impression de la facture -->
-        <div id="invoice-content" class="bg-white p-8 border border-gray-300 rounded-lg">
-            <!-- Le contenu de la facture sera généré ici par JavaScript -->
-        </div>
-
-        <!-- Boutons d'action -->
-        <div class="flex gap-4 mt-6">
-            <button id="print-invoice-button" class="flex-1 bg-cyan-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-cyan-600 transition-colors flex items-center justify-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
-                </svg>
-                Imprimer
-            </button>
-            <button id="download-invoice-button" class="flex-1 bg-green-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
-                Télécharger PDF
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- Ajouter juste après la fermeture de la section panier et avant l'historique des ventes -->
-<div id="invoice-generation-section" class="mt-6 hidden">
-    <div class="bg-green-50 border-2 border-green-200 rounded-lg p-6 text-center">
-        <div class="text-green-600 mb-3">
-            <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-        </div>
-        <h3 class="text-xl font-bold text-gray-800 mb-2">Vente enregistrée avec succès !</h3>
-        <p class="text-gray-600 mb-4">Souhaitez-vous générer une facture pour cette vente ?</p>
-        <div class="flex gap-4 justify-center">
-            <button id="generate-invoice-button" class="bg-cyan-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-cyan-600 transition-colors flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
-                Générer la facture
-            </button>
-            <button id="skip-invoice-button" class="bg-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-lg hover:bg-gray-400 transition-colors">
-                Passer
-            </button>
-        </div>
-    </div>
-</div>
+                    </form>
                 </div>
                 <div class="mt-10 bg-white p-6 rounded-lg shadow-sm">
                     <h2 class="text-xl font-bold text-gray-800">Historique des ventes</h2>
@@ -1378,76 +1292,19 @@
                     salesHistoryTableContainer.classList.remove('hidden');
                     let html = '';
                     const sortedSales = Object.values(sales).sort((a, b) => new Date(b.date) - new Date(a.date));
-                    
-                    // Grouper les ventes par date + commentaire (pour identifier les ventes groupées)
-                    const groupedSales = {};
                     sortedSales.forEach(sale => {
-                        const groupKey = `${sale.date}_${sale.comment || 'no-comment'}_${sale.sellerName}`;
-                        if (!groupedSales[groupKey]) {
-                            groupedSales[groupKey] = [];
-                        }
-                        groupedSales[groupKey].push(sale);
+                        const shopItem = appData.shopStock[sale.shopProductId];
+                        const currency = shopItem ? (appData.storeProducts[shopItem.sourceProductId]?.currency || 'CFA') : 'CFA';
+                        html += `
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${sale.productName}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.sellerName}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.quantity}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">${formatCurrency(sale.totalAmount, currency)}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.comment}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(sale.date)}</td>
+                            </tr>`;
                     });
-                    
-                    Object.values(groupedSales).forEach(group => {
-                        const firstSale = group[0];
-                        const shopItem = appData.shopStock[firstSale.shopProductId];
-                        const currency = shopItem ? (appData.storeProducts[shopItem.sourceProductId]?.currency || 'FCFA') : 'FCFA';
-                        
-                        // Si plusieurs produits dans le groupe, afficher en tant que vente groupée
-                        if (group.length > 1) {
-                            const totalAmount = group.reduce((sum, s) => sum + s.totalAmount, 0);
-                            const totalQty = group.reduce((sum, s) => sum + s.quantity, 0);
-                            const productNames = group.map(s => s.productName).join(', ');
-                            
-                            html += `
-                                <tr class="hover:bg-gray-50 bg-blue-50">
-                                    <td class="px-6 py-4 text-sm font-medium text-gray-900">
-                                        <div class="flex items-center gap-2">
-                                            <span class="bg-blue-500 text-white text-xs px-2 py-1 rounded">Groupée</span>
-                                            <span>${group.length} produits</span>
-                                        </div>
-                                        <div class="text-xs text-gray-500 mt-1">${productNames}</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${firstSale.sellerName}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${totalQty}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">${formatCurrency(totalAmount, currency)}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${firstSale.comment}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(firstSale.date)}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                        <button onclick='generateInvoiceFromHistory(${JSON.stringify(group).replace(/'/g, "\\'")})'
-                                            class="bg-cyan-500 hover:bg-cyan-600 text-white px-3 py-1 rounded text-xs font-semibold flex items-center gap-1">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                            </svg>
-                                            Facture
-                                        </button>
-                                    </td>
-                                </tr>`;
-                        } else {
-                            // Vente simple
-                            const sale = firstSale;
-                            html += `
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${sale.productName}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.sellerName}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.quantity}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">${formatCurrency(sale.totalAmount, currency)}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.comment}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(sale.date)}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                        <button onclick='generateInvoiceFromHistory(${JSON.stringify([sale]).replace(/'/g, "\\'")})'
-                                            class="bg-cyan-500 hover:bg-cyan-600 text-white px-3 py-1 rounded text-xs font-semibold flex items-center gap-1">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                            </svg>
-                                            Facture
-                                        </button>
-                                    </td>
-                                </tr>`;
-                        }
-                    });
-                    
                     salesHistoryTbody.innerHTML = html;
                 } else {
                     salesHistoryPlaceholder.classList.remove('hidden');
@@ -1728,525 +1585,30 @@
                 }
             });
 
-
             // Listeners pour les actions (Vente, Ajout Produit, etc.)
-            
-            // ===== NOUVEAU SYSTÈME DE PANIER POUR VENTES GROUPÉES =====
-            let cart = []; // Le panier contenant les articles à vendre
-            
-            const addToCartButton = document.getElementById('add-to-cart-button');
-            const cartSection = document.getElementById('cart-section');
-            const cartItems = document.getElementById('cart-items');
-            const cartTotal = document.getElementById('cart-total');
-            const cartItemsCount = document.getElementById('cart-items-count');
-            const clearCartButton = document.getElementById('clear-cart-button');
-            const validateSaleButton = document.getElementById('validate-sale-button');
-            
-            // Fonction pour mettre à jour l'affichage du panier
-            function updateCartDisplay() {
-                if (cart.length === 0) {
-                    cartSection.classList.add('hidden');
-                    return;
-                }
-                
-                cartSection.classList.remove('hidden');
-                
-                // Construire le HTML des articles du panier
-                let cartHTML = '';
-                let total = 0;
-                
-                cart.forEach((item, index) => {
-                    const itemTotal = item.sellingPrice * item.quantity;
-                    total += itemTotal;
-                    
-                    cartHTML += `
-                        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                            <div class="flex justify-between items-start mb-3">
-                                <div class="flex-1">
-                                    <div class="font-semibold text-gray-800">${item.name}</div>
-                                    <div class="text-sm text-gray-500">${formatCurrency(item.sellingPrice)} x ${item.quantity}</div>
-                                </div>
-                                <button onclick="removeFromCart(${index})" class="text-red-500 hover:text-red-700 ml-2">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                    </svg>
-                                </button>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <input type="number" 
-                                    value="${item.quantity}" 
-                                    min="1" 
-                                    max="${item.maxStock}"
-                                    onchange="updateCartItemQuantity(${index}, this.value)"
-                                    class="w-20 p-2 border border-gray-300 rounded text-center">
-                                <span class="font-bold text-gray-800">${formatCurrency(itemTotal)}</span>
-                            </div>
-                        </div>
-                    `;
-                });
-                
-                cartItems.innerHTML = cartHTML;
-                cartTotal.textContent = formatCurrency(total);
-                cartItemsCount.textContent = cart.length;
-            }
-            
-            // Fonction pour ajouter un article au panier
-            if (addToCartButton) {
-                addToCartButton.addEventListener('click', () => {
-                    salesError.classList.add('hidden');
-                    
-                    const shopProductId = salesProductSelect.value;
-                    const quantity = parseInt(salesQuantityInput.value, 10);
-                    
-                    if (!shopProductId) {
-                        salesError.textContent = "Veuillez sélectionner un produit.";
-                        salesError.classList.remove('hidden');
-                        return;
-                    }
-                    
-                    if (isNaN(quantity) || quantity <= 0) {
-                        salesError.textContent = "Quantité invalide.";
-                        salesError.classList.remove('hidden');
-                        return;
-                    }
-                    
-                    const shopProduct = appData.shopStock[shopProductId];
-                    if (!shopProduct) {
-                        salesError.textContent = "Produit introuvable.";
-                        salesError.classList.remove('hidden');
-                        return;
-                    }
-                    
-                    // Vérifier si le produit est déjà dans le panier
-                    const existingItemIndex = cart.findIndex(item => item.shopProductId === shopProductId);
-                    
-                    if (existingItemIndex !== -1) {
-                        // Produit déjà dans le panier, on met à jour la quantité
-                        const newQuantity = cart[existingItemIndex].quantity + quantity;
-                        if (newQuantity > shopProduct.quantityInShop) {
-                            salesError.textContent = `Stock insuffisant. Maximum disponible: ${shopProduct.quantityInShop}`;
-                            salesError.classList.remove('hidden');
-                            return;
-                        }
-                        cart[existingItemIndex].quantity = newQuantity;
-                    } else {
-                        // Nouveau produit dans le panier
-                        if (quantity > shopProduct.quantityInShop) {
-                            salesError.textContent = "Stock insuffisant.";
-                            salesError.classList.remove('hidden');
-                            return;
-                        }
-                        
-                        cart.push({
-                            shopProductId: shopProductId,
-                            name: shopProduct.name,
-                            quantity: quantity,
-                            sellingPrice: shopProduct.sellingPrice,
-                            maxStock: shopProduct.quantityInShop
-                        });
-                    }
-                    
-                    // Réinitialiser le formulaire
-                    salesProductSelect.value = '';
-                    salesQuantityInput.value = '1';
-                    
-                    updateCartDisplay();
-                    showSuccessToast("Produit ajouté au panier!");
-                });
-            }
-            
-            // Fonction pour retirer un article du panier (globale pour être accessible depuis onclick)
-            window.removeFromCart = function(index) {
-                cart.splice(index, 1);
-                updateCartDisplay();
-                showSuccessToast("Article retiré du panier");
-            };
-            
-            // Fonction pour mettre à jour la quantité d'un article (globale pour être accessible depuis onchange)
-            window.updateCartItemQuantity = function(index, newQuantity) {
-                const qty = parseInt(newQuantity, 10);
-                if (isNaN(qty) || qty <= 0) {
-                    showSuccessToast("Quantité invalide");
-                    updateCartDisplay();
-                    return;
-                }
-                
-                const item = cart[index];
-                if (qty > item.maxStock) {
-                    showSuccessToast(`Stock insuffisant. Maximum: ${item.maxStock}`);
-                    updateCartDisplay();
-                    return;
-                }
-                
-                cart[index].quantity = qty;
-                updateCartDisplay();
-            };
-            
-            // Vider le panier
-            if (clearCartButton) {
-                clearCartButton.addEventListener('click', () => {
-                    if (confirm("Êtes-vous sûr de vouloir vider le panier ?")) {
-                        cart = [];
-                        updateCartDisplay();
-                        showSuccessToast("Panier vidé");
-                    }
-                });
-            }
-            
-            // Valider la vente (traiter tous les articles du panier)
-            if (validateSaleButton) {
-                validateSaleButton.addEventListener('click', async () => {
-                    salesError.classList.add('hidden');
-                    
-                    if (!currentUser || !dbBasePath) {
-                        salesError.textContent = "Vous devez être connecté.";
-                        salesError.classList.remove('hidden');
-                        return;
-                    }
-                    
-                    if (cart.length === 0) {
-                        salesError.textContent = "Le panier est vide.";
-                        salesError.classList.remove('hidden');
-                        return;
-                    }
-                    
-                    const comment = salesComment.value || "";
-                    const sellerName = currentUserData?.fullName || currentUser.email;
-                    
-                    validateSaleButton.disabled = true;
-                    
-                    try {
-                        const updates = {};
-                        const now = new Date().toISOString();
-                        
-                        // Vérifier que tous les produits ont encore du stock suffisant
-                        for (const item of cart) {
-                            const shopProduct = appData.shopStock[item.shopProductId];
-                            if (!shopProduct || item.quantity > shopProduct.quantityInShop) {
-                                throw new Error(`Stock insuffisant pour ${item.name}`);
-                            }
-                        }
-                        
-                        // Traiter chaque article du panier
-                        for (const item of cart) {
-                            const shopProduct = appData.shopStock[item.shopProductId];
-                            const shopNewStock = shopProduct.quantityInShop - item.quantity;
-                            
-                            // Mettre à jour le stock
-                            updates[`${dbBasePath}/shopStock/${item.shopProductId}/quantityInShop`] = shopNewStock;
-                            
-                            // Enregistrer le mouvement de stock
-                            const shopMoveKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
-                            updates[`${dbBasePath}/shopMovements/${shopMoveKey}`] = {
-                                id: shopMoveKey,
-                                shopProductId: item.shopProductId,
-                                productName: item.name,
-                                type: "Sortie",
-                                quantityChange: item.quantity,
-                                oldStock: shopProduct.quantityInShop,
-                                newStock: shopNewStock,
-                                comment: `Vente groupée: ${comment}`,
-                                date: now,
-                                userEmail: currentUser.email
-                            };
-                            
-                            // Enregistrer la vente
-                            const saleKey = push(ref(db, `${dbBasePath}/salesHistory`)).key;
-                            updates[`${dbBasePath}/salesHistory/${saleKey}`] = {
-                                id: saleKey,
-                                shopProductId: item.shopProductId,
-                                productName: item.name,
-                                quantity: item.quantity,
-                                sellingPrice: item.sellingPrice,
-                                totalAmount: item.sellingPrice * item.quantity,
-                                sellerName,
-                                comment,
-                                date: now
-                            };
-                        }
-                        
-                        // Appliquer toutes les mises à jour
-                        await update(ref(db), updates);
-                        
-                        showSuccessToast(`Vente groupée enregistrée! ${cart.length} produit(s) vendu(s)`);
-                        
-                        // Préparer les données pour la facture
-                        const saleDataForInvoice = {
-                            items: [...cart], // Copie du panier avant réinitialisation
-                            sellerName: sellerName,
-                            comment: comment,
-                            date: now
-                        };
-                        
-                        // Réinitialiser le panier et le formulaire
-                        cart = [];
-                        salesComment.value = '';
-                        updateCartDisplay();
-                        
-                        // Afficher l'option de génération de facture
-                        showInvoiceGenerationOption(saleDataForInvoice);
-                        
-                    } catch (error) {
-                        salesError.textContent = error.message;
-                        salesError.classList.remove('hidden');
-                    } finally {
-                        validateSaleButton.disabled = false;
-                    }
-                });
-            }
-            // ===== FIN DU SYSTÈME DE PANIER =====
-
-// ===== SYSTÈME DE GÉNÉRATION DE FACTURES =====
-let lastSaleData = null; // Stocke les données de la dernière vente pour générer la facture
-
-const invoiceModal = document.getElementById('invoice-modal');
-const closeInvoiceModal = document.getElementById('close-invoice-modal');
-const invoiceContent = document.getElementById('invoice-content');
-const printInvoiceButton = document.getElementById('print-invoice-button');
-const downloadInvoiceButton = document.getElementById('download-invoice-button');
-const invoiceGenerationSection = document.getElementById('invoice-generation-section');
-const generateInvoiceButton = document.getElementById('generate-invoice-button');
-const skipInvoiceButton = document.getElementById('skip-invoice-button');
-
-// Fonction pour générer un numéro de facture unique
-function generateInvoiceNumber() {
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const timestamp = Date.now().toString().slice(-6);
-    return `FAC-${year}${month}${day}-${timestamp}`;
-}
-
-// Fonction pour générer le HTML de la facture
-function generateInvoiceHTML(saleData) {
-    const invoiceNumber = generateInvoiceNumber();
-    const companyName = currentUserData?.companyName || 'Ma Société';
-    const date = new Date(saleData.date);
-    const formattedDate = date.toLocaleDateString('fr-FR', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-    
-    let itemsHTML = '';
-    let subtotal = 0;
-    
-    saleData.items.forEach(item => {
-        const itemTotal = item.sellingPrice * item.quantity;
-        subtotal += itemTotal;
-        itemsHTML += `
-            <tr class="border-b">
-                <td class="py-3 px-4">${item.name}</td>
-                <td class="py-3 px-4 text-center">${item.quantity}</td>
-                <td class="py-3 px-4 text-right">${formatCurrency(item.sellingPrice)}</td>
-                <td class="py-3 px-4 text-right font-semibold">${formatCurrency(itemTotal)}</td>
-            </tr>
-        `;
-    });
-    
-    return `
-        <div class="invoice-document">
-            <!-- En-tête de la facture -->
-            <div class="flex justify-between items-start mb-8">
-                <div>
-                    <h1 class="text-3xl font-bold text-gray-800 mb-2">${companyName}</h1>
-                    <p class="text-gray-600">Gestion de stock et ventes</p>
-                </div>
-                <div class="text-right">
-                    <h2 class="text-2xl font-bold text-cyan-600 mb-2">FACTURE</h2>
-                    <p class="text-gray-600">N° ${invoiceNumber}</p>
-                    <p class="text-gray-600">${formattedDate}</p>
-                </div>
-            </div>
-            
-            <!-- Informations vendeur -->
-            <div class="mb-8 bg-gray-50 p-4 rounded-lg">
-                <p class="text-sm text-gray-500 mb-1">Vendeur</p>
-                <p class="font-semibold text-gray-800">${saleData.sellerName}</p>
-            </div>
-            
-            <!-- Commentaire si présent -->
-            ${saleData.comment ? `
-                <div class="mb-6 bg-blue-50 border-l-4 border-blue-400 p-4">
-                    <p class="text-sm text-gray-600"><strong>Note :</strong> ${saleData.comment}</p>
-                </div>
-            ` : ''}
-            
-            <!-- Tableau des articles -->
-            <table class="w-full mb-8">
-                <thead class="bg-gray-100">
-                    <tr>
-                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Produit</th>
-                        <th class="py-3 px-4 text-center font-semibold text-gray-700">Quantité</th>
-                        <th class="py-3 px-4 text-right font-semibold text-gray-700">Prix unitaire</th>
-                        <th class="py-3 px-4 text-right font-semibold text-gray-700">Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${itemsHTML}
-                </tbody>
-            </table>
-            
-            <!-- Total -->
-            <div class="flex justify-end mb-8">
-                <div class="w-64">
-                    <div class="flex justify-between py-2 border-b">
-                        <span class="text-gray-600">Sous-total</span>
-                        <span class="font-semibold">${formatCurrency(subtotal)}</span>
-                    </div>
-                    <div class="flex justify-between py-3 bg-gray-100 px-4 rounded-lg mt-2">
-                        <span class="text-lg font-bold text-gray-800">TOTAL</span>
-                        <span class="text-lg font-bold text-green-600">${formatCurrency(subtotal)}</span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Pied de page -->
-            <div class="text-center text-gray-500 text-sm border-t pt-4">
-                <p>Merci pour votre achat !</p>
-                <p class="mt-2">Cette facture a été générée par StockPilot</p>
-            </div>
-        </div>
-    `;
-}
-
-// Fonction pour afficher la facture dans le modal
-function showInvoice(saleData) {
-    invoiceContent.innerHTML = generateInvoiceHTML(saleData);
-    invoiceModal.classList.remove('hidden');
-}
-
-// Fonction pour imprimer la facture
-if (printInvoiceButton) {
-    printInvoiceButton.addEventListener('click', () => {
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Facture - ${generateInvoiceNumber()}</title>
-                <script src="https://cdn.tailwindcss.com"></script>
-                <style>
-                    @media print {
-                        body { padding: 20px; }
-                        .no-print { display: none; }
-                    }
-                </style>
-            </head>
-            <body>
-                ${invoiceContent.innerHTML}
-            </body>
-            </html>
-        `);
-        printWindow.document.close();
-        setTimeout(() => {
-            printWindow.print();
-        }, 250);
-    });
-}
-
-// Fonction pour télécharger la facture en PDF (utilise print to PDF du navigateur)
-if (downloadInvoiceButton) {
-    downloadInvoiceButton.addEventListener('click', () => {
-        const printWindow = window.open('', '_blank');
-        const invoiceNum = generateInvoiceNumber();
-        printWindow.document.write(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Facture - ${invoiceNum}</title>
-                <script src="https://cdn.tailwindcss.com"></script>
-                <style>
-                    @page { margin: 20mm; }
-                    body { padding: 20px; }
-                </style>
-            </head>
-            <body>
-                ${invoiceContent.innerHTML}
-                <script>
-                    window.onload = function() {
-                        setTimeout(() => {
-                            window.print();
-                        }, 500);
-                    }
-                </script>
-            </body>
-            </html>
-        `);
-        printWindow.document.close();
-        alert('Utilisez "Enregistrer au format PDF" dans la boîte de dialogue d\'impression pour sauvegarder la facture.');
-    });
-}
-
-// Fermer le modal de facture
-if (closeInvoiceModal) {
-    closeInvoiceModal.addEventListener('click', () => {
-        invoiceModal.classList.add('hidden');
-    });
-}
-
-// Clic en dehors du modal pour fermer
-if (invoiceModal) {
-    invoiceModal.addEventListener('click', (e) => {
-        if (e.target === invoiceModal) {
-            invoiceModal.classList.add('hidden');
-        }
-    });
-}
-
-// Bouton pour générer la facture après une vente
-if (generateInvoiceButton) {
-    generateInvoiceButton.addEventListener('click', () => {
-        if (lastSaleData) {
-            showInvoice(lastSaleData);
-            invoiceGenerationSection.classList.add('hidden');
-        }
-    });
-}
-
-// Bouton pour passer la génération de facture
-if (skipInvoiceButton) {
-    skipInvoiceButton.addEventListener('click', () => {
-        invoiceGenerationSection.classList.add('hidden');
-        lastSaleData = null;
-    });
-}
-
-// Fonction pour afficher la section de génération de facture après une vente
-function showInvoiceGenerationOption(saleData) {
-    lastSaleData = saleData;
-    invoiceGenerationSection.classList.remove('hidden');
-    
-    // Faire défiler vers la section
-    setTimeout(() => {
-        invoiceGenerationSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 100);
-}
-// Fonction globale pour générer une facture depuis l'historique
-window.generateInvoiceFromHistory = function(salesGroup) {
-    // Reconstituer les données au format attendu par la fonction de génération
-    const items = salesGroup.map(sale => ({
-        shopProductId: sale.shopProductId,
-        name: sale.productName,
-        quantity: sale.quantity,
-        sellingPrice: sale.sellingPrice,
-        maxStock: 999 // Non utilisé pour la facture
-    }));
-    
-    const saleDataForInvoice = {
-        items: items,
-        sellerName: salesGroup[0].sellerName,
-        comment: salesGroup[0].comment || '',
-        date: salesGroup[0].date
-    };
-    
-    showInvoice(saleDataForInvoice);
-};
-
-// ===== FIN DU SYSTÈME DE GÉNÉRATION DE FACTURES =====
+            if(salesForm) salesForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                salesError.classList.add('hidden');
+                if (!currentUser || !dbBasePath) { salesError.textContent = "Vous devez être connecté."; salesError.classList.remove('hidden'); return; }
+                const shopProductId = salesProductSelect.value;
+                const quantity = parseInt(salesQuantityInput.value, 10);
+                const comment = salesComment.value || "";
+                const sellerName = currentUserData?.fullName || currentUser.email;
+                if (!shopProductId || isNaN(quantity) || quantity <= 0) { salesError.textContent = "Quantité invalide."; salesError.classList.remove('hidden'); return; }
+                const shopProduct = appData.shopStock[shopProductId];
+                if (!shopProduct || quantity > shopProduct.quantityInShop) { salesError.textContent = "Stock insuffisant."; salesError.classList.remove('hidden'); return; }
+                salesSubmitButton.disabled = true;
+                try {
+                    const updates = {}; const now = new Date().toISOString();
+                    const shopNewStock = shopProduct.quantityInShop - quantity;
+                    updates[`${dbBasePath}/shopStock/${shopProductId}/quantityInShop`] = shopNewStock;
+                    const shopMoveKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
+                    updates[`${dbBasePath}/shopMovements/${shopMoveKey}`] = { id: shopMoveKey, shopProductId, productName: shopProduct.name, type: "Sortie", quantityChange: quantity, oldStock: shopProduct.quantityInShop, newStock: shopNewStock, comment: `Vente: ${comment}`, date: now, userEmail: currentUser.email };
+                    const saleKey = push(ref(db, `${dbBasePath}/salesHistory`)).key;
+                    updates[`${dbBasePath}/salesHistory/${saleKey}`] = { id: saleKey, shopProductId, productName: shopProduct.name, quantity, sellingPrice: shopProduct.sellingPrice, totalAmount: shopProduct.sellingPrice * quantity, sellerName, comment, date: now };
+                    await update(ref(db), updates); showSuccessToast("Vente enregistrée!"); salesForm.reset(); updateSalesTotal();
+                } catch (error) { salesError.textContent = error.message; salesError.classList.remove('hidden'); } finally { salesSubmitButton.disabled = false; }
+            });
 
             if(newProductForm) newProductForm.addEventListener('submit', async (e) => {
                 e.preventDefault(); newProductError.classList.add('hidden');
