@@ -30,6 +30,13 @@
         main {
             transition: margin-left 0.3s ease-in-out;
         }
+        .low-stock-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
     </style>
 <script type="importmap">
 {
@@ -71,7 +78,7 @@
                     </button>
                 </div>
 
-                <!-- Formulaire de connexion (initialement visible) -->
+                <!-- Formulaire de connexion -->
                 <form id="login-form">
                     <div class="space-y-4">
                         <div>
@@ -82,14 +89,14 @@
                             <label class="text-sm font-medium text-gray-600" for="password">Mot de passe</label>
                             <input type="password" id="password" name="password" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
                         </div>
-                        <p id="login-error" class="text-red-500 text-sm mt-2 hidden"></p> <!-- Ajout pour les erreurs -->
+                        <p id="login-error" class="text-red-500 text-sm mt-2 hidden"></p>
                         <button type="submit" id="login-submit-button" class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
                             Se connecter
                         </button>
                     </div>
                 </form>
 
-                <!-- Formulaire d'inscription (initialement caché) -->
+                <!-- Formulaire d'inscription -->
                 <form id="signup-form" class="hidden">
                     <div class="space-y-4">
                         <div>
@@ -99,7 +106,6 @@
                         <div>
                             <label class="text-sm font-medium text-gray-600" for="companyName">Nom de l'entreprise</label>
                             <input type="text" id="companyName" name="companyName" placeholder="Ma Société" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
-                            <p class="text-xs text-gray-500 mt-1">Si le nom correspond à une entreprise existante, vous la rejoindrez.</p>
                         </div>
                         <div>
                             <label class="text-sm font-medium text-gray-600" for="signup-email">Email</label>
@@ -121,15 +127,10 @@
         </div>
     </div>
 
-    <!-- 
-      CONTENEUR DE L'APPLICATION (LAYOUT)
-      Initialement caché, sera affiché par JS après la connexion.
-    -->
+    <!-- CONTENEUR DE L'APPLICATION -->
     <div id="layout-container" class="hidden">
-        <!-- Overlay pour sidebar mobile -->
         <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden lg:hidden"></div>
 
-        <!-- Sidebar -->
         <aside id="sidebar" class="w-64 bg-white shadow-md flex flex-col h-screen fixed top-0 left-0 z-40 transition-transform duration-300 ease-in-out -translate-x-full lg:translate-x-0 lg:transition-all">
             <div class="p-6 flex items-center space-x-3 border-b border-gray-200">
                 <div class="bg-cyan-100 text-cyan-500 p-2 rounded-lg">
@@ -138,14 +139,13 @@
                 <h1 class="sidebar-text text-xl font-bold text-gray-800">StockPilot</h1>
             </div>
             <nav class="flex-1 p-4 space-y-2">
-                <!-- Les boutons de navigation -->
                 <button data-page="Tableau de bord" class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors bg-cyan-400 text-white shadow">
                     <div data-icon="dashboard" class="w-5 h-5"></div>
                     <span class="sidebar-text">Tableau de bord</span>
                 </button>
                 <button data-page="Ventes" class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
                     <div data-icon="sales" class="w-5 h-5"></div>
-                    <span class="sidebar-text">Ventes</span>
+                    <span class="sidebar-text">Ventes (Panier)</span>
                 </button>
                 <button data-page="Stock Boutique" class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
                     <div data-icon="box" class="w-5 h-5"></div>
@@ -166,7 +166,6 @@
             </nav>
             <div class="p-4 border-t border-gray-200">
                 <div class="sidebar-text p-4 mb-2 rounded-lg bg-gray-100">
-                    <!-- Placeholder pour le profil utilisateur -->
                     <p id="user-name-display" class="text-sm font-medium text-gray-700">Utilisateur connecté</p>
                     <p id="user-company-display" class="text-xs text-gray-500 font-semibold truncate mt-1"></p>
                     <p id="user-email-display" class="text-xs text-gray-400 truncate">Chargement...</p>
@@ -176,7 +175,6 @@
                     <span class="sidebar-text">Déconnexion</span>
                 </button>
             </div>
-             <!-- Bouton pour réduire/agrandir la sidebar sur Desktop -->
             <div class="hidden lg:block absolute -right-3 top-20">
                 <button id="sidebar-collapse-toggle" class="bg-white border rounded-full p-1.5 shadow-md hover:bg-gray-100 transition-colors">
                     <div data-icon="arrowLeft" class="w-4 h-4 text-gray-600"></div>
@@ -184,156 +182,173 @@
             </div>
         </aside>
 
-        <!-- Contenu principal (pages) -->
         <main class="flex-1 lg:ml-64 overflow-y-auto h-screen">
-            
-            <!-- Header pour la vue mobile -->
             <header id="mobile-header" class="sticky top-0 bg-gray-50/75 backdrop-blur-sm z-10 p-4 border-b border-gray-200 flex items-center justify-between lg:hidden">
                 <button id="hamburger-button" class="text-gray-500 hover:text-gray-800">
                     <div data-icon="menu" class="w-6 h-6"></div>
                 </button>
                 <h1 id="mobile-page-title" class="text-lg font-semibold text-gray-800">Tableau de bord</h1>
-                <div class="w-6"></div> <!-- Spacer -->
+                <div class="w-6"></div>
             </header>
 
             <!-- Page: Tableau de bord -->
             <div id="page-Tableau-de-bord" class="page-content p-4 md:p-8">
                 <h1 class="text-3xl font-bold text-gray-800">Bienvenue!</h1>
-                <p class="text-gray-500 mt-1">Voici un aperçu de votre activité</p>
+                <p class="text-gray-500 mt-1">Voici l'état actuel de votre activité</p>
+                
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
                     <!-- StatCard -->
-                    <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
+                    <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between border-l-4 border-blue-400">
                         <div>
                             <p class="text-sm text-gray-500">Ventes du jour</p>
                             <p id="stat-daily-sales" class="text-2xl font-bold text-gray-800 mt-1">0</p>
                         </div>
-                        <div class="p-3 rounded-lg bg-blue-100">
+                        <div class="p-3 rounded-lg bg-blue-50">
                             <div data-icon="sales" class="w-6 h-6 text-blue-500"></div>
                         </div>
                     </div>
-                    <!-- StatCard -->
-                    <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
+                    <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between border-l-4 border-green-400">
                         <div>
                             <p class="text-sm text-gray-500">Stock Boutique</p>
-                            <p id="stat-shop-stock" class="text-2xl font-bold text-gray-800 mt-1">0 produits</p>
+                            <p id="stat-shop-stock" class="text-2xl font-bold text-gray-800 mt-1">0</p>
                         </div>
-                        <div class="p-3 rounded-lg bg-green-100">
+                        <div class="p-3 rounded-lg bg-green-50">
                             <div data-icon="box" class="w-6 h-6 text-green-500"></div>
                         </div>
                     </div>
-                    <!-- StatCard -->
-                    <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
+                    <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between border-l-4 border-red-400">
                         <div>
-                            <p class="text-sm text-gray-500">Stock Magasin</p>
-                            <p id="stat-store-stock" class="text-2xl font-bold text-gray-800 mt-1">0 produits</p>
+                            <p class="text-sm text-gray-500">Alertes Stock</p>
+                            <p id="stat-alerts-count" class="text-2xl font-bold text-red-600 mt-1">0</p>
                         </div>
-                        <div class="p-3 rounded-lg bg-yellow-100">
-                            <div data-icon="box" class="w-6 h-6 text-yellow-500"></div>
+                        <div class="p-3 rounded-lg bg-red-50">
+                            <div data-icon="box" class="w-6 h-6 text-red-500"></div>
                         </div>
                     </div>
-                    <!-- StatCard -->
-                    <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
+                    <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between border-l-4 border-indigo-400">
                         <div>
-                            <p class="text-sm text-gray-500">Revenus du mois</p>
+                            <p class="text-sm text-gray-500">Revenu Mensuel</p>
                             <p id="stat-monthly-revenue" class="text-2xl font-bold text-gray-800 mt-1">0 FCFA</p>
                         </div>
-                        <div class="p-3 rounded-lg bg-indigo-100">
+                        <div class="p-3 rounded-lg bg-indigo-50">
                             <div data-icon="stats" class="w-6 h-6 text-indigo-500"></div>
                         </div>
                     </div>
                 </div>
-                <div class="mt-10 bg-white p-6 rounded-lg shadow-sm">
-                    <h2 class="text-xl font-bold text-gray-800">Démarrage rapide</h2>
-                    <div class="mt-4 space-y-4">
-                        <div class="p-4 border border-gray-200 rounded-lg">
-                            <h3 class="font-semibold text-gray-700">1. Ajouter des produits au magasin</h3>
-                            <p class="text-sm text-gray-500 mt-1">Commencez par ajouter vos produits dans "Mon Magasin" avec leurs prix d'achat.</p>
+
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-8 mt-10">
+                    <!-- Section Alertes -->
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-red-100">
+                        <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                            <span class="w-2 h-2 bg-red-500 rounded-full low-stock-pulse"></span>
+                            Articles à réapprovisionner
+                        </h2>
+                        <div id="dashboard-low-stock-list" class="mt-4 space-y-4">
+                            <p class="text-sm text-gray-400 italic">Tout est sous contrôle !</p>
                         </div>
-                        <div class="p-4 border border-gray-200 rounded-lg">
-                            <h3 class="font-semibold text-gray-700">2. Transférer vers la boutique</h3>
-                            <p class="text-sm text-gray-500 mt-1">Transférez les produits vers votre "Stock Boutique" en ajoutant votre marge.</p>
+                    </div>
+
+                    <!-- Top Produits -->
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                        <h2 class="text-lg font-bold text-gray-800">Top 5 Produits Vendus</h2>
+                        <div id="dashboard-top-selling-list" class="mt-4 space-y-4">
+                            <p class="text-sm text-gray-400 italic">Aucune donnée de vente.</p>
                         </div>
-                        <div class="p-4 border border-gray-200 rounded-lg">
-                            <h3 class="font-semibold text-gray-700">3. Enregistrer vos ventes</h3>
-                            <p class="text-sm text-gray-500 mt-1">Utilisez l'interface "Ventes" pour enregistrer chaque transaction.</p>
+                    </div>
+
+                    <!-- Activité Récente -->
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                        <h2 class="text-lg font-bold text-gray-800">Activités Récentes</h2>
+                        <div id="dashboard-recent-activity-list" class="mt-4 space-y-4">
+                            <p class="text-sm text-gray-400 italic">Pas encore de transactions.</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Page: Ventes -->
+            <!-- Page: Ventes (POINT DE VENTE) -->
             <div id="page-Ventes" class="page-content p-4 md:p-8 hidden">
-                <h1 class="text-3xl font-bold text-gray-800">Ventes</h1>
-                <p class="text-gray-500 mt-1">Enregistrez vos ventes quotidiennes</p>
-                <div class="mt-8 bg-white p-6 rounded-lg shadow-sm">
-                    <h2 class="text-xl font-bold text-gray-800 flex items-center">
-                        <div data-icon="sales" class="w-6 h-6 mr-3 text-cyan-500"></div>
-                        Enregistrer une vente
-                    </h2>
-                    <form id="sales-form" class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="col-span-1">
-                            <label for="sales-product-select" class="block text-sm font-medium text-gray-700 mb-1">Produit *</label>
-                            <select id="sales-product-select" name="product" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500">
-                                <option value="">Sélectionner un produit</option>
-                            </select>
-                        </div>
-                        <div class="col-span-1">
-                            <label for="sales-quantity-input" class="block text-sm font-medium text-gray-700 mb-1">Quantité *</label>
-                            <input type="number" name="quantity" id="sales-quantity-input" value="1" min="1" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500" />
-                        </div>
-                        
-                        <!-- Nouveau champ : Montant total -->
-                        <div class="col-span-1">
-                            <label for="sales-total-amount" class="block text-sm font-medium text-gray-700 mb-1">Montant total</label>
-                            <input type="text" id="sales-total-amount" value="0 FCFA" class="w-full border-gray-300 rounded-lg shadow-sm bg-gray-100 focus:ring-0 focus:border-gray-300" readonly />
-                        </div>
-                        
-                        <div class="col-span-1">
-                            <label for="seller-name" class="block text-sm font-medium text-gray-700 mb-1">Vendeur *</label>
-                            <input type="text" name="seller" id="seller-name" class="w-full border-gray-300 rounded-lg shadow-sm bg-gray-100 focus:ring-0 focus:border-gray-300" readonly />
+                <h1 class="text-3xl font-bold text-gray-800">Point de Vente</h1>
+                <p class="text-gray-500 mt-1">Enregistrez vos ventes groupées ici.</p>
+                
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-8 mt-8">
+                    <!-- Sélection -->
+                    <div class="xl:col-span-2 space-y-6">
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-3 mb-6">
+                                <div data-icon="sales" class="w-6 h-6 text-cyan-500"></div>
+                                Ajouter un produit à la vente
+                            </h2>
+                            <form id="pos-add-item-form" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="col-span-1">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Produit *</label>
+                                    <select id="pos-product-select" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500">
+                                        <option value="">Sélectionner un produit</option>
+                                    </select>
+                                </div>
+                                <div class="col-span-1">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Quantité *</label>
+                                    <div class="flex items-center gap-2">
+                                        <input type="number" id="pos-quantity-input" value="1" min="1" class="flex-grow border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500" />
+                                        <button type="submit" class="bg-cyan-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-cyan-600 transition-colors">
+                                            Ajouter
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
                         </div>
 
-                        <div class="col-span-2">
-                            <label for="sales-comment" class="block text-sm font-medium text-gray-700 mb-1">Commentaire (optionnel)</label>
-                            <textarea name="comment" id="sales-comment" rows="3" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500"></textarea>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                            <h2 class="text-xl font-bold text-gray-800 mb-4">Historique global des ventes</h2>
+                            <div id="sales-history-table-container" class="hidden overflow-x-auto rounded-lg border border-gray-100">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left">Produit</th>
+                                            <th class="px-6 py-3 text-left">Qté</th>
+                                            <th class="px-6 py-3 text-left">Total</th>
+                                            <th class="px-6 py-3 text-left">Vendeur</th>
+                                            <th class="px-6 py-3 text-right">Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="sales-history-tbody" class="divide-y divide-gray-100 text-sm text-gray-700"></tbody>
+                                </table>
+                            </div>
                         </div>
-                        
-                        <p id="sales-error" class="text-red-500 text-sm mt-2 hidden col-span-2"></p>
-                        
-                        <div class="col-span-2">
-                            <button type="submit" id="sales-submit-button" class="inline-flex items-center px-4 py-2 bg-cyan-400 text-white font-semibold rounded-lg shadow-md hover:bg-cyan-500 transition-colors">
-                                + Enregistrer la vente
-                            </button>
-                        </div>
-                    </form>
-                </div>
-                <div class="mt-10 bg-white p-6 rounded-lg shadow-sm">
-                    <h2 class="text-xl font-bold text-gray-800">Historique des ventes</h2>
-                    <p class="text-sm text-gray-500 mt-1">Liste de toutes les transactions enregistrées.</p>
-                    
-                    <!-- Conteneur pour l'historique des ventes -->
-                    <div id="sales-history-container" class="mt-6">
-                        <!-- Message si vide -->
-                        <div id="sales-history-placeholder" class="flex flex-col items-center justify-center text-center text-gray-500 h-32">
-                            <p>Aucune vente enregistrée</p>
-                        </div>
-                        <!-- Tableau si non vide -->
-                        <div id="sales-history-table-container" class="hidden overflow-x-auto rounded-lg border border-gray-200">
-                            <table class="min-w-full bg-white divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendeur</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qté</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Commentaire</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="sales-history-tbody" class="divide-y divide-gray-200">
-                                    <!-- Lignes de ventes insérées par JS -->
-                                </tbody>
-                            </table>
+                    </div>
+
+                    <!-- Panier -->
+                    <div class="xl:col-span-1">
+                        <div class="bg-white rounded-2xl shadow-xl border border-cyan-100 overflow-hidden flex flex-col h-[600px] sticky top-8">
+                            <div class="bg-cyan-500 p-4 text-white">
+                                <h2 class="text-lg font-bold flex items-center justify-between">
+                                    <span>Ticket de Caisse</span>
+                                    <span id="cart-item-count" class="bg-white/20 px-2 py-0.5 rounded text-xs">0 articles</span>
+                                </h2>
+                            </div>
+                            
+                            <div id="cart-items-container" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50">
+                                <div class="flex flex-col items-center justify-center h-full text-gray-400 italic">
+                                    <p>Le panier est vide</p>
+                                </div>
+                            </div>
+
+                            <div class="p-6 bg-white border-t border-gray-100 space-y-4">
+                                <div class="flex justify-between items-center text-gray-500 text-sm">
+                                    <span>Total Articles</span>
+                                    <span id="cart-total-qty">0</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xl font-bold text-gray-800">Total à payer</span>
+                                    <span id="cart-total-amount" class="text-2xl font-black text-cyan-600">0 FCFA</span>
+                                </div>
+                                <button id="pos-finalize-sale-btn" class="w-full bg-cyan-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-cyan-700 disabled:bg-gray-300 disabled:shadow-none transition-all">
+                                    FINALISER LA VENTE
+                                </button>
+                                <button id="pos-clear-cart-btn" class="w-full text-gray-400 text-sm font-semibold hover:text-red-500 transition-colors">
+                                    Vider le panier
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -345,8 +360,7 @@
                 <div class="mt-8 bg-white p-6 rounded-lg shadow-sm">
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div class="relative flex-grow">
-                            <!-- ID AJOUTÉ ICI -->
-                            <input type="text" id="shop-search-input" placeholder="Rechercher par nom ou description..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500" />
+                            <input type="text" id="shop-search-input" placeholder="Rechercher par nom..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500" />
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
@@ -354,73 +368,26 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-2 flex-wrap">
-                            <button id="open-restock-modal-button" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2">
-                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h5" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 20v-5h-5" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 9a9 9 0 0114.13-6.364M20 15a9 9 0 01-14.13 6.364" />
-                                </svg>
-                                Réapprovisionner
-                            </button>
-                            <button id="open-transfer-modal-button" class="px-4 py-2 bg-cyan-400 text-white font-semibold rounded-lg shadow-md hover:bg-cyan-500 transition-colors flex items-center gap-2">
-                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                </svg>
-                                Transférer depuis Magasin
-                            </button>
+                            <button id="open-restock-modal-button" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2">Réapprovisionner</button>
+                            <button id="open-transfer-modal-button" class="px-4 py-2 bg-cyan-400 text-white font-semibold rounded-lg shadow-md hover:bg-cyan-500 transition-colors flex items-center gap-2">Transférer depuis Magasin</button>
                         </div>
                     </div>
-                    <!-- Conteneur pour la liste des produits de la boutique -->
                     <div id="shop-stock-container" class="mt-6">
-                        <!-- Message si vide (visible par défaut) -->
                         <div id="shop-stock-placeholder" class="flex flex-col items-center justify-center text-center text-gray-500 h-40">
                             <p>Aucun article en inventaire.</p>
                         </div>
-                        <!-- Tableau si non vide (caché par défaut) -->
                         <div id="shop-stock-table-container" class="hidden overflow-x-auto rounded-lg border border-gray-200">
                             <table class="min-w-full bg-white divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
                                     <tr>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantité</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prix de Vente</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Seuil d'alerte</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Produit</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantité</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prix de Vente</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Seuil</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase text-right">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody id="shop-stock-tbody" class="divide-y divide-gray-200">
-                                    <!-- Lignes de produits insérées par JS -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                <div class="mt-10 bg-white p-6 rounded-lg shadow-sm">
-                    <h2 class="text-xl font-bold text-gray-800">Mouvements du Stock Boutique</h2>
-                    <p class="text-sm text-gray-500 mt-1">Historique de tous les ajouts et réapprovisionnements de stock.</p>
-                     <!-- Conteneur pour les mouvements de la boutique -->
-                    <div id="shop-movements-container" class="mt-6">
-                        <!-- Message si vide (visible par défaut) -->
-                        <div id="shop-movements-placeholder" class="flex flex-col items-center justify-center text-center text-gray-500 h-32">
-                            <p>Aucun mouvement de stock enregistré.</p>
-                        </div>
-                        <!-- Tableau si non vide (caché par défaut) -->
-                        <div id="shop-movements-table-container" class="hidden overflow-x-auto rounded-lg border border-gray-200">
-                            <table class="min-w-full bg-white divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th> <!-- AJOUTÉ -->
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qte Changée</th> <!-- Renommé -->
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Changement</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Commentaire</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Utilisateur</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="shop-movements-tbody" class="divide-y divide-gray-200">
-                                    <!-- Lignes de mouvements insérées par JS -->
-                                </tbody>
+                                <tbody id="shop-stock-tbody" class="divide-y divide-gray-200 text-sm"></tbody>
                             </table>
                         </div>
                     </div>
@@ -433,1436 +400,548 @@
                 <div class="mt-8 bg-white p-6 rounded-lg shadow-sm">
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div class="relative flex-grow">
-                             <!-- ID AJOUTÉ ICI -->
-                            <input type="text" id="store-search-input" placeholder="Rechercher par nom ou description..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500" />
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
+                            <input type="text" id="store-search-input" placeholder="Rechercher par nom..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500" />
                         </div>
                         <div class="flex items-center gap-2 flex-wrap">
                             <button id="open-entry-modal-button" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2">Entrée</button>
                             <button id="open-exit-modal-button" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2">Sortie</button>
-                            <!-- ID ajouté au bouton "Nouveau Produit" -->
-                            <button id="open-new-product-modal-button" class="px-4 py-2 bg-cyan-400 text-white font-semibold rounded-lg shadow-md hover:bg-cyan-500 transition-colors flex items-center gap-2">
-                                + Nouveau Produit
-                            </button>
+                            <button id="open-new-product-modal-button" class="px-4 py-2 bg-cyan-400 text-white font-semibold rounded-lg shadow-md hover:bg-cyan-500 transition-colors flex items-center gap-2">+ Nouveau Produit</button>
                         </div>
                     </div>
-                    
-                    <!-- Conteneur pour la liste des produits du magasin -->
                     <div id="store-products-container" class="mt-6">
-                        <!-- Message si vide (visible par défaut) -->
                         <div id="store-products-placeholder" class="flex flex-col items-center justify-center text-center text-gray-500 h-40">
                             <p>Aucun article dans le magasin.</p>
                         </div>
-                        <!-- Tableau si non vide (caché par défaut) -->
                         <div id="store-products-table-container" class="hidden overflow-x-auto rounded-lg border border-gray-200">
-                            <table class="min-w-full bg-white divide-y divide-gray-200">
+                            <table class="min-w-full bg-white divide-y divide-gray-200 text-sm">
                                 <thead class="bg-gray-50">
                                     <tr>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantité</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coût d'achat</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Produit</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantité</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Coût</th>
+                                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody id="store-products-tbody" class="divide-y divide-gray-200">
-                                    <!-- Lignes de produits insérées par JS -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                </div>
-                <div class="mt-10 bg-white p-6 rounded-lg shadow-sm">
-                    <h2 class="text-xl font-bold text-gray-800">Mouvements du Magasin</h2>
-                    <p class="text-sm text-gray-500 mt-1">Historique de toutes les entrées et sorties du magasin.</p>
-
-                    <!-- Conteneur pour les mouvements du magasin -->
-                    <div id="store-movements-container" class="mt-6">
-                        <!-- Message si vide (visible par défaut) -->
-                        <div id="store-movements-placeholder" class="flex flex-col items-center justify-center text-center text-gray-500 h-32">
-                            <p>Aucun mouvement enregistré.</p>
-                        </div>
-                        <!-- Tableau si non vide (caché par défaut) -->
-                        <div id="store-movements-table-container" class="hidden overflow-x-auto rounded-lg border border-gray-200">
-                            <table class="min-w-full bg-white divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantité</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Changement Stock</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Commentaire</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="store-movements-tbody" class="divide-y divide-gray-200">
-                                    <!-- Lignes de mouvements insérées par JS -->
-                                </tbody>
+                                <tbody id="store-products-tbody" class="divide-y divide-gray-200"></tbody>
                             </table>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Page: Statistiques -->
-            <div id="page-Statistiques" class="page-content p-4 md:p-8 hidden">
-                <h1 class="text-3xl font-bold text-gray-800">Statistiques</h1>
-                <p class="text-gray-500 mt-1">Analysez vos performances commerciales globales</p>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
-                    <!-- StatCard -->
-                    <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
-                        <div>
-                            <p class="text-sm text-gray-500">Ventes totales</p>
-                            <p id="stat-total-sales" class="text-2xl font-bold text-gray-800 mt-1">0</p>
-                            <p class="text-xs text-gray-400 mt-2">Depuis le début</p>
-                        </div>
-                        <div class="p-3 rounded-lg bg-blue-100">
-                            <div data-icon="sales" class="w-6 h-6 text-blue-500"></div>
-                        </div>
-                    </div>
-                    <!-- StatCard -->
-                    <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
-                        <div>
-                            <p class="text-sm text-gray-500">Revenus totaux</p>
-                            <p id="stat-revenue" class="text-2xl font-bold text-gray-800 mt-1">0 FCFA</p>
-                            <p class="text-xs text-gray-400 mt-2">Depuis le début</p>
-                        </div>
-                        <div class="p-3 rounded-lg bg-indigo-100">
-                            <div data-icon="stats" class="w-6 h-6 text-indigo-500"></div>
-                        </div>
-                    </div>
-                    <!-- StatCard -->
-                    <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
-                        <div>
-                            <p class="text-sm text-gray-500">Produits en stock</p>
-                            <p id="stat-products-in-stock" class="text-2xl font-bold text-gray-800 mt-1">0</p>
-                            <p class="text-xs text-gray-400 mt-2">Dans la boutique</p>
-                        </div>
-                        <div class="p-3 rounded-lg bg-green-100">
-                            <div data-icon="box" class="w-6 h-6 text-green-500"></div>
-                        </div>
-                    </div>
-                    <!-- StatCard -->
-                    <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
-                        <div>
-                            <p class="text-sm text-gray-500">Marge moyenne</p>
-                            <p id="stat-avg-margin" class="text-2xl font-bold text-gray-800 mt-1">0%</p>
-                            <p class="text-xs text-gray-400 mt-2">Sur toutes les ventes</p>
-                        </div>
-                        <div class="p-3 rounded-lg bg-purple-100">
-                            <div data-icon="chartBar" class="w-6 h-6 text-purple-500"></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="mt-10 grid grid-cols-1 xl:grid-cols-2 gap-8">
-                    <!-- Section Produits les plus vendus -->
-                    <div class="bg-white p-6 rounded-lg shadow-sm">
-                        <h2 class="text-xl font-bold text-gray-800">Produits les plus vendus</h2>
-                        <p class="text-sm text-gray-500 mt-1">Classement par quantité vendue.</p>
-                        <div id="best-selling-container" class="mt-4">
-                             <div id="best-selling-placeholder" class="text-center text-gray-500 py-8">
-                                <p>Aucune donnée de vente disponible.</p>
-                            </div>
-                            <div id="best-selling-table-container" class="hidden overflow-x-auto">
-                                <table class="min-w-full bg-white">
-                                    <thead class="bg-gray-50">
-                                        <tr>
-                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
-                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qté Vendue</th>
-                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenu Généré</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="best-selling-tbody" class="divide-y divide-gray-200">
-                                        <!-- Données insérées par JS -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Section Performance des vendeurs -->
-                    <div class="bg-white p-6 rounded-lg shadow-sm">
-                        <h2 class="text-xl font-bold text-gray-800">Performance des vendeurs</h2>
-                        <p class="text-sm text-gray-500 mt-1">Classement par revenu généré.</p>
-                         <div id="seller-performance-container" class="mt-4">
-                             <div id="seller-performance-placeholder" class="text-center text-gray-500 py-8">
-                                <p>Aucune donnée de vente disponible.</p>
-                            </div>
-                            <div id="seller-performance-table-container" class="hidden overflow-x-auto">
-                                <table class="min-w-full bg-white">
-                                    <thead class="bg-gray-50">
-                                        <tr>
-                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendeur</th>
-                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nb. Ventes</th>
-                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenu Total</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="seller-performance-tbody" class="divide-y divide-gray-200">
-                                        <!-- Données insérées par JS -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Page: Paramètres -->
-            <div id="page-Paramètres" class="page-content p-4 md:p-8 hidden">
-                <h1 class="text-3xl font-bold">Paramètres</h1>
-                <p class="text-gray-500 mt-1">Gérez les paramètres de votre compte et de l'application.</p>
-                <div class="mt-8 bg-white p-6 rounded-lg shadow-sm">
-                    <p>Les options de paramètres seront bientôt disponibles ici.</p>
-                </div>
-            </div>
+            <div id="page-Statistiques" class="page-content p-4 md:p-8 hidden"><h1 class="text-3xl font-bold">Statistiques</h1><p class="mt-4 text-gray-500 italic">En cours de développement...</p></div>
+            <div id="page-Paramètres" class="page-content p-4 md:p-8 hidden"><h1 class="text-3xl font-bold">Paramètres</h1><p class="mt-4 text-gray-500 italic">En cours de développement...</p></div>
 
         </main>
     </div>
 
-    <!-- 
-      MODAL "AJOUTER UN NOUVEAU PRODUIT"
-    -->
+    <!-- Modals -->
     <div id="new-product-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 m-4">
-            <!-- En-tête -->
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-gray-800">Ajouter un nouveau produit au magasin</h2>
-                <button id="close-new-product-modal-button" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-            <!-- Formulaire -->
-            <form id="new-product-form">
-                <div class="space-y-4">
-                    <div>
-                        <label for="product-name" class="block text-sm font-medium text-gray-700">Nom du Produit *</label>
-                        <input type="text" id="product-name" placeholder="ex: Écran 27 pouces" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
-                    </div>
-                    <div>
-                        <label for="product-description" class="block text-sm font-medium text-gray-700">Description</label>
-                        <textarea id="product-description" placeholder="Une courte description du produit" rows="3" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"></textarea>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label for="product-cost" class="block text-sm font-medium text-gray-700">Coût d'Achat *</label>
-                            <input type="number" id="product-cost" placeholder="0" value="0" min="0" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
-                        </div>
-                        <div>
-                            <label for="product-currency" class="block text-sm font-medium text-gray-700">Devise *</label>
-                            <input type="text" id="product-currency" placeholder="EUR" value="EUR" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
-                        </div>
-                    </div>
-                    <div>
-                        <label for="product-quantity" class="block text-sm font-medium text-gray-700">Quantité Initiale *</label>
-                        <input type="number" id="product-quantity" placeholder="0" value="0" min="0" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
-                    </div>
-                    <p id="new-product-error" class="text-red-500 text-sm mt-2 hidden"></p>
-                    <button type="submit" id="new-product-submit-button" class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
-                        Ajouter le produit
-                    </button>
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Nouveau Produit</h2>
+            <form id="new-product-form" class="space-y-4">
+                <input type="text" name="product-name" placeholder="Nom du Produit *" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-cyan-400" required>
+                <textarea name="product-description" placeholder="Description" rows="2" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-cyan-400"></textarea>
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="number" name="product-cost" placeholder="Coût d'Achat *" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-cyan-400" required>
+                    <input type="text" name="product-currency" value="CFA" class="w-full p-3 border rounded-lg bg-gray-50" readonly>
                 </div>
+                <input type="number" name="product-quantity" placeholder="Quantité Initiale *" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-cyan-400" required>
+                <button type="submit" class="w-full bg-cyan-400 text-white font-bold py-3 rounded-lg hover:bg-cyan-500">Ajouter au magasin</button>
             </form>
         </div>
     </div>
-    
-    <!-- 
-      MODAL "ENREGISTRER UNE ENTRÉE"
-    -->
-    <div id="entry-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 m-4">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-gray-800">Enregistrer une entrée</h2>
-                <button id="close-entry-modal-button" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-            <form id="entry-form">
-                <div class="space-y-4">
-                    <div>
-                        <label for="entry-product-select" class="block text-sm font-medium text-gray-700">Produit *</label>
-                        <select id="entry-product-select" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
-                            <option value="">Sélectionnez un produit</option>
-                            <!-- Options remplies par JS -->
-                        </select>
-                    </div>
-                    <div>
-                        <label for="entry-quantity" class="block text-sm font-medium text-gray-700">Quantité *</label>
-                        <input type="number" id="entry-quantity" placeholder="0" min="1" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
-                    </div>
-                    <div>
-                        <label for="entry-comment" class="block text-sm font-medium text-gray-700">Commentaire (Optionnel)</label>
-                        <textarea id="entry-comment" placeholder="ex: Arrivage fournisseur..." rows="3" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"></textarea>
-                    </div>
-                    <p id="entry-error" class="text-red-500 text-sm mt-2 hidden"></p>
-                    <button type="submit" id="entry-submit-button" class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
-                        Enregistrer l'entrée
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-    
-    <!-- 
-      MODAL "ENREGISTRER UNE SORTIE"
-    -->
-    <div id="exit-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 m-4">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-gray-800">Enregistrer une sortie</h2>
-                <button id="close-exit-modal-button" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-            <form id="exit-form">
-                <div class="space-y-4">
-                    <div>
-                        <label for="exit-product-select" class="block text-sm font-medium text-gray-700">Produit *</label>
-                        <select id="exit-product-select" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
-                            <option value="">Sélectionnez un produit</option>
-                            <!-- Options remplies par JS -->
-                        </select>
-                    </div>
-                    <div>
-                        <label for="exit-quantity" class="block text-sm font-medium text-gray-700">Quantité *</label>
-                        <input type="number" id="exit-quantity" placeholder="0" min="1" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
-                    </div>
-                    <div>
-                        <label for="exit-comment" class="block text-sm font-medium text-gray-700">Commentaire (Optionnel)</label>
-                        <textarea id="exit-comment" placeholder="ex: Transfert vers boutique..." rows="3" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"></textarea>
-                    </div>
-                    <p id="exit-error" class="text-red-500 text-sm mt-2 hidden"></p>
-                    <button type="submit" id="exit-submit-button" class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
-                        Enregistrer la sortie
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-    
-    <!-- 
-      MODAL "TRANSFÉRER UN ARTICLE DEPUIS LE MAGASIN"
-    -->
+
+    <!-- Modal Transfert -->
     <div id="transfer-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 m-4">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-gray-800">Transférer un article depuis le Magasin</h2>
-                <button id="close-transfer-modal-button" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-            <form id="transfer-form">
-                <div class="space-y-4">
-                    <div>
-                        <label for="transfer-product-select" class="block text-sm font-medium text-gray-700">Article Source (depuis le Magasin) *</label>
-                        <select id="transfer-product-select" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
-                            <option value="">Sélectionnez un article à transférer...</option>
-                            <!-- Options remplies par JS -->
-                        </select>
-                    </div>
-                    
-                    <div id="transfer-source-info" class="hidden">
-                        <h4 class="text-sm font-medium text-gray-700">Informations de l'article source</h4>
-                        <p class="mt-1 p-3 bg-gray-100 rounded-lg text-sm text-gray-600">
-                            Coût d'achat: <span id="transfer-cost-display" class="font-semibold">0 CFA</span>
-                        </p>
-                    </div>
-
-                    <div>
-                        <label for="transfer-selling-price" class="block text-sm font-medium text-gray-700">Prix de Vente (pour la Boutique) *</label>
-                        <input type="number" id="transfer-selling-price" placeholder="110000" min="0" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label for="transfer-quantity" class="block text-sm font-medium text-gray-700">Stock à Transférer *</label>
-                            <input type="number" id="transfer-quantity" placeholder="1" min="1" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
-                        </div>
-                        <div>
-                            <label for="transfer-alert-threshold" class="block text-sm font-medium text-gray-700">Seuil d'alerte</label>
-                            <input type="number" id="transfer-alert-threshold" placeholder="10" value="10" min="0" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400">
-                        </div>
-                    </div>
-                    
-                    <div id="transfer-stock-warning" class="hidden flex items-center p-3 bg-yellow-100 border border-yellow-200 rounded-lg">
-                        <svg class="w-5 h-5 text-yellow-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        <p class="text-sm text-yellow-700">Cette valeur doit être inférieure ou égale à X.</p>
-                    </div>
-                    
-                    <p class="text-xs text-gray-500">
-                        Si un article de boutique lié à cette source existe déjà, le stock sera fusionné. Sinon, un nouvel article sera créé.
-                    </p>
-                    
-                    <p id="transfer-error" class="text-red-500 text-sm mt-2 hidden"></p>
-                    <button type="submit" id="transfer-submit-button" class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
-                        Transférer et Créer/Mettre à jour l'article
-                    </button>
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Transférer vers Boutique</h2>
+            <form id="transfer-form" class="space-y-4">
+                <select id="transfer-product-select" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-cyan-400" required>
+                    <option value="">Sélectionner depuis Magasin</option>
+                </select>
+                <input type="number" id="transfer-selling-price" placeholder="Prix de Vente *" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-cyan-400" required>
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="number" id="transfer-quantity" placeholder="Quantité *" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-cyan-400" required>
+                    <input type="number" id="transfer-alert-threshold" value="5" placeholder="Seuil alerte" class="w-full p-3 border rounded-lg">
                 </div>
+                <button type="submit" class="w-full bg-cyan-400 text-white font-bold py-3 rounded-lg">Valider le transfert</button>
             </form>
         </div>
     </div>
 
-    <!-- 
-      MODAL "RÉAPPROVISIONNER UN ARTICLE"
-    -->
+    <!-- Modal Restock -->
     <div id="restock-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 m-4">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-gray-800">Réapprovisionner un article</h2>
-                <button id="close-restock-modal-button" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-            <form id="restock-form">
-                <div class="space-y-4">
-                    <div>
-                        <label for="restock-product-select" class="block text-sm font-medium text-gray-700">Produit de la Boutique *</label>
-                        <select id="restock-product-select" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
-                            <option value="">Sélectionnez un produit à réapprovisionner</option>
-                            <!-- Options remplies par JS -->
-                        </select>
-                    </div>
-
-                    <div id="restock-source-info" class="hidden">
-                        <h4 class="text-sm font-medium text-gray-700">Article Source</h4>
-                        <p class="mt-1 p-3 bg-gray-100 rounded-lg text-sm text-gray-600">
-                            <span id="restock-source-name" class="font-semibold"></span>
-                            (Stock magasin disponible: <span id="restock-source-stock" class="font-semibold">0</span>)
-                        </p>
-                    </div>
-
-                    <div>
-                        <label for="restock-quantity" class="block text-sm font-medium text-gray-700">Quantité à Ajouter (depuis le Magasin) *</label>
-                        <input type="number" id="restock-quantity" placeholder="1" min="1" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
-                    </div>
-
-                    <div id="restock-stock-warning" class="hidden flex items-center p-3 bg-yellow-100 border border-yellow-200 rounded-lg">
-                        <svg class="w-5 h-5 text-yellow-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        <p class="text-sm text-yellow-700">Cette valeur doit être inférieure ou égale à X.</p>
-                    </div>
-                    
-                    <div>
-                        <label for="restock-comment" class="block text-sm font-medium text-gray-700">Commentaire (Optionnel)</label>
-                        <textarea id="restock-comment" placeholder="ex: Réapprovisionnement hebdomadaire" rows="3" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"></textarea>
-                    </div>
-                    <p id="restock-error" class="text-red-500 text-sm mt-2 hidden"></p>
-                    <button type="submit" id="restock-submit-button" class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
-                        Confirmer le réapprovisionnement
-                    </button>
-                </div>
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Réapprovisionnement Boutique</h2>
+            <form id="restock-form" class="space-y-4">
+                <select id="restock-product-select" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-cyan-400" required></select>
+                <input type="number" id="restock-quantity" placeholder="Quantité à ajouter *" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-cyan-400" required>
+                <button type="submit" class="w-full bg-cyan-400 text-white font-bold py-3 rounded-lg">Confirmer</button>
             </form>
         </div>
     </div>
-    
-    <!-- 
-      TOAST DE SUCCÈS GLOBAL
-    -->
-    <div id="success-toast" class="fixed bottom-5 right-5 z-50">
-        <div class="flex items-center bg-green-500 text-white text-sm font-medium px-4 py-3 rounded-lg shadow-lg">
-            <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            <span id="success-toast-message">Opération réussie!</span>
-        </div>
-    </div>
-
 
     <script type="module">
-        // --- SDK Firebase ---
         import { initializeApp } from "firebase/app";
-        import { 
-            getAuth, 
-            createUserWithEmailAndPassword, 
-            signInWithEmailAndPassword, 
-            signOut, 
-            onAuthStateChanged 
-        } from "firebase/auth";
-        import { 
-            getDatabase, 
-            ref, 
-            set,
-            push,
-            onValue,
-            off,
-            update,
-            query,
-            orderByChild,
-            equalTo,
-            get,
-            remove
-        } from "firebase/database";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
+        import { getDatabase, ref, set, push, onValue, off, update, remove, get } from "firebase/database";
 
-        // --- GESTION DES ICÔNES SVG ---
+        // Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyB65Iye8YMpxXsPthdBYmNojBMpaTPZS3A",
+            authDomain: "gestion-stock-c9484.firebaseapp.com",
+            databaseURL: "https://gestion-stock-c9484-default-rtdb.firebaseio.com",
+            projectId: "gestion-stock-c9484",
+            storageBucket: "gestion-stock-c9484.firebasestorage.app",
+            messagingSenderId: "834033352449",
+            appId: "1:834033352449:web:b86ff5b60c816bb469e500",
+            measurementId: "G-5VKP3S88F8"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        // State Global
+        let currentUser = null;
+        let currentUserData = null;
+        let dbBasePath = ''; 
+        let appData = { storeProducts: {}, shopStock: {}, salesHistory: {} };
+        let currentCart = []; 
+        let currentPage = 'Tableau de bord';
+        let isSidebarCollapsed = false;
+
+        // Icons Engine
         function getIconSVG(name, className = '') {
             const icons = {
-                logo: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L4 6.5V17.5L12 22L20 17.5V6.5L12 2ZM11 15.5V10.5H13V15.5H11ZM11.5 8.5C10.67 8.5 10 7.83 10 7C10 6.17 10.67 5.5 11.5 5.5C12.33 5.5 13 6.17 13 7C13 7.83 12.33 8.5 11.5 8.5Z" /></svg>`,
-                dashboard: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>`,
-                sales: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>`,
-                box: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>`,
-                stats: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>`,
-                settings: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>`,
-                logout: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>`,
-                chartBar: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-4m3 4v-2m3 2v-6m3 2V7" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 20h14" /></svg>`,
-                trash: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>`,
-                arrowUp: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>`,
-                arrowDown: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>`,
-                menu: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>`,
-                arrowLeft: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>`,
-                arrowRight: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>`
+                logo: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L4 6.5V17.5L12 22L20 17.5V6.5L12 2ZM11 15.5V10.5H13V15.5H11ZM11.5 8.5C10.67 8.5 10 7.83 10 7C10 6.17 10.67 5.5 11.5 5.5C12.33 5.5 13 6.17 13 7C13 7.83 12.33 8.5 11.5 8.5Z" /></svg>',
+                dashboard: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>',
+                sales: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>',
+                box: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>',
+                stats: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>',
+                settings: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /></svg>',
+                logout: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>',
+                trash: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>',
+                arrowLeft: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>',
+                arrowRight: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>',
+                menu: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>'
             };
-            const svg = icons[name] || '';
-            if (className && svg) {
-                return svg.replace('<svg', `<svg class="${className}"`);
-            }
+            let svg = icons[name] || '';
+            if (className) svg = svg.replace('<svg', `<svg class="${className}"`);
             return svg;
         }
 
         function renderIcons() {
-            document.querySelectorAll('[data-icon]').forEach(element => {
-                const iconName = element.getAttribute('data-icon');
-                // Pass the placeholder's class directly to the SVG generator
-                const svgString = getIconSVG(iconName, element.className);
-                if (svgString) {
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = svgString.trim();
-                    const svgElement = tempDiv.firstChild;
-                    if (svgElement) {
-                        element.replaceWith(svgElement);
-                    }
-                }
+            document.querySelectorAll('[data-icon]').forEach(el => {
+                const svg = getIconSVG(el.dataset.icon, el.className);
+                if (svg) el.replaceWith(new DOMParser().parseFromString(svg, 'text/html').body.firstChild);
             });
         }
-        renderIcons();
 
-        // --- GESTION DE L'APPLICATION ---
+        // Utils
+        function formatCurrency(val) {
+            return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', minimumFractionDigits: 0 }).format(val);
+        }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const firebaseConfig = {
-                apiKey: "AIzaSyB65Iye8YMpxXsPthdBYmNojBMpaTPZS3A",
-                authDomain: "gestion-stock-c9484.firebaseapp.com",
-                databaseURL: "https://gestion-stock-c9484-default-rtdb.firebaseio.com",
-                projectId: "gestion-stock-c9484",
-                storageBucket: "gestion-stock-c9484.firebasestorage.app",
-                messagingSenderId: "834033352449",
-                appId: "1:834033352449:web:b86ff5b60c816bb469e500",
-                measurementId: "G-5VKP3S88F8"
-            };
+        function showSuccessToast(msg) {
+            const toast = document.getElementById('success-toast');
+            document.getElementById('success-toast-message').textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
 
-            const app = initializeApp(firebaseConfig);
-            const auth = getAuth(app);
-            const db = getDatabase(app);
+        // Logic POS (Cart)
+        function updateCartUI() {
+            const container = document.getElementById('cart-items-container');
+            const totalAmountEl = document.getElementById('cart-total-amount');
+            const totalQtyEl = document.getElementById('cart-total-qty');
+            const countBadge = document.getElementById('cart-item-count');
+            const finalizeBtn = document.getElementById('pos-finalize-sale-btn');
 
-            let isAuthenticated = false;
-            let currentPage = 'Tableau de bord';
-            let isLoginView = true;
-            let currentUser = null;
-            let currentUserData = null;
-            let dbBasePath = ''; 
-
-            const appData = { storeProducts: {}, shopStock: {}, salesHistory: {} };
-            let isSidebarOpen = false; 
-            let isSidebarCollapsed = false;
-
-            let storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, salesHistoryListener;
-            let storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, salesHistoryRef;
-
-            // Références DOM
-            const authPageContainer = document.getElementById('auth-page-container');
-            const layoutContainer = document.getElementById('layout-container');
-            const logoutButton = document.getElementById('logout-button');
-            const navButtons = document.querySelectorAll('.nav-button');
-            const pageContents = document.querySelectorAll('.page-content');
-            const authToggleLogin = document.getElementById('auth-toggle-login');
-            const authToggleSignup = document.getElementById('auth-toggle-signup');
-            const loginForm = document.getElementById('login-form');
-            const signupForm = document.getElementById('signup-form');
-            const userEmailDisplay = document.getElementById('user-email-display');
-            const userNameDisplay = document.getElementById('user-name-display');
-            const userCompanyDisplay = document.getElementById('user-company-display');
-            const loginError = document.getElementById('login-error');
-            const signupError = document.getElementById('signup-error');
-            const signupErrorContainer = document.getElementById('signup-error-container');
-            const loginSubmitButton = document.getElementById('login-submit-button');
-            const signupSubmitButton = document.getElementById('signup-submit-button');
-            
-            const sidebar = document.getElementById('sidebar');
-            const mainContent = document.querySelector('main');
-            const mobileHeader = document.getElementById('mobile-header');
-            const mobilePageTitle = document.getElementById('mobile-page-title');
-            const hamburgerButton = document.getElementById('hamburger-button');
-            const sidebarOverlay = document.getElementById('sidebar-overlay');
-            const sidebarCollapseToggle = document.getElementById('sidebar-collapse-toggle');
-
-            const storeSearchInput = document.getElementById('store-search-input');
-            const shopSearchInput = document.getElementById('shop-search-input');
-
-            const storeProductsPlaceholder = document.getElementById('store-products-placeholder');
-            const storeProductsTableContainer = document.getElementById('store-products-table-container');
-            const storeProductsTbody = document.getElementById('store-products-tbody');
-            const storeMovementsPlaceholder = document.getElementById('store-movements-placeholder');
-            const storeMovementsTableContainer = document.getElementById('store-movements-table-container');
-            const storeMovementsTbody = document.getElementById('store-movements-tbody');
-            
-            const shopStockPlaceholder = document.getElementById('shop-stock-placeholder');
-            const shopStockTableContainer = document.getElementById('shop-stock-table-container');
-            const shopStockTbody = document.getElementById('shop-stock-tbody');
-            const shopMovementsPlaceholder = document.getElementById('shop-movements-placeholder');
-            const shopMovementsTableContainer = document.getElementById('shop-movements-table-container');
-            const shopMovementsTbody = document.getElementById('shop-movements-tbody');
-
-            const salesForm = document.getElementById('sales-form');
-            const salesProductSelect = document.getElementById('sales-product-select');
-            const salesQuantityInput = document.getElementById('sales-quantity-input');
-            const salesTotalAmount = document.getElementById('sales-total-amount');
-            const sellerNameInput = document.getElementById('seller-name');
-            const salesComment = document.getElementById('sales-comment');
-            const salesError = document.getElementById('sales-error');
-            const salesSubmitButton = document.getElementById('sales-submit-button');
-            const salesHistoryPlaceholder = document.getElementById('sales-history-placeholder');
-            const salesHistoryTableContainer = document.getElementById('sales-history-table-container');
-            const salesHistoryTbody = document.getElementById('sales-history-tbody');
-
-            // Modals
-            const openNewProductModalButton = document.getElementById('open-new-product-modal-button');
-            const newProductModal = document.getElementById('new-product-modal');
-            const closeNewProductModalButton = document.getElementById('close-new-product-modal-button');
-            const newProductForm = document.getElementById('new-product-form');
-            const newProductError = document.getElementById('new-product-error');
-            const newProductSubmitButton = document.getElementById('new-product-submit-button');
-
-            const openEntryModalButton = document.getElementById('open-entry-modal-button');
-            const entryModal = document.getElementById('entry-modal');
-            const closeEntryModalButton = document.getElementById('close-entry-modal-button');
-            const entryForm = document.getElementById('entry-form');
-            const entryProductSelect = document.getElementById('entry-product-select');
-            const entryError = document.getElementById('entry-error');
-            const entrySubmitButton = document.getElementById('entry-submit-button');
-            
-            const openExitModalButton = document.getElementById('open-exit-modal-button');
-            const exitModal = document.getElementById('exit-modal');
-            const closeExitModalButton = document.getElementById('close-exit-modal-button');
-            const exitForm = document.getElementById('exit-form');
-            const exitProductSelect = document.getElementById('exit-product-select');
-            const exitError = document.getElementById('exit-error');
-            const exitSubmitButton = document.getElementById('exit-submit-button');
-            
-            const openTransferModalButton = document.getElementById('open-transfer-modal-button');
-            const transferModal = document.getElementById('transfer-modal');
-            const closeTransferModalButton = document.getElementById('close-transfer-modal-button');
-            const transferForm = document.getElementById('transfer-form');
-            const transferProductSelect = document.getElementById('transfer-product-select');
-            const transferSourceInfo = document.getElementById('transfer-source-info');
-            const transferCostDisplay = document.getElementById('transfer-cost-display');
-            const transferStockWarning = document.getElementById('transfer-stock-warning');
-            const transferError = document.getElementById('transfer-error');
-            const transferSubmitButton = document.getElementById('transfer-submit-button');
-
-            const openRestockModalButton = document.getElementById('open-restock-modal-button');
-            const restockModal = document.getElementById('restock-modal');
-            const closeRestockModalButton = document.getElementById('close-restock-modal-button');
-            const restockForm = document.getElementById('restock-form');
-            const restockProductSelect = document.getElementById('restock-product-select');
-            const restockSourceInfo = document.getElementById('restock-source-info');
-            const restockSourceName = document.getElementById('restock-source-name');
-            const restockSourceStock = document.getElementById('restock-source-stock');
-            const restockStockWarning = document.getElementById('restock-stock-warning');
-            const restockError = document.getElementById('restock-error');
-            const restockSubmitButton = document.getElementById('restock-submit-button');
-            
-            const successToast = document.getElementById('success-toast');
-            const successToastMessage = document.getElementById('success-toast-message');
-
-            function showSuccessToast(message) {
-                if (successToastMessage) successToastMessage.textContent = message;
-                if (successToast) {
-                    successToast.classList.add('show');
-                    setTimeout(() => successToast.classList.remove('show'), 3000);
-                }
+            if (currentCart.length === 0) {
+                container.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-gray-400 italic text-sm"><p>Panier vide</p></div>';
+                totalAmountEl.textContent = '0 FCFA';
+                totalQtyEl.textContent = '0';
+                countBadge.textContent = '0 articles';
+                finalizeBtn.disabled = true;
+                return;
             }
 
-            function formatCurrency(value, currency = 'XOF') {
-                if(isNaN(value) || value === null) value = 0;
-                const displayCurrency = currency.toUpperCase() === 'CFA' ? 'XOF' : currency;
-                try {
-                    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: displayCurrency, minimumFractionDigits: 0 }).format(value);
-                } catch (e) {
-                     return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', minimumFractionDigits: 0 }).format(value);
-                }
-            }
-            
-            function formatDateForDisplay(isoString) {
-                const date = new Date(isoString);
-                return date.toLocaleString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace(' à', ',');
-            }
+            let totalAmount = 0;
+            let totalQty = 0;
+            container.innerHTML = currentCart.map((item, index) => {
+                totalAmount += item.totalPrice;
+                totalQty += item.quantity;
+                return `
+                    <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-100 flex justify-between items-center group">
+                        <div class="flex-1">
+                            <p class="font-bold text-gray-800 text-sm">${item.name}</p>
+                            <p class="text-xs text-gray-400">${formatCurrency(item.unitPrice)} x ${item.quantity}</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <p class="text-sm font-black text-gray-900">${formatCurrency(item.totalPrice)}</p>
+                            <button onclick="window.removeFromCart(${index})" class="text-gray-300 hover:text-red-500 transition-colors">
+                                <div data-icon="trash" class="w-4 h-4"></div>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
 
-            function populateStoreProductSelects() {
-                const products = appData.storeProducts;
-                const selects = [entryProductSelect, exitProductSelect, transferProductSelect];
-                selects.forEach(select => {
-                    if (!select) return;
-                    const firstOption = select.options[0];
-                    select.innerHTML = '';
-                    select.appendChild(firstOption.cloneNode(true));
-                    if (products) {
-                        Object.values(products).forEach(product => {
-                            const option = document.createElement('option');
-                            option.value = product.id;
-                            option.textContent = `${product.name} (Actuellement : ${product.quantityInStore})`;
-                            select.appendChild(option);
-                        });
-                    }
-                });
-            }
-            
-            function populateShopProductSelects() {
-                const products = appData.shopStock;
-                const selects = [restockProductSelect, salesProductSelect];
-                selects.forEach(select => {
-                    if (!select) return;
-                    const firstOption = select.options[0];
-                    select.innerHTML = '';
-                    select.appendChild(firstOption.cloneNode(true));
-                    if (products) {
-                        Object.values(products).forEach(product => {
-                            const option = document.createElement('option');
-                            option.value = product.id;
-                            if (select.id === 'restock-product-select') option.textContent = `${product.name} (Actuellement : ${product.quantityInShop})`;
-                            else option.textContent = `${product.name} (Stock: ${product.quantityInShop})`;
-                            select.appendChild(option);
-                        });
-                    }
-                });
-            }
+            totalAmountEl.textContent = formatCurrency(totalAmount);
+            totalQtyEl.textContent = totalQty;
+            countBadge.textContent = `${currentCart.length} articles`;
+            finalizeBtn.disabled = false;
+            renderIcons();
+        }
 
-            function renderStoreProducts(searchTerm = '') {
-                const products = appData.storeProducts;
-                const normalizedSearch = searchTerm.toLowerCase();
-                const filteredProducts = Object.values(products).filter(product => 
-                    product.name?.toLowerCase().includes(normalizedSearch) || product.description?.toLowerCase().includes(normalizedSearch)
-                );
+        window.removeFromCart = (index) => {
+            currentCart.splice(index, 1);
+            updateCartUI();
+        };
 
-                if (filteredProducts.length > 0) {
-                    storeProductsPlaceholder.classList.add('hidden');
-                    storeProductsTableContainer.classList.remove('hidden');
-                    let html = '';
-                    const sortedProducts = filteredProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                    sortedProducts.forEach(product => {
-                        // FIXED: Pass classes directly to getIconSVG
-                        const iconBox = getIconSVG('box', 'w-5 h-5 text-gray-600');
-                        const iconTrash = getIconSVG('trash', 'w-5 h-5');
-                        html += `
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 whitespace-nowrap"><div class="flex items-center"><div class="p-2 bg-gray-100 rounded-lg mr-3">${iconBox}</div><span class="text-sm font-medium text-gray-900">${product.name}</span></div></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.description || ''}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">${product.quantityInStore}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatCurrency(product.purchaseCost, product.currency)}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    <button class="delete-icon text-gray-400 hover:text-red-500" data-product-id="${product.id}">
-                                        ${iconTrash}
-                                    </button>
-                                </td>
-                            </tr>`;
-                    });
-                    storeProductsTbody.innerHTML = html;
-                } else {
-                    storeProductsTableContainer.classList.add('hidden');
-                    storeProductsPlaceholder.classList.remove('hidden');
-                    storeProductsTbody.innerHTML = '';
-                }
+        // UI Dashboard
+        function updateDashboardUI() {
+            const sales = Object.values(appData.salesHistory);
+            const stock = Object.values(appData.shopStock);
+            const now = new Date();
+            const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+            // KPIs
+            document.getElementById('stat-daily-sales').textContent = sales.filter(s => s.date >= startOfDay).length;
+            document.getElementById('stat-shop-stock').textContent = stock.reduce((acc, i) => acc + i.quantityInShop, 0);
+            const lowStockItems = stock.filter(i => i.quantityInShop <= (i.alertThreshold || 5));
+            document.getElementById('stat-alerts-count').textContent = lowStockItems.length;
+            document.getElementById('stat-monthly-revenue').textContent = formatCurrency(sales.filter(s => s.date >= startOfMonth).reduce((acc, s) => acc + s.totalAmount, 0));
+
+            // Low Stock List
+            const alertList = document.getElementById('dashboard-low-stock-list');
+            if (lowStockItems.length > 0) {
+                alertList.innerHTML = lowStockItems.map(i => `
+                    <div class="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-100">
+                        <span class="text-sm font-semibold text-gray-700">${i.name}</span>
+                        <span class="text-xs font-bold text-red-600 bg-white px-2 py-1 rounded">${i.quantityInShop} en stock</span>
+                    </div>
+                `).join('');
+            } else {
+                alertList.innerHTML = '<p class="text-sm text-gray-400 italic">Tous les stocks sont OK !</p>';
             }
 
-            function onStoreMovementsValue(snapshot) {
-                const movements = snapshot.val();
-                if (movements) {
-                    storeMovementsPlaceholder.classList.add('hidden');
-                    storeMovementsTableContainer.classList.remove('hidden');
-                    let html = '';
-                    const sortedMovements = Object.values(movements).sort((a, b) => new Date(b.date) - new Date(a.date));
-                    sortedMovements.forEach(move => {
-                        const isEntry = move.type === 'Entrée';
-                        const arrowIcon = isEntry ? getIconSVG('arrowUp', 'w-4 h-4') : getIconSVG('arrowDown', 'w-4 h-4');
-                        html += `
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${move.productName}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><span class="flex items-center ${isEntry ? 'text-green-600' : 'text-red-600'}"><span class="mr-1.5">${arrowIcon}</span>${move.type}</span></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${isEntry ? 'text-green-600' : 'text-red-600'}">${isEntry ? '+' : '-'}${move.quantityChange}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><span class="flex items-center"><span class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md">${move.oldStock}</span><span class="mx-1 text-gray-400">-></span><span class="px-2 py-0.5 ${isEntry ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} rounded-md">${move.newStock}</span></span></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${move.comment}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(move.date)}</td>
-                            </tr>`;
-                    });
-                    storeMovementsTbody.innerHTML = html;
-                } else {
-                    storeMovementsPlaceholder.classList.remove('hidden');
-                    storeMovementsTableContainer.classList.add('hidden');
-                    storeMovementsTbody.innerHTML = '';
-                }
-            }
-            
-            function onStoreProductsValue(snapshot) {
-                appData.storeProducts = snapshot.val() || {};
-                populateStoreProductSelects();
-                renderStoreProducts(storeSearchInput ? storeSearchInput.value : '');
-                updateAllStats();
+            // Top Products
+            const prodStats = sales.reduce((acc, s) => {
+                acc[s.productName] = (acc[s.productName] || 0) + s.quantity;
+                return acc;
+            }, {});
+            const sortedTop = Object.entries(prodStats).sort((a,b) => b[1]-a[1]).slice(0, 5);
+            const topList = document.getElementById('dashboard-top-selling-list');
+            if (sortedTop.length > 0) {
+                topList.innerHTML = sortedTop.map(([name, qty], idx) => `
+                    <div class="flex items-center gap-3">
+                        <span class="w-6 h-6 rounded-full bg-cyan-100 text-cyan-600 flex items-center justify-center text-xs font-bold">${idx+1}</span>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-800">${name}</p>
+                            <div class="w-full bg-gray-100 rounded-full h-1.5 mt-1">
+                                <div class="bg-cyan-400 h-1.5 rounded-full" style="width: ${Math.min(100, (qty/sortedTop[0][1])*100)}%"></div>
+                            </div>
+                        </div>
+                        <span class="text-xs font-bold text-gray-400">${qty} ventes</span>
+                    </div>
+                `).join('');
             }
 
-            function renderShopStock(searchTerm = '') {
-                const stock = appData.shopStock;
-                const normalizedSearch = searchTerm.toLowerCase();
-                const filteredStock = Object.values(stock).filter(item => item.name?.toLowerCase().includes(normalizedSearch));
-
-                if (filteredStock.length > 0) {
-                    shopStockPlaceholder.classList.add('hidden');
-                    shopStockTableContainer.classList.remove('hidden');
-                    let html = '';
-                    const sortedStock = filteredStock.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                    sortedStock.forEach(item => {
-                        const isLowStock = item.quantityInShop <= item.alertThreshold;
-                        const currency = appData.storeProducts[item.sourceProductId]?.currency || 'CFA';
-                        // FIXED: Pass classes directly to getIconSVG
-                        const iconBox = getIconSVG('box', 'w-5 h-5 text-gray-600');
-                        const iconTrash = getIconSVG('trash', 'w-5 h-5');
-                        html += `
-                            <tr class="hover:bg-gray-50 ${isLowStock ? 'bg-red-50' : ''}">
-                                <td class="px-6 py-4 whitespace-nowrap"><div class="flex items-center"><div class="p-2 bg-gray-100 rounded-lg mr-3">${iconBox}</div><span class="text-sm font-medium text-gray-900">${item.name}</span></div></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${isLowStock ? 'text-red-600' : 'text-gray-700'}">${item.quantityInShop}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatCurrency(item.sellingPrice, currency)}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.alertThreshold}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    <button class="delete-icon text-gray-400 hover:text-red-500" data-stock-id="${item.id}">
-                                        ${iconTrash}
-                                    </button>
-                                </td>
-                            </tr>`;
-                    });
-                    shopStockTbody.innerHTML = html;
-                } else {
-                    shopStockTableContainer.classList.add('hidden');
-                    shopStockPlaceholder.classList.remove('hidden');
-                    shopStockTbody.innerHTML = '';
-                }
+            // Recent Activity
+            const recentSales = sales.sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
+            const recentList = document.getElementById('dashboard-recent-activity-list');
+            if (recentSales.length > 0) {
+                recentList.innerHTML = recentSales.map(s => `
+                    <div class="flex items-center gap-3 py-1">
+                        <div class="w-2 h-2 rounded-full bg-green-400"></div>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-800">${s.productName}</p>
+                            <p class="text-[10px] text-gray-400 font-bold uppercase">${new Date(s.date).toLocaleTimeString()}</p>
+                        </div>
+                        <span class="text-sm font-bold text-green-600">+${formatCurrency(s.totalAmount)}</span>
+                    </div>
+                `).join('');
             }
-            
-            function onShopStockValue(snapshot) {
-                appData.shopStock = snapshot.val() || {};
-                populateShopProductSelects();
-                renderShopStock(shopSearchInput ? shopSearchInput.value : '');
-                updateAllStats();
-            }
+        }
 
-            function onShopMovementsValue(snapshot) {
-                const movements = snapshot.val();
-                if (movements) {
-                    shopMovementsPlaceholder.classList.add('hidden');
-                    shopMovementsTableContainer.classList.remove('hidden');
-                    let html = '';
-                    const sortedMovements = Object.values(movements).sort((a, b) => new Date(b.date) - new Date(a.date));
-                    sortedMovements.forEach(move => {
-                        const isEntry = move.type === 'Entrée';
-                        const qteClass = isEntry ? 'text-green-600' : 'text-red-600';
-                        const arrowIcon = isEntry ? getIconSVG('arrowUp', 'w-4 h-4') : getIconSVG('arrowDown', 'w-4 h-4');
-                        const userDisplay = move.userEmail ? move.userEmail.split('@')[0] : 'N/A';
-                        html += `
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${move.productName}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><span class="flex items-center ${qteClass}"><span class="mr-1.5">${arrowIcon}</span>${move.type}</span></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${qteClass}">${isEntry ? '+' : '-'}${move.quantityChange}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><span class="flex items-center"><span class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md">${move.oldStock}</span><span class="mx-1 text-gray-400">-></span><span class="px-2 py-0.5 ${isEntry ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} rounded-md">${move.newStock}</span></span></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${move.comment}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${userDisplay}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(move.date)}</td>
-                            </tr>`;
-                    });
-                    shopMovementsTbody.innerHTML = html;
-                } else {
-                    shopMovementsPlaceholder.classList.remove('hidden');
-                    shopMovementsTableContainer.classList.add('hidden');
-                    shopMovementsTbody.innerHTML = '';
-                }
-            }
-
-            function onSalesHistoryValue(snapshot) {
-                appData.salesHistory = snapshot.val() || {};
-                const sales = appData.salesHistory;
-                if (sales && Object.keys(sales).length > 0) {
-                    salesHistoryPlaceholder.classList.add('hidden');
-                    salesHistoryTableContainer.classList.remove('hidden');
-                    let html = '';
-                    const sortedSales = Object.values(sales).sort((a, b) => new Date(b.date) - new Date(a.date));
-                    sortedSales.forEach(sale => {
-                        const shopItem = appData.shopStock[sale.shopProductId];
-                        const currency = shopItem ? (appData.storeProducts[shopItem.sourceProductId]?.currency || 'CFA') : 'CFA';
-                        html += `
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${sale.productName}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.sellerName}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.quantity}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">${formatCurrency(sale.totalAmount, currency)}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.comment}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(sale.date)}</td>
-                            </tr>`;
-                    });
-                    salesHistoryTbody.innerHTML = html;
-                } else {
-                    salesHistoryPlaceholder.classList.remove('hidden');
-                    salesHistoryTableContainer.classList.add('hidden');
-                    salesHistoryTbody.innerHTML = '';
-                }
-                updateAllStats();
-            }
-
-            function setupFirebaseListeners() {
-                cleanupFirebaseListeners();
-                if (!dbBasePath) return;
-
-                storeProductsRef = ref(db, `${dbBasePath}/storeProducts`);
-                storeProductsListener = onValue(storeProductsRef, onStoreProductsValue);
-                
-                storeMovementsRef = ref(db, `${dbBasePath}/storeMovements`);
-                storeMovementsListener = onValue(storeMovementsRef, onStoreMovementsValue);
-                
-                shopStockRef = ref(db, `${dbBasePath}/shopStock`);
-                shopStockListener = onValue(shopStockRef, onShopStockValue);
-                
-                shopMovementsRef = ref(db, `${dbBasePath}/shopMovements`);
-                shopMovementsListener = onValue(shopMovementsRef, onShopMovementsValue);
-
-                salesHistoryRef = ref(db, `${dbBasePath}/salesHistory`);
-                salesHistoryListener = onValue(salesHistoryRef, onSalesHistoryValue);
-            }
-
-            function cleanupFirebaseListeners() {
-                if (storeProductsListener && storeProductsRef) off(storeProductsRef, storeProductsListener);
-                if (storeMovementsListener && storeMovementsRef) off(storeMovementsRef, storeMovementsListener);
-                if (shopStockListener && shopStockRef) off(shopStockRef, shopStockListener);
-                if (shopMovementsListener && shopMovementsRef) off(shopMovementsRef, shopMovementsListener);
-                if (salesHistoryListener && salesHistoryRef) off(salesHistoryRef, salesHistoryListener);
-                
-                storeProductsListener = null; storeMovementsListener = null; shopStockListener = null; shopMovementsListener = null; salesHistoryListener = null;
-                storeProductsRef = null; storeMovementsRef = null; shopStockRef = null; shopMovementsRef = null; salesHistoryRef = null;
-
-                appData.storeProducts = {};
-                appData.shopStock = {};
-                appData.salesHistory = {};
-                populateStoreProductSelects();
-                populateShopProductSelects();
-            }
-
-            function updateUI() {
-                if (isAuthenticated) {
-                    if (authPageContainer) authPageContainer.classList.add('hidden');
-                    if (layoutContainer) layoutContainer.classList.remove('hidden');
-                    if (currentUser && currentUser.email && userEmailDisplay) userEmailDisplay.textContent = currentUser.email;
-                    if (currentUserData) {
-                        if(userNameDisplay) userNameDisplay.textContent = currentUserData.fullName || 'Utilisateur';
-                        if(userCompanyDisplay) userCompanyDisplay.textContent = currentUserData.companyName || '';
-                    }
-                    if (mobilePageTitle) mobilePageTitle.textContent = currentPage;
-                } else {
-                    if (authPageContainer) authPageContainer.classList.remove('hidden');
-                    if (layoutContainer) layoutContainer.classList.add('hidden');
-                    if (userEmailDisplay) userEmailDisplay.textContent = "Non connecté";
-                    if (sellerNameInput) sellerNameInput.value = '';
-                    isLoginView = true;
-                    updateAuthFormView();
-                    if (storeProductsTbody) storeProductsTbody.innerHTML = '';
-                    if (storeMovementsTbody) storeMovementsTbody.innerHTML = '';
-                    if (shopStockTbody) shopStockTbody.innerHTML = '';
-                    if (shopMovementsTbody) shopMovementsTbody.innerHTML = '';
-                    if (salesHistoryTbody) salesHistoryTbody.innerHTML = '';
-                    [storeProductsPlaceholder, storeMovementsPlaceholder, shopStockPlaceholder, shopMovementsPlaceholder, salesHistoryPlaceholder].forEach(p => p && p.classList.remove('hidden'));
-                    [storeProductsTableContainer, storeMovementsTableContainer, shopStockTableContainer, shopMovementsTableContainer, salesHistoryTableContainer].forEach(t => t && t.classList.add('hidden'));
-                    return;
-                }
-
-                pageContents.forEach(page => {
-                    if (page.id === `page-${currentPage.replace(/ /g, '-')}`) page.classList.remove('hidden');
-                    else page.classList.add('hidden');
-                });
-
-                navButtons.forEach(button => {
-                    if (button.dataset.page === currentPage) {
-                        button.classList.add('bg-cyan-400', 'text-white', 'shadow');
-                        button.classList.remove('text-gray-600', 'hover:bg-gray-100');
-                    } else {
-                        button.classList.remove('bg-cyan-400', 'text-white', 'shadow');
-                        button.classList.add('text-gray-600', 'hover:bg-gray-100');
-                    }
-                });
-            }
-
-            function updateAuthFormView() {
-                if(loginError) loginError.classList.add('hidden');
-                if(signupError) signupError.textContent = '';
-                if(signupErrorContainer) signupErrorContainer.classList.add('hidden');
-                if (isLoginView) {
-                    if(loginForm) loginForm.classList.remove('hidden');
-                    if(signupForm) signupForm.classList.add('hidden');
-                    if(authToggleLogin) { authToggleLogin.classList.add('bg-white', 'shadow', 'text-gray-800'); authToggleLogin.classList.remove('text-gray-500', 'hover:bg-gray-200'); }
-                    if(authToggleSignup) { authToggleSignup.classList.remove('bg-white', 'shadow', 'text-gray-800'); authToggleSignup.classList.add('text-gray-500', 'hover:bg-gray-200'); }
-                } else {
-                    if(loginForm) loginForm.classList.add('hidden');
-                    if(signupForm) signupForm.classList.remove('hidden');
-                    if(authToggleSignup) { authToggleSignup.classList.add('bg-white', 'shadow', 'text-gray-800'); authToggleSignup.classList.remove('text-gray-500', 'hover:bg-gray-200'); }
-                    if(authToggleLogin) { authToggleLogin.classList.remove('bg-white', 'shadow', 'text-gray-800'); authToggleLogin.classList.add('text-gray-500', 'hover:bg-gray-200'); }
-                }
-            }
-            
-            function updateSalesTotal() {
-                if (!salesProductSelect || !salesQuantityInput || !salesTotalAmount) return;
-                const shopProductId = salesProductSelect.value;
-                const quantity = parseInt(salesQuantityInput.value, 10);
-                if (!shopProductId || isNaN(quantity) || quantity <= 0) {
-                    salesTotalAmount.value = formatCurrency(0);
-                    return;
-                }
-                const shopProduct = appData.shopStock[shopProductId];
-                if (shopProduct) {
-                    const total = shopProduct.sellingPrice * quantity;
-                    const currency = appData.storeProducts[shopProduct.sourceProductId]?.currency;
-                    salesTotalAmount.value = formatCurrency(total, currency);
-                }
-            }
-
-            function updateSidebarMobileState() {
-                if (isSidebarOpen) {
-                    sidebar.classList.remove('-translate-x-full');
-                    sidebarOverlay.classList.remove('hidden');
-                } else {
-                    sidebar.classList.add('-translate-x-full');
-                    sidebarOverlay.classList.add('hidden');
-                }
-            }
-
-            function updateSidebarDesktopState() {
-                const sidebarTexts = document.querySelectorAll('.sidebar-text');
-                const navButtonsToCenter = document.querySelectorAll('.nav-button, #logout-button');
-                const toggleButtonContainer = sidebarCollapseToggle.firstElementChild;
-                if (isSidebarCollapsed) {
-                    sidebar.classList.replace('w-64', 'lg:w-20');
-                    mainContent.classList.replace('lg:ml-64', 'lg:ml-20');
-                    sidebarTexts.forEach(el => el.classList.add('lg:hidden'));
-                    navButtonsToCenter.forEach(el => el.classList.add('lg:justify-center'));
-                    toggleButtonContainer.innerHTML = getIconSVG('arrowRight', 'w-4 h-4 text-gray-600');
-                } else {
-                    sidebar.classList.replace('lg:w-20', 'w-64');
-                    mainContent.classList.replace('lg:ml-20', 'lg:ml-64');
-                    sidebarTexts.forEach(el => el.classList.remove('lg:hidden'));
-                    navButtonsToCenter.forEach(el => el.classList.remove('lg:justify-center'));
-                    toggleButtonContainer.innerHTML = getIconSVG('arrowLeft', 'w-4 h-4 text-gray-600');
-                }
-            }
-
-            // Event Listeners
-            if (hamburgerButton) hamburgerButton.addEventListener('click', () => { isSidebarOpen = true; updateSidebarMobileState(); });
-            if (sidebarOverlay) sidebarOverlay.addEventListener('click', () => { isSidebarOpen = false; updateSidebarMobileState(); });
-            if (sidebarCollapseToggle) sidebarCollapseToggle.addEventListener('click', () => { isSidebarCollapsed = !isSidebarCollapsed; updateSidebarDesktopState(); });
-            if(authToggleLogin) authToggleLogin.addEventListener('click', () => { isLoginView = true; updateAuthFormView(); });
-            if(authToggleSignup) authToggleSignup.addEventListener('click', () => { isLoginView = false; updateAuthFormView(); });
-            if(salesProductSelect) salesProductSelect.addEventListener('change', updateSalesTotal);
-            if(salesQuantityInput) salesQuantityInput.addEventListener('input', updateSalesTotal);
-            
-            // Auth Logic
-            if(loginForm) loginForm.addEventListener('submit', async (event) => {
-                event.preventDefault();
-                const email = loginForm.email.value;
-                const password = loginForm.password.value;
-                if(loginError) loginError.classList.add('hidden'); 
-                if(loginSubmitButton) { loginSubmitButton.disabled = true; loginSubmitButton.textContent = "Connexion..."; }
-                try {
-                    await signInWithEmailAndPassword(auth, email, password);
-                } catch (error) {
-                    if(loginError) { loginError.textContent = "Email ou mot de passe incorrect."; loginError.classList.remove('hidden'); }
-                } finally {
-                    if(loginSubmitButton) { loginSubmitButton.disabled = false; loginSubmitButton.textContent = "Se connecter"; }
-                }
+        // Firebase Sync
+        function setupFirebaseListeners() {
+            if (!dbBasePath) return;
+            onValue(ref(db, `${dbBasePath}/shopStock`), (snap) => {
+                appData.shopStock = snap.val() || {};
+                renderShopStockTable();
+                populateSelects();
+                updateDashboardUI();
             });
-
-            if(signupForm) signupForm.addEventListener('submit', async (event) => {
-                event.preventDefault();
-                const email = signupForm['signup-email'].value;
-                const password = signupForm['signup-password'].value;
-                const fullName = signupForm.fullName.value;
-                const companyName = signupForm.companyName.value;
-                
-                if(signupError) signupError.textContent = '';
-                if(signupErrorContainer) signupErrorContainer.classList.add('hidden');
-                if(signupSubmitButton) { signupSubmitButton.disabled = true; signupSubmitButton.textContent = "Création..."; }
-                
-                try {
-                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                    const user = userCredential.user;
-
-                    const companiesRef = ref(db, 'companies');
-                    const snapshot = await get(companiesRef);
-                    let companyId = null;
-                    let matchedCompanyName = companyName.trim();
-
-                    if (snapshot.exists()) {
-                        const companies = snapshot.val();
-                        const existingCompanyKey = Object.keys(companies).find(key =>
-                            companies[key].name && companies[key].name.trim().toLowerCase() === companyName.trim().toLowerCase()
-                        );
-                        if (existingCompanyKey) {
-                            companyId = existingCompanyKey;
-                            matchedCompanyName = companies[existingCompanyKey].name;
-                        }
-                    }
-
-                    if (!companyId) {
-                        const newCompRef = push(companiesRef);
-                        companyId = newCompRef.key;
-                        await set(newCompRef, {
-                            name: matchedCompanyName,
-                            createdAt: new Date().toISOString(),
-                            createdBy: user.uid
-                        });
-                    }
-
-                    await set(ref(db, `users/${user.uid}`), {
-                        uid: user.uid,
-                        email: email,
-                        fullName: fullName,
-                        companyName: matchedCompanyName,
-                        companyId: companyId
-                    });
-
-                    await set(ref(db, `companies/${companyId}/members/${user.uid}`), {
-                        email: email,
-                        fullName: fullName
-                    });
-
-                    // --- AJOUT POUR LE RAFRAICHISSEMENT IMMEDIAT ---
-                    // Mise à jour manuelle de l'état local car onAuthStateChanged peut rater les données si elles ne sont pas encore écrites
-                    currentUser = user;
-                    isAuthenticated = true;
-                    currentUserData = {
-                        uid: user.uid,
-                        email: email,
-                        fullName: fullName,
-                        companyName: matchedCompanyName,
-                        companyId: companyId
-                    };
-                    dbBasePath = `companies/${companyId}`;
-                    setupFirebaseListeners();
-                    updateUI();
-                    showSuccessToast("Compte créé avec succès !");
-                    // ------------------------------------------------
-
-                } catch (error) {
-                    console.error("Erreur d'inscription:", error);
-                    if(signupError) {
-                        if (error.code === 'auth/email-already-in-use') {
-                             signupError.innerHTML = `
-                                Cet email existe déjà.<br>
-                                <button id="error-switch-login" class="underline font-bold hover:text-red-700 mt-1 focus:outline-none">
-                                    Se connecter à la place ?
-                                </button>
-                             `;
-                             // Setup the listener immediately after showing the message
-                             setTimeout(() => {
-                                 const switchBtn = document.getElementById('error-switch-login');
-                                 if(switchBtn) {
-                                     switchBtn.onclick = (e) => {
-                                         e.preventDefault();
-                                         isLoginView = true;
-                                         updateAuthFormView();
-                                     };
-                                 }
-                             }, 0);
-                        } else if (error.code === 'auth/weak-password') {
-                             signupError.textContent = "Le mot de passe doit contenir au moins 6 caractères.";
-                        } else {
-                             signupError.textContent = "Une erreur est survenue: " + error.message;
-                        }
-                        if(signupErrorContainer) signupErrorContainer.classList.remove('hidden');
-                    }
-                } finally {
-                    if(signupSubmitButton) { signupSubmitButton.disabled = false; signupSubmitButton.textContent = "Créer mon compte"; }
-                }
+            onValue(ref(db, `${dbBasePath}/storeProducts`), (snap) => {
+                appData.storeProducts = snap.val() || {};
+                renderStoreProductsTable();
+                populateSelects();
+                updateDashboardUI();
             });
+            onValue(ref(db, `${dbBasePath}/salesHistory`), (snap) => {
+                appData.salesHistory = snap.val() || {};
+                renderSalesHistoryTable();
+                updateDashboardUI();
+            });
+        }
 
-            // Listeners pour les actions (Vente, Ajout Produit, etc.)
-            if(salesForm) salesForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                salesError.classList.add('hidden');
-                if (!currentUser || !dbBasePath) { salesError.textContent = "Vous devez être connecté."; salesError.classList.remove('hidden'); return; }
-                const shopProductId = salesProductSelect.value;
-                const quantity = parseInt(salesQuantityInput.value, 10);
-                const comment = salesComment.value || "";
+        function populateSelects() {
+            const select = document.getElementById('pos-product-select');
+            select.innerHTML = '<option value="">Sélectionner un produit</option>' + 
+                Object.values(appData.shopStock).map(i => `<option value="${i.id}">${i.name} (Stock: ${i.quantityInShop})</option>`).join('');
+
+            const transferSelect = document.getElementById('transfer-product-select');
+            transferSelect.innerHTML = '<option value="">Sélectionner depuis Magasin</option>' + 
+                Object.values(appData.storeProducts).map(i => `<option value="${i.id}">${i.name} (Disponible: ${i.quantityInStore})</option>`).join('');
+
+            const restockSelect = document.getElementById('restock-product-select');
+            restockSelect.innerHTML = '<option value="">Sélectionner article boutique</option>' + 
+                Object.values(appData.shopStock).map(i => `<option value="${i.id}">${i.name}</option>`).join('');
+        }
+
+        function renderShopStockTable() {
+            const tbody = document.getElementById('shop-stock-tbody');
+            const stock = Object.values(appData.shopStock);
+            if (stock.length > 0) {
+                document.getElementById('shop-stock-table-container').classList.remove('hidden');
+                document.getElementById('shop-stock-placeholder').classList.add('hidden');
+                tbody.innerHTML = stock.map(i => `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 font-bold text-gray-800">${i.name}</td>
+                        <td class="px-6 py-4"><span class="${i.quantityInShop <= (i.alertThreshold || 5) ? 'text-red-600 font-bold' : ''}">${i.quantityInShop}</span></td>
+                        <td class="px-6 py-4">${formatCurrency(i.sellingPrice)}</td>
+                        <td class="px-6 py-4 text-gray-400">${i.alertThreshold || 5}</td>
+                        <td class="px-6 py-4 text-right">
+                            <button onclick="window.deleteShopItem('${i.id}')" class="text-gray-300 hover:text-red-500"><div data-icon="trash" class="w-5 h-5"></div></button>
+                        </td>
+                    </tr>
+                `).join('');
+                renderIcons();
+            } else {
+                document.getElementById('shop-stock-table-container').classList.add('hidden');
+                document.getElementById('shop-stock-placeholder').classList.remove('hidden');
+            }
+        }
+
+        function renderStoreProductsTable() {
+            const tbody = document.getElementById('store-products-tbody');
+            const products = Object.values(appData.storeProducts);
+            if (products.length > 0) {
+                document.getElementById('store-products-table-container').classList.remove('hidden');
+                document.getElementById('store-products-placeholder').classList.add('hidden');
+                tbody.innerHTML = products.map(p => `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 font-bold text-gray-800">${p.name}</td>
+                        <td class="px-6 py-4 text-gray-500 truncate max-w-xs">${p.description || '-'}</td>
+                        <td class="px-6 py-4 font-semibold">${p.quantityInStore}</td>
+                        <td class="px-6 py-4">${formatCurrency(p.purchaseCost)}</td>
+                        <td class="px-6 py-4 text-right">
+                             <button onclick="window.deleteStoreProduct('${p.id}')" class="text-gray-300 hover:text-red-500"><div data-icon="trash" class="w-5 h-5"></div></button>
+                        </td>
+                    </tr>
+                `).join('');
+                renderIcons();
+            } else {
+                document.getElementById('store-products-table-container').classList.add('hidden');
+                document.getElementById('store-products-placeholder').classList.remove('hidden');
+            }
+        }
+
+        function renderSalesHistoryTable() {
+            const tbody = document.getElementById('sales-history-tbody');
+            const sales = Object.values(appData.salesHistory).sort((a,b) => new Date(b.date) - new Date(a.date));
+            if (sales.length > 0) {
+                document.getElementById('sales-history-table-container').classList.remove('hidden');
+                tbody.innerHTML = sales.map(s => `
+                    <tr>
+                        <td class="px-6 py-3 font-medium">${s.productName}</td>
+                        <td class="px-6 py-3">${s.quantity}</td>
+                        <td class="px-6 py-3 font-bold text-green-600">${formatCurrency(s.totalAmount)}</td>
+                        <td class="px-6 py-3 text-gray-500">${s.sellerName}</td>
+                        <td class="px-6 py-3 text-right text-gray-400 text-xs">${new Date(s.date).toLocaleString()}</td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        window.deleteStoreProduct = (id) => { if(confirm('Supprimer cet article du magasin ?')) remove(ref(db, `${dbBasePath}/storeProducts/${id}`)); };
+        window.deleteShopItem = (id) => { if(confirm('Retirer cet article de la boutique ?')) remove(ref(db, `${dbBasePath}/shopStock/${id}`)); };
+
+        // Events
+        document.getElementById('pos-add-item-form').onsubmit = (e) => {
+            e.preventDefault();
+            const pid = document.getElementById('pos-product-select').value;
+            const qty = parseInt(document.getElementById('pos-quantity-input').value);
+            if (!pid || qty < 1) return;
+
+            const product = appData.shopStock[pid];
+            const inCart = currentCart.filter(i => i.id === pid).reduce((acc, i) => acc + i.quantity, 0);
+
+            if (qty + inCart > product.quantityInShop) {
+                alert(`Stock insuffisant ! Disponible : ${product.quantityInShop}`);
+                return;
+            }
+
+            const existingIdx = currentCart.findIndex(item => item.id === pid);
+            if (existingIdx > -1) {
+                currentCart[existingIdx].quantity += qty;
+                currentCart[existingIdx].totalPrice = currentCart[existingIdx].quantity * product.sellingPrice;
+            } else {
+                currentCart.push({
+                    id: pid,
+                    name: product.name,
+                    unitPrice: product.sellingPrice,
+                    quantity: qty,
+                    totalPrice: qty * product.sellingPrice
+                });
+            }
+            updateCartUI();
+        };
+
+        document.getElementById('pos-clear-cart-btn').onclick = () => { currentCart = []; updateCartUI(); };
+
+        document.getElementById('pos-finalize-sale-btn').onclick = async () => {
+            if (currentCart.length === 0) return;
+            const btn = document.getElementById('pos-finalize-sale-btn');
+            btn.disabled = true;
+            btn.textContent = "TRAITEMENT...";
+
+            try {
+                const updates = {};
+                const now = new Date().toISOString();
                 const sellerName = currentUserData?.fullName || currentUser.email;
-                if (!shopProductId || isNaN(quantity) || quantity <= 0) { salesError.textContent = "Quantité invalide."; salesError.classList.remove('hidden'); return; }
-                const shopProduct = appData.shopStock[shopProductId];
-                if (!shopProduct || quantity > shopProduct.quantityInShop) { salesError.textContent = "Stock insuffisant."; salesError.classList.remove('hidden'); return; }
-                salesSubmitButton.disabled = true;
-                try {
-                    const updates = {}; const now = new Date().toISOString();
-                    const shopNewStock = shopProduct.quantityInShop - quantity;
-                    updates[`${dbBasePath}/shopStock/${shopProductId}/quantityInShop`] = shopNewStock;
-                    const shopMoveKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
-                    updates[`${dbBasePath}/shopMovements/${shopMoveKey}`] = { id: shopMoveKey, shopProductId, productName: shopProduct.name, type: "Sortie", quantityChange: quantity, oldStock: shopProduct.quantityInShop, newStock: shopNewStock, comment: `Vente: ${comment}`, date: now, userEmail: currentUser.email };
-                    const saleKey = push(ref(db, `${dbBasePath}/salesHistory`)).key;
-                    updates[`${dbBasePath}/salesHistory/${saleKey}`] = { id: saleKey, shopProductId, productName: shopProduct.name, quantity, sellingPrice: shopProduct.sellingPrice, totalAmount: shopProduct.sellingPrice * quantity, sellerName, comment, date: now };
-                    await update(ref(db), updates); showSuccessToast("Vente enregistrée!"); salesForm.reset(); updateSalesTotal();
-                } catch (error) { salesError.textContent = error.message; salesError.classList.remove('hidden'); } finally { salesSubmitButton.disabled = false; }
-            });
 
-            if(newProductForm) newProductForm.addEventListener('submit', async (e) => {
-                e.preventDefault(); newProductError.classList.add('hidden');
-                if (!currentUser || !dbBasePath) return;
-                
-                const name = newProductForm['product-name'].value.trim(); 
-                const desc = newProductForm['product-description'].value.trim(); 
-                const cost = parseFloat(newProductForm['product-cost'].value); 
-                const currency = newProductForm['product-currency'].value.trim(); 
-                const qty = parseInt(newProductForm['product-quantity'].value, 10);
-                
-                if (!name || isNaN(cost)) return;
-                
-                newProductSubmitButton.disabled = true;
-                try {
-                    // --- MODIFICATION: FUSION DES DOUBLONS ---
-                    const existingProduct = Object.values(appData.storeProducts).find(p => 
-                        p.name.toLowerCase() === name.toLowerCase() && 
-                        p.purchaseCost === cost && 
-                        p.currency === currency
-                    );
-
-                    if (existingProduct) {
-                        // Mise à jour de la quantité
-                        const oldQty = existingProduct.quantityInStore;
-                        const newQty = oldQty + qty;
-                        
-                        const updates = {};
-                        updates[`${dbBasePath}/storeProducts/${existingProduct.id}/quantityInStore`] = newQty;
-                        
-                        const moveRef = push(ref(db, `${dbBasePath}/storeMovements`));
-                        updates[`${dbBasePath}/storeMovements/${moveRef.key}`] = { 
-                            id: moveRef.key, 
-                            productId: existingProduct.id, 
-                            productName: existingProduct.name, 
-                            type: "Entrée", 
-                            quantityChange: qty, 
-                            oldStock: oldQty, 
-                            newStock: newQty, 
-                            comment: "Fusion automatique (Produit existant)", 
-                            date: new Date().toISOString() 
-                        };
-                        
-                        await update(ref(db), updates);
-                        showSuccessToast("Quantité ajoutée au produit existant !");
-                    } else {
-                        // Création d'un nouveau produit
-                        const newRef = push(ref(db, `${dbBasePath}/storeProducts`));
-                        const newProd = { id: newRef.key, name, description: desc, purchaseCost: cost, currency, quantityInStore: qty, createdAt: new Date().toISOString() };
-                        await set(newRef, newProd);
-                        const moveRef = push(ref(db, `${dbBasePath}/storeMovements`));
-                        await set(moveRef, { id: moveRef.key, productId: newProd.id, productName: name, type: "Entrée", quantityChange: qty, oldStock: 0, newStock: qty, comment: "Création", date: new Date().toISOString() });
-                        showSuccessToast("Produit ajouté!");
-                    }
+                currentCart.forEach(item => {
+                    const shopProduct = appData.shopStock[item.id];
+                    const newStock = shopProduct.quantityInShop - item.quantity;
                     
-                    newProductForm.reset(); 
-                    newProductModal.classList.add('hidden');
-                } catch (err) { 
-                    newProductError.textContent = err.message; 
-                    newProductError.classList.remove('hidden'); 
-                } finally { 
-                    newProductSubmitButton.disabled = false; 
-                }
-            });
-
-            if(entryForm) entryForm.addEventListener('submit', async (e) => {
-                e.preventDefault(); entryError.classList.add('hidden'); if(!currentUser || !dbBasePath) return;
-                const pid = entryProductSelect.value; const qty = parseInt(entryForm['entry-quantity'].value, 10); const comment = entryForm['entry-comment'].value;
-                const prod = appData.storeProducts[pid];
-                if(!prod || qty <= 0) return;
-                entrySubmitButton.disabled = true;
-                try {
-                   const newStock = prod.quantityInStore + qty;
-                   const updates = {}; updates[`${dbBasePath}/storeProducts/${pid}/quantityInStore`] = newStock;
-                   const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
-                   updates[`${dbBasePath}/storeMovements/${moveKey}`] = { id: moveKey, productId: pid, productName: prod.name, type: "Entrée", quantityChange: qty, oldStock: prod.quantityInStore, newStock, comment, date: new Date().toISOString() };
-                   await update(ref(db), updates); showSuccessToast("Entrée ok"); entryForm.reset(); entryModal.classList.add('hidden');
-                } catch(err) { entryError.textContent = err.message; entryError.classList.remove('hidden'); } finally { entrySubmitButton.disabled = false; }
-            });
-
-            if(exitForm) exitForm.addEventListener('submit', async (e) => {
-                 e.preventDefault(); exitError.classList.add('hidden'); if(!currentUser || !dbBasePath) return;
-                 const pid = exitProductSelect.value; const qty = parseInt(exitForm['exit-quantity'].value, 10); const comment = exitForm['exit-comment'].value;
-                 const prod = appData.storeProducts[pid];
-                 if(!prod || qty <= 0) return;
-                 if(qty > prod.quantityInStore) { exitError.textContent = "Stock insuffisant"; exitError.classList.remove('hidden'); return; }
-                 exitSubmitButton.disabled = true;
-                 try {
-                    const newStock = prod.quantityInStore - qty;
-                    const updates = {}; updates[`${dbBasePath}/storeProducts/${pid}/quantityInStore`] = newStock;
-                    const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
-                    updates[`${dbBasePath}/storeMovements/${moveKey}`] = { id: moveKey, productId: pid, productName: prod.name, type: "Sortie", quantityChange: qty, oldStock: prod.quantityInStore, newStock, comment, date: new Date().toISOString() };
-                    await update(ref(db), updates); showSuccessToast("Sortie ok"); exitForm.reset(); exitModal.classList.add('hidden');
-                 } catch(err) { exitError.textContent = err.message; exitError.classList.remove('hidden'); } finally { exitSubmitButton.disabled = false; }
-            });
-
-            if(transferForm) transferForm.addEventListener('submit', async (e) => {
-                e.preventDefault(); transferError.classList.add('hidden'); if(!currentUser || !dbBasePath) return;
-                const sourceId = transferProductSelect.value; const qty = parseInt(transferForm['transfer-quantity'].value, 10); const price = parseFloat(transferForm['transfer-selling-price'].value);
-                const sourceProd = appData.storeProducts[sourceId];
-                if(!sourceProd || qty > sourceProd.quantityInStore) { transferError.textContent = "Erreur stock"; transferError.classList.remove('hidden'); return; }
-                transferSubmitButton.disabled = true;
-                try {
-                    let existingItem = Object.values(appData.shopStock).find(i => i.sourceProductId === sourceId);
-                    const updates = {}; const now = new Date().toISOString();
-                    const storeNew = sourceProd.quantityInStore - qty;
-                    const shopOld = existingItem ? existingItem.quantityInShop : 0; const shopNew = shopOld + qty;
+                    // Update Stock
+                    updates[`${dbBasePath}/shopStock/${item.id}/quantityInShop`] = newStock;
                     
-                    updates[`${dbBasePath}/storeProducts/${sourceId}/quantityInStore`] = storeNew;
-                    const smKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
-                    updates[`${dbBasePath}/storeMovements/${smKey}`] = { id: smKey, productId: sourceId, productName: sourceProd.name, type: "Sortie", quantityChange: qty, oldStock: sourceProd.quantityInStore, newStock: storeNew, comment: "Vers boutique", date: now };
+                    // History
+                    const sKey = push(ref(db, `${dbBasePath}/salesHistory`)).key;
+                    updates[`${dbBasePath}/salesHistory/${sKey}`] = {
+                        id: sKey, shopProductId: item.id, productName: item.name,
+                        quantity: item.quantity, sellingPrice: item.unitPrice,
+                        totalAmount: item.totalPrice, sellerName, date: now
+                    };
+                });
 
-                    const shopId = existingItem ? existingItem.id : push(ref(db, `${dbBasePath}/shopStock`)).key;
-                    updates[`${dbBasePath}/shopStock/${shopId}`] = { id: shopId, sourceProductId: sourceId, name: sourceProd.name, purchaseCost: sourceProd.purchaseCost, sellingPrice: price, quantityInShop: shopNew, alertThreshold: 10, createdAt: existingItem ? existingItem.createdAt : now, updatedAt: now };
+                await update(ref(db), updates);
+                currentCart = [];
+                updateCartUI();
+                showSuccessToast("Vente validée avec succès !");
+            } catch (err) {
+                console.error(err);
+                alert("Erreur lors de la validation.");
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "FINALISER LA VENTE";
+            }
+        };
 
-                    const shmKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
-                    updates[`${dbBasePath}/shopMovements/${shmKey}`] = { id: shmKey, shopProductId: shopId, productName: sourceProd.name, type: "Entrée", quantityChange: qty, oldStock: shopOld, newStock: shopNew, comment: "Depuis magasin", date: now, userEmail: currentUser.email };
-                    
-                    await update(ref(db), updates); showSuccessToast("Transfert ok"); transferForm.reset(); transferModal.classList.add('hidden');
-                } catch(err) { transferError.textContent = err.message; transferError.classList.remove('hidden'); } finally { transferSubmitButton.disabled = false; }
-            });
+        // Modal forms
+        document.getElementById('new-product-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const f = e.target;
+            const name = f['product-name'].value;
+            const cost = parseFloat(f['product-cost'].value);
+            const qty = parseInt(f['product-quantity'].value);
 
-            if(restockForm) restockForm.addEventListener('submit', async (e) => {
-                e.preventDefault(); restockError.classList.add('hidden'); if(!currentUser || !dbBasePath) return;
-                const sid = restockProductSelect.value; const qty = parseInt(restockForm['restock-quantity'].value, 10);
-                const shopProd = appData.shopStock[sid];
-                if(!shopProd) return;
-                const sourceProd = appData.storeProducts[shopProd.sourceProductId];
-                if(!sourceProd || qty > sourceProd.quantityInStore) { restockError.textContent = "Stock magasin insuffisant"; restockError.classList.remove('hidden'); return; }
-                restockSubmitButton.disabled = true;
-                try {
-                    const updates = {}; const now = new Date().toISOString();
-                    const storeNew = sourceProd.quantityInStore - qty;
-                    const shopNew = shopProd.quantityInShop + qty;
-                    
-                    updates[`${dbBasePath}/storeProducts/${sourceProd.id}/quantityInStore`] = storeNew;
-                    const smKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
-                    updates[`${dbBasePath}/storeMovements/${smKey}`] = { id: smKey, productId: sourceProd.id, productName: sourceProd.name, type: "Sortie", quantityChange: qty, oldStock: sourceProd.quantityInStore, newStock: storeNew, comment: "Restock", date: now };
+            const existing = Object.values(appData.storeProducts).find(p => p.name.toLowerCase() === name.toLowerCase() && p.purchaseCost === cost);
+            if (existing) {
+                await update(ref(db, `${dbBasePath}/storeProducts/${existing.id}`), { quantityInStore: existing.quantityInStore + qty });
+            } else {
+                const nRef = push(ref(db, `${dbBasePath}/storeProducts`));
+                await set(nRef, { id: nRef.key, name, purchaseCost: cost, quantityInStore: qty, currency: 'CFA', createdAt: new Date().toISOString() });
+            }
+            f.reset(); document.getElementById('new-product-modal').classList.add('hidden');
+            showSuccessToast("Produit ajouté !");
+        };
 
-                    updates[`${dbBasePath}/shopStock/${sid}/quantityInShop`] = shopNew;
-                    updates[`${dbBasePath}/shopStock/${sid}/updatedAt`] = now;
-                    const shmKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
-                    updates[`${dbBasePath}/shopMovements/${shmKey}`] = { id: shmKey, shopProductId: sid, productName: shopProd.name, type: "Entrée", quantityChange: qty, oldStock: shopProd.quantityInShop, newStock: shopNew, comment: "Restock", date: now, userEmail: currentUser.email };
-                    
-                    await update(ref(db), updates); showSuccessToast("Restock ok"); restockForm.reset(); restockModal.classList.add('hidden');
-                } catch(err) { restockError.textContent = err.message; restockError.classList.remove('hidden'); } finally { restockSubmitButton.disabled = false; }
-            });
-
-            // UI Event Bindings
-            if (storeSearchInput) storeSearchInput.addEventListener('input', (e) => renderStoreProducts(e.target.value));
-            if (shopSearchInput) shopSearchInput.addEventListener('input', (e) => renderShopStock(e.target.value));
-            navButtons.forEach(btn => btn.addEventListener('click', () => { currentPage = btn.dataset.page; if(window.innerWidth < 1024) { isSidebarOpen = false; updateSidebarMobileState(); } updateUI(); }));
-            if(logoutButton) logoutButton.addEventListener('click', () => signOut(auth));
+        document.getElementById('transfer-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const pid = document.getElementById('transfer-product-select').value;
+            const price = parseFloat(document.getElementById('transfer-selling-price').value);
+            const qty = parseInt(document.getElementById('transfer-quantity').value);
+            const alertT = parseInt(document.getElementById('transfer-alert-threshold').value);
             
-            // --- MODIFICATION: SUPPRESSION DES PRODUITS ---
-            storeProductsTbody.addEventListener('click', async (e) => {
-                const btn = e.target.closest('.delete-icon');
-                if (!btn || !dbBasePath) return;
-                const pid = btn.dataset.productId;
-                if (confirm("Supprimer définitivement ce produit du magasin ? Cela n'affectera pas le stock déjà en boutique.")) {
-                    try {
-                        await remove(ref(db, `${dbBasePath}/storeProducts/${pid}`));
-                        showSuccessToast("Produit supprimé du magasin");
-                    } catch (err) {
-                        console.error(err);
-                    }
-                }
-            });
+            const storeProd = appData.storeProducts[pid];
+            if (qty > storeProd.quantityInStore) return alert("Stock insuffisant !");
 
-            shopStockTbody.addEventListener('click', async (e) => {
-                const btn = e.target.closest('.delete-icon');
-                if (!btn || !dbBasePath) return;
-                const sid = btn.dataset.stockId;
-                if (confirm("Retirer ce produit de la boutique ? Le stock ne sera PAS renvoyé au magasin.")) {
-                    try {
-                        await remove(ref(db, `${dbBasePath}/shopStock/${sid}`));
-                        showSuccessToast("Article retiré de la boutique");
-                    } catch (err) {
-                        console.error(err);
-                    }
-                }
-            });
+            const shopItem = Object.values(appData.shopStock).find(i => i.sourceProductId === pid && i.sellingPrice === price);
+            const updates = {};
+            updates[`${dbBasePath}/storeProducts/${pid}/quantityInStore`] = storeProd.quantityInStore - qty;
+            if (shopItem) updates[`${dbBasePath}/shopStock/${shopItem.id}/quantityInShop`] = shopItem.quantityInShop + qty;
+            else {
+                const sKey = push(ref(db, `${dbBasePath}/shopStock`)).key;
+                updates[`${dbBasePath}/shopStock/${sKey}`] = { id: sKey, sourceProductId: pid, name: storeProd.name, sellingPrice: price, quantityInShop: qty, alertThreshold: alertT, purchaseCost: storeProd.purchaseCost };
+            }
+            await update(ref(db), updates);
+            document.getElementById('transfer-modal').classList.add('hidden');
+            showSuccessToast("Transféré vers boutique !");
+        };
 
-            // Modals Close
-            [newProductModal, entryModal, exitModal, transferModal, restockModal].forEach(m => { if(m) m.addEventListener('click', e => { if(e.target === m) m.classList.add('hidden'); }); });
-            if(closeNewProductModalButton) closeNewProductModalButton.addEventListener('click', () => newProductModal.classList.add('hidden'));
-            if(closeEntryModalButton) closeEntryModalButton.addEventListener('click', () => entryModal.classList.add('hidden'));
-            if(closeExitModalButton) closeExitModalButton.addEventListener('click', () => exitModal.classList.add('hidden'));
-            if(closeTransferModalButton) closeTransferModalButton.addEventListener('click', () => transferModal.classList.add('hidden'));
-            if(closeRestockModalButton) closeRestockModalButton.addEventListener('click', () => restockModal.classList.add('hidden'));
-
-            // Modals Open
-            if(openNewProductModalButton) openNewProductModalButton.addEventListener('click', () => { newProductModal.classList.remove('hidden'); newProductForm.reset(); });
-            if(openEntryModalButton) openEntryModalButton.addEventListener('click', () => { entryModal.classList.remove('hidden'); entryForm.reset(); });
-            if(openExitModalButton) openExitModalButton.addEventListener('click', () => { exitModal.classList.remove('hidden'); exitForm.reset(); });
-            if(openTransferModalButton) openTransferModalButton.addEventListener('click', () => { transferModal.classList.remove('hidden'); transferForm.reset(); transferSourceInfo.classList.add('hidden'); });
-            if(openRestockModalButton) openRestockModalButton.addEventListener('click', () => { restockModal.classList.remove('hidden'); restockForm.reset(); restockSourceInfo.classList.add('hidden'); });
-
-            // Select changes
-            if(transferProductSelect) transferProductSelect.addEventListener('change', () => { const p = appData.storeProducts[transferProductSelect.value]; if(p) { transferCostDisplay.textContent = formatCurrency(p.purchaseCost, p.currency); transferSourceInfo.classList.remove('hidden'); } else transferSourceInfo.classList.add('hidden'); });
-            if(restockProductSelect) restockProductSelect.addEventListener('change', () => { const si = appData.shopStock[restockProductSelect.value]; if(si && appData.storeProducts[si.sourceProductId]) { const sp = appData.storeProducts[si.sourceProductId]; restockSourceName.textContent = sp.name; restockSourceStock.textContent = sp.quantityInStore; restockSourceInfo.classList.remove('hidden'); } else restockSourceInfo.classList.add('hidden'); });
-
-            function updateAllStats() {
-                const sales = Object.values(appData.salesHistory);
-                const shopItems = Object.values(appData.shopStock);
-                const storeItems = Object.values(appData.storeProducts);
-                const now = new Date();
-                const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-                
-                document.getElementById('stat-daily-sales').textContent = sales.filter(s => s.date >= startOfDay).length;
-                document.getElementById('stat-monthly-revenue').textContent = formatCurrency(sales.filter(s => s.date >= startOfMonth).reduce((acc, s) => acc + s.totalAmount, 0));
-                const shopCount = shopItems.reduce((acc, i) => acc + i.quantityInShop, 0);
-                document.getElementById('stat-shop-stock').textContent = shopCount;
-                document.getElementById('stat-store-stock').textContent = storeItems.reduce((acc, i) => acc + i.quantityInStore, 0);
-                
-                document.getElementById('stat-total-sales').textContent = sales.length;
-                document.getElementById('stat-revenue').textContent = formatCurrency(sales.reduce((acc, s) => acc + s.totalAmount, 0));
-                document.getElementById('stat-products-in-stock').textContent = shopCount;
-                
-                // Best Selling & Seller Perf (Simplified logic)
-                const bestSellingContainer = document.getElementById('best-selling-tbody');
-                const productSales = sales.reduce((acc, s) => { acc[s.productName] = (acc[s.productName] || 0) + s.quantity; return acc; }, {});
-                const sortedProd = Object.entries(productSales).sort((a,b) => b[1]-a[1]).slice(0,5);
-                bestSellingContainer.innerHTML = sortedProd.length ? sortedProd.map(([name, qty]) => `<tr class="hover:bg-gray-50"><td class="px-4 py-3 text-sm text-gray-800">${name}</td><td class="px-4 py-3 text-sm text-gray-600">${qty}</td><td class="px-4 py-3"></td></tr>`).join('') : '';
-                if(sortedProd.length) { document.getElementById('best-selling-placeholder').classList.add('hidden'); document.getElementById('best-selling-table-container').classList.remove('hidden'); }
-                
-                const sellerPerfContainer = document.getElementById('seller-performance-tbody');
-                const sellerSales = sales.reduce((acc, s) => { acc[s.sellerName] = (acc[s.sellerName] || 0) + s.totalAmount; return acc; }, {});
-                const sortedSeller = Object.entries(sellerSales).sort((a,b) => b[1]-a[1]).slice(0,5);
-                sellerPerfContainer.innerHTML = sortedSeller.length ? sortedSeller.map(([name, total]) => `<tr class="hover:bg-gray-50"><td class="px-4 py-3 text-sm text-gray-800">${name}</td><td class="px-4 py-3"></td><td class="px-4 py-3 text-sm font-semibold text-gray-700">${formatCurrency(total)}</td></tr>`).join('') : '';
-                if(sortedSeller.length) { document.getElementById('seller-performance-placeholder').classList.add('hidden'); document.getElementById('seller-performance-table-container').classList.remove('hidden'); }
+        // Navigation
+        function updateUI() {
+            const layout = document.getElementById('layout-container');
+            const auth = document.getElementById('auth-page-container');
+            if (currentUser) {
+                layout.classList.remove('hidden'); auth.classList.add('hidden');
+                document.getElementById('user-name-display').textContent = currentUserData?.fullName || currentUser.email;
+                document.getElementById('user-company-display').textContent = currentUserData?.companyName || '';
+                document.getElementById('user-email-display').textContent = currentUser.email;
+            } else {
+                layout.classList.add('hidden'); auth.classList.remove('hidden');
             }
 
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    isAuthenticated = true;
-                    currentUser = user;
-                    get(ref(db, `users/${user.uid}`)).then((snapshot) => {
-                        if (snapshot.exists()) {
-                            currentUserData = snapshot.val();
-                            if (sellerNameInput) sellerNameInput.value = currentUserData.fullName || user.email;
-                            dbBasePath = currentUserData.companyId ? `companies/${currentUserData.companyId}` : `users/${user.uid}`;
-                            setupFirebaseListeners();
-                            updateUI();
-                        }
-                    });
-                } else {
-                    isAuthenticated = false; currentUser = null; currentUserData = null; dbBasePath = ''; currentPage = 'Tableau de bord'; cleanupFirebaseListeners(); updateUI();
-                }
+            document.querySelectorAll('.nav-button').forEach(btn => {
+                const active = btn.dataset.page === currentPage;
+                btn.classList.toggle('bg-cyan-400', active); btn.classList.toggle('text-white', active);
             });
+            document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
+            const activeP = document.getElementById(`page-${currentPage.replace(/ /g, '-')}`);
+            if (activeP) activeP.classList.remove('hidden');
+            renderIcons();
+        }
 
-            updateUI();
+        document.querySelectorAll('.nav-button').forEach(btn => btn.onclick = () => { currentPage = btn.dataset.page; updateUI(); });
+        document.getElementById('logout-button').onclick = () => signOut(auth);
+        document.getElementById('auth-toggle-login').onclick = () => { document.getElementById('login-form').classList.remove('hidden'); document.getElementById('signup-form').classList.add('hidden'); };
+        document.getElementById('auth-toggle-signup').onclick = () => { document.getElementById('login-form').classList.add('hidden'); document.getElementById('signup-form').classList.remove('hidden'); };
+        
+        document.getElementById('open-new-product-modal-button').onclick = () => document.getElementById('new-product-modal').classList.remove('hidden');
+        document.getElementById('open-transfer-modal-button').onclick = () => document.getElementById('transfer-modal').classList.remove('hidden');
+        document.getElementById('open-restock-modal-button').onclick = () => document.getElementById('restock-modal').classList.remove('hidden');
+        
+        // Final Init
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                const snap = await get(ref(db, `users/${user.uid}`));
+                currentUserData = snap.val();
+                dbBasePath = `companies/${currentUserData.companyId}`;
+                setupFirebaseListeners();
+                updateUI();
+            } else {
+                currentUser = null; updateUI();
+            }
         });
+
+        document.getElementById('login-form').onsubmit = async (e) => {
+            e.preventDefault();
+            try { await signInWithEmailAndPassword(auth, e.target.email.value, e.target.password.value); } 
+            catch (err) { document.getElementById('login-error').textContent = "Erreur de connexion"; document.getElementById('login-error').classList.remove('hidden'); }
+        };
+
+        renderIcons();
+        updateCartUI();
     </script>
 </body>
 </html>
