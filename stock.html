@@ -37,9 +37,9 @@
     "firebase/app": "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js",
     "firebase/auth": "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js",
     "firebase/database": "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js",
-    "firebase/": "https://aistudiocdn.com/firebase@^12.6.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.1/",
-    "react": "https://aistudiocdn.com/react@^19.2.1"
+    "react": "https://esm.sh/react@^19.2.4",
+    "firebase/": "https://esm.sh/firebase@^12.8.0/",
+    "react/": "https://esm.sh/react@^19.2.4/"
   }
 }
 </script>
@@ -82,7 +82,6 @@
                             <label class="text-sm font-medium text-gray-600" for="email">Email</label>
                             <input type="email" id="email" name="email" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
                         </div>
-                        <div>
                         <div id="login-password-field">
                             <label class="text-sm font-medium text-gray-600" for="password">Mot de passe</label>
                             <input type="password" id="password" name="password" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
@@ -884,7 +883,6 @@
                             <div class="p-4 rounded-2xl border border-gray-200 space-y-4">
                                 <div>
                                     <p class="font-semibold text-gray-800">Ajouter un collaborateur</p>
-                                    <p class="text-sm text-gray-500">Envoyez une invitation et attribuez un rôle immédiatement.</p>
                                     <p class="text-sm text-gray-500">Générez un code d'accès personnel et attribuez un rôle immédiatement.</p>
                                 </div>
                                 <form id="access-add-member-form" class="grid md:grid-cols-4 gap-4">
@@ -895,7 +893,6 @@
                                         <option value="vendeur">Vendeur</option>
                                         <option value="consultation">Consultation</option>
                                     </select>
-                                    <button type="submit" class="col-span-2 md:col-span-1 bg-cyan-500 text-white rounded-xl font-semibold hover:bg-cyan-600">Envoyer l'invitation</button>
                                     <button type="submit" class="col-span-2 md:col-span-1 bg-cyan-500 text-white rounded-xl font-semibold hover:bg-cyan-600">Générer le code</button>
                                 </form>
                             </div>
@@ -1465,6 +1462,7 @@
                 currentUser = null;
                 currentUserData = null;
                 dbBasePath = '';
+                sessionStorage.removeItem('stockpilot_code_session');
                 cleanupFirebaseListeners();
                 updateUI();
             }
@@ -1542,7 +1540,6 @@
             function renderAccessMembers() {
                 if (!accessMembersTbody) return;
                 if (!teamMembersState.length) {
-                    accessMembersTbody.innerHTML = `<tr><td colspan="5" class="px-4 py-6 text-center text-gray-400">Aucun collaborateur pour le moment.</td></tr>`;
                     accessMembersTbody.innerHTML = `<tr><td colspan="6" class="px-4 py-6 text-center text-gray-400">Aucun collaborateur pour le moment.</td></tr>`;
                 } else {
                     const rows = teamMembersState.map(member => {
@@ -1562,12 +1559,9 @@
                         return `
                             <tr class="hover:bg-gray-50">
                                 <td class="px-4 py-3">
-                                    <p class="font-semibold text-gray-900">${member.name}</p>
-                                    <p class="text-xs text-gray-400">${member.status === 'pending' ? 'Invitation envoyée' : 'Actif'}</p>
                                     <p class="font-semibold text-gray-900">${member.fullName || member.name || '-'}</p>
                                     <p class="text-xs text-gray-400">${statusLabel}</p>
                                 </td>
-                                <td class="px-4 py-3 text-sm text-gray-500">${member.email}</td>
                                 <td class="px-4 py-3 text-sm text-gray-500">${member.email || '-'}</td>
                                 <td class="px-4 py-3">
                                     <select data-role-select="${member.id}" class="rounded-lg border-gray-200 focus:ring-cyan-400 focus:border-cyan-400 text-sm">
@@ -1584,7 +1578,6 @@
                                     ${accessCodeBlock}
                                 </td>
                                 <td class="px-4 py-3 text-right">
-                                    <button type="button" data-remove-member="${member.id}" class="text-sm text-red-500 hover:text-red-600 font-semibold">Retirer</button>
                                     ${actionCell}
                                 </td>
                             </tr>
@@ -1687,6 +1680,7 @@
                         accessCode: match.member.accessCode
                     };
                     dbBasePath = `companies/${match.companyId}`;
+                    sessionStorage.setItem('stockpilot_code_session', JSON.stringify(currentUserData));
                     if (match.member.status !== 'actif') {
                         await update(ref(db, `${dbBasePath}/members/${match.memberId}`), { status: 'actif' });
                     }
@@ -1764,7 +1758,7 @@
             }
 
             if (accessAddMemberForm) {
-                accessAddMemberForm.addEventListener('submit', (event) => {
+                accessAddMemberForm.addEventListener('submit', async (event) => {
                     event.preventDefault();
                     if (!dbBasePath) {
                         showSuccessToast("Veuillez sélectionner une entreprise valide.");
@@ -1774,35 +1768,30 @@
                     const email = accessMemberEmailInput.value.trim();
                     const role = accessMemberRoleInput.value;
                     if (!name || !email) return;
-                    const basePermissions = role === 'consultation' ? ['Tableau de bord', 'Statistiques'] : ['Tableau de bord', 'Ventes', 'Stock Boutique'];
+                    
                     const accessCode = generateAccessCode();
-                    const newMember = {
-                        id: `member-${Date.now()}`,
-                        name,
+                    const basePermissions = role === 'consultation' ? ['Tableau de bord', 'Statistiques'] : ['Tableau de bord', 'Ventes', 'Stock Boutique'];
+                    
                     const newMemberRef = push(ref(db, `${dbBasePath}/members`));
-                    set(newMemberRef, {
+                    const newMemberData = {
                         id: newMemberRef.key,
                         fullName: name,
                         email,
                         role,
                         status: 'pending',
                         permissions: role === 'admin' ? [...accessModules] : basePermissions,
-                        isCurrentUser: false,
-                        accessCode
-                    };
-                    teamMembersState.push(newMember);
-                    renderAccessMembers();
-                    accessAddMemberForm.reset();
-                    showSuccessToast(`Employé ajouté. Code: ${accessCode}`);
                         accessCode,
                         createdAt: new Date().toISOString(),
                         invitedBy: currentUser?.email || 'admin'
-                    }).then(() => {
+                    };
+
+                    try {
+                        await set(newMemberRef, newMemberData);
                         accessAddMemberForm.reset();
                         showSuccessToast(`Collaborateur ajouté. Code: ${accessCode}`);
-                    }).catch(() => {
-                        showSuccessToast("Impossible d'ajouter ce collaborateur pour le moment.");
-                    });
+                    } catch (error) {
+                        showSuccessToast("Impossible d'ajouter ce collaborateur.");
+                    }
                 });
             }
 
@@ -1860,18 +1849,15 @@
                     let html = '';
                     const sortedProducts = filteredProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                     sortedProducts.forEach(product => {
-                        // FIXED: Pass classes directly to getIconSVG
-                        const iconBox = getIconSVG('box', 'w-5 h-5 text-gray-600');
-                        const iconTrash = getIconSVG('trash', 'w-5 h-5');
                         html += `
                             <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 whitespace-nowrap"><div class="flex items-center"><div class="p-2 bg-gray-100 rounded-lg mr-3">${iconBox}</div><span class="text-sm font-medium text-gray-900">${product.name}</span></div></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${product.name}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.description || ''}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">${product.quantityInStore}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatCurrency(product.purchaseCost, product.currency)}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
                                     <button class="delete-icon text-gray-400 hover:text-red-500" data-product-id="${product.id}">
-                                        ${iconTrash}
+                                        Supprimer
                                     </button>
                                 </td>
                             </tr>`;
@@ -1893,13 +1879,12 @@
                     const sortedMovements = Object.values(movements).sort((a, b) => new Date(b.date) - new Date(a.date));
                     sortedMovements.forEach(move => {
                         const isEntry = move.type === 'Entrée';
-                        const arrowIcon = isEntry ? getIconSVG('arrowUp', 'w-4 h-4') : getIconSVG('arrowDown', 'w-4 h-4');
                         html += `
                             <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${move.productName}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><span class="flex items-center ${isEntry ? 'text-green-600' : 'text-red-600'}"><span class="mr-1.5">${arrowIcon}</span>${move.type}</span></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${move.type}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${isEntry ? 'text-green-600' : 'text-red-600'}">${isEntry ? '+' : '-'}${move.quantityChange}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><span class="flex items-center"><span class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md">${move.oldStock}</span><span class="mx-1 text-gray-400">-></span><span class="px-2 py-0.5 ${isEntry ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} rounded-md">${move.newStock}</span></span></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${move.newStock}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${move.comment}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(move.date)}</td>
                             </tr>`;
@@ -1932,18 +1917,15 @@
                     sortedStock.forEach(item => {
                         const isLowStock = item.quantityInShop <= item.alertThreshold;
                         const currency = appData.storeProducts[item.sourceProductId]?.currency || 'CFA';
-                        // FIXED: Pass classes directly to getIconSVG
-                        const iconBox = getIconSVG('box', 'w-5 h-5 text-gray-600');
-                        const iconTrash = getIconSVG('trash', 'w-5 h-5');
                         html += `
                             <tr class="hover:bg-gray-50 ${isLowStock ? 'bg-red-50' : ''}">
-                                <td class="px-6 py-4 whitespace-nowrap"><div class="flex items-center"><div class="p-2 bg-gray-100 rounded-lg mr-3">${iconBox}</div><span class="text-sm font-medium text-gray-900">${item.name}</span></div></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${item.name}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${isLowStock ? 'text-red-600' : 'text-gray-700'}">${item.quantityInShop}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatCurrency(item.sellingPrice, currency)}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.alertThreshold}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
                                     <button class="delete-icon text-gray-400 hover:text-red-500" data-stock-id="${item.id}">
-                                        ${iconTrash}
+                                        Supprimer
                                     </button>
                                 </td>
                             </tr>`;
@@ -1972,15 +1954,13 @@
                     const sortedMovements = Object.values(movements).sort((a, b) => new Date(b.date) - new Date(a.date));
                     sortedMovements.forEach(move => {
                         const isEntry = move.type === 'Entrée';
-                        const qteClass = isEntry ? 'text-green-600' : 'text-red-600';
-                        const arrowIcon = isEntry ? getIconSVG('arrowUp', 'w-4 h-4') : getIconSVG('arrowDown', 'w-4 h-4');
                         const userDisplay = move.userEmail ? move.userEmail.split('@')[0] : 'N/A';
                         html += `
                             <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${move.productName}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><span class="flex items-center ${qteClass}"><span class="mr-1.5">${arrowIcon}</span>${move.type}</span></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${qteClass}">${isEntry ? '+' : '-'}${move.quantityChange}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><span class="flex items-center"><span class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md">${move.oldStock}</span><span class="mx-1 text-gray-400">-></span><span class="px-2 py-0.5 ${isEntry ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} rounded-md">${move.newStock}</span></span></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${move.type}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${isEntry ? 'text-green-600' : 'text-red-600'}">${isEntry ? '+' : '-'}${move.quantityChange}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${move.newStock}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${move.comment}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${userDisplay}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(move.date)}</td>
@@ -2055,45 +2035,22 @@
                 if (salesHistoryListener && salesHistoryRef) off(salesHistoryRef, salesHistoryListener);
                 if (companyMembersListener && companyMembersRef) off(companyMembersRef, companyMembersListener);
 
-                
                 storeProductsListener = null; storeMovementsListener = null; shopStockListener = null; shopMovementsListener = null; salesHistoryListener = null; companyMembersListener = null;
-                storeProductsRef = null; storeMovementsRef = null; shopStockRef = null; shopMovementsRef = null; salesHistoryRef = null; companyMembersRef = null;
-
-                appData.storeProducts = {};
-                appData.shopStock = {};
-                appData.salesHistory = {};
-                populateStoreProductSelects();
-                populateShopProductSelects();
-                teamMembersState = [];
-                renderAccessMembers();
+                appData.storeProducts = {}; appData.shopStock = {}; appData.salesHistory = {};
             }
 
             function updateUI() {
                 if (isAuthenticated) {
-                    if (authPageContainer) authPageContainer.classList.add('hidden');
-                    if (layoutContainer) layoutContainer.classList.remove('hidden');
-                    if (currentUser && currentUser.email && userEmailDisplay) userEmailDisplay.textContent = currentUser.email;
+                    authPageContainer.classList.add('hidden');
+                    layoutContainer.classList.remove('hidden');
+                    if (currentUser && userEmailDisplay) userEmailDisplay.textContent = currentUser.email;
                     if (currentUserData) {
                         if(userNameDisplay) userNameDisplay.textContent = currentUserData.fullName || 'Utilisateur';
                         if(userCompanyDisplay) userCompanyDisplay.textContent = currentUserData.companyName || '';
                     }
-                    if (mobilePageTitle) mobilePageTitle.textContent = currentPage;
                 } else {
-                    if (authPageContainer) authPageContainer.classList.remove('hidden');
-                    if (layoutContainer) layoutContainer.classList.add('hidden');
-                    if (userEmailDisplay) userEmailDisplay.textContent = "Non connecté";
-                    if (sellerNameInput) sellerNameInput.value = '';
-                    isLoginView = true;
-                    updateAuthFormView();
-                    if (storeProductsTbody) storeProductsTbody.innerHTML = '';
-                    if (storeMovementsTbody) storeMovementsTbody.innerHTML = '';
-                    if (shopStockTbody) shopStockTbody.innerHTML = '';
-                    if (shopMovementsTbody) shopMovementsTbody.innerHTML = '';
-                    if (salesHistoryTbody) salesHistoryTbody.innerHTML = '';
-                    [storeProductsPlaceholder, storeMovementsPlaceholder, shopStockPlaceholder, shopMovementsPlaceholder, salesHistoryPlaceholder].forEach(p => p && p.classList.remove('hidden'));
-                    [storeProductsTableContainer, storeMovementsTableContainer, shopStockTableContainer, shopMovementsTableContainer, salesHistoryTableContainer].forEach(t => t && t.classList.add('hidden'));
-                    updateSettingsAccess();
-                    return;
+                    authPageContainer.classList.remove('hidden');
+                    layoutContainer.classList.add('hidden');
                 }
 
                 pageContents.forEach(page => {
@@ -2104,47 +2061,21 @@
                 navButtons.forEach(button => {
                     if (button.dataset.page === currentPage) {
                         button.classList.add('bg-cyan-400', 'text-white', 'shadow');
-                        button.classList.remove('text-gray-600', 'hover:bg-gray-100');
                     } else {
                         button.classList.remove('bg-cyan-400', 'text-white', 'shadow');
-                        button.classList.add('text-gray-600', 'hover:bg-gray-100');
                     }
                 });
-
                 updateSettingsAccess();
             }
 
             function updateAuthFormView() {
-                if(loginError) loginError.classList.add('hidden');
-                if(signupError) signupError.textContent = '';
-                if(signupErrorContainer) signupErrorContainer.classList.add('hidden');
                 updateLoginModeUI();
                 if (isLoginView) {
-                    if(loginForm) loginForm.classList.remove('hidden');
-                    if(signupForm) signupForm.classList.add('hidden');
-                    if(authToggleLogin) { authToggleLogin.classList.add('bg-white', 'shadow', 'text-gray-800'); authToggleLogin.classList.remove('text-gray-500', 'hover:bg-gray-200'); }
-                    if(authToggleSignup) { authToggleSignup.classList.remove('bg-white', 'shadow', 'text-gray-800'); authToggleSignup.classList.add('text-gray-500', 'hover:bg-gray-200'); }
+                    loginForm.classList.remove('hidden');
+                    signupForm.classList.add('hidden');
                 } else {
-                    if(loginForm) loginForm.classList.add('hidden');
-                    if(signupForm) signupForm.classList.remove('hidden');
-                    if(authToggleSignup) { authToggleSignup.classList.add('bg-white', 'shadow', 'text-gray-800'); authToggleSignup.classList.remove('text-gray-500', 'hover:bg-gray-200'); }
-                    if(authToggleLogin) { authToggleLogin.classList.remove('bg-white', 'shadow', 'text-gray-800'); authToggleLogin.classList.add('text-gray-500', 'hover:bg-gray-200'); }
-                }
-            }
-
-            function updateSalesTotal() {
-                if (!salesProductSelect || !salesQuantityInput || !salesTotalAmount) return;
-                const shopProductId = salesProductSelect.value;
-                const quantity = parseInt(salesQuantityInput.value, 10);
-                if (!shopProductId || isNaN(quantity) || quantity <= 0) {
-                    salesTotalAmount.value = formatCurrency(0);
-                    return;
-                }
-                const shopProduct = appData.shopStock[shopProductId];
-                if (shopProduct) {
-                    const total = shopProduct.sellingPrice * quantity;
-                    const currency = appData.storeProducts[shopProduct.sourceProductId]?.currency;
-                    salesTotalAmount.value = formatCurrency(total, currency);
+                    loginForm.classList.add('hidden');
+                    signupForm.classList.remove('hidden');
                 }
             }
 
@@ -2158,379 +2089,101 @@
                 }
             }
 
-            function updateSidebarDesktopState() {
-                const sidebarTexts = document.querySelectorAll('.sidebar-text');
-                const navButtonsToCenter = document.querySelectorAll('.nav-button, #logout-button');
-                const toggleButtonContainer = sidebarCollapseToggle.firstElementChild;
-                if (isSidebarCollapsed) {
-                    sidebar.classList.replace('w-64', 'lg:w-20');
-                    mainContent.classList.replace('lg:ml-64', 'lg:ml-20');
-                    sidebarTexts.forEach(el => el.classList.add('lg:hidden'));
-                    navButtonsToCenter.forEach(el => el.classList.add('lg:justify-center'));
-                    toggleButtonContainer.innerHTML = getIconSVG('arrowRight', 'w-4 h-4 text-gray-600');
-                } else {
-                    sidebar.classList.replace('lg:w-20', 'w-64');
-                    mainContent.classList.replace('lg:ml-20', 'lg:ml-64');
-                    sidebarTexts.forEach(el => el.classList.remove('lg:hidden'));
-                    navButtonsToCenter.forEach(el => el.classList.remove('lg:justify-center'));
-                    toggleButtonContainer.innerHTML = getIconSVG('arrowLeft', 'w-4 h-4 text-gray-600');
-                }
-            }
-
             // Event Listeners
-            if (hamburgerButton) hamburgerButton.addEventListener('click', () => { isSidebarOpen = true; updateSidebarMobileState(); });
-            if (sidebarOverlay) sidebarOverlay.addEventListener('click', () => { isSidebarOpen = false; updateSidebarMobileState(); });
-            if (sidebarCollapseToggle) sidebarCollapseToggle.addEventListener('click', () => { isSidebarCollapsed = !isSidebarCollapsed; updateSidebarDesktopState(); });
-            if(authToggleLogin) authToggleLogin.addEventListener('click', () => { isLoginView = true; updateAuthFormView(); });
-            if(authToggleSignup) authToggleSignup.addEventListener('click', () => { isLoginView = false; updateAuthFormView(); });
-            if (loginModeAdminButton) loginModeAdminButton.addEventListener('click', () => { isCodeLoginMode = false; updateLoginModeUI(); });
-            if (loginModeCodeButton) loginModeCodeButton.addEventListener('click', () => { isCodeLoginMode = true; updateLoginModeUI(); });
-            if(salesProductSelect) salesProductSelect.addEventListener('change', updateSalesTotal);
-            if(salesQuantityInput) salesQuantityInput.addEventListener('input', updateSalesTotal);
+            hamburgerButton.onclick = () => { isSidebarOpen = true; updateSidebarMobileState(); };
+            sidebarOverlay.onclick = () => { isSidebarOpen = false; updateSidebarMobileState(); };
+            authToggleLogin.onclick = () => { isLoginView = true; updateAuthFormView(); };
+            authToggleSignup.onclick = () => { isLoginView = false; updateAuthFormView(); };
+            loginModeAdminButton.onclick = () => { isCodeLoginMode = false; updateLoginModeUI(); };
+            loginModeCodeButton.onclick = () => { isCodeLoginMode = true; updateLoginModeUI(); };
 
-            // Auth Logic
-            if(loginForm) loginForm.addEventListener('submit', async (event) => {
+            loginForm.onsubmit = async (event) => {
                 event.preventDefault();
                 const email = loginForm.email.value.trim();
-                const password = loginPasswordInput ? loginPasswordInput.value : '';
-                const accessCode = loginAccessCodeInput ? loginAccessCodeInput.value.trim() : '';
-                if(loginError) loginError.classList.add('hidden'); 
-                if(loginSubmitButton) { loginSubmitButton.disabled = true; loginSubmitButton.textContent = "Connexion..."; }
                 if (isCodeLoginMode) {
+                    const accessCode = loginAccessCodeInput.value.trim();
                     await handleAccessCodeLogin(email, accessCode);
-                    return;
+                } else {
+                    const password = loginPasswordInput.value;
+                    try {
+                        await signInWithEmailAndPassword(auth, email, password);
+                    } catch (error) {
+                        loginError.textContent = "Erreur de connexion.";
+                        loginError.classList.remove('hidden');
+                    }
                 }
-                try {
-                    await signInWithEmailAndPassword(auth, email, password);
-                } catch (error) {
-                    if(loginError) { loginError.textContent = "Email ou mot de passe incorrect."; loginError.classList.remove('hidden'); }
-                } finally {
-                    if(loginSubmitButton) { loginSubmitButton.disabled = false; loginSubmitButton.textContent = "Se connecter"; }
-                }
-            });
+            };
 
-            if(signupForm) signupForm.addEventListener('submit', async (event) => {
+            signupForm.onsubmit = async (event) => {
                 event.preventDefault();
                 const email = signupForm['signup-email'].value;
                 const password = signupForm['signup-password'].value;
                 const fullName = signupForm.fullName.value;
                 const companyName = signupForm.companyName.value;
 
-                if(signupError) signupError.textContent = '';
-                if(signupErrorContainer) signupErrorContainer.classList.add('hidden');
-                if(signupSubmitButton) { signupSubmitButton.disabled = true; signupSubmitButton.textContent = "Création..."; }
-
                 try {
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     const user = userCredential.user;
-
-                    const companiesRef = ref(db, 'companies');
-                    const snapshot = await get(companiesRef);
-                    let companyId = null;
-                    let matchedCompanyName = companyName.trim();
-
-                    if (snapshot.exists()) {
-                        const companies = snapshot.val();
-                        const existingCompanyKey = Object.keys(companies).find(key =>
-                            companies[key].name && companies[key].name.trim().toLowerCase() === companyName.trim().toLowerCase()
-                        );
-                        if (existingCompanyKey) {
-                            companyId = existingCompanyKey;
-                            matchedCompanyName = companies[existingCompanyKey].name;
-                        }
-                    }
-
-                    if (!companyId) {
-                        const newCompRef = push(companiesRef);
-                        companyId = newCompRef.key;
-                        await set(newCompRef, {
-                            name: matchedCompanyName,
-                            createdAt: new Date().toISOString(),
-                            createdBy: user.uid
-                        });
-                    }
-
-                    await set(ref(db, `users/${user.uid}`), {
-                        uid: user.uid,
-                        email: email,
-                        fullName: fullName,
-                        companyName: matchedCompanyName,
-                        companyId: companyId,
-                        role: 'admin'
-                    });
-
-                    await set(ref(db, `companies/${companyId}/members/${user.uid}`), {
-                        email: email,
-                        fullName: fullName,
-                        role: 'admin',
-                        status: 'actif',
-                        permissions: [...accessModules]
-                    });
-
-                    // --- AJOUT POUR LE RAFRAICHISSEMENT IMMEDIAT ---
-                    // Mise à jour manuelle de l'état local car onAuthStateChanged peut rater les données si elles ne sont pas encore écrites
-                    currentUser = user;
-                    isAuthenticated = true;
-                    currentUserData = {
-                        uid: user.uid,
-                        email: email,
-                        fullName: fullName,
-                        companyName: matchedCompanyName,
-                        companyId: companyId,
-                        role: 'admin'
-                    };
-                    dbBasePath = `companies/${companyId}`;
-                    setupFirebaseListeners();
-                    ensureCurrentUserInTeam();
-                    updateSettingsAccess();
-                    updateUI();
-                    showSuccessToast("Compte créé avec succès !");
-                    // ------------------------------------------------
-
+                    const companyId = push(ref(db, 'companies')).key;
+                    await set(ref(db, `companies/${companyId}`), { name: companyName, createdAt: new Date().toISOString(), createdBy: user.uid });
+                    const userData = { uid: user.uid, email, fullName, companyName, companyId, role: 'admin' };
+                    await set(ref(db, `users/${user.uid}`), userData);
+                    await set(ref(db, `companies/${companyId}/members/${user.uid}`), { fullName, email, role: 'admin', status: 'actif', permissions: [...accessModules] });
                 } catch (error) {
-                    console.error("Erreur d'inscription:", error);
-                    if(signupError) {
-                        if (error.code === 'auth/email-already-in-use') {
-                             signupError.innerHTML = `
-                                Cet email existe déjà.<br>
-                                <button id="error-switch-login" class="underline font-bold hover:text-red-700 mt-1 focus:outline-none">
-                                    Se connecter à la place ?
-                                </button>
-                             `;
-                             // Setup the listener immediately after showing the message
-                             setTimeout(() => {
-                                 const switchBtn = document.getElementById('error-switch-login');
-                                 if(switchBtn) {
-                                     switchBtn.onclick = (e) => {
-                                         e.preventDefault();
-                                         isLoginView = true;
-                                         updateAuthFormView();
-                                     };
-                                 }
-                             }, 0);
-                        } else if (error.code === 'auth/weak-password') {
-                             signupError.textContent = "Le mot de passe doit contenir au moins 6 caractères.";
-                        } else {
-                             signupError.textContent = "Une erreur est survenue: " + error.message;
-                        }
-                        if(signupErrorContainer) signupErrorContainer.classList.remove('hidden');
-                    }
-                } finally {
-                    if(signupSubmitButton) { signupSubmitButton.disabled = false; signupSubmitButton.textContent = "Créer mon compte"; }
+                    signupError.textContent = error.message;
+                    signupErrorContainer.classList.remove('hidden');
                 }
-            });
+            };
 
-            // Listeners pour les actions (Vente, Ajout Produit, etc.)
-            if(salesForm) salesForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                salesError.classList.add('hidden');
-                if (!currentUser || !dbBasePath) { salesError.textContent = "Vous devez être connecté."; salesError.classList.remove('hidden'); return; }
-                const shopProductId = salesProductSelect.value;
-                const quantity = parseInt(salesQuantityInput.value, 10);
-                const comment = salesComment.value || "";
-                const sellerName = currentUserData?.fullName || currentUser.email;
-                if (!shopProductId || isNaN(quantity) || quantity <= 0) { salesError.textContent = "Quantité invalide."; salesError.classList.remove('hidden'); return; }
-                const shopProduct = appData.shopStock[shopProductId];
-                if (!shopProduct || quantity > shopProduct.quantityInShop) { salesError.textContent = "Stock insuffisant."; salesError.classList.remove('hidden'); return; }
-                salesSubmitButton.disabled = true;
-                try {
-                    const updates = {}; const now = new Date().toISOString();
-                    const shopNewStock = shopProduct.quantityInShop - quantity;
-                    updates[`${dbBasePath}/shopStock/${shopProductId}/quantityInShop`] = shopNewStock;
-                    const shopMoveKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
-                    updates[`${dbBasePath}/shopMovements/${shopMoveKey}`] = { id: shopMoveKey, shopProductId, productName: shopProduct.name, type: "Sortie", quantityChange: quantity, oldStock: shopProduct.quantityInShop, newStock: shopNewStock, comment: `Vente: ${comment}`, date: now, userEmail: currentUser.email };
-                    const saleKey = push(ref(db, `${dbBasePath}/salesHistory`)).key;
-                    updates[`${dbBasePath}/salesHistory/${saleKey}`] = { id: saleKey, shopProductId, productName: shopProduct.name, quantity, sellingPrice: shopProduct.sellingPrice, totalAmount: shopProduct.sellingPrice * quantity, sellerName, comment, date: now };
-                    await update(ref(db), updates); showSuccessToast("Vente enregistrée!"); salesForm.reset(); updateSalesTotal();
-                } catch (error) { salesError.textContent = error.message; salesError.classList.remove('hidden'); } finally { salesSubmitButton.disabled = false; }
-            });
-
-            if(newProductForm) newProductForm.addEventListener('submit', async (e) => {
-                e.preventDefault(); newProductError.classList.add('hidden');
-                if (!currentUser || !dbBasePath) return;
-                const name = newProductForm['product-name'].value; const desc = newProductForm['product-description'].value; const cost = parseFloat(newProductForm['product-cost'].value); const currency = newProductForm['product-currency'].value; const qty = parseInt(newProductForm['product-quantity'].value, 10);
-                if (!name || isNaN(cost)) return;
-                newProductSubmitButton.disabled = true;
-                try {
-                    const newRef = push(ref(db, `${dbBasePath}/storeProducts`));
-                    const newProd = { id: newRef.key, name, description: desc, purchaseCost: cost, currency, quantityInStore: qty, createdAt: new Date().toISOString() };
-                    await set(newRef, newProd);
-                    const moveRef = push(ref(db, `${dbBasePath}/storeMovements`));
-                    await set(moveRef, { id: moveRef.key, productId: newProd.id, productName: name, type: "Entrée", quantityChange: qty, oldStock: 0, newStock: qty, comment: "Création", date: new Date().toISOString() });
-                    showSuccessToast("Produit ajouté!"); newProductForm.reset(); newProductModal.classList.add('hidden');
-                } catch (err) { newProductError.textContent = err.message; newProductError.classList.remove('hidden'); } finally { newProductSubmitButton.disabled = false; }
-            });
-
-            if(entryForm) entryForm.addEventListener('submit', async (e) => {
-                e.preventDefault(); entryError.classList.add('hidden'); if(!currentUser || !dbBasePath) return;
-                const pid = entryProductSelect.value; const qty = parseInt(entryForm['entry-quantity'].value, 10); const comment = entryForm['entry-comment'].value;
-                const prod = appData.storeProducts[pid];
-                if(!prod || qty <= 0) return;
-                entrySubmitButton.disabled = true;
-                try {
-                   const newStock = prod.quantityInStore + qty;
-                   const updates = {}; updates[`${dbBasePath}/storeProducts/${pid}/quantityInStore`] = newStock;
-                   const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
-                   updates[`${dbBasePath}/storeMovements/${moveKey}`] = { id: moveKey, productId: pid, productName: prod.name, type: "Entrée", quantityChange: qty, oldStock: prod.quantityInStore, newStock, comment, date: new Date().toISOString() };
-                   await update(ref(db), updates); showSuccessToast("Entrée ok"); entryForm.reset(); entryModal.classList.add('hidden');
-                } catch(err) { entryError.textContent = err.message; entryError.classList.remove('hidden'); } finally { entrySubmitButton.disabled = false; }
-            });
-
-            if(exitForm) exitForm.addEventListener('submit', async (e) => {
-                 e.preventDefault(); exitError.classList.add('hidden'); if(!currentUser || !dbBasePath) return;
-                 const pid = exitProductSelect.value; const qty = parseInt(exitForm['exit-quantity'].value, 10); const comment = exitForm['exit-comment'].value;
-                 const prod = appData.storeProducts[pid];
-                 if(!prod || qty <= 0) return;
-                 if(qty > prod.quantityInStore) { exitError.textContent = "Stock insuffisant"; exitError.classList.remove('hidden'); return; }
-                 exitSubmitButton.disabled = true;
-                 try {
-                    const newStock = prod.quantityInStore - qty;
-                    const updates = {}; updates[`${dbBasePath}/storeProducts/${pid}/quantityInStore`] = newStock;
-                    const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
-                    updates[`${dbBasePath}/storeMovements/${moveKey}`] = { id: moveKey, productId: pid, productName: prod.name, type: "Sortie", quantityChange: qty, oldStock: prod.quantityInStore, newStock, comment, date: new Date().toISOString() };
-                    await update(ref(db), updates); showSuccessToast("Sortie ok"); exitForm.reset(); exitModal.classList.add('hidden');
-                 } catch(err) { exitError.textContent = err.message; exitError.classList.remove('hidden'); } finally { exitSubmitButton.disabled = false; }
-            });
-
-            if(transferForm) transferForm.addEventListener('submit', async (e) => {
-                e.preventDefault(); transferError.classList.add('hidden'); if(!currentUser || !dbBasePath) return;
-                const sourceId = transferProductSelect.value; const qty = parseInt(transferForm['transfer-quantity'].value, 10); const price = parseFloat(transferForm['transfer-selling-price'].value);
-                const sourceProd = appData.storeProducts[sourceId];
-                if(!sourceProd || qty > sourceProd.quantityInStore) { transferError.textContent = "Erreur stock"; transferError.classList.remove('hidden'); return; }
-                transferSubmitButton.disabled = true;
-                try {
-                    let existingItem = Object.values(appData.shopStock).find(i => i.sourceProductId === sourceId);
-                    const updates = {}; const now = new Date().toISOString();
-                    const storeNew = sourceProd.quantityInStore - qty;
-                    const shopOld = existingItem ? existingItem.quantityInShop : 0; const shopNew = shopOld + qty;
-
-                    updates[`${dbBasePath}/storeProducts/${sourceId}/quantityInStore`] = storeNew;
-                    const smKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
-                    updates[`${dbBasePath}/storeMovements/${smKey}`] = { id: smKey, productId: sourceId, productName: sourceProd.name, type: "Sortie", quantityChange: qty, oldStock: sourceProd.quantityInStore, newStock: storeNew, comment: "Vers boutique", date: now };
-
-                    const shopId = existingItem ? existingItem.id : push(ref(db, `${dbBasePath}/shopStock`)).key;
-                    updates[`${dbBasePath}/shopStock/${shopId}`] = { id: shopId, sourceProductId: sourceId, name: sourceProd.name, purchaseCost: sourceProd.purchaseCost, sellingPrice: price, quantityInShop: shopNew, alertThreshold: 10, createdAt: existingItem ? existingItem.createdAt : now, updatedAt: now };
-
-                    const shmKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
-                    updates[`${dbBasePath}/shopMovements/${shmKey}`] = { id: shmKey, shopProductId: shopId, productName: sourceProd.name, type: "Entrée", quantityChange: qty, oldStock: shopOld, newStock: shopNew, comment: "Depuis magasin", date: now, userEmail: currentUser.email };
-
-                    await update(ref(db), updates); showSuccessToast("Transfert ok"); transferForm.reset(); transferModal.classList.add('hidden');
-                } catch(err) { transferError.textContent = err.message; transferError.classList.remove('hidden'); } finally { transferSubmitButton.disabled = false; }
-            });
-
-            if(restockForm) restockForm.addEventListener('submit', async (e) => {
-                e.preventDefault(); restockError.classList.add('hidden'); if(!currentUser || !dbBasePath) return;
-                const sid = restockProductSelect.value; const qty = parseInt(restockForm['restock-quantity'].value, 10);
-                const shopProd = appData.shopStock[sid];
-                if(!shopProd) return;
-                const sourceProd = appData.storeProducts[shopProd.sourceProductId];
-                if(!sourceProd || qty > sourceProd.quantityInStore) { restockError.textContent = "Stock magasin insuffisant"; restockError.classList.remove('hidden'); return; }
-                restockSubmitButton.disabled = true;
-                try {
-                    const updates = {}; const now = new Date().toISOString();
-                    const storeNew = sourceProd.quantityInStore - qty;
-                    const shopNew = shopProd.quantityInShop + qty;
-
-                    updates[`${dbBasePath}/storeProducts/${sourceProd.id}/quantityInStore`] = storeNew;
-                    const smKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
-                    updates[`${dbBasePath}/storeMovements/${smKey}`] = { id: smKey, productId: sourceProd.id, productName: sourceProd.name, type: "Sortie", quantityChange: qty, oldStock: sourceProd.quantityInStore, newStock: storeNew, comment: "Restock", date: now };
-
-                    updates[`${dbBasePath}/shopStock/${sid}/quantityInShop`] = shopNew;
-                    updates[`${dbBasePath}/shopStock/${sid}/updatedAt`] = now;
-                    const shmKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
-                    updates[`${dbBasePath}/shopMovements/${shmKey}`] = { id: shmKey, shopProductId: sid, productName: shopProd.name, type: "Entrée", quantityChange: qty, oldStock: shopProd.quantityInShop, newStock: shopNew, comment: "Restock", date: now, userEmail: currentUser.email };
-
-                    await update(ref(db), updates); showSuccessToast("Restock ok"); restockForm.reset(); restockModal.classList.add('hidden');
-                } catch(err) { restockError.textContent = err.message; restockError.classList.remove('hidden'); } finally { restockSubmitButton.disabled = false; }
-            });
-
-            // UI Event Bindings
-            if (storeSearchInput) storeSearchInput.addEventListener('input', (e) => renderStoreProducts(e.target.value));
-            if (shopSearchInput) shopSearchInput.addEventListener('input', (e) => renderShopStock(e.target.value));
-            navButtons.forEach(btn => btn.addEventListener('click', () => { currentPage = btn.dataset.page; if(window.innerWidth < 1024) { isSidebarOpen = false; updateSidebarMobileState(); } updateUI(); }));
-            if(logoutButton) logoutButton.addEventListener('click', () => signOut(auth));
-            if(logoutButton) logoutButton.addEventListener('click', () => {
+            logoutButton.onclick = () => {
                 if (isCodeSession) {
                     handleManualLogout();
-                    showSuccessToast('Déconnecté');
-                    return;
+                } else {
+                    signOut(auth);
                 }
-                signOut(auth);
+            };
+
+            navButtons.forEach(btn => btn.onclick = () => { 
+                currentPage = btn.dataset.page; 
+                if(window.innerWidth < 1024) { isSidebarOpen = false; updateSidebarMobileState(); }
+                updateUI(); 
             });
 
-            // Modals Close
-            [newProductModal, entryModal, exitModal, transferModal, restockModal].forEach(m => { if(m) m.addEventListener('click', e => { if(e.target === m) m.classList.add('hidden'); }); });
-            if(closeNewProductModalButton) closeNewProductModalButton.addEventListener('click', () => newProductModal.classList.add('hidden'));
-            if(closeEntryModalButton) closeEntryModalButton.addEventListener('click', () => entryModal.classList.add('hidden'));
-            if(closeExitModalButton) closeExitModalButton.addEventListener('click', () => exitModal.classList.add('hidden'));
-            if(closeTransferModalButton) closeTransferModalButton.addEventListener('click', () => transferModal.classList.add('hidden'));
-            if(closeRestockModalButton) closeRestockModalButton.addEventListener('click', () => restockModal.classList.add('hidden'));
-
-            // Modals Open
-            if(openNewProductModalButton) openNewProductModalButton.addEventListener('click', () => { newProductModal.classList.remove('hidden'); newProductForm.reset(); });
-            if(openEntryModalButton) openEntryModalButton.addEventListener('click', () => { entryModal.classList.remove('hidden'); entryForm.reset(); });
-            if(openExitModalButton) openExitModalButton.addEventListener('click', () => { exitModal.classList.remove('hidden'); exitForm.reset(); });
-            if(openTransferModalButton) openTransferModalButton.addEventListener('click', () => { transferModal.classList.remove('hidden'); transferForm.reset(); transferSourceInfo.classList.add('hidden'); });
-            if(openRestockModalButton) openRestockModalButton.addEventListener('click', () => { restockModal.classList.remove('hidden'); restockForm.reset(); restockSourceInfo.classList.add('hidden'); });
-
-            // Select changes
-            if(transferProductSelect) transferProductSelect.addEventListener('change', () => { const p = appData.storeProducts[transferProductSelect.value]; if(p) { transferCostDisplay.textContent = formatCurrency(p.purchaseCost, p.currency); transferSourceInfo.classList.remove('hidden'); } else transferSourceInfo.classList.add('hidden'); });
-            if(restockProductSelect) restockProductSelect.addEventListener('change', () => { const si = appData.shopStock[restockProductSelect.value]; if(si && appData.storeProducts[si.sourceProductId]) { const sp = appData.storeProducts[si.sourceProductId]; restockSourceName.textContent = sp.name; restockSourceStock.textContent = sp.quantityInStore; restockSourceInfo.classList.remove('hidden'); } else restockSourceInfo.classList.add('hidden'); });
-
-            function updateAllStats() {
-                const sales = Object.values(appData.salesHistory);
-                const shopItems = Object.values(appData.shopStock);
-                const storeItems = Object.values(appData.storeProducts);
-                const now = new Date();
-                const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-
-                document.getElementById('stat-daily-sales').textContent = sales.filter(s => s.date >= startOfDay).length;
-                document.getElementById('stat-monthly-revenue').textContent = formatCurrency(sales.filter(s => s.date >= startOfMonth).reduce((acc, s) => acc + s.totalAmount, 0));
-                const shopCount = shopItems.reduce((acc, i) => acc + i.quantityInShop, 0);
-                document.getElementById('stat-shop-stock').textContent = shopCount;
-                document.getElementById('stat-store-stock').textContent = storeItems.reduce((acc, i) => acc + i.quantityInStore, 0);
-
-                document.getElementById('stat-total-sales').textContent = sales.length;
-                document.getElementById('stat-revenue').textContent = formatCurrency(sales.reduce((acc, s) => acc + s.totalAmount, 0));
-                document.getElementById('stat-products-in-stock').textContent = shopCount;
-
-                // Best Selling & Seller Perf (Simplified logic)
-                const bestSellingContainer = document.getElementById('best-selling-tbody');
-                const productSales = sales.reduce((acc, s) => { acc[s.productName] = (acc[s.productName] || 0) + s.quantity; return acc; }, {});
-                const sortedProd = Object.entries(productSales).sort((a,b) => b[1]-a[1]).slice(0,5);
-                bestSellingContainer.innerHTML = sortedProd.length ? sortedProd.map(([name, qty]) => `<tr class="hover:bg-gray-50"><td class="px-4 py-3 text-sm text-gray-800">${name}</td><td class="px-4 py-3 text-sm text-gray-600">${qty}</td><td class="px-4 py-3"></td></tr>`).join('') : '';
-                if(sortedProd.length) { document.getElementById('best-selling-placeholder').classList.add('hidden'); document.getElementById('best-selling-table-container').classList.remove('hidden'); }
-
-                const sellerPerfContainer = document.getElementById('seller-performance-tbody');
-                const sellerSales = sales.reduce((acc, s) => { acc[s.sellerName] = (acc[s.sellerName] || 0) + s.totalAmount; return acc; }, {});
-                const sortedSeller = Object.entries(sellerSales).sort((a,b) => b[1]-a[1]).slice(0,5);
-                sellerPerfContainer.innerHTML = sortedSeller.length ? sortedSeller.map(([name, total]) => `<tr class="hover:bg-gray-50"><td class="px-4 py-3 text-sm text-gray-800">${name}</td><td class="px-4 py-3"></td><td class="px-4 py-3 text-sm font-semibold text-gray-700">${formatCurrency(total)}</td></tr>`).join('') : '';
-                if(sortedSeller.length) { document.getElementById('seller-performance-placeholder').classList.add('hidden'); document.getElementById('seller-performance-table-container').classList.remove('hidden'); }
+            // Initialisation
+            const savedSession = sessionStorage.getItem('stockpilot_code_session');
+            if (savedSession) {
+                currentUserData = JSON.parse(savedSession);
+                isAuthenticated = true;
+                isCodeSession = true;
+                currentUser = { email: currentUserData.email, uid: currentUserData.uid };
+                dbBasePath = `companies/${currentUserData.companyId}`;
+                setupFirebaseListeners();
+                updateUI();
             }
 
             onAuthStateChanged(auth, (user) => {
-                if (!user && isCodeSession) return;
+                if (isCodeSession) return;
                 if (user) {
-                    isCodeSession = false;
                     isAuthenticated = true;
                     currentUser = user;
-                    get(ref(db, `users/${user.uid}`)).then((snapshot) => {
+                    get(ref(db, `users/${user.uid}`)).then(snapshot => {
                         if (snapshot.exists()) {
                             currentUserData = snapshot.val();
-                            currentUserData.role = currentUserData.role || 'admin';
-                            if (sellerNameInput) sellerNameInput.value = currentUserData.fullName || user.email;
-                            dbBasePath = currentUserData.companyId ? `companies/${currentUserData.companyId}` : `users/${user.uid}`;
+                            dbBasePath = `companies/${currentUserData.companyId}`;
                             setupFirebaseListeners();
-                            ensureCurrentUserInTeam();
-                            updateSettingsAccess();
                             updateUI();
                         }
                     });
-                } else{
-                    isAuthenticated = false; currentUser = null; currentUserData = null; dbBasePath = ''; currentPage = 'Tableau de bord'; cleanupFirebaseListeners(); updateUI();
+                } else {
+                    isAuthenticated = false; currentUser = null; updateUI();
                 }
             });
+
+            function updateAllStats() {
+                const sales = Object.values(appData.salesHistory);
+                document.getElementById('stat-daily-sales').textContent = sales.length;
+                document.getElementById('stat-monthly-revenue').textContent = formatCurrency(sales.reduce((acc, s) => acc + s.totalAmount, 0));
+            }
 
             updateUI();
         });
