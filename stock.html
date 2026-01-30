@@ -1278,12 +1278,7 @@
             let storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, salesHistoryRef, companyMembersRef;
 
             const accessModules = ['Tableau de bord', 'Ventes', 'Stock Boutique', 'Mon Magasin', 'Statistiques', 'Paramètres'];
-            let teamMembersState = [
-                { id: 'seed-admin', name: 'Turibe Bayomi', email: 'turibeabayomi@gmail.com', role: 'admin', status: 'actif', permissions: [...accessModules], isCurrentUser: false, accessCode: 'ADM-4592' },
-                { id: 'seed-manager', name: 'Salimata Traoré', email: 'salimata@turibe.com', role: 'manager', status: 'actif', permissions: ['Tableau de bord', 'Ventes', 'Statistiques'], isCurrentUser: false, accessCode: 'MNG-7815' },
-                { id: 'seed-seller', name: 'Yao Michel', email: 'yao@turibe.com', role: 'vendeur', status: 'actif', permissions: ['Ventes', 'Stock Boutique'], isCurrentUser: false, accessCode: 'VND-2023' },
-                { id: 'seed-analytics', name: 'Kadidia Koné', email: 'kadidia@turibe.com', role: 'consultation', status: 'pending', permissions: ['Tableau de bord', 'Statistiques'], isCurrentUser: false, accessCode: 'ANA-6118' }
-            ];
+            let teamMembersState = [];
 
             // Références DOM
             const authPageContainer = document.getElementById('auth-page-container');
@@ -1462,7 +1457,6 @@
                 currentUser = null;
                 currentUserData = null;
                 dbBasePath = '';
-                sessionStorage.removeItem('stockpilot_code_session');
                 cleanupFirebaseListeners();
                 updateUI();
             }
@@ -1680,7 +1674,6 @@
                         accessCode: match.member.accessCode
                     };
                     dbBasePath = `companies/${match.companyId}`;
-                    sessionStorage.setItem('stockpilot_code_session', JSON.stringify(currentUserData));
                     if (match.member.status !== 'actif') {
                         await update(ref(db, `${dbBasePath}/members/${match.memberId}`), { status: 'actif' });
                     }
@@ -1768,34 +1761,31 @@
                     const email = accessMemberEmailInput.value.trim();
                     const role = accessMemberRoleInput.value;
                     if (!name || !email) return;
-                    
+
                     const accessCode = generateAccessCode();
                     const basePermissions = role === 'consultation' ? ['Tableau de bord', 'Statistiques'] : ['Tableau de bord', 'Ventes', 'Stock Boutique'];
-                    
-                    const newMemberRef = push(ref(db, `${dbBasePath}/members`));
-                    const newMemberData = {
-                        id: newMemberRef.key,
-                        fullName: name,
-                        email,
-                        role,
-                        status: 'pending',
-                        permissions: role === 'admin' ? [...accessModules] : basePermissions,
-                        accessCode,
-                        createdAt: new Date().toISOString(),
-                        invitedBy: currentUser?.email || 'admin'
-                    };
 
                     try {
-                        await set(newMemberRef, newMemberData);
+                        const newMemberRef = push(ref(db, `${dbBasePath}/members`));
+                        await set(newMemberRef, {
+                            id: newMemberRef.key,
+                            fullName: name,
+                            email,
+                            role,
+                            status: 'pending',
+                            permissions: role === 'admin' ? [...accessModules] : basePermissions,
+                            accessCode,
+                            createdAt: new Date().toISOString(),
+                            invitedBy: currentUser?.email || 'admin'
+                        });
                         accessAddMemberForm.reset();
                         showSuccessToast(`Collaborateur ajouté. Code: ${accessCode}`);
                     } catch (error) {
-                        showSuccessToast("Impossible d'ajouter ce collaborateur.");
+                        console.error(error);
+                        showSuccessToast("Impossible d'ajouter ce collaborateur pour le moment.");
                     }
                 });
             }
-
-            renderAccessMembers();
 
             function populateStoreProductSelects() {
                 const products = appData.storeProducts;
@@ -2041,16 +2031,17 @@
 
             function updateUI() {
                 if (isAuthenticated) {
-                    authPageContainer.classList.add('hidden');
-                    layoutContainer.classList.remove('hidden');
+                    if (authPageContainer) authPageContainer.classList.add('hidden');
+                    if (layoutContainer) layoutContainer.classList.remove('hidden');
                     if (currentUser && userEmailDisplay) userEmailDisplay.textContent = currentUser.email;
                     if (currentUserData) {
                         if(userNameDisplay) userNameDisplay.textContent = currentUserData.fullName || 'Utilisateur';
                         if(userCompanyDisplay) userCompanyDisplay.textContent = currentUserData.companyName || '';
                     }
+                    if (mobilePageTitle) mobilePageTitle.textContent = currentPage;
                 } else {
-                    authPageContainer.classList.remove('hidden');
-                    layoutContainer.classList.add('hidden');
+                    if (authPageContainer) authPageContainer.classList.remove('hidden');
+                    if (layoutContainer) layoutContainer.classList.add('hidden');
                 }
 
                 pageContents.forEach(page => {
@@ -2061,21 +2052,44 @@
                 navButtons.forEach(button => {
                     if (button.dataset.page === currentPage) {
                         button.classList.add('bg-cyan-400', 'text-white', 'shadow');
+                        button.classList.remove('text-gray-600', 'hover:bg-gray-100');
                     } else {
                         button.classList.remove('bg-cyan-400', 'text-white', 'shadow');
+                        button.classList.add('text-gray-600', 'hover:bg-gray-100');
                     }
                 });
+
                 updateSettingsAccess();
             }
 
             function updateAuthFormView() {
                 updateLoginModeUI();
                 if (isLoginView) {
-                    loginForm.classList.remove('hidden');
-                    signupForm.classList.add('hidden');
+                    if(loginForm) loginForm.classList.remove('hidden');
+                    if(signupForm) signupForm.classList.add('hidden');
+                    if(authToggleLogin) authToggleLogin.classList.add('bg-white', 'shadow', 'text-gray-800');
+                    if(authToggleSignup) authToggleSignup.classList.remove('bg-white', 'shadow', 'text-gray-800');
                 } else {
-                    loginForm.classList.add('hidden');
-                    signupForm.classList.remove('hidden');
+                    if(loginForm) loginForm.classList.add('hidden');
+                    if(signupForm) signupForm.classList.remove('hidden');
+                    if(authToggleSignup) authToggleSignup.classList.add('bg-white', 'shadow', 'text-gray-800');
+                    if(authToggleLogin) authToggleLogin.classList.remove('bg-white', 'shadow', 'text-gray-800');
+                }
+            }
+
+            function updateSalesTotal() {
+                if (!salesProductSelect || !salesQuantityInput || !salesTotalAmount) return;
+                const shopProductId = salesProductSelect.value;
+                const quantity = parseInt(salesQuantityInput.value, 10);
+                if (!shopProductId || isNaN(quantity) || quantity <= 0) {
+                    salesTotalAmount.value = formatCurrency(0);
+                    return;
+                }
+                const shopProduct = appData.shopStock[shopProductId];
+                if (shopProduct) {
+                    const total = shopProduct.sellingPrice * quantity;
+                    const currency = appData.storeProducts[shopProduct.sourceProductId]?.currency;
+                    salesTotalAmount.value = formatCurrency(total, currency);
                 }
             }
 
@@ -2089,15 +2103,32 @@
                 }
             }
 
-            // Event Listeners
-            hamburgerButton.onclick = () => { isSidebarOpen = true; updateSidebarMobileState(); };
-            sidebarOverlay.onclick = () => { isSidebarOpen = false; updateSidebarMobileState(); };
-            authToggleLogin.onclick = () => { isLoginView = true; updateAuthFormView(); };
-            authToggleSignup.onclick = () => { isLoginView = false; updateAuthFormView(); };
-            loginModeAdminButton.onclick = () => { isCodeLoginMode = false; updateLoginModeUI(); };
-            loginModeCodeButton.onclick = () => { isCodeLoginMode = true; updateLoginModeUI(); };
+            function updateSidebarDesktopState() {
+                const sidebarTexts = document.querySelectorAll('.sidebar-text');
+                if (isSidebarCollapsed) {
+                    sidebar.classList.replace('w-64', 'lg:w-20');
+                    mainContent.classList.replace('lg:ml-64', 'lg:ml-20');
+                    sidebarTexts.forEach(el => el.classList.add('lg:hidden'));
+                } else {
+                    sidebar.classList.replace('lg:w-20', 'w-64');
+                    mainContent.classList.replace('lg:ml-20', 'lg:ml-64');
+                    sidebarTexts.forEach(el => el.classList.remove('lg:hidden'));
+                }
+            }
 
-            loginForm.onsubmit = async (event) => {
+            // Event Listeners
+            if (hamburgerButton) hamburgerButton.addEventListener('click', () => { isSidebarOpen = true; updateSidebarMobileState(); });
+            if (sidebarOverlay) sidebarOverlay.addEventListener('click', () => { isSidebarOpen = false; updateSidebarMobileState(); });
+            if (sidebarCollapseToggle) sidebarCollapseToggle.addEventListener('click', () => { isSidebarCollapsed = !isSidebarCollapsed; updateSidebarDesktopState(); });
+            if(authToggleLogin) authToggleLogin.addEventListener('click', () => { isLoginView = true; updateAuthFormView(); });
+            if(authToggleSignup) authToggleSignup.addEventListener('click', () => { isLoginView = false; updateAuthFormView(); });
+            if (loginModeAdminButton) loginModeAdminButton.addEventListener('click', () => { isCodeLoginMode = false; updateLoginModeUI(); });
+            if (loginModeCodeButton) loginModeCodeButton.addEventListener('click', () => { isCodeLoginMode = true; updateLoginModeUI(); });
+            if(salesProductSelect) salesProductSelect.addEventListener('change', updateSalesTotal);
+            if(salesQuantityInput) salesQuantityInput.addEventListener('input', updateSalesTotal);
+
+            // Auth Logic
+            if(loginForm) loginForm.addEventListener('submit', async (event) => {
                 event.preventDefault();
                 const email = loginForm.email.value.trim();
                 if (isCodeLoginMode) {
@@ -2106,15 +2137,20 @@
                 } else {
                     const password = loginPasswordInput.value;
                     try {
+                        if(loginSubmitButton) loginSubmitButton.disabled = true;
                         await signInWithEmailAndPassword(auth, email, password);
                     } catch (error) {
-                        loginError.textContent = "Erreur de connexion.";
-                        loginError.classList.remove('hidden');
+                        if(loginError) {
+                            loginError.textContent = "Email ou mot de passe incorrect.";
+                            loginError.classList.remove('hidden');
+                        }
+                    } finally {
+                        if(loginSubmitButton) loginSubmitButton.disabled = false;
                     }
                 }
-            };
+            });
 
-            signupForm.onsubmit = async (event) => {
+            if(signupForm) signupForm.addEventListener('submit', async (event) => {
                 event.preventDefault();
                 const email = signupForm['signup-email'].value;
                 const password = signupForm['signup-password'].value;
@@ -2122,6 +2158,7 @@
                 const companyName = signupForm.companyName.value;
 
                 try {
+                    if(signupSubmitButton) signupSubmitButton.disabled = true;
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     const user = userCredential.user;
                     const companyId = push(ref(db, 'companies')).key;
@@ -2130,62 +2167,346 @@
                     await set(ref(db, `users/${user.uid}`), userData);
                     await set(ref(db, `companies/${companyId}/members/${user.uid}`), { fullName, email, role: 'admin', status: 'actif', permissions: [...accessModules] });
                 } catch (error) {
-                    signupError.textContent = error.message;
-                    signupErrorContainer.classList.remove('hidden');
+                    if(signupError) {
+                        signupError.textContent = error.message;
+                        if(signupErrorContainer) signupErrorContainer.classList.remove('hidden');
+                    }
+                } finally {
+                    if(signupSubmitButton) signupSubmitButton.disabled = false;
                 }
-            };
+            });
 
-            logoutButton.onclick = () => {
+            if(salesForm) salesForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!currentUser || !dbBasePath) return;
+                const shopProductId = salesProductSelect.value;
+                const quantity = parseInt(salesQuantityInput.value, 10);
+                const comment = salesComment.value || "";
+                const sellerName = currentUserData?.fullName || currentUser.email;
+                if (!shopProductId || isNaN(quantity) || quantity <= 0) return;
+                const shopProduct = appData.shopStock[shopProductId];
+                if (!shopProduct || quantity > shopProduct.quantityInShop) {
+                    alert("Stock insuffisant !");
+                    return;
+                }
+                
+                try {
+                    if(salesSubmitButton) salesSubmitButton.disabled = true;
+                    const updates = {}; const now = new Date().toISOString();
+                    const shopNewStock = shopProduct.quantityInShop - quantity;
+                    updates[`${dbBasePath}/shopStock/${shopProductId}/quantityInShop`] = shopNewStock;
+                    const shopMoveKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
+                    updates[`${dbBasePath}/shopMovements/${shopMoveKey}`] = { id: shopMoveKey, shopProductId, productName: shopProduct.name, type: "Sortie", quantityChange: quantity, oldStock: shopProduct.quantityInShop, newStock: shopNewStock, comment: `Vente: ${comment}`, date: now, userEmail: currentUser.email };
+                    const saleKey = push(ref(db, `${dbBasePath}/salesHistory`)).key;
+                    updates[`${dbBasePath}/salesHistory/${saleKey}`] = { id: saleKey, shopProductId, productName: shopProduct.name, quantity, sellingPrice: shopProduct.sellingPrice, totalAmount: shopProduct.sellingPrice * quantity, sellerName, comment, date: now };
+                    await update(ref(db), updates); 
+                    showSuccessToast("Vente enregistrée!"); 
+                    salesForm.reset(); 
+                    updateSalesTotal();
+                } catch (error) {
+                    console.error(error);
+                } finally {
+                    if(salesSubmitButton) salesSubmitButton.disabled = false;
+                }
+            });
+
+            if(newProductForm) newProductForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!currentUser || !dbBasePath) return;
+                const name = newProductForm['product-name'].value;
+                const desc = newProductForm['product-description'].value;
+                const cost = parseFloat(newProductForm['product-cost'].value);
+                const currency = newProductForm['product-currency'].value;
+                const qty = parseInt(newProductForm['product-quantity'].value, 10);
+                if (!name || isNaN(cost)) return;
+                
+                try {
+                    if(newProductSubmitButton) newProductSubmitButton.disabled = true;
+                    const newRef = push(ref(db, `${dbBasePath}/storeProducts`));
+                    const newProd = { id: newRef.key, name, description: desc, purchaseCost: cost, currency, quantityInStore: qty, createdAt: new Date().toISOString() };
+                    await set(newRef, newProd);
+                    const moveRef = push(ref(db, `${dbBasePath}/storeMovements`));
+                    await set(moveRef, { id: moveRef.key, productId: newProd.id, productName: name, type: "Entrée", quantityChange: qty, oldStock: 0, newStock: qty, comment: "Création", date: new Date().toISOString() });
+                    showSuccessToast("Produit ajouté!"); 
+                    newProductForm.reset(); 
+                    newProductModal.classList.add('hidden');
+                } catch (err) {
+                    console.error(err);
+                } finally {
+                    if(newProductSubmitButton) newProductSubmitButton.disabled = false;
+                }
+            });
+
+            if(entryForm) entryForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if(!currentUser || !dbBasePath) return;
+                const pid = entryProductSelect.value;
+                const qty = parseInt(entryForm['entry-quantity'].value, 10);
+                const comment = entryForm['entry-comment'].value;
+                const prod = appData.storeProducts[pid];
+                if(!prod || qty <= 0) return;
+                
+                try {
+                    if(entrySubmitButton) entrySubmitButton.disabled = true;
+                    const newStock = prod.quantityInStore + qty;
+                    const updates = {}; 
+                    updates[`${dbBasePath}/storeProducts/${pid}/quantityInStore`] = newStock;
+                    const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
+                    updates[`${dbBasePath}/storeMovements/${moveKey}`] = { id: moveKey, productId: pid, productName: prod.name, type: "Entrée", quantityChange: qty, oldStock: prod.quantityInStore, newStock, comment, date: new Date().toISOString() };
+                    await update(ref(db), updates); 
+                    showSuccessToast("Entrée de stock réussie !"); 
+                    entryForm.reset(); 
+                    entryModal.classList.add('hidden');
+                } catch(err) {
+                    console.error(err);
+                } finally {
+                    if(entrySubmitButton) entrySubmitButton.disabled = false;
+                }
+            });
+
+            if(exitForm) exitForm.addEventListener('submit', async (e) => {
+                 e.preventDefault();
+                 if(!currentUser || !dbBasePath) return;
+                 const pid = exitProductSelect.value;
+                 const qty = parseInt(exitForm['exit-quantity'].value, 10);
+                 const comment = exitForm['exit-comment'].value;
+                 const prod = appData.storeProducts[pid];
+                 if(!prod || qty <= 0) return;
+                 if(qty > prod.quantityInStore) {
+                     alert("Stock insuffisant dans le magasin.");
+                     return;
+                 }
+                 
+                 try {
+                    if(exitSubmitButton) exitSubmitButton.disabled = true;
+                    const newStock = prod.quantityInStore - qty;
+                    const updates = {}; 
+                    updates[`${dbBasePath}/storeProducts/${pid}/quantityInStore`] = newStock;
+                    const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
+                    updates[`${dbBasePath}/storeMovements/${moveKey}`] = { id: moveKey, productId: pid, productName: prod.name, type: "Sortie", quantityChange: qty, oldStock: prod.quantityInStore, newStock, comment, date: new Date().toISOString() };
+                    await update(ref(db), updates); 
+                    showSuccessToast("Sortie de stock réussie !"); 
+                    exitForm.reset(); 
+                    exitModal.classList.add('hidden');
+                 } catch(err) {
+                    console.error(err);
+                 } finally {
+                    if(exitSubmitButton) exitSubmitButton.disabled = false;
+                 }
+            });
+
+            if(transferForm) transferForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if(!currentUser || !dbBasePath) return;
+                const sourceId = transferProductSelect.value;
+                const qty = parseInt(transferForm['transfer-quantity'].value, 10);
+                const price = parseFloat(transferForm['transfer-selling-price'].value);
+                const alertT = parseInt(transferForm['transfer-alert-threshold'].value, 10) || 5;
+                const sourceProd = appData.storeProducts[sourceId];
+                if(!sourceProd || qty > sourceProd.quantityInStore) {
+                    alert("Stock magasin insuffisant.");
+                    return;
+                }
+                
+                try {
+                    if(transferSubmitButton) transferSubmitButton.disabled = true;
+                    let existingItem = Object.values(appData.shopStock).find(i => i.sourceProductId === sourceId);
+                    const updates = {}; const now = new Date().toISOString();
+                    const storeNew = sourceProd.quantityInStore - qty;
+                    const shopOld = existingItem ? existingItem.quantityInShop : 0; 
+                    const shopNew = shopOld + qty;
+
+                    updates[`${dbBasePath}/storeProducts/${sourceId}/quantityInStore`] = storeNew;
+                    const smKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
+                    updates[`${dbBasePath}/storeMovements/${smKey}`] = { id: smKey, productId: sourceId, productName: sourceProd.name, type: "Sortie", quantityChange: qty, oldStock: sourceProd.quantityInStore, newStock: storeNew, comment: "Transfert Boutique", date: now };
+
+                    const shopId = existingItem ? existingItem.id : push(ref(db, `${dbBasePath}/shopStock`)).key;
+                    updates[`${dbBasePath}/shopStock/${shopId}`] = { id: shopId, sourceProductId: sourceId, name: sourceProd.name, purchaseCost: sourceProd.purchaseCost, sellingPrice: price, quantityInShop: shopNew, alertThreshold: alertT, createdAt: existingItem ? existingItem.createdAt : now, updatedAt: now };
+
+                    const shmKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
+                    updates[`${dbBasePath}/shopMovements/${shmKey}`] = { id: shmKey, shopProductId: shopId, productName: sourceProd.name, type: "Entrée", quantityChange: qty, oldStock: shopOld, newStock: shopNew, comment: "Depuis magasin", date: now, userEmail: currentUser.email };
+
+                    await update(ref(db), updates); 
+                    showSuccessToast("Transfert boutique réussi !"); 
+                    transferForm.reset(); 
+                    transferModal.classList.add('hidden');
+                } catch(err) {
+                    console.error(err);
+                } finally {
+                    if(transferSubmitButton) transferSubmitButton.disabled = false;
+                }
+            });
+
+            if(restockForm) restockForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if(!currentUser || !dbBasePath) return;
+                const sid = restockProductSelect.value;
+                const qty = parseInt(restockForm['restock-quantity'].value, 10);
+                const comment = restockForm['restock-comment'].value || "Restock";
+                const shopProd = appData.shopStock[sid];
+                if(!shopProd) return;
+                const sourceProd = appData.storeProducts[shopProd.sourceProductId];
+                if(!sourceProd || qty > sourceProd.quantityInStore) {
+                    alert("Stock magasin insuffisant.");
+                    return;
+                }
+                
+                try {
+                    if(restockSubmitButton) restockSubmitButton.disabled = true;
+                    const updates = {}; const now = new Date().toISOString();
+                    const storeNew = sourceProd.quantityInStore - qty;
+                    const shopNew = shopProd.quantityInShop + qty;
+
+                    updates[`${dbBasePath}/storeProducts/${sourceProd.id}/quantityInStore`] = storeNew;
+                    const smKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
+                    updates[`${dbBasePath}/storeMovements/${smKey}`] = { id: smKey, productId: sourceProd.id, productName: sourceProd.name, type: "Sortie", quantityChange: qty, oldStock: sourceProd.quantityInStore, newStock: storeNew, comment: "Réappro Boutique", date: now };
+
+                    updates[`${dbBasePath}/shopStock/${sid}/quantityInShop`] = shopNew;
+                    updates[`${dbBasePath}/shopStock/${sid}/updatedAt`] = now;
+                    const shmKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
+                    updates[`${dbBasePath}/shopMovements/${shmKey}`] = { id: shmKey, shopProductId: sid, productName: shopProd.name, type: "Entrée", quantityChange: qty, oldStock: shopProd.quantityInShop, newStock: shopNew, comment: comment, date: now, userEmail: currentUser.email };
+
+                    await update(ref(db), updates); 
+                    showSuccessToast("Réapprovisionnement réussi !"); 
+                    restockForm.reset(); 
+                    restockModal.classList.add('hidden');
+                } catch(err) {
+                    console.error(err);
+                } finally {
+                    if(restockSubmitButton) restockSubmitButton.disabled = false;
+                }
+            });
+
+            // UI Navigation
+            navButtons.forEach(btn => btn.addEventListener('click', () => { 
+                currentPage = btn.dataset.page; 
+                if(window.innerWidth < 1024) { 
+                    isSidebarOpen = false; 
+                    updateSidebarMobileState(); 
+                } 
+                updateUI(); 
+            }));
+
+            if(logoutButton) logoutButton.addEventListener('click', () => {
                 if (isCodeSession) {
                     handleManualLogout();
+                    showSuccessToast('Déconnecté');
                 } else {
                     signOut(auth);
                 }
-            };
-
-            navButtons.forEach(btn => btn.onclick = () => { 
-                currentPage = btn.dataset.page; 
-                if(window.innerWidth < 1024) { isSidebarOpen = false; updateSidebarMobileState(); }
-                updateUI(); 
             });
 
-            // Initialisation
-            const savedSession = sessionStorage.getItem('stockpilot_code_session');
-            if (savedSession) {
-                currentUserData = JSON.parse(savedSession);
-                isAuthenticated = true;
-                isCodeSession = true;
-                currentUser = { email: currentUserData.email, uid: currentUserData.uid };
-                dbBasePath = `companies/${currentUserData.companyId}`;
-                setupFirebaseListeners();
-                updateUI();
-            }
+            // Modals Open
+            if(openNewProductModalButton) openNewProductModalButton.addEventListener('click', () => { newProductModal.classList.remove('hidden'); newProductForm.reset(); });
+            if(openEntryModalButton) openEntryModalButton.addEventListener('click', () => { entryModal.classList.remove('hidden'); entryForm.reset(); });
+            if(openExitModalButton) openExitModalButton.addEventListener('click', () => { exitModal.classList.remove('hidden'); exitForm.reset(); });
+            if(openTransferModalButton) openTransferModalButton.addEventListener('click', () => { transferModal.classList.remove('hidden'); transferForm.reset(); transferSourceInfo.classList.add('hidden'); });
+            if(openRestockModalButton) openRestockModalButton.addEventListener('click', () => { restockModal.classList.remove('hidden'); restockForm.reset(); restockSourceInfo.classList.add('hidden'); });
 
-            onAuthStateChanged(auth, (user) => {
-                if (isCodeSession) return;
-                if (user) {
-                    isAuthenticated = true;
-                    currentUser = user;
-                    get(ref(db, `users/${user.uid}`)).then(snapshot => {
-                        if (snapshot.exists()) {
-                            currentUserData = snapshot.val();
-                            dbBasePath = `companies/${currentUserData.companyId}`;
-                            setupFirebaseListeners();
-                            updateUI();
-                        }
-                    });
+            // Modals Close
+            if(closeNewProductModalButton) closeNewProductModalButton.addEventListener('click', () => newProductModal.classList.add('hidden'));
+            if(closeEntryModalButton) closeEntryModalButton.addEventListener('click', () => entryModal.classList.add('hidden'));
+            if(closeExitModalButton) closeExitModalButton.addEventListener('click', () => exitModal.classList.add('hidden'));
+            if(closeTransferModalButton) closeTransferModalButton.addEventListener('click', () => transferModal.classList.add('hidden'));
+            if(closeRestockModalButton) closeRestockModalButton.addEventListener('click', () => restockModal.classList.add('hidden'));
+
+            // Background Modal Close
+            [newProductModal, entryModal, exitModal, transferModal, restockModal].forEach(m => { 
+                if(m) m.addEventListener('click', e => { if(e.target === m) m.classList.add('hidden'); }); 
+            });
+
+            // Select Interaction (Info display in modals)
+            if(transferProductSelect) transferProductSelect.addEventListener('change', () => { 
+                const p = appData.storeProducts[transferProductSelect.value]; 
+                if(p) { 
+                    transferCostDisplay.textContent = formatCurrency(p.purchaseCost, p.currency); 
+                    transferSourceInfo.classList.remove('hidden'); 
                 } else {
-                    isAuthenticated = false; currentUser = null; updateUI();
+                    transferSourceInfo.classList.add('hidden'); 
+                }
+            });
+
+            if(restockProductSelect) restockProductSelect.addEventListener('change', () => { 
+                const si = appData.shopStock[restockProductSelect.value]; 
+                if(si && appData.storeProducts[si.sourceProductId]) { 
+                    const sp = appData.storeProducts[si.sourceProductId]; 
+                    restockSourceName.textContent = sp.name; 
+                    restockSourceStock.textContent = sp.quantityInStore; 
+                    restockSourceInfo.classList.remove('hidden'); 
+                } else {
+                    restockSourceInfo.classList.add('hidden'); 
                 }
             });
 
             function updateAllStats() {
                 const sales = Object.values(appData.salesHistory);
-                document.getElementById('stat-daily-sales').textContent = sales.length;
-                document.getElementById('stat-monthly-revenue').textContent = formatCurrency(sales.reduce((acc, s) => acc + s.totalAmount, 0));
+                const shopItems = Object.values(appData.shopStock);
+                const storeItems = Object.values(appData.storeProducts);
+                const now = new Date();
+                const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+                if(document.getElementById('stat-daily-sales')) 
+                    document.getElementById('stat-daily-sales').textContent = sales.filter(s => s.date >= startOfDay).length;
+                
+                if(document.getElementById('stat-monthly-revenue'))
+                    document.getElementById('stat-monthly-revenue').textContent = formatCurrency(sales.filter(s => s.date >= startOfMonth).reduce((acc, s) => acc + s.totalAmount, 0));
+                
+                const shopCount = shopItems.reduce((acc, i) => acc + i.quantityInShop, 0);
+                if(document.getElementById('stat-shop-stock'))
+                    document.getElementById('stat-shop-stock').textContent = shopCount + " produits";
+                
+                if(document.getElementById('stat-store-stock'))
+                    document.getElementById('stat-store-stock').textContent = storeItems.reduce((acc, i) => acc + i.quantityInStore, 0) + " produits";
+
+                if(document.getElementById('stat-total-sales'))
+                    document.getElementById('stat-total-sales').textContent = sales.length;
+                
+                if(document.getElementById('stat-revenue'))
+                    document.getElementById('stat-revenue').textContent = formatCurrency(sales.reduce((acc, s) => acc + s.totalAmount, 0));
+                
+                if(document.getElementById('stat-products-in-stock'))
+                    document.getElementById('stat-products-in-stock').textContent = shopItems.length;
+
+                // Rendus statistiques (Top produits, etc)
+                const bestSellingContainer = document.getElementById('best-selling-tbody');
+                if(bestSellingContainer) {
+                    const productSales = sales.reduce((acc, s) => { acc[s.productName] = (acc[s.productName] || 0) + s.quantity; return acc; }, {});
+                    const sortedProd = Object.entries(productSales).sort((a,b) => b[1]-a[1]).slice(0,5);
+                    bestSellingContainer.innerHTML = sortedProd.length ? sortedProd.map(([name, qty]) => `<tr class="hover:bg-gray-50"><td class="px-4 py-3 text-sm text-gray-800">${name}</td><td class="px-4 py-3 text-sm text-gray-600 font-bold">${qty}</td><td class="px-4 py-3"></td></tr>`).join('') : '';
+                    if(sortedProd.length) { 
+                        document.getElementById('best-selling-placeholder')?.classList.add('hidden'); 
+                        document.getElementById('best-selling-table-container')?.classList.remove('hidden'); 
+                    }
+                }
             }
 
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    isCodeSession = false;
+                    isAuthenticated = true;
+                    currentUser = user;
+                    get(ref(db, `users/${user.uid}`)).then((snapshot) => {
+                        if (snapshot.exists()) {
+                            currentUserData = snapshot.val();
+                            currentUserData.role = currentUserData.role || 'admin';
+                            if (sellerNameInput) sellerNameInput.value = currentUserData.fullName || user.email;
+                            dbBasePath = currentUserData.companyId ? `companies/${currentUserData.companyId}` : `users/${user.uid}`;
+                            setupFirebaseListeners();
+                            ensureCurrentUserInTeam();
+                            updateSettingsAccess();
+                            updateUI();
+                        }
+                    });
+                } else{
+                    if (!isCodeSession) {
+                        isAuthenticated = false; currentUser = null; currentUserData = null; dbBasePath = ''; currentPage = 'Tableau de bord'; cleanupFirebaseListeners(); updateUI();
+                    }
+                }
+            });
+
             updateUI();
+            updateAuthFormView();
         });
     </script>
 </body>
