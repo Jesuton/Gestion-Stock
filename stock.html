@@ -2884,12 +2884,11 @@
                     yPos += 10;
 
                     // === TABLEAU DES PRODUITS ===
-                    // Fonction de formatage simple pour le PDF (sans symboles spéciaux)
+                    // Fonction ultra-simple pour éviter les problèmes d'encodage
                     const formatPDFCurrency = (amount) => {
-                        return new Intl.NumberFormat('fr-FR', {
-                            minimumFractionDigits: 0,
-                            maximumFractionDigits: 0
-                        }).format(amount);
+                        // Convertir en string et ajouter des espaces pour les milliers
+                        const numStr = Math.round(amount).toString();
+                        return numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
                     };
 
                     const tableData = invoiceData.items.map(item => [
@@ -2908,30 +2907,32 @@
                             fillColor: primaryColor,
                             textColor: [255, 255, 255],
                             fontStyle: 'bold',
-                            fontSize: 10
+                            fontSize: 10,
+                            halign: 'center'
                         },
                         bodyStyles: {
                             fontSize: 9
                         },
                         columnStyles: {
-                            0: { cellWidth: 80 },
+                            0: { cellWidth: 60, halign: 'left' },
                             1: { cellWidth: 30, halign: 'center' },
-                            2: { cellWidth: 40, halign: 'right' },
-                            3: { cellWidth: 40, halign: 'right' }
+                            2: { cellWidth: 45, halign: 'right' },
+                            3: { cellWidth: 45, halign: 'right' }
                         },
-                        margin: { left: 20, right: 20 }
+                        margin: { left: 15, right: 15 },
+                        tableWidth: 'auto'
                     });
 
                     yPos = doc.lastAutoTable.finalY + 10;
 
                     // === TOTAL ===
                     doc.setFillColor(...lightGray);
-                    doc.rect(20, yPos, 170, 12, 'F');
+                    doc.rect(15, yPos, 180, 12, 'F');
                     doc.setTextColor(...darkGray);
                     doc.setFontSize(14);
                     doc.setFont(undefined, 'bold');
-                    doc.text('TOTAL:', 130, yPos + 8);
-                    doc.text(`${formatPDFCurrency(invoiceData.total)} ${invoiceData.currency}`, 170, yPos + 8, { align: 'right' });
+                    doc.text('TOTAL:', 135, yPos + 8);
+                    doc.text(formatPDFCurrency(invoiceData.total) + ' ' + invoiceData.currency, 185, yPos + 8, { align: 'right' });
 
                     yPos += 20;
 
