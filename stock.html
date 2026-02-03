@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -9,29 +10,35 @@
     <style>
         /* Ajout de la police Inter pour une meilleure apparence */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+
         body {
             font-family: 'Inter', sans-serif;
         }
+
         /* Style pour l'icône de corbeille */
         .delete-icon:hover svg {
-            color: #ef4444; /* text-red-500 */
+            color: #ef4444;
+            /* text-red-500 */
         }
+
         /* Styles pour le Toast de Succès */
         #success-toast {
             transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
             transform: translateY(100%);
             opacity: 0;
         }
+
         #success-toast.show {
             transform: translateY(0);
             opacity: 1;
         }
+
         /* Style pour la transition du margin sur le main content */
         main {
             transition: margin-left 0.3s ease-in-out;
         }
     </style>
-<script type="importmap">
+    <script type="importmap">
 {
   "imports": {
     "firebase/app": "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js",
@@ -44,6 +51,7 @@
 }
 </script>
 </head>
+
 <body class="bg-gray-50">
 
     <!-- 
@@ -63,10 +71,12 @@
                 </div>
 
                 <div class="w-full bg-gray-100 rounded-lg p-1 flex mb-6">
-                    <button id="auth-toggle-login" class="w-1/2 p-2 rounded-md text-sm font-semibold transition-colors bg-white shadow text-gray-800">
+                    <button id="auth-toggle-login"
+                        class="w-1/2 p-2 rounded-md text-sm font-semibold transition-colors bg-white shadow text-gray-800">
                         Se connecter
                     </button>
-                    <button id="auth-toggle-signup" class="w-1/2 p-2 rounded-md text-sm font-semibold transition-colors text-gray-500 hover:bg-gray-200">
+                    <button id="auth-toggle-signup"
+                        class="w-1/2 p-2 rounded-md text-sm font-semibold transition-colors text-gray-500 hover:bg-gray-200">
                         S'inscrire
                     </button>
                 </div>
@@ -75,24 +85,34 @@
                 <form id="login-form">
                     <div class="space-y-4">
                         <div class="flex bg-gray-100 rounded-lg p-1 text-xs font-semibold">
-                            <button type="button" id="login-mode-admin" class="flex-1 px-3 py-2 rounded-md bg-white text-gray-800 shadow">Admin</button>
-                            <button type="button" id="login-mode-code" class="flex-1 px-3 py-2 rounded-md text-gray-500 hover:text-gray-700">Collaborateur</button>
+                            <button type="button" id="login-mode-admin"
+                                class="flex-1 px-3 py-2 rounded-md bg-white text-gray-800 shadow">Admin</button>
+                            <button type="button" id="login-mode-code"
+                                class="flex-1 px-3 py-2 rounded-md text-gray-500 hover:text-gray-700">Collaborateur</button>
                         </div>
                         <div>
                             <label class="text-sm font-medium text-gray-600" for="email">Email</label>
-                            <input type="email" id="email" name="email" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
+                            <input type="email" id="email" name="email"
+                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition"
+                                required />
                         </div>
                         <div id="login-password-field">
                             <label class="text-sm font-medium text-gray-600" for="password">Mot de passe</label>
-                            <input type="password" id="password" name="password" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
+                            <input type="password" id="password" name="password"
+                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition"
+                                required />
                         </div>
                         <div id="login-access-code-field" class="hidden">
                             <label class="text-sm font-medium text-gray-600" for="access-code">Code d'accès</label>
-                            <input type="text" id="access-code" name="access-code" placeholder="Ex: Z4T7-9Q3S" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition uppercase tracking-widest" />
-                            <p class="text-xs text-gray-500 mt-1">Demandez ce code à l'administrateur de votre entreprise.</p>
+                            <input type="text" id="access-code" name="access-code" placeholder="Ex: Z4T7-9Q3S"
+                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition uppercase tracking-widest" />
+                            <p class="text-xs text-gray-500 mt-1">Demandez ce code à l'administrateur de votre
+                                entreprise.</p>
                         </div>
-                        <p id="login-error" class="text-red-500 text-sm mt-2 hidden"></p> <!-- Ajout pour les erreurs -->
-                        <button type="submit" id="login-submit-button" class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
+                        <p id="login-error" class="text-red-500 text-sm mt-2 hidden"></p>
+                        <!-- Ajout pour les erreurs -->
+                        <button type="submit" id="login-submit-button"
+                            class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
                             Se connecter
                         </button>
                     </div>
@@ -103,25 +123,36 @@
                     <div class="space-y-4">
                         <div>
                             <label class="text-sm font-medium text-gray-600" for="fullName">Nom complet</label>
-                            <input type="text" id="fullName" name="fullName" placeholder="Jean Dupont" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
+                            <input type="text" id="fullName" name="fullName" placeholder="Jean Dupont"
+                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition"
+                                required />
                         </div>
                         <div>
-                            <label class="text-sm font-medium text-gray-600" for="companyName">Nom de l'entreprise</label>
-                            <input type="text" id="companyName" name="companyName" placeholder="Ma Société" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
-                            <p class="text-xs text-gray-500 mt-1">Si le nom correspond à une entreprise existante, vous la rejoindrez.</p>
+                            <label class="text-sm font-medium text-gray-600" for="companyName">Nom de
+                                l'entreprise</label>
+                            <input type="text" id="companyName" name="companyName" placeholder="Ma Société"
+                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition"
+                                required />
+                            <p class="text-xs text-gray-500 mt-1">Si le nom correspond à une entreprise existante, vous
+                                la rejoindrez.</p>
                         </div>
                         <div>
                             <label class="text-sm font-medium text-gray-600" for="signup-email">Email</label>
-                            <input type="email" id="signup-email" name="signup-email" placeholder="votre@email.com" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
+                            <input type="email" id="signup-email" name="signup-email" placeholder="votre@email.com"
+                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition"
+                                required />
                         </div>
                         <div>
                             <label class="text-sm font-medium text-gray-600" for="signup-password">Mot de passe</label>
-                            <input type="password" id="signup-password" name="signup-password" placeholder="********" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
+                            <input type="password" id="signup-password" name="signup-password" placeholder="********"
+                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition"
+                                required />
                         </div>
                         <div id="signup-error-container" class="hidden p-3 bg-red-50 border border-red-200 rounded-lg">
-                             <p id="signup-error" class="text-red-500 text-sm"></p>
+                            <p id="signup-error" class="text-red-500 text-sm"></p>
                         </div>
-                        <button type="submit" id="signup-submit-button" class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
+                        <button type="submit" id="signup-submit-button"
+                            class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
                             Créer mon compte
                         </button>
                     </div>
@@ -139,7 +170,8 @@
         <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden lg:hidden"></div>
 
         <!-- Sidebar -->
-        <aside id="sidebar" class="w-64 bg-white shadow-md flex flex-col h-screen fixed top-0 left-0 z-40 transition-transform duration-300 ease-in-out -translate-x-full lg:translate-x-0 lg:transition-all">
+        <aside id="sidebar"
+            class="w-64 bg-white shadow-md flex flex-col h-screen fixed top-0 left-0 z-40 transition-transform duration-300 ease-in-out -translate-x-full lg:translate-x-0 lg:transition-all">
             <div class="p-6 flex items-center space-x-3 border-b border-gray-200">
                 <div class="bg-cyan-100 text-cyan-500 p-2 rounded-lg">
                     <div data-icon="logo" class="w-6 h-6"></div>
@@ -148,27 +180,33 @@
             </div>
             <nav class="flex-1 p-4 space-y-2">
                 <!-- Les boutons de navigation -->
-                <button data-page="Tableau de bord" class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors bg-cyan-400 text-white shadow">
+                <button data-page="Tableau de bord"
+                    class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors bg-cyan-400 text-white shadow">
                     <div data-icon="dashboard" class="w-5 h-5"></div>
                     <span class="sidebar-text">Tableau de bord</span>
                 </button>
-                <button data-page="Ventes" class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
+                <button data-page="Ventes"
+                    class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
                     <div data-icon="sales" class="w-5 h-5"></div>
                     <span class="sidebar-text">Ventes</span>
                 </button>
-                <button data-page="Stock Boutique" class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
+                <button data-page="Stock Boutique"
+                    class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
                     <div data-icon="box" class="w-5 h-5"></div>
                     <span class="sidebar-text">Stock Boutique</span>
                 </button>
-                <button data-page="Mon Magasin" class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
+                <button data-page="Mon Magasin"
+                    class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
                     <div data-icon="box" class="w-5 h-5"></div>
                     <span class="sidebar-text">Mon Magasin</span>
                 </button>
-                <button data-page="Statistiques" class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
+                <button data-page="Statistiques"
+                    class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
                     <div data-icon="stats" class="w-5 h-5"></div>
                     <span class="sidebar-text">Statistiques</span>
                 </button>
-                <button data-page="Paramètres" class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
+                <button data-page="Paramètres"
+                    class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
                     <div data-icon="settings" class="w-5 h-5"></div>
                     <span class="sidebar-text">Paramètres</span>
                 </button>
@@ -180,14 +218,16 @@
                     <p id="user-company-display" class="text-xs text-gray-500 font-semibold truncate mt-1"></p>
                     <p id="user-email-display" class="text-xs text-gray-400 truncate">Chargement...</p>
                 </div>
-                <button id="logout-button" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">
+                <button id="logout-button"
+                    class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">
                     <div data-icon="logout" class="w-5 h-5"></div>
                     <span class="sidebar-text">Déconnexion</span>
                 </button>
             </div>
-             <!-- Bouton pour réduire/agrandir la sidebar sur Desktop -->
+            <!-- Bouton pour réduire/agrandir la sidebar sur Desktop -->
             <div class="hidden lg:block absolute -right-3 top-20">
-                <button id="sidebar-collapse-toggle" class="bg-white border rounded-full p-1.5 shadow-md hover:bg-gray-100 transition-colors">
+                <button id="sidebar-collapse-toggle"
+                    class="bg-white border rounded-full p-1.5 shadow-md hover:bg-gray-100 transition-colors">
                     <div data-icon="arrowLeft" class="w-4 h-4 text-gray-600"></div>
                 </button>
             </div>
@@ -197,7 +237,8 @@
         <main class="flex-1 lg:ml-64 overflow-y-auto h-screen">
 
             <!-- Header pour la vue mobile -->
-            <header id="mobile-header" class="sticky top-0 bg-gray-50/75 backdrop-blur-sm z-10 p-4 border-b border-gray-200 flex items-center justify-between lg:hidden">
+            <header id="mobile-header"
+                class="sticky top-0 bg-gray-50/75 backdrop-blur-sm z-10 p-4 border-b border-gray-200 flex items-center justify-between lg:hidden">
                 <button id="hamburger-button" class="text-gray-500 hover:text-gray-800">
                     <div data-icon="menu" class="w-6 h-6"></div>
                 </button>
@@ -256,15 +297,18 @@
                     <div class="mt-4 space-y-4">
                         <div class="p-4 border border-gray-200 rounded-lg">
                             <h3 class="font-semibold text-gray-700">1. Ajouter des produits au magasin</h3>
-                            <p class="text-sm text-gray-500 mt-1">Commencez par ajouter vos produits dans "Mon Magasin" avec leurs prix d'achat.</p>
+                            <p class="text-sm text-gray-500 mt-1">Commencez par ajouter vos produits dans "Mon Magasin"
+                                avec leurs prix d'achat.</p>
                         </div>
                         <div class="p-4 border border-gray-200 rounded-lg">
                             <h3 class="font-semibold text-gray-700">2. Transférer vers la boutique</h3>
-                            <p class="text-sm text-gray-500 mt-1">Transférez les produits vers votre "Stock Boutique" en ajoutant votre marge.</p>
+                            <p class="text-sm text-gray-500 mt-1">Transférez les produits vers votre "Stock Boutique" en
+                                ajoutant votre marge.</p>
                         </div>
                         <div class="p-4 border border-gray-200 rounded-lg">
                             <h3 class="font-semibold text-gray-700">3. Enregistrer vos ventes</h3>
-                            <p class="text-sm text-gray-500 mt-1">Utilisez l'interface "Ventes" pour enregistrer chaque transaction.</p>
+                            <p class="text-sm text-gray-500 mt-1">Utilisez l'interface "Ventes" pour enregistrer chaque
+                                transaction.</p>
                         </div>
                     </div>
                 </div>
@@ -281,41 +325,137 @@
                     </h2>
                     <form id="sales-form" class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="col-span-1">
-                            <label for="sales-product-select" class="block text-sm font-medium text-gray-700 mb-1">Produit *</label>
-                            <select id="sales-product-select" name="product" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500">
+                            <label for="sales-product-select"
+                                class="block text-sm font-medium text-gray-700 mb-1">Produit *</label>
+                            <select id="sales-product-select" name="product"
+                                class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500">
                                 <option value="">Sélectionner un produit</option>
                             </select>
                         </div>
                         <div class="col-span-1">
-                            <label for="sales-quantity-input" class="block text-sm font-medium text-gray-700 mb-1">Quantité *</label>
-                            <input type="number" name="quantity" id="sales-quantity-input" value="1" min="1" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500" />
+                            <label for="sales-quantity-input"
+                                class="block text-sm font-medium text-gray-700 mb-1">Quantité *</label>
+                            <input type="number" name="quantity" id="sales-quantity-input" value="1" min="1"
+                                class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500" />
                         </div>
 
                         <!-- Nouveau champ : Montant total -->
                         <div class="col-span-1">
-                            <label for="sales-total-amount" class="block text-sm font-medium text-gray-700 mb-1">Montant total</label>
-                            <input type="text" id="sales-total-amount" value="0 FCFA" class="w-full border-gray-300 rounded-lg shadow-sm bg-gray-100 focus:ring-0 focus:border-gray-300" readonly />
+                            <label for="sales-total-amount" class="block text-sm font-medium text-gray-700 mb-1">Montant
+                                total</label>
+                            <input type="text" id="sales-total-amount" value="0 FCFA"
+                                class="w-full border-gray-300 rounded-lg shadow-sm bg-gray-100 focus:ring-0 focus:border-gray-300"
+                                readonly />
                         </div>
 
                         <div class="col-span-1">
-                            <label for="seller-name" class="block text-sm font-medium text-gray-700 mb-1">Vendeur *</label>
-                            <input type="text" name="seller" id="seller-name" class="w-full border-gray-300 rounded-lg shadow-sm bg-gray-100 focus:ring-0 focus:border-gray-300" readonly />
+                            <label for="seller-name" class="block text-sm font-medium text-gray-700 mb-1">Vendeur
+                                *</label>
+                            <input type="text" name="seller" id="seller-name"
+                                class="w-full border-gray-300 rounded-lg shadow-sm bg-gray-100 focus:ring-0 focus:border-gray-300"
+                                readonly />
                         </div>
 
                         <div class="col-span-2">
-                            <label for="sales-comment" class="block text-sm font-medium text-gray-700 mb-1">Commentaire (optionnel)</label>
-                            <textarea name="comment" id="sales-comment" rows="3" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500"></textarea>
+                            <label for="sales-comment" class="block text-sm font-medium text-gray-700 mb-1">Commentaire
+                                (optionnel)</label>
+                            <textarea name="comment" id="sales-comment" rows="3"
+                                class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500"></textarea>
                         </div>
 
                         <p id="sales-error" class="text-red-500 text-sm mt-2 hidden col-span-2"></p>
 
-                        <div class="col-span-2">
-                            <button type="submit" id="sales-submit-button" class="inline-flex items-center px-4 py-2 bg-cyan-400 text-white font-semibold rounded-lg shadow-md hover:bg-cyan-500 transition-colors">
-                                + Enregistrer la vente
+                        <div class="col-span-2 flex gap-3">
+                            <button type="button" id="add-to-cart-button"
+                                class="inline-flex items-center px-4 py-2 bg-cyan-400 text-white font-semibold rounded-lg shadow-md hover:bg-cyan-500 transition-colors">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
+                                    </path>
+                                </svg>
+                                Ajouter au panier
+                            </button>
+                            <button type="submit" id="sales-submit-button"
+                                class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-300 transition-colors">
+                                + Vente directe
                             </button>
                         </div>
                     </form>
                 </div>
+
+                <!-- Section Panier -->
+                <div id="cart-section" class="mt-8 bg-white p-6 rounded-lg shadow-sm border-2 border-cyan-200 hidden">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                            <svg class="w-6 h-6 mr-3 text-cyan-500" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
+                                </path>
+                            </svg>
+                            Panier
+                            <span id="cart-count"
+                                class="ml-3 px-2.5 py-0.5 text-xs font-semibold rounded-full bg-cyan-100 text-cyan-800">0</span>
+                        </h2>
+                        <button id="clear-cart-button"
+                            class="text-sm text-red-500 hover:text-red-700 font-medium flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                </path>
+                            </svg>
+                            Vider le panier
+                        </button>
+                    </div>
+
+                    <!-- Tableau du panier -->
+                    <div class="overflow-x-auto rounded-lg border border-gray-200">
+                        <table class="min-w-full bg-white divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Produit</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Prix unitaire</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Quantité</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Sous-total</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cart-items-tbody" class="divide-y divide-gray-200">
+                                <!-- Les articles du panier seront insérés ici par JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Total et validation -->
+                    <div
+                        class="mt-6 flex flex-col md:flex-row items-center justify-between gap-4 p-4 bg-gray-50 rounded-lg">
+                        <div class="text-right">
+                            <p class="text-sm text-gray-500">Total de la commande</p>
+                            <p id="cart-total" class="text-3xl font-bold text-gray-800">0 FCFA</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <button id="validate-cart-button"
+                                class="px-6 py-3 bg-green-500 text-white font-bold rounded-lg shadow-md hover:bg-green-600 transition-colors flex items-center">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                Valider la vente
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="mt-10 bg-white p-6 rounded-lg shadow-sm">
                     <h2 class="text-xl font-bold text-gray-800">Historique des ventes</h2>
                     <p class="text-sm text-gray-500 mt-1">Liste de toutes les transactions enregistrées.</p>
@@ -323,20 +463,34 @@
                     <!-- Conteneur pour l'historique des ventes -->
                     <div id="sales-history-container" class="mt-6">
                         <!-- Message si vide -->
-                        <div id="sales-history-placeholder" class="flex flex-col items-center justify-center text-center text-gray-500 h-32">
+                        <div id="sales-history-placeholder"
+                            class="flex flex-col items-center justify-center text-center text-gray-500 h-32">
                             <p>Aucune vente enregistrée</p>
                         </div>
                         <!-- Tableau si non vide -->
-                        <div id="sales-history-table-container" class="hidden overflow-x-auto rounded-lg border border-gray-200">
+                        <div id="sales-history-table-container"
+                            class="hidden overflow-x-auto rounded-lg border border-gray-200">
                             <table class="min-w-full bg-white divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
                                     <tr>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendeur</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qté</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Commentaire</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Produit</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Vendeur</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Qté</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Montant</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Commentaire</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Date</th>
                                     </tr>
                                 </thead>
                                 <tbody id="sales-history-tbody" class="divide-y divide-gray-200">
@@ -355,25 +509,37 @@
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div class="relative flex-grow">
                             <!-- ID AJOUTÉ ICI -->
-                            <input type="text" id="shop-search-input" placeholder="Rechercher par nom ou description..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500" />
+                            <input type="text" id="shop-search-input" placeholder="Rechercher par nom ou description..."
+                                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500" />
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                                        clip-rule="evenodd" />
                                 </svg>
                             </div>
                         </div>
                         <div class="flex items-center gap-2 flex-wrap">
-                            <button id="open-restock-modal-button" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2">
-                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h5" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 20v-5h-5" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 9a9 9 0 0114.13-6.364M20 15a9 9 0 01-14.13 6.364" />
+                            <button id="open-restock-modal-button"
+                                class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2">
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 4v5h5" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M20 20v-5h-5" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 9a9 9 0 0114.13-6.364M20 15a9 9 0 01-14.13 6.364" />
                                 </svg>
                                 Réapprovisionner
                             </button>
-                            <button id="open-transfer-modal-button" class="px-4 py-2 bg-cyan-400 text-white font-semibold rounded-lg shadow-md hover:bg-cyan-500 transition-colors flex items-center gap-2">
-                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            <button id="open-transfer-modal-button"
+                                class="px-4 py-2 bg-cyan-400 text-white font-semibold rounded-lg shadow-md hover:bg-cyan-500 transition-colors flex items-center gap-2">
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4v16m8-8H4" />
                                 </svg>
                                 Transférer depuis Magasin
                             </button>
@@ -382,19 +548,31 @@
                     <!-- Conteneur pour la liste des produits de la boutique -->
                     <div id="shop-stock-container" class="mt-6">
                         <!-- Message si vide (visible par défaut) -->
-                        <div id="shop-stock-placeholder" class="flex flex-col items-center justify-center text-center text-gray-500 h-40">
+                        <div id="shop-stock-placeholder"
+                            class="flex flex-col items-center justify-center text-center text-gray-500 h-40">
                             <p>Aucun article en inventaire.</p>
                         </div>
                         <!-- Tableau si non vide (caché par défaut) -->
-                        <div id="shop-stock-table-container" class="hidden overflow-x-auto rounded-lg border border-gray-200">
+                        <div id="shop-stock-table-container"
+                            class="hidden overflow-x-auto rounded-lg border border-gray-200">
                             <table class="min-w-full bg-white divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
                                     <tr>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantité</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prix de Vente</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Seuil d'alerte</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Produit</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Quantité</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Prix de Vente</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Seuil d'alerte</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="shop-stock-tbody" class="divide-y divide-gray-200">
@@ -406,25 +584,42 @@
                 </div>
                 <div class="mt-10 bg-white p-6 rounded-lg shadow-sm">
                     <h2 class="text-xl font-bold text-gray-800">Mouvements du Stock Boutique</h2>
-                    <p class="text-sm text-gray-500 mt-1">Historique de tous les ajouts et réapprovisionnements de stock.</p>
-                     <!-- Conteneur pour les mouvements de la boutique -->
+                    <p class="text-sm text-gray-500 mt-1">Historique de tous les ajouts et réapprovisionnements de
+                        stock.</p>
+                    <!-- Conteneur pour les mouvements de la boutique -->
                     <div id="shop-movements-container" class="mt-6">
                         <!-- Message si vide (visible par défaut) -->
-                        <div id="shop-movements-placeholder" class="flex flex-col items-center justify-center text-center text-gray-500 h-32">
+                        <div id="shop-movements-placeholder"
+                            class="flex flex-col items-center justify-center text-center text-gray-500 h-32">
                             <p>Aucun mouvement de stock enregistré.</p>
                         </div>
                         <!-- Tableau si non vide (caché par défaut) -->
-                        <div id="shop-movements-table-container" class="hidden overflow-x-auto rounded-lg border border-gray-200">
+                        <div id="shop-movements-table-container"
+                            class="hidden overflow-x-auto rounded-lg border border-gray-200">
                             <table class="min-w-full bg-white divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
                                     <tr>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th> <!-- AJOUTÉ -->
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qte Changée</th> <!-- Renommé -->
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Changement</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Commentaire</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Utilisateur</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Produit</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Type</th> <!-- AJOUTÉ -->
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Qte Changée</th> <!-- Renommé -->
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Changement</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Commentaire</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Utilisateur</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Date</th>
                                     </tr>
                                 </thead>
                                 <tbody id="shop-movements-tbody" class="divide-y divide-gray-200">
@@ -442,19 +637,27 @@
                 <div class="mt-8 bg-white p-6 rounded-lg shadow-sm">
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div class="relative flex-grow">
-                             <!-- ID AJOUTÉ ICI -->
-                            <input type="text" id="store-search-input" placeholder="Rechercher par nom ou description..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500" />
+                            <!-- ID AJOUTÉ ICI -->
+                            <input type="text" id="store-search-input"
+                                placeholder="Rechercher par nom ou description..."
+                                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500" />
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                                        clip-rule="evenodd" />
                                 </svg>
                             </div>
                         </div>
                         <div class="flex items-center gap-2 flex-wrap">
-                            <button id="open-entry-modal-button" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2">Entrée</button>
-                            <button id="open-exit-modal-button" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2">Sortie</button>
+                            <button id="open-entry-modal-button"
+                                class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2">Entrée</button>
+                            <button id="open-exit-modal-button"
+                                class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2">Sortie</button>
                             <!-- ID ajouté au bouton "Nouveau Produit" -->
-                            <button id="open-new-product-modal-button" class="px-4 py-2 bg-cyan-400 text-white font-semibold rounded-lg shadow-md hover:bg-cyan-500 transition-colors flex items-center gap-2">
+                            <button id="open-new-product-modal-button"
+                                class="px-4 py-2 bg-cyan-400 text-white font-semibold rounded-lg shadow-md hover:bg-cyan-500 transition-colors flex items-center gap-2">
                                 + Nouveau Produit
                             </button>
                         </div>
@@ -463,19 +666,31 @@
                     <!-- Conteneur pour la liste des produits du magasin -->
                     <div id="store-products-container" class="mt-6">
                         <!-- Message si vide (visible par défaut) -->
-                        <div id="store-products-placeholder" class="flex flex-col items-center justify-center text-center text-gray-500 h-40">
+                        <div id="store-products-placeholder"
+                            class="flex flex-col items-center justify-center text-center text-gray-500 h-40">
                             <p>Aucun article dans le magasin.</p>
                         </div>
                         <!-- Tableau si non vide (caché par défaut) -->
-                        <div id="store-products-table-container" class="hidden overflow-x-auto rounded-lg border border-gray-200">
+                        <div id="store-products-table-container"
+                            class="hidden overflow-x-auto rounded-lg border border-gray-200">
                             <table class="min-w-full bg-white divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
                                     <tr>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantité</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coût d'achat</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Produit</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Description</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Quantité</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Coût d'achat</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="store-products-tbody" class="divide-y divide-gray-200">
@@ -493,20 +708,34 @@
                     <!-- Conteneur pour les mouvements du magasin -->
                     <div id="store-movements-container" class="mt-6">
                         <!-- Message si vide (visible par défaut) -->
-                        <div id="store-movements-placeholder" class="flex flex-col items-center justify-center text-center text-gray-500 h-32">
+                        <div id="store-movements-placeholder"
+                            class="flex flex-col items-center justify-center text-center text-gray-500 h-32">
                             <p>Aucun mouvement enregistré.</p>
                         </div>
                         <!-- Tableau si non vide (caché par défaut) -->
-                        <div id="store-movements-table-container" class="hidden overflow-x-auto rounded-lg border border-gray-200">
+                        <div id="store-movements-table-container"
+                            class="hidden overflow-x-auto rounded-lg border border-gray-200">
                             <table class="min-w-full bg-white divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
                                     <tr>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantité</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Changement Stock</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Commentaire</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Produit</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Type</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Quantité</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Changement Stock</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Commentaire</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Date</th>
                                     </tr>
                                 </thead>
                                 <tbody id="store-movements-tbody" class="divide-y divide-gray-200">
@@ -575,16 +804,22 @@
                         <h2 class="text-xl font-bold text-gray-800">Produits les plus vendus</h2>
                         <p class="text-sm text-gray-500 mt-1">Classement par quantité vendue.</p>
                         <div id="best-selling-container" class="mt-4">
-                             <div id="best-selling-placeholder" class="text-center text-gray-500 py-8">
+                            <div id="best-selling-placeholder" class="text-center text-gray-500 py-8">
                                 <p>Aucune donnée de vente disponible.</p>
                             </div>
                             <div id="best-selling-table-container" class="hidden overflow-x-auto">
                                 <table class="min-w-full bg-white">
                                     <thead class="bg-gray-50">
                                         <tr>
-                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
-                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qté Vendue</th>
-                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenu Généré</th>
+                                            <th scope="col"
+                                                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Produit</th>
+                                            <th scope="col"
+                                                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Qté Vendue</th>
+                                            <th scope="col"
+                                                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Revenu Généré</th>
                                         </tr>
                                     </thead>
                                     <tbody id="best-selling-tbody" class="divide-y divide-gray-200">
@@ -599,17 +834,23 @@
                     <div class="bg-white p-6 rounded-lg shadow-sm">
                         <h2 class="text-xl font-bold text-gray-800">Performance des vendeurs</h2>
                         <p class="text-sm text-gray-500 mt-1">Classement par revenu généré.</p>
-                         <div id="seller-performance-container" class="mt-4">
-                             <div id="seller-performance-placeholder" class="text-center text-gray-500 py-8">
+                        <div id="seller-performance-container" class="mt-4">
+                            <div id="seller-performance-placeholder" class="text-center text-gray-500 py-8">
                                 <p>Aucune donnée de vente disponible.</p>
                             </div>
                             <div id="seller-performance-table-container" class="hidden overflow-x-auto">
                                 <table class="min-w-full bg-white">
                                     <thead class="bg-gray-50">
                                         <tr>
-                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendeur</th>
-                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nb. Ventes</th>
-                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenu Total</th>
+                                            <th scope="col"
+                                                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Vendeur</th>
+                                            <th scope="col"
+                                                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Nb. Ventes</th>
+                                            <th scope="col"
+                                                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Revenu Total</th>
                                         </tr>
                                     </thead>
                                     <tbody id="seller-performance-tbody" class="divide-y divide-gray-200">
@@ -631,23 +872,30 @@
                         </div>
                         <div>
                             <h1 class="text-3xl font-bold">Paramètres</h1>
-                            <p class="text-gray-500 mt-1">Gérez les préférences de votre compte, de votre équipe et du SaaS.</p>
+                            <p class="text-gray-500 mt-1">Gérez les préférences de votre compte, de votre équipe et du
+                                SaaS.</p>
                         </div>
                     </div>
                     <p class="text-sm text-gray-400">
-                        Seuls les administrateurs ont accès complet à cette zone. Les autres rôles peuvent être limités via l'onglet
+                        Seuls les administrateurs ont accès complet à cette zone. Les autres rôles peuvent être limités
+                        via l'onglet
                         <span class="font-semibold text-gray-600">Accès</span>.
                     </p>
                 </div>
 
-                <div id="settings-restricted-state" class="mt-8 bg-white p-6 rounded-xl shadow-sm border border-red-100 hidden">
+                <div id="settings-restricted-state"
+                    class="mt-8 bg-white p-6 rounded-xl shadow-sm border border-red-100 hidden">
                     <div class="flex items-start gap-4">
                         <div class="p-2 rounded-full bg-red-50 text-red-500">
-                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L4.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L4.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
                         </div>
                         <div>
                             <h2 class="text-lg font-semibold text-gray-900">Accès restreint</h2>
-                            <p class="text-gray-500 mt-1">Vous devez être administrateur de l'entreprise pour modifier les paramètres globaux. Contactez un administrateur pour revoir vos droits.</p>
+                            <p class="text-gray-500 mt-1">Vous devez être administrateur de l'entreprise pour modifier
+                                les paramètres globaux. Contactez un administrateur pour revoir vos droits.</p>
                         </div>
                     </div>
                 </div>
@@ -661,22 +909,33 @@
                                 <p class="text-gray-500 text-sm">Facturé mensuellement · 5 utilisateurs inclus</p>
                             </div>
                             <div class="flex flex-wrap gap-3 text-sm">
-                                <div class="px-3 py-2 bg-cyan-50 text-cyan-700 rounded-lg font-medium" id="settings-admin-badge">Rôle : Admin</div>
-                                <button class="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 font-semibold">Mettre à niveau</button>
-                                <button class="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 font-semibold">Télécharger la politique d'accès</button>
+                                <div class="px-3 py-2 bg-cyan-50 text-cyan-700 rounded-lg font-medium"
+                                    id="settings-admin-badge">Rôle : Admin</div>
+                                <button
+                                    class="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 font-semibold">Mettre
+                                    à niveau</button>
+                                <button
+                                    class="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 font-semibold">Télécharger
+                                    la politique d'accès</button>
                             </div>
                         </div>
                     </div>
 
                     <div>
                         <div class="flex flex-wrap gap-2 bg-white p-2 rounded-2xl shadow-sm">
-                            <button type="button" data-settings-tab="compte" class="settings-tab-button px-4 py-2 rounded-xl text-sm font-semibold bg-cyan-500 text-white">Compte</button>
-                            <button type="button" data-settings-tab="application" class="settings-tab-button px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 hover:text-gray-900">Application</button>
-                            <button type="button" data-settings-tab="notifications" class="settings-tab-button px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 hover:text-gray-900">Notifications</button>
-                            <button type="button" data-settings-tab="facturation" class="settings-tab-button px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 hover:text-gray-900">Facturation</button>
-                            <button type="button" data-settings-tab="acces" class="settings-tab-button px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 hover:text-gray-900 flex items-center gap-2">
+                            <button type="button" data-settings-tab="compte"
+                                class="settings-tab-button px-4 py-2 rounded-xl text-sm font-semibold bg-cyan-500 text-white">Compte</button>
+                            <button type="button" data-settings-tab="application"
+                                class="settings-tab-button px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 hover:text-gray-900">Application</button>
+                            <button type="button" data-settings-tab="notifications"
+                                class="settings-tab-button px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 hover:text-gray-900">Notifications</button>
+                            <button type="button" data-settings-tab="facturation"
+                                class="settings-tab-button px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 hover:text-gray-900">Facturation</button>
+                            <button type="button" data-settings-tab="acces"
+                                class="settings-tab-button px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 hover:text-gray-900 flex items-center gap-2">
                                 Accès
-                                <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-cyan-50 text-cyan-600 border border-cyan-100">Admin</span>
+                                <span
+                                    class="px-2 py-0.5 rounded-full text-xs font-semibold bg-cyan-50 text-cyan-600 border border-cyan-100">Admin</span>
                             </button>
                         </div>
                     </div>
@@ -686,16 +945,21 @@
                         <div data-settings-panel="compte" class="bg-white rounded-2xl shadow-sm p-6 space-y-6">
                             <div class="flex flex-col gap-1">
                                 <h2 class="text-xl font-semibold text-gray-900">Profil & Identité</h2>
-                                <p class="text-sm text-gray-500">Coordonnées de l'entreprise et du responsable légal.</p>
+                                <p class="text-sm text-gray-500">Coordonnées de l'entreprise et du responsable légal.
+                                </p>
                             </div>
                             <div class="grid gap-6 md:grid-cols-2">
                                 <div>
                                     <label class="text-sm font-medium text-gray-600">Nom de l'entreprise</label>
-                                    <input type="text" class="mt-2 w-full rounded-lg border-gray-200 focus:ring-cyan-400 focus:border-cyan-400" placeholder="Nom de votre entreprise" id="settings-company-name">
+                                    <input type="text"
+                                        class="mt-2 w-full rounded-lg border-gray-200 focus:ring-cyan-400 focus:border-cyan-400"
+                                        placeholder="Nom de votre entreprise" id="settings-company-name">
                                 </div>
                                 <div>
                                     <label class="text-sm font-medium text-gray-600">Fuseau horaire</label>
-                                    <select class="mt-2 w-full rounded-lg border-gray-200 focus:ring-cyan-400 focus:border-cyan-400" id="settings-timezone">
+                                    <select
+                                        class="mt-2 w-full rounded-lg border-gray-200 focus:ring-cyan-400 focus:border-cyan-400"
+                                        id="settings-timezone">
                                         <option value="Africa/Abidjan">(GMT) Afrique de l'Ouest</option>
                                         <option value="Europe/Paris">(GMT+1) Europe Centrale</option>
                                         <option value="America/New_York">(GMT-5) New York</option>
@@ -704,55 +968,73 @@
                                 </div>
                                 <div>
                                     <label class="text-sm font-medium text-gray-600">Email de support</label>
-                                    <input type="email" class="mt-2 w-full rounded-lg border-gray-200 focus:ring-cyan-400 focus:border-cyan-400" placeholder="support@entreprise.com">
+                                    <input type="email"
+                                        class="mt-2 w-full rounded-lg border-gray-200 focus:ring-cyan-400 focus:border-cyan-400"
+                                        placeholder="support@entreprise.com">
                                 </div>
                                 <div>
                                     <label class="text-sm font-medium text-gray-600">Numéro WhatsApp</label>
-                                    <input type="tel" class="mt-2 w-full rounded-lg border-gray-200 focus:ring-cyan-400 focus:border-cyan-400" placeholder="+225 xx xx xx xx">
+                                    <input type="tel"
+                                        class="mt-2 w-full rounded-lg border-gray-200 focus:ring-cyan-400 focus:border-cyan-400"
+                                        placeholder="+225 xx xx xx xx">
                                 </div>
                             </div>
                             <div class="flex flex-wrap gap-3">
-                                <button class="px-5 py-2.5 bg-cyan-500 text-white rounded-xl text-sm font-semibold hover:bg-cyan-600">Enregistrer</button>
-                                <button class="px-5 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50">Annuler</button>
+                                <button
+                                    class="px-5 py-2.5 bg-cyan-500 text-white rounded-xl text-sm font-semibold hover:bg-cyan-600">Enregistrer</button>
+                                <button
+                                    class="px-5 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50">Annuler</button>
                             </div>
                         </div>
 
                         <!-- Onglet Application -->
-                        <div data-settings-panel="application" class="bg-white rounded-2xl shadow-sm p-6 space-y-6 hidden">
+                        <div data-settings-panel="application"
+                            class="bg-white rounded-2xl shadow-sm p-6 space-y-6 hidden">
                             <div>
                                 <h2 class="text-xl font-semibold text-gray-900">Fonctionnalités activées</h2>
-                                <p class="text-sm text-gray-500">Activez uniquement les modules nécessaires à votre entreprise.</p>
+                                <p class="text-sm text-gray-500">Activez uniquement les modules nécessaires à votre
+                                    entreprise.</p>
                             </div>
                             <div class="space-y-4">
-                                <label class="flex items-start justify-between gap-4 p-4 rounded-xl border border-gray-200 hover:border-cyan-200 cursor-pointer">
+                                <label
+                                    class="flex items-start justify-between gap-4 p-4 rounded-xl border border-gray-200 hover:border-cyan-200 cursor-pointer">
                                     <div>
                                         <p class="text-sm font-semibold text-gray-800">Gestion multi-boutiques</p>
                                         <p class="text-sm text-gray-500">Synchroniser plusieurs points de vente.</p>
                                     </div>
-                                    <input type="checkbox" class="w-5 h-5 text-cyan-500 rounded border-gray-300 focus:ring-cyan-500" checked>
+                                    <input type="checkbox"
+                                        class="w-5 h-5 text-cyan-500 rounded border-gray-300 focus:ring-cyan-500"
+                                        checked>
                                 </label>
-                                <label class="flex items-start justify-between gap-4 p-4 rounded-xl border border-gray-200 hover:border-cyan-200 cursor-pointer">
+                                <label
+                                    class="flex items-start justify-between gap-4 p-4 rounded-xl border border-gray-200 hover:border-cyan-200 cursor-pointer">
                                     <div>
                                         <p class="text-sm font-semibold text-gray-800">Mode hors ligne</p>
                                         <p class="text-sm text-gray-500">Continuer les ventes même sans connexion.</p>
                                     </div>
-                                    <input type="checkbox" class="w-5 h-5 text-cyan-500 rounded border-gray-300 focus:ring-cyan-500">
+                                    <input type="checkbox"
+                                        class="w-5 h-5 text-cyan-500 rounded border-gray-300 focus:ring-cyan-500">
                                 </label>
-                                <label class="flex items-start justify-between gap-4 p-4 rounded-xl border border-gray-200 hover:border-cyan-200 cursor-pointer">
+                                <label
+                                    class="flex items-start justify-between gap-4 p-4 rounded-xl border border-gray-200 hover:border-cyan-200 cursor-pointer">
                                     <div>
                                         <p class="text-sm font-semibold text-gray-800">Synchronisation comptable</p>
                                         <p class="text-sm text-gray-500">Export automatique vers votre ERP.</p>
                                     </div>
-                                    <input type="checkbox" class="w-5 h-5 text-cyan-500 rounded border-gray-300 focus:ring-cyan-500" checked>
+                                    <input type="checkbox"
+                                        class="w-5 h-5 text-cyan-500 rounded border-gray-300 focus:ring-cyan-500"
+                                        checked>
                                 </label>
                             </div>
                             <div class="flex justify-end">
-                                <button class="px-5 py-2.5 bg-cyan-500 text-white rounded-xl text-sm font-semibold hover:bg-cyan-600">Sauvegarder</button>
+                                <button
+                                    class="px-5 py-2.5 bg-cyan-500 text-white rounded-xl text-sm font-semibold hover:bg-cyan-600">Sauvegarder</button>
                             </div>
                         </div>
 
                         <!-- Onglet Notifications -->
-                        <div data-settings-panel="notifications" class="bg-white rounded-2xl shadow-sm p-6 space-y-6 hidden">
+                        <div data-settings-panel="notifications"
+                            class="bg-white rounded-2xl shadow-sm p-6 space-y-6 hidden">
                             <div>
                                 <h2 class="text-xl font-semibold text-gray-900">Alertes & Notifications</h2>
                                 <p class="text-sm text-gray-500">Notifiez vos équipes lors des évènements critiques.</p>
@@ -766,8 +1048,10 @@
                                         </div>
                                         <label class="inline-flex items-center cursor-pointer">
                                             <input type="checkbox" class="sr-only peer" checked>
-                                            <span class="w-12 h-6 bg-gray-200 rounded-full peer peer-checked:bg-cyan-500 relative transition">
-                                                <span class="absolute top-0.5 left-1 w-5 h-5 bg-white rounded-full shadow transition-all peer-checked:translate-x-6"></span>
+                                            <span
+                                                class="w-12 h-6 bg-gray-200 rounded-full peer peer-checked:bg-cyan-500 relative transition">
+                                                <span
+                                                    class="absolute top-0.5 left-1 w-5 h-5 bg-white rounded-full shadow transition-all peer-checked:translate-x-6"></span>
                                             </span>
                                         </label>
                                     </div>
@@ -781,8 +1065,10 @@
                                         </div>
                                         <label class="inline-flex items-center cursor-pointer">
                                             <input type="checkbox" class="sr-only peer" checked>
-                                            <span class="w-12 h-6 bg-gray-200 rounded-full peer peer-checked:bg-cyan-500 relative transition">
-                                                <span class="absolute top-0.5 left-1 w-5 h-5 bg-white rounded-full shadow transition-all peer-checked:translate-x-6"></span>
+                                            <span
+                                                class="w-12 h-6 bg-gray-200 rounded-full peer peer-checked:bg-cyan-500 relative transition">
+                                                <span
+                                                    class="absolute top-0.5 left-1 w-5 h-5 bg-white rounded-full shadow transition-all peer-checked:translate-x-6"></span>
                                             </span>
                                         </label>
                                     </div>
@@ -795,8 +1081,10 @@
                                         </div>
                                         <label class="inline-flex items-center cursor-pointer">
                                             <input type="checkbox" class="sr-only peer">
-                                            <span class="w-12 h-6 bg-gray-200 rounded-full peer peer-checked:bg-cyan-500 relative transition">
-                                                <span class="absolute top-0.5 left-1 w-5 h-5 bg-white rounded-full shadow transition-all peer-checked:translate-x-6"></span>
+                                            <span
+                                                class="w-12 h-6 bg-gray-200 rounded-full peer peer-checked:bg-cyan-500 relative transition">
+                                                <span
+                                                    class="absolute top-0.5 left-1 w-5 h-5 bg-white rounded-full shadow transition-all peer-checked:translate-x-6"></span>
                                             </span>
                                         </label>
                                     </div>
@@ -809,23 +1097,29 @@
                                         </div>
                                         <label class="inline-flex items-center cursor-pointer">
                                             <input type="checkbox" class="sr-only peer" checked>
-                                            <span class="w-12 h-6 bg-gray-200 rounded-full peer peer-checked:bg-cyan-500 relative transition">
-                                                <span class="absolute top-0.5 left-1 w-5 h-5 bg-white rounded-full shadow transition-all peer-checked:translate-x-6"></span>
+                                            <span
+                                                class="w-12 h-6 bg-gray-200 rounded-full peer peer-checked:bg-cyan-500 relative transition">
+                                                <span
+                                                    class="absolute top-0.5 left-1 w-5 h-5 bg-white rounded-full shadow transition-all peer-checked:translate-x-6"></span>
                                             </span>
                                         </label>
                                     </div>
                                 </div>
                             </div>
                             <div class="flex justify-end">
-                                <button class="px-5 py-2.5 bg-cyan-500 text-white rounded-xl text-sm font-semibold hover:bg-cyan-600">Mettre à jour</button>
+                                <button
+                                    class="px-5 py-2.5 bg-cyan-500 text-white rounded-xl text-sm font-semibold hover:bg-cyan-600">Mettre
+                                    à jour</button>
                             </div>
                         </div>
 
                         <!-- Onglet Facturation -->
-                        <div data-settings-panel="facturation" class="bg-white rounded-2xl shadow-sm p-6 space-y-6 hidden">
+                        <div data-settings-panel="facturation"
+                            class="bg-white rounded-2xl shadow-sm p-6 space-y-6 hidden">
                             <div>
                                 <h2 class="text-xl font-semibold text-gray-900">Facturation & moyens de paiement</h2>
-                                <p class="text-sm text-gray-500">Visualisez votre consommation et vos prochaines échéances.</p>
+                                <p class="text-sm text-gray-500">Visualisez votre consommation et vos prochaines
+                                    échéances.</p>
                             </div>
                             <div class="grid md:grid-cols-2 gap-6">
                                 <div class="p-5 border border-gray-200 rounded-2xl space-y-4">
@@ -834,10 +1128,15 @@
                                             <p class="text-sm uppercase text-gray-400">Prochaine facture</p>
                                             <p class="text-2xl font-semibold text-gray-800">24 000 F CFA</p>
                                         </div>
-                                        <span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-50 text-green-700">Le 01/12</span>
+                                        <span
+                                            class="px-3 py-1 text-xs font-semibold rounded-full bg-green-50 text-green-700">Le
+                                            01/12</span>
                                     </div>
-                                    <p class="text-sm text-gray-500">Basée sur 3 boutiques actives et 7 utilisateurs.</p>
-                                    <button class="px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50">Télécharger la dernière facture</button>
+                                    <p class="text-sm text-gray-500">Basée sur 3 boutiques actives et 7 utilisateurs.
+                                    </p>
+                                    <button
+                                        class="px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50">Télécharger
+                                        la dernière facture</button>
                                 </div>
                                 <div class="p-5 border border-gray-200 rounded-2xl space-y-4">
                                     <div>
@@ -846,13 +1145,17 @@
                                         <p class="text-sm text-gray-500">Titulaire : Turibe Bayomi</p>
                                     </div>
                                     <div class="flex gap-3">
-                                        <button class="px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50">Modifier</button>
-                                        <button class="px-4 py-2 rounded-xl border border-red-200 text-sm font-semibold text-red-600 hover:bg-red-50">Supprimer</button>
+                                        <button
+                                            class="px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50">Modifier</button>
+                                        <button
+                                            class="px-4 py-2 rounded-xl border border-red-200 text-sm font-semibold text-red-600 hover:bg-red-50">Supprimer</button>
                                     </div>
                                 </div>
                             </div>
                             <div class="flex justify-end">
-                                <button class="px-5 py-2.5 bg-cyan-500 text-white rounded-xl text-sm font-semibold hover:bg-cyan-600">Ajouter un moyen de paiement</button>
+                                <button
+                                    class="px-5 py-2.5 bg-cyan-500 text-white rounded-xl text-sm font-semibold hover:bg-cyan-600">Ajouter
+                                    un moyen de paiement</button>
                             </div>
                         </div>
 
@@ -861,9 +1164,12 @@
                             <div class="flex flex-col gap-1">
                                 <div class="flex items-center gap-3">
                                     <h2 class="text-xl font-semibold text-gray-900">Gestion des accès</h2>
-                                    <span class="px-2.5 py-0.5 text-xs rounded-full bg-cyan-50 text-cyan-600 border border-cyan-100">Admins uniquement</span>
+                                    <span
+                                        class="px-2.5 py-0.5 text-xs rounded-full bg-cyan-50 text-cyan-600 border border-cyan-100">Admins
+                                        uniquement</span>
                                 </div>
-                                <p class="text-sm text-gray-500">Définissez les rôles de vos collaborateurs et choisissez les modules qu'ils peuvent voir.</p>
+                                <p class="text-sm text-gray-500">Définissez les rôles de vos collaborateurs et
+                                    choisissez les modules qu'ils peuvent voir.</p>
                             </div>
                             <div class="grid md:grid-cols-3 gap-4">
                                 <div class="p-4 rounded-2xl border border-gray-200">
@@ -883,28 +1189,38 @@
                             <div class="p-4 rounded-2xl border border-gray-200 space-y-4">
                                 <div>
                                     <p class="font-semibold text-gray-800">Ajouter un collaborateur</p>
-                                    <p class="text-sm text-gray-500">Générez un code d'accès personnel et attribuez un rôle immédiatement.</p>
+                                    <p class="text-sm text-gray-500">Générez un code d'accès personnel et attribuez un
+                                        rôle immédiatement.</p>
                                 </div>
                                 <form id="access-add-member-form" class="grid md:grid-cols-4 gap-4">
-                                    <input type="text" id="access-member-name" placeholder="Nom complet" class="col-span-2 md:col-span-1 rounded-xl border-gray-200 focus:ring-cyan-400 focus:border-cyan-400" required>
-                                    <input type="email" id="access-member-email" placeholder="Email professionnel" class="col-span-2 md:col-span-1 rounded-xl border-gray-200 focus:ring-cyan-400 focus:border-cyan-400" required>
-                                    <select id="access-member-role" class="col-span-2 md:col-span-1 rounded-xl border-gray-200 focus:ring-cyan-400 focus:border-cyan-400">
+                                    <input type="text" id="access-member-name" placeholder="Nom complet"
+                                        class="col-span-2 md:col-span-1 rounded-xl border-gray-200 focus:ring-cyan-400 focus:border-cyan-400"
+                                        required>
+                                    <input type="email" id="access-member-email" placeholder="Email professionnel"
+                                        class="col-span-2 md:col-span-1 rounded-xl border-gray-200 focus:ring-cyan-400 focus:border-cyan-400"
+                                        required>
+                                    <select id="access-member-role"
+                                        class="col-span-2 md:col-span-1 rounded-xl border-gray-200 focus:ring-cyan-400 focus:border-cyan-400">
                                         <option value="manager">Manager</option>
                                         <option value="vendeur">Vendeur</option>
                                         <option value="consultation">Consultation</option>
                                     </select>
-                                    <button type="submit" class="col-span-2 md:col-span-1 bg-cyan-500 text-white rounded-xl font-semibold hover:bg-cyan-600">Générer le code</button>
+                                    <button type="submit"
+                                        class="col-span-2 md:col-span-1 bg-cyan-500 text-white rounded-xl font-semibold hover:bg-cyan-600">Générer
+                                        le code</button>
                                 </form>
                             </div>
 
                             <div class="space-y-3">
                                 <div class="flex items-center justify-between">
                                     <p class="font-semibold text-gray-800">Collaborateurs actifs</p>
-                                    <span class="text-sm text-gray-500">Cliquez sur un module pour l'activer/désactiver.</span>
+                                    <span class="text-sm text-gray-500">Cliquez sur un module pour
+                                        l'activer/désactiver.</span>
                                 </div>
                                 <div class="overflow-x-auto border border-gray-200 rounded-2xl">
                                     <table class="min-w-full divide-y divide-gray-200">
-                                        <thead class="bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                        <thead
+                                            class="bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
                                             <tr>
                                                 <th class="px-4 py-3">Nom</th>
                                                 <th class="px-4 py-3">Email</th>
@@ -914,9 +1230,11 @@
                                                 <th class="px-4 py-3 text-right">Actions</th>
                                             </tr>
                                         </thead>
-                                        <tbody id="access-members-tbody" class="divide-y divide-gray-100 text-sm text-gray-700">
+                                        <tbody id="access-members-tbody"
+                                            class="divide-y divide-gray-100 text-sm text-gray-700">
                                             <tr>
-                                                <td colspan="6" class="px-4 py-6 text-center text-gray-400">Chargement des collaborateurs...</td>
+                                                <td colspan="6" class="px-4 py-6 text-center text-gray-400">Chargement
+                                                    des collaborateurs...</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -933,42 +1251,62 @@
     <!-- 
       MODAL "AJOUTER UN NOUVEAU PRODUIT"
     -->
-    <div id="new-product-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+    <div id="new-product-modal"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 m-4">
             <!-- En-tête -->
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold text-gray-800">Ajouter un nouveau produit au magasin</h2>
                 <button id="close-new-product-modal-button" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
                 </button>
             </div>
             <!-- Formulaire -->
             <form id="new-product-form">
                 <div class="space-y-4">
                     <div>
-                        <label for="product-name" class="block text-sm font-medium text-gray-700">Nom du Produit *</label>
-                        <input type="text" id="product-name" placeholder="ex: Écran 27 pouces" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
+                        <label for="product-name" class="block text-sm font-medium text-gray-700">Nom du Produit
+                            *</label>
+                        <input type="text" id="product-name" placeholder="ex: Écran 27 pouces"
+                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                            required>
                     </div>
                     <div>
-                        <label for="product-description" class="block text-sm font-medium text-gray-700">Description</label>
-                        <textarea id="product-description" placeholder="Une courte description du produit" rows="3" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"></textarea>
+                        <label for="product-description"
+                            class="block text-sm font-medium text-gray-700">Description</label>
+                        <textarea id="product-description" placeholder="Une courte description du produit" rows="3"
+                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"></textarea>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label for="product-cost" class="block text-sm font-medium text-gray-700">Coût d'Achat *</label>
-                            <input type="number" id="product-cost" placeholder="0" value="0" min="0" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
+                            <label for="product-cost" class="block text-sm font-medium text-gray-700">Coût d'Achat
+                                *</label>
+                            <input type="number" id="product-cost" placeholder="0" value="0" min="0"
+                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                                required>
                         </div>
                         <div>
-                            <label for="product-currency" class="block text-sm font-medium text-gray-700">Devise *</label>
-                            <input type="text" id="product-currency" placeholder="EUR" value="EUR" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
+                            <label for="product-currency" class="block text-sm font-medium text-gray-700">Devise
+                                *</label>
+                            <input type="text" id="product-currency" placeholder="EUR" value="EUR"
+                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                                required>
                         </div>
                     </div>
                     <div>
-                        <label for="product-quantity" class="block text-sm font-medium text-gray-700">Quantité Initiale *</label>
-                        <input type="number" id="product-quantity" placeholder="0" value="0" min="0" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
+                        <label for="product-quantity" class="block text-sm font-medium text-gray-700">Quantité Initiale
+                            *</label>
+                        <input type="number" id="product-quantity" placeholder="0" value="0" min="0"
+                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                            required>
                     </div>
                     <p id="new-product-error" class="text-red-500 text-sm mt-2 hidden"></p>
-                    <button type="submit" id="new-product-submit-button" class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
+                    <button type="submit" id="new-product-submit-button"
+                        class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
                         Ajouter le produit
                     </button>
                 </div>
@@ -984,28 +1322,40 @@
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold text-gray-800">Enregistrer une entrée</h2>
                 <button id="close-entry-modal-button" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
                 </button>
             </div>
             <form id="entry-form">
                 <div class="space-y-4">
                     <div>
-                        <label for="entry-product-select" class="block text-sm font-medium text-gray-700">Produit *</label>
-                        <select id="entry-product-select" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
+                        <label for="entry-product-select" class="block text-sm font-medium text-gray-700">Produit
+                            *</label>
+                        <select id="entry-product-select"
+                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                            required>
                             <option value="">Sélectionnez un produit</option>
                             <!-- Options remplies par JS -->
                         </select>
                     </div>
                     <div>
                         <label for="entry-quantity" class="block text-sm font-medium text-gray-700">Quantité *</label>
-                        <input type="number" id="entry-quantity" placeholder="0" min="1" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
+                        <input type="number" id="entry-quantity" placeholder="0" min="1"
+                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                            required>
                     </div>
                     <div>
-                        <label for="entry-comment" class="block text-sm font-medium text-gray-700">Commentaire (Optionnel)</label>
-                        <textarea id="entry-comment" placeholder="ex: Arrivage fournisseur..." rows="3" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"></textarea>
+                        <label for="entry-comment" class="block text-sm font-medium text-gray-700">Commentaire
+                            (Optionnel)</label>
+                        <textarea id="entry-comment" placeholder="ex: Arrivage fournisseur..." rows="3"
+                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"></textarea>
                     </div>
                     <p id="entry-error" class="text-red-500 text-sm mt-2 hidden"></p>
-                    <button type="submit" id="entry-submit-button" class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
+                    <button type="submit" id="entry-submit-button"
+                        class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
                         Enregistrer l'entrée
                     </button>
                 </div>
@@ -1021,28 +1371,40 @@
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold text-gray-800">Enregistrer une sortie</h2>
                 <button id="close-exit-modal-button" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
                 </button>
             </div>
             <form id="exit-form">
                 <div class="space-y-4">
                     <div>
-                        <label for="exit-product-select" class="block text-sm font-medium text-gray-700">Produit *</label>
-                        <select id="exit-product-select" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
+                        <label for="exit-product-select" class="block text-sm font-medium text-gray-700">Produit
+                            *</label>
+                        <select id="exit-product-select"
+                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                            required>
                             <option value="">Sélectionnez un produit</option>
                             <!-- Options remplies par JS -->
                         </select>
                     </div>
                     <div>
                         <label for="exit-quantity" class="block text-sm font-medium text-gray-700">Quantité *</label>
-                        <input type="number" id="exit-quantity" placeholder="0" min="1" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
+                        <input type="number" id="exit-quantity" placeholder="0" min="1"
+                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                            required>
                     </div>
                     <div>
-                        <label for="exit-comment" class="block text-sm font-medium text-gray-700">Commentaire (Optionnel)</label>
-                        <textarea id="exit-comment" placeholder="ex: Transfert vers boutique..." rows="3" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"></textarea>
+                        <label for="exit-comment" class="block text-sm font-medium text-gray-700">Commentaire
+                            (Optionnel)</label>
+                        <textarea id="exit-comment" placeholder="ex: Transfert vers boutique..." rows="3"
+                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"></textarea>
                     </div>
                     <p id="exit-error" class="text-red-500 text-sm mt-2 hidden"></p>
-                    <button type="submit" id="exit-submit-button" class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
+                    <button type="submit" id="exit-submit-button"
+                        class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
                         Enregistrer la sortie
                     </button>
                 </div>
@@ -1058,14 +1420,21 @@
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold text-gray-800">Transférer un article depuis le Magasin</h2>
                 <button id="close-transfer-modal-button" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
                 </button>
             </div>
             <form id="transfer-form">
                 <div class="space-y-4">
                     <div>
-                        <label for="transfer-product-select" class="block text-sm font-medium text-gray-700">Article Source (depuis le Magasin) *</label>
-                        <select id="transfer-product-select" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
+                        <label for="transfer-product-select" class="block text-sm font-medium text-gray-700">Article
+                            Source (depuis le Magasin) *</label>
+                        <select id="transfer-product-select"
+                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                            required>
                             <option value="">Sélectionnez un article à transférer...</option>
                             <!-- Options remplies par JS -->
                         </select>
@@ -1079,32 +1448,46 @@
                     </div>
 
                     <div>
-                        <label for="transfer-selling-price" class="block text-sm font-medium text-gray-700">Prix de Vente (pour la Boutique) *</label>
-                        <input type="number" id="transfer-selling-price" placeholder="110000" min="0" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
+                        <label for="transfer-selling-price" class="block text-sm font-medium text-gray-700">Prix de
+                            Vente (pour la Boutique) *</label>
+                        <input type="number" id="transfer-selling-price" placeholder="110000" min="0"
+                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                            required>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label for="transfer-quantity" class="block text-sm font-medium text-gray-700">Stock à Transférer *</label>
-                            <input type="number" id="transfer-quantity" placeholder="1" min="1" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
+                            <label for="transfer-quantity" class="block text-sm font-medium text-gray-700">Stock à
+                                Transférer *</label>
+                            <input type="number" id="transfer-quantity" placeholder="1" min="1"
+                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                                required>
                         </div>
                         <div>
-                            <label for="transfer-alert-threshold" class="block text-sm font-medium text-gray-700">Seuil d'alerte</label>
-                            <input type="number" id="transfer-alert-threshold" placeholder="10" value="10" min="0" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400">
+                            <label for="transfer-alert-threshold" class="block text-sm font-medium text-gray-700">Seuil
+                                d'alerte</label>
+                            <input type="number" id="transfer-alert-threshold" placeholder="10" value="10" min="0"
+                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400">
                         </div>
                     </div>
 
-                    <div id="transfer-stock-warning" class="hidden flex items-center p-3 bg-yellow-100 border border-yellow-200 rounded-lg">
-                        <svg class="w-5 h-5 text-yellow-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <div id="transfer-stock-warning"
+                        class="hidden flex items-center p-3 bg-yellow-100 border border-yellow-200 rounded-lg">
+                        <svg class="w-5 h-5 text-yellow-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
                         <p class="text-sm text-yellow-700">Cette valeur doit être inférieure ou égale à X.</p>
                     </div>
 
                     <p class="text-xs text-gray-500">
-                        Si un article de boutique lié à cette source existe déjà, le stock sera fusionné. Sinon, un nouvel article sera créé.
+                        Si un article de boutique lié à cette source existe déjà, le stock sera fusionné. Sinon, un
+                        nouvel article sera créé.
                     </p>
 
                     <p id="transfer-error" class="text-red-500 text-sm mt-2 hidden"></p>
-                    <button type="submit" id="transfer-submit-button" class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
+                    <button type="submit" id="transfer-submit-button"
+                        class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
                         Transférer et Créer/Mettre à jour l'article
                     </button>
                 </div>
@@ -1120,14 +1503,21 @@
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold text-gray-800">Réapprovisionner un article</h2>
                 <button id="close-restock-modal-button" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
                 </button>
             </div>
             <form id="restock-form">
                 <div class="space-y-4">
                     <div>
-                        <label for="restock-product-select" class="block text-sm font-medium text-gray-700">Produit de la Boutique *</label>
-                        <select id="restock-product-select" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
+                        <label for="restock-product-select" class="block text-sm font-medium text-gray-700">Produit de
+                            la Boutique *</label>
+                        <select id="restock-product-select"
+                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                            required>
                             <option value="">Sélectionnez un produit à réapprovisionner</option>
                             <!-- Options remplies par JS -->
                         </select>
@@ -1142,21 +1532,31 @@
                     </div>
 
                     <div>
-                        <label for="restock-quantity" class="block text-sm font-medium text-gray-700">Quantité à Ajouter (depuis le Magasin) *</label>
-                        <input type="number" id="restock-quantity" placeholder="1" min="1" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" required>
+                        <label for="restock-quantity" class="block text-sm font-medium text-gray-700">Quantité à Ajouter
+                            (depuis le Magasin) *</label>
+                        <input type="number" id="restock-quantity" placeholder="1" min="1"
+                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                            required>
                     </div>
 
-                    <div id="restock-stock-warning" class="hidden flex items-center p-3 bg-yellow-100 border border-yellow-200 rounded-lg">
-                        <svg class="w-5 h-5 text-yellow-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <div id="restock-stock-warning"
+                        class="hidden flex items-center p-3 bg-yellow-100 border border-yellow-200 rounded-lg">
+                        <svg class="w-5 h-5 text-yellow-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
                         <p class="text-sm text-yellow-700">Cette valeur doit être inférieure ou égale à X.</p>
                     </div>
 
                     <div>
-                        <label for="restock-comment" class="block text-sm font-medium text-gray-700">Commentaire (Optionnel)</label>
-                        <textarea id="restock-comment" placeholder="ex: Réapprovisionnement hebdomadaire" rows="3" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"></textarea>
+                        <label for="restock-comment" class="block text-sm font-medium text-gray-700">Commentaire
+                            (Optionnel)</label>
+                        <textarea id="restock-comment" placeholder="ex: Réapprovisionnement hebdomadaire" rows="3"
+                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"></textarea>
                     </div>
                     <p id="restock-error" class="text-red-500 text-sm mt-2 hidden"></p>
-                    <button type="submit" id="restock-submit-button" class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
+                    <button type="submit" id="restock-submit-button"
+                        class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
                         Confirmer le réapprovisionnement
                     </button>
                 </div>
@@ -1169,7 +1569,10 @@
     -->
     <div id="success-toast" class="fixed bottom-5 right-5 z-50">
         <div class="flex items-center bg-green-500 text-white text-sm font-medium px-4 py-3 rounded-lg shadow-lg">
-            <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
             <span id="success-toast-message">Opération réussie!</span>
         </div>
     </div>
@@ -1178,16 +1581,16 @@
     <script type="module">
         // --- SDK Firebase ---
         import { initializeApp } from "firebase/app";
-        import { 
-            getAuth, 
-            createUserWithEmailAndPassword, 
-            signInWithEmailAndPassword, 
-            signOut, 
-            onAuthStateChanged 
+        import {
+            getAuth,
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword,
+            signOut,
+            onAuthStateChanged
         } from "firebase/auth";
-        import { 
-            getDatabase, 
-            ref, 
+        import {
+            getDatabase,
+            ref,
             set,
             push,
             onValue,
@@ -1265,20 +1668,23 @@
             let isLoginView = true;
             let currentUser = null;
             let currentUserData = null;
-            let dbBasePath = ''; 
+            let dbBasePath = '';
 
             const appData = { storeProducts: {}, shopStock: {}, salesHistory: {} };
-            let isSidebarOpen = false; 
+            let isSidebarOpen = false;
             let isSidebarCollapsed = false;
             let isCodeLoginMode = false;
             let isCodeSession = false;
 
-        
+
             let storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, salesHistoryListener, companyMembersListener;
             let storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, salesHistoryRef, companyMembersRef;
 
             const accessModules = ['Tableau de bord', 'Ventes', 'Stock Boutique', 'Mon Magasin', 'Statistiques', 'Paramètres'];
             let teamMembersState = [];
+
+            // Cart state
+            let cartItems = [];
 
             // Références DOM
             const authPageContainer = document.getElementById('auth-page-container');
@@ -1341,6 +1747,16 @@
             const salesHistoryPlaceholder = document.getElementById('sales-history-placeholder');
             const salesHistoryTableContainer = document.getElementById('sales-history-table-container');
             const salesHistoryTbody = document.getElementById('sales-history-tbody');
+
+            // Cart elements
+            const addToCartButton = document.getElementById('add-to-cart-button');
+            const cartSection = document.getElementById('cart-section');
+            const cartCount = document.getElementById('cart-count');
+            const cartItemsTbody = document.getElementById('cart-items-tbody');
+            const cartTotal = document.getElementById('cart-total');
+            const validateCartButton = document.getElementById('validate-cart-button');
+            const clearCartButton = document.getElementById('clear-cart-button');
+
 
             // Modals
             const openNewProductModalButton = document.getElementById('open-new-product-modal-button');
@@ -1416,12 +1832,12 @@
             }
 
             function formatCurrency(value, currency = 'XOF') {
-                if(isNaN(value) || value === null) value = 0;
+                if (isNaN(value) || value === null) value = 0;
                 const displayCurrency = currency.toUpperCase() === 'CFA' ? 'XOF' : currency;
                 try {
                     return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: displayCurrency, minimumFractionDigits: 0 }).format(value);
                 } catch (e) {
-                     return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', minimumFractionDigits: 0 }).format(value);
+                    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', minimumFractionDigits: 0 }).format(value);
                 }
             }
 
@@ -1829,7 +2245,7 @@
             function renderStoreProducts(searchTerm = '') {
                 const products = appData.storeProducts;
                 const normalizedSearch = searchTerm.toLowerCase();
-                const filteredProducts = Object.values(products).filter(product => 
+                const filteredProducts = Object.values(products).filter(product =>
                     product.name?.toLowerCase().includes(normalizedSearch) || product.description?.toLowerCase().includes(normalizedSearch)
                 );
 
@@ -2035,8 +2451,8 @@
                     if (layoutContainer) layoutContainer.classList.remove('hidden');
                     if (currentUser && userEmailDisplay) userEmailDisplay.textContent = currentUser.email;
                     if (currentUserData) {
-                        if(userNameDisplay) userNameDisplay.textContent = currentUserData.fullName || 'Utilisateur';
-                        if(userCompanyDisplay) userCompanyDisplay.textContent = currentUserData.companyName || '';
+                        if (userNameDisplay) userNameDisplay.textContent = currentUserData.fullName || 'Utilisateur';
+                        if (userCompanyDisplay) userCompanyDisplay.textContent = currentUserData.companyName || '';
                     }
                     if (mobilePageTitle) mobilePageTitle.textContent = currentPage;
                 } else {
@@ -2065,15 +2481,15 @@
             function updateAuthFormView() {
                 updateLoginModeUI();
                 if (isLoginView) {
-                    if(loginForm) loginForm.classList.remove('hidden');
-                    if(signupForm) signupForm.classList.add('hidden');
-                    if(authToggleLogin) authToggleLogin.classList.add('bg-white', 'shadow', 'text-gray-800');
-                    if(authToggleSignup) authToggleSignup.classList.remove('bg-white', 'shadow', 'text-gray-800');
+                    if (loginForm) loginForm.classList.remove('hidden');
+                    if (signupForm) signupForm.classList.add('hidden');
+                    if (authToggleLogin) authToggleLogin.classList.add('bg-white', 'shadow', 'text-gray-800');
+                    if (authToggleSignup) authToggleSignup.classList.remove('bg-white', 'shadow', 'text-gray-800');
                 } else {
-                    if(loginForm) loginForm.classList.add('hidden');
-                    if(signupForm) signupForm.classList.remove('hidden');
-                    if(authToggleSignup) authToggleSignup.classList.add('bg-white', 'shadow', 'text-gray-800');
-                    if(authToggleLogin) authToggleLogin.classList.remove('bg-white', 'shadow', 'text-gray-800');
+                    if (loginForm) loginForm.classList.add('hidden');
+                    if (signupForm) signupForm.classList.remove('hidden');
+                    if (authToggleSignup) authToggleSignup.classList.add('bg-white', 'shadow', 'text-gray-800');
+                    if (authToggleLogin) authToggleLogin.classList.remove('bg-white', 'shadow', 'text-gray-800');
                 }
             }
 
@@ -2092,6 +2508,219 @@
                     salesTotalAmount.value = formatCurrency(total, currency);
                 }
             }
+
+            // --- FONCTIONS DE GESTION DU PANIER ---
+            function addToCart() {
+                const shopProductId = salesProductSelect.value;
+                const quantity = parseInt(salesQuantityInput.value, 10);
+
+                if (!shopProductId || isNaN(quantity) || quantity <= 0) {
+                    if (salesError) {
+                        salesError.textContent = "Veuillez sélectionner un produit et une quantité valide.";
+                        salesError.classList.remove('hidden');
+                        setTimeout(() => salesError.classList.add('hidden'), 3000);
+                    }
+                    return;
+                }
+
+                const shopProduct = appData.shopStock[shopProductId];
+                if (!shopProduct) return;
+
+                // Vérifier si le produit est déjà dans le panier
+                const existingItemIndex = cartItems.findIndex(item => item.shopProductId === shopProductId);
+
+                if (existingItemIndex !== -1) {
+                    // Augmenter la quantité du produit existant
+                    cartItems[existingItemIndex].quantity += quantity;
+                } else {
+                    // Ajouter un nouveau produit au panier
+                    const currency = appData.storeProducts[shopProduct.sourceProductId]?.currency || 'CFA';
+                    cartItems.push({
+                        shopProductId,
+                        name: shopProduct.name,
+                        sellingPrice: shopProduct.sellingPrice,
+                        quantity,
+                        currency
+                    });
+                }
+
+                // Réinitialiser le formulaire
+                salesProductSelect.value = '';
+                salesQuantityInput.value = '1';
+                updateSalesTotal();
+
+                // Mettre à jour l'affichage du panier
+                renderCart();
+                showSuccessToast('Article ajouté au panier');
+            }
+
+            function removeFromCart(index) {
+                cartItems.splice(index, 1);
+                renderCart();
+                showSuccessToast('Article retiré du panier');
+            }
+
+            function updateCartQuantity(index, newQty) {
+                if (newQty <= 0) {
+                    removeFromCart(index);
+                } else {
+                    cartItems[index].quantity = newQty;
+                    renderCart();
+                }
+            }
+
+            function calculateCartTotal() {
+                return cartItems.reduce((total, item) => total + (item.sellingPrice * item.quantity), 0);
+            }
+
+            function renderCart() {
+                if (cartItems.length === 0) {
+                    cartSection.classList.add('hidden');
+                    return;
+                }
+
+                cartSection.classList.remove('hidden');
+                cartCount.textContent = cartItems.length;
+
+                let html = '';
+                cartItems.forEach((item, index) => {
+                    const subtotal = item.sellingPrice * item.quantity;
+                    html += `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${item.name}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatCurrency(item.sellingPrice, item.currency)}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <div class="flex items-center gap-2">
+                                    <button type="button" onclick="updateCartQuantity(${index}, ${item.quantity - 1})" class="text-gray-500 hover:text-gray-700">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9"></path>
+                                        </svg>
+                                    </button>
+                                    <input type="number" value="${item.quantity}" min="1" 
+                                        onchange="updateCartQuantity(${index}, parseInt(this.value))"
+                                        class="w-16 text-center border border-gray-300 rounded px-2 py-1 text-sm">
+                                    <button type="button" onclick="updateCartQuantity(${index}, ${item.quantity + 1})" class="text-gray-500 hover:text-gray-700">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">${formatCurrency(subtotal, item.currency)}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                <button type="button" onclick="removeFromCart(${index})" class="text-red-500 hover:text-red-700">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
+                            </td>
+                        </tr>`;
+                });
+
+                cartItemsTbody.innerHTML = html;
+
+                // Utiliser la devise du premier article pour le total
+                const currency = cartItems[0]?.currency || 'CFA';
+                const total = calculateCartTotal();
+                cartTotal.textContent = formatCurrency(total, currency);
+            }
+
+            function clearCart() {
+                if (cartItems.length === 0) return;
+
+                if (confirm('Voulez-vous vraiment vider le panier ?')) {
+                    cartItems = [];
+                    renderCart();
+                    showSuccessToast('Panier vidé');
+                }
+            }
+
+            async function validateCart() {
+                if (!currentUser || !dbBasePath) return;
+                if (cartItems.length === 0) {
+                    alert('Le panier est vide !');
+                    return;
+                }
+
+                // Vérifier le stock disponible pour chaque article
+                for (const item of cartItems) {
+                    const shopProduct = appData.shopStock[item.shopProductId];
+                    if (!shopProduct || item.quantity > shopProduct.quantityInShop) {
+                        alert(`Stock insuffisant pour ${item.name}. Disponible: ${shopProduct?.quantityInShop || 0}`);
+                        return;
+                    }
+                }
+
+                try {
+                    if (validateCartButton) validateCartButton.disabled = true;
+
+                    const updates = {};
+                    const now = new Date().toISOString();
+                    const sellerName = currentUserData?.fullName || currentUser.email;
+                    const comment = salesComment.value || "";
+
+                    // Traiter chaque article du panier
+                    for (const item of cartItems) {
+                        const shopProduct = appData.shopStock[item.shopProductId];
+                        const shopNewStock = shopProduct.quantityInShop - item.quantity;
+
+                        // Mettre à jour le stock de la boutique
+                        updates[`${dbBasePath}/shopStock/${item.shopProductId}/quantityInShop`] = shopNewStock;
+
+                        // Ajouter un mouvement de stock
+                        const shopMoveKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
+                        updates[`${dbBasePath}/shopMovements/${shopMoveKey}`] = {
+                            id: shopMoveKey,
+                            shopProductId: item.shopProductId,
+                            productName: item.name,
+                            type: "Sortie",
+                            quantityChange: item.quantity,
+                            oldStock: shopProduct.quantityInShop,
+                            newStock: shopNewStock,
+                            comment: `Vente groupée: ${comment}`,
+                            date: now,
+                            userEmail: currentUser.email
+                        };
+
+                        // Ajouter une vente à l'historique
+                        const saleKey = push(ref(db, `${dbBasePath}/salesHistory`)).key;
+                        updates[`${dbBasePath}/salesHistory/${saleKey}`] = {
+                            id: saleKey,
+                            shopProductId: item.shopProductId,
+                            productName: item.name,
+                            quantity: item.quantity,
+                            sellingPrice: item.sellingPrice,
+                            totalAmount: item.sellingPrice * item.quantity,
+                            sellerName,
+                            comment,
+                            date: now
+                        };
+                    }
+
+                    await update(ref(db), updates);
+
+                    const totalAmount = calculateCartTotal();
+                    showSuccessToast(`Vente groupée enregistrée ! Total: ${formatCurrency(totalAmount)}`);
+
+                    // Vider le panier et réinitialiser le formulaire
+                    cartItems = [];
+                    renderCart();
+                    salesComment.value = '';
+                } catch (error) {
+                    console.error(error);
+                    alert('Une erreur est survenue lors de la validation de la vente');
+                } finally {
+                    if (validateCartButton) validateCartButton.disabled = false;
+                }
+            }
+
+            // Exposer les fonctions pour les boutons et inputs inline
+            window.addToCart = addToCart;
+            window.removeFromCart = removeFromCart;
+            window.updateCartQuantity = updateCartQuantity;
+            window.clearCart = clearCart;
+            window.validateCart = validateCart;
+
 
             function updateSidebarMobileState() {
                 if (isSidebarOpen) {
@@ -2117,29 +2746,29 @@
             }
 
             // --- ÉCOUTEURS POUR LA SUPPRESSION ---
-            if(storeProductsTbody) {
+            if (storeProductsTbody) {
                 storeProductsTbody.addEventListener('click', async (e) => {
                     const btn = e.target.closest('button.delete-icon');
-                    if(btn && btn.dataset.productId) {
-                        if(confirm('Supprimer ce produit du magasin définitivement ?')) {
+                    if (btn && btn.dataset.productId) {
+                        if (confirm('Supprimer ce produit du magasin définitivement ?')) {
                             try {
                                 await remove(ref(db, `${dbBasePath}/storeProducts/${btn.dataset.productId}`));
                                 showSuccessToast('Produit supprimé du magasin');
-                            } catch(err) { console.error(err); }
+                            } catch (err) { console.error(err); }
                         }
                     }
                 });
             }
 
-            if(shopStockTbody) {
+            if (shopStockTbody) {
                 shopStockTbody.addEventListener('click', async (e) => {
                     const btn = e.target.closest('button.delete-icon');
-                    if(btn && btn.dataset.stockId) {
-                        if(confirm('Supprimer ce produit de la boutique ?')) {
+                    if (btn && btn.dataset.stockId) {
+                        if (confirm('Supprimer ce produit de la boutique ?')) {
                             try {
                                 await remove(ref(db, `${dbBasePath}/shopStock/${btn.dataset.stockId}`));
                                 showSuccessToast('Produit retiré de la boutique');
-                            } catch(err) { console.error(err); }
+                            } catch (err) { console.error(err); }
                         }
                     }
                 });
@@ -2149,15 +2778,21 @@
             if (hamburgerButton) hamburgerButton.addEventListener('click', () => { isSidebarOpen = true; updateSidebarMobileState(); });
             if (sidebarOverlay) sidebarOverlay.addEventListener('click', () => { isSidebarOpen = false; updateSidebarMobileState(); });
             if (sidebarCollapseToggle) sidebarCollapseToggle.addEventListener('click', () => { isSidebarCollapsed = !isSidebarCollapsed; updateSidebarDesktopState(); });
-            if(authToggleLogin) authToggleLogin.addEventListener('click', () => { isLoginView = true; updateAuthFormView(); });
-            if(authToggleSignup) authToggleSignup.addEventListener('click', () => { isLoginView = false; updateAuthFormView(); });
+            if (authToggleLogin) authToggleLogin.addEventListener('click', () => { isLoginView = true; updateAuthFormView(); });
+            if (authToggleSignup) authToggleSignup.addEventListener('click', () => { isLoginView = false; updateAuthFormView(); });
             if (loginModeAdminButton) loginModeAdminButton.addEventListener('click', () => { isCodeLoginMode = false; updateLoginModeUI(); });
             if (loginModeCodeButton) loginModeCodeButton.addEventListener('click', () => { isCodeLoginMode = true; updateLoginModeUI(); });
-            if(salesProductSelect) salesProductSelect.addEventListener('change', updateSalesTotal);
-            if(salesQuantityInput) salesQuantityInput.addEventListener('input', updateSalesTotal);
+            if (salesProductSelect) salesProductSelect.addEventListener('change', updateSalesTotal);
+            if (salesQuantityInput) salesQuantityInput.addEventListener('input', updateSalesTotal);
+
+            // Cart event listeners
+            if (addToCartButton) addToCartButton.addEventListener('click', addToCart);
+            if (validateCartButton) validateCartButton.addEventListener('click', validateCart);
+            if (clearCartButton) clearCartButton.addEventListener('click', clearCart);
+
 
             // Auth Logic
-            if(loginForm) loginForm.addEventListener('submit', async (event) => {
+            if (loginForm) loginForm.addEventListener('submit', async (event) => {
                 event.preventDefault();
                 const email = loginForm.email.value.trim();
                 if (isCodeLoginMode) {
@@ -2166,20 +2801,20 @@
                 } else {
                     const password = loginPasswordInput.value;
                     try {
-                        if(loginSubmitButton) loginSubmitButton.disabled = true;
+                        if (loginSubmitButton) loginSubmitButton.disabled = true;
                         await signInWithEmailAndPassword(auth, email, password);
                     } catch (error) {
-                        if(loginError) {
+                        if (loginError) {
                             loginError.textContent = "Email ou mot de passe incorrect.";
                             loginError.classList.remove('hidden');
                         }
                     } finally {
-                        if(loginSubmitButton) loginSubmitButton.disabled = false;
+                        if (loginSubmitButton) loginSubmitButton.disabled = false;
                     }
                 }
             });
 
-            if(signupForm) signupForm.addEventListener('submit', async (event) => {
+            if (signupForm) signupForm.addEventListener('submit', async (event) => {
                 event.preventDefault();
                 const email = signupForm['signup-email'].value;
                 const password = signupForm['signup-password'].value;
@@ -2187,7 +2822,7 @@
                 const companyName = signupForm.companyName.value;
 
                 try {
-                    if(signupSubmitButton) signupSubmitButton.disabled = true;
+                    if (signupSubmitButton) signupSubmitButton.disabled = true;
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     const user = userCredential.user;
                     const companyId = push(ref(db, 'companies')).key;
@@ -2196,16 +2831,16 @@
                     await set(ref(db, `users/${user.uid}`), userData);
                     await set(ref(db, `companies/${companyId}/members/${user.uid}`), { fullName, email, role: 'admin', status: 'actif', permissions: [...accessModules] });
                 } catch (error) {
-                    if(signupError) {
+                    if (signupError) {
                         signupError.textContent = error.message;
-                        if(signupErrorContainer) signupErrorContainer.classList.remove('hidden');
+                        if (signupErrorContainer) signupErrorContainer.classList.remove('hidden');
                     }
                 } finally {
-                    if(signupSubmitButton) signupSubmitButton.disabled = false;
+                    if (signupSubmitButton) signupSubmitButton.disabled = false;
                 }
             });
 
-            if(salesForm) salesForm.addEventListener('submit', async (e) => {
+            if (salesForm) salesForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 if (!currentUser || !dbBasePath) return;
                 const shopProductId = salesProductSelect.value;
@@ -2218,9 +2853,9 @@
                     alert("Stock insuffisant !");
                     return;
                 }
-                
+
                 try {
-                    if(salesSubmitButton) salesSubmitButton.disabled = true;
+                    if (salesSubmitButton) salesSubmitButton.disabled = true;
                     const updates = {}; const now = new Date().toISOString();
                     const shopNewStock = shopProduct.quantityInShop - quantity;
                     updates[`${dbBasePath}/shopStock/${shopProductId}/quantityInShop`] = shopNewStock;
@@ -2228,18 +2863,18 @@
                     updates[`${dbBasePath}/shopMovements/${shopMoveKey}`] = { id: shopMoveKey, shopProductId, productName: shopProduct.name, type: "Sortie", quantityChange: quantity, oldStock: shopProduct.quantityInShop, newStock: shopNewStock, comment: `Vente: ${comment}`, date: now, userEmail: currentUser.email };
                     const saleKey = push(ref(db, `${dbBasePath}/salesHistory`)).key;
                     updates[`${dbBasePath}/salesHistory/${saleKey}`] = { id: saleKey, shopProductId, productName: shopProduct.name, quantity, sellingPrice: shopProduct.sellingPrice, totalAmount: shopProduct.sellingPrice * quantity, sellerName, comment, date: now };
-                    await update(ref(db), updates); 
-                    showSuccessToast("Vente enregistrée!"); 
-                    salesForm.reset(); 
+                    await update(ref(db), updates);
+                    showSuccessToast("Vente enregistrée!");
+                    salesForm.reset();
                     updateSalesTotal();
                 } catch (error) {
                     console.error(error);
                 } finally {
-                    if(salesSubmitButton) salesSubmitButton.disabled = false;
+                    if (salesSubmitButton) salesSubmitButton.disabled = false;
                 }
             });
 
-            if(newProductForm) newProductForm.addEventListener('submit', async (e) => {
+            if (newProductForm) newProductForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 if (!currentUser || !dbBasePath) return;
                 const name = newProductForm['product-name'].value;
@@ -2248,16 +2883,16 @@
                 const currency = newProductForm['product-currency'].value;
                 const qty = parseInt(newProductForm['product-quantity'].value, 10);
                 if (!name || isNaN(cost)) return;
-                
+
                 try {
-                    if(newProductSubmitButton) newProductSubmitButton.disabled = true;
-                    
+                    if (newProductSubmitButton) newProductSubmitButton.disabled = true;
+
                     // LOGIQUE D'AGRÉGATION AUTO (MAGASIN)
-                    const existingProduct = Object.values(appData.storeProducts).find(p => 
+                    const existingProduct = Object.values(appData.storeProducts).find(p =>
                         p.name.toLowerCase() === name.trim().toLowerCase() && p.purchaseCost === cost
                     );
 
-                    if(existingProduct) {
+                    if (existingProduct) {
                         const newStock = existingProduct.quantityInStore + qty;
                         const updates = {};
                         const now = new Date().toISOString();
@@ -2272,100 +2907,100 @@
                         await set(newRef, newProd);
                         const moveRef = push(ref(db, `${dbBasePath}/storeMovements`));
                         await set(moveRef, { id: moveRef.key, productId: newProd.id, productName: name, type: "Entrée", quantityChange: qty, oldStock: 0, newStock: qty, comment: "Création", date: new Date().toISOString() });
-                        showSuccessToast("Produit ajouté!"); 
+                        showSuccessToast("Produit ajouté!");
                     }
-                    
-                    newProductForm.reset(); 
+
+                    newProductForm.reset();
                     newProductModal.classList.add('hidden');
                 } catch (err) {
                     console.error(err);
                 } finally {
-                    if(newProductSubmitButton) newProductSubmitButton.disabled = false;
+                    if (newProductSubmitButton) newProductSubmitButton.disabled = false;
                 }
             });
 
-            if(entryForm) entryForm.addEventListener('submit', async (e) => {
+            if (entryForm) entryForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                if(!currentUser || !dbBasePath) return;
+                if (!currentUser || !dbBasePath) return;
                 const pid = entryProductSelect.value;
                 const qty = parseInt(entryForm['entry-quantity'].value, 10);
                 const comment = entryForm['entry-comment'].value;
                 const prod = appData.storeProducts[pid];
-                if(!prod || qty <= 0) return;
-                
+                if (!prod || qty <= 0) return;
+
                 try {
-                    if(entrySubmitButton) entrySubmitButton.disabled = true;
+                    if (entrySubmitButton) entrySubmitButton.disabled = true;
                     const newStock = prod.quantityInStore + qty;
-                    const updates = {}; 
+                    const updates = {};
                     updates[`${dbBasePath}/storeProducts/${pid}/quantityInStore`] = newStock;
                     const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
                     updates[`${dbBasePath}/storeMovements/${moveKey}`] = { id: moveKey, productId: pid, productName: prod.name, type: "Entrée", quantityChange: qty, oldStock: prod.quantityInStore, newStock, comment, date: new Date().toISOString() };
-                    await update(ref(db), updates); 
-                    showSuccessToast("Entrée de stock réussie !"); 
-                    entryForm.reset(); 
+                    await update(ref(db), updates);
+                    showSuccessToast("Entrée de stock réussie !");
+                    entryForm.reset();
                     entryModal.classList.add('hidden');
-                } catch(err) {
+                } catch (err) {
                     console.error(err);
                 } finally {
-                    if(entrySubmitButton) entrySubmitButton.disabled = false;
+                    if (entrySubmitButton) entrySubmitButton.disabled = false;
                 }
             });
 
-            if(exitForm) exitForm.addEventListener('submit', async (e) => {
-                 e.preventDefault();
-                 if(!currentUser || !dbBasePath) return;
-                 const pid = exitProductSelect.value;
-                 const qty = parseInt(exitForm['exit-quantity'].value, 10);
-                 const comment = exitForm['exit-comment'].value;
-                 const prod = appData.storeProducts[pid];
-                 if(!prod || qty <= 0) return;
-                 if(qty > prod.quantityInStore) {
-                     alert("Stock insuffisant dans le magasin.");
-                     return;
-                 }
-                 
-                 try {
-                    if(exitSubmitButton) exitSubmitButton.disabled = true;
+            if (exitForm) exitForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!currentUser || !dbBasePath) return;
+                const pid = exitProductSelect.value;
+                const qty = parseInt(exitForm['exit-quantity'].value, 10);
+                const comment = exitForm['exit-comment'].value;
+                const prod = appData.storeProducts[pid];
+                if (!prod || qty <= 0) return;
+                if (qty > prod.quantityInStore) {
+                    alert("Stock insuffisant dans le magasin.");
+                    return;
+                }
+
+                try {
+                    if (exitSubmitButton) exitSubmitButton.disabled = true;
                     const newStock = prod.quantityInStore - qty;
-                    const updates = {}; 
+                    const updates = {};
                     updates[`${dbBasePath}/storeProducts/${pid}/quantityInStore`] = newStock;
                     const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
                     updates[`${dbBasePath}/storeMovements/${moveKey}`] = { id: moveKey, productId: pid, productName: prod.name, type: "Sortie", quantityChange: qty, oldStock: prod.quantityInStore, newStock, comment, date: new Date().toISOString() };
-                    await update(ref(db), updates); 
-                    showSuccessToast("Sortie de stock réussie !"); 
-                    exitForm.reset(); 
+                    await update(ref(db), updates);
+                    showSuccessToast("Sortie de stock réussie !");
+                    exitForm.reset();
                     exitModal.classList.add('hidden');
-                 } catch(err) {
+                } catch (err) {
                     console.error(err);
-                 } finally {
-                    if(exitSubmitButton) exitSubmitButton.disabled = false;
-                 }
+                } finally {
+                    if (exitSubmitButton) exitSubmitButton.disabled = false;
+                }
             });
 
-            if(transferForm) transferForm.addEventListener('submit', async (e) => {
+            if (transferForm) transferForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                if(!currentUser || !dbBasePath) return;
+                if (!currentUser || !dbBasePath) return;
                 const sourceId = transferProductSelect.value;
                 const qty = parseInt(transferForm['transfer-quantity'].value, 10);
                 const price = parseFloat(transferForm['transfer-selling-price'].value);
                 const alertT = parseInt(transferForm['transfer-alert-threshold'].value, 10) || 5;
                 const sourceProd = appData.storeProducts[sourceId];
-                if(!sourceProd || qty > sourceProd.quantityInStore) {
+                if (!sourceProd || qty > sourceProd.quantityInStore) {
                     alert("Stock magasin insuffisant.");
                     return;
                 }
-                
+
                 try {
-                    if(transferSubmitButton) transferSubmitButton.disabled = true;
-                    
+                    if (transferSubmitButton) transferSubmitButton.disabled = true;
+
                     // LOGIQUE D'AGRÉGATION AUTO (BOUTIQUE) par NOM + PRIX
-                    let existingItem = Object.values(appData.shopStock).find(i => 
+                    let existingItem = Object.values(appData.shopStock).find(i =>
                         i.name.toLowerCase() === sourceProd.name.toLowerCase() && i.sellingPrice === price
                     );
 
                     const updates = {}; const now = new Date().toISOString();
                     const storeNew = sourceProd.quantityInStore - qty;
-                    const shopOld = existingItem ? existingItem.quantityInShop : 0; 
+                    const shopOld = existingItem ? existingItem.quantityInShop : 0;
                     const shopNew = shopOld + qty;
 
                     updates[`${dbBasePath}/storeProducts/${sourceId}/quantityInStore`] = storeNew;
@@ -2378,33 +3013,33 @@
                     const shmKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
                     updates[`${dbBasePath}/shopMovements/${shmKey}`] = { id: shmKey, shopProductId: shopId, productName: sourceProd.name, type: "Entrée", quantityChange: qty, oldStock: shopOld, newStock: shopNew, comment: existingItem ? "Fusion stock (même prix)" : "Depuis magasin", date: now, userEmail: currentUser.email };
 
-                    await update(ref(db), updates); 
-                    showSuccessToast(existingItem ? "Stock fusionné en boutique !" : "Transfert boutique réussi !"); 
-                    transferForm.reset(); 
+                    await update(ref(db), updates);
+                    showSuccessToast(existingItem ? "Stock fusionné en boutique !" : "Transfert boutique réussi !");
+                    transferForm.reset();
                     transferModal.classList.add('hidden');
-                } catch(err) {
+                } catch (err) {
                     console.error(err);
                 } finally {
-                    if(transferSubmitButton) transferSubmitButton.disabled = false;
+                    if (transferSubmitButton) transferSubmitButton.disabled = false;
                 }
             });
 
-            if(restockForm) restockForm.addEventListener('submit', async (e) => {
+            if (restockForm) restockForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                if(!currentUser || !dbBasePath) return;
+                if (!currentUser || !dbBasePath) return;
                 const sid = restockProductSelect.value;
                 const qty = parseInt(restockForm['restock-quantity'].value, 10);
                 const comment = restockForm['restock-comment'].value || "Restock";
                 const shopProd = appData.shopStock[sid];
-                if(!shopProd) return;
+                if (!shopProd) return;
                 const sourceProd = appData.storeProducts[shopProd.sourceProductId];
-                if(!sourceProd || qty > sourceProd.quantityInStore) {
+                if (!sourceProd || qty > sourceProd.quantityInStore) {
                     alert("Stock magasin insuffisant.");
                     return;
                 }
-                
+
                 try {
-                    if(restockSubmitButton) restockSubmitButton.disabled = true;
+                    if (restockSubmitButton) restockSubmitButton.disabled = true;
                     const updates = {}; const now = new Date().toISOString();
                     const storeNew = sourceProd.quantityInStore - qty;
                     const shopNew = shopProd.quantityInShop + qty;
@@ -2418,28 +3053,28 @@
                     const shmKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
                     updates[`${dbBasePath}/shopMovements/${shmKey}`] = { id: shmKey, shopProductId: sid, productName: shopProd.name, type: "Entrée", quantityChange: qty, oldStock: shopProd.quantityInShop, newStock: shopNew, comment: comment, date: now, userEmail: currentUser.email };
 
-                    await update(ref(db), updates); 
-                    showSuccessToast("Réapprovisionnement réussi !"); 
-                    restockForm.reset(); 
+                    await update(ref(db), updates);
+                    showSuccessToast("Réapprovisionnement réussi !");
+                    restockForm.reset();
                     restockModal.classList.add('hidden');
-                } catch(err) {
+                } catch (err) {
                     console.error(err);
                 } finally {
-                    if(restockSubmitButton) restockSubmitButton.disabled = false;
+                    if (restockSubmitButton) restockSubmitButton.disabled = false;
                 }
             });
 
             // UI Navigation
-            navButtons.forEach(btn => btn.addEventListener('click', () => { 
-                currentPage = btn.dataset.page; 
-                if(window.innerWidth < 1024) { 
-                    isSidebarOpen = false; 
-                    updateSidebarMobileState(); 
-                } 
-                updateUI(); 
+            navButtons.forEach(btn => btn.addEventListener('click', () => {
+                currentPage = btn.dataset.page;
+                if (window.innerWidth < 1024) {
+                    isSidebarOpen = false;
+                    updateSidebarMobileState();
+                }
+                updateUI();
             }));
 
-            if(logoutButton) logoutButton.addEventListener('click', () => {
+            if (logoutButton) logoutButton.addEventListener('click', () => {
                 if (isCodeSession) {
                     handleManualLogout();
                     showSuccessToast('Déconnecté');
@@ -2449,44 +3084,44 @@
             });
 
             // Modals Open
-            if(openNewProductModalButton) openNewProductModalButton.addEventListener('click', () => { newProductModal.classList.remove('hidden'); newProductForm.reset(); });
-            if(openEntryModalButton) openEntryModalButton.addEventListener('click', () => { entryModal.classList.remove('hidden'); entryForm.reset(); });
-            if(openExitModalButton) openExitModalButton.addEventListener('click', () => { exitModal.classList.remove('hidden'); exitForm.reset(); });
-            if(openTransferModalButton) openTransferModalButton.addEventListener('click', () => { transferModal.classList.remove('hidden'); transferForm.reset(); transferSourceInfo.classList.add('hidden'); });
-            if(openRestockModalButton) openRestockModalButton.addEventListener('click', () => { restockModal.classList.remove('hidden'); restockForm.reset(); restockSourceInfo.classList.add('hidden'); });
+            if (openNewProductModalButton) openNewProductModalButton.addEventListener('click', () => { newProductModal.classList.remove('hidden'); newProductForm.reset(); });
+            if (openEntryModalButton) openEntryModalButton.addEventListener('click', () => { entryModal.classList.remove('hidden'); entryForm.reset(); });
+            if (openExitModalButton) openExitModalButton.addEventListener('click', () => { exitModal.classList.remove('hidden'); exitForm.reset(); });
+            if (openTransferModalButton) openTransferModalButton.addEventListener('click', () => { transferModal.classList.remove('hidden'); transferForm.reset(); transferSourceInfo.classList.add('hidden'); });
+            if (openRestockModalButton) openRestockModalButton.addEventListener('click', () => { restockModal.classList.remove('hidden'); restockForm.reset(); restockSourceInfo.classList.add('hidden'); });
 
             // Modals Close
-            if(closeNewProductModalButton) closeNewProductModalButton.addEventListener('click', () => newProductModal.classList.add('hidden'));
-            if(closeEntryModalButton) closeEntryModalButton.addEventListener('click', () => entryModal.classList.add('hidden'));
-            if(closeExitModalButton) closeExitModalButton.addEventListener('click', () => exitModal.classList.add('hidden'));
-            if(closeTransferModalButton) closeTransferModalButton.addEventListener('click', () => transferModal.classList.add('hidden'));
-            if(closeRestockModalButton) closeRestockModalButton.addEventListener('click', () => restockModal.classList.add('hidden'));
+            if (closeNewProductModalButton) closeNewProductModalButton.addEventListener('click', () => newProductModal.classList.add('hidden'));
+            if (closeEntryModalButton) closeEntryModalButton.addEventListener('click', () => entryModal.classList.add('hidden'));
+            if (closeExitModalButton) closeExitModalButton.addEventListener('click', () => exitModal.classList.add('hidden'));
+            if (closeTransferModalButton) closeTransferModalButton.addEventListener('click', () => transferModal.classList.add('hidden'));
+            if (closeRestockModalButton) closeRestockModalButton.addEventListener('click', () => restockModal.classList.add('hidden'));
 
             // Background Modal Close
-            [newProductModal, entryModal, exitModal, transferModal, restockModal].forEach(m => { 
-                if(m) m.addEventListener('click', e => { if(e.target === m) m.classList.add('hidden'); }); 
+            [newProductModal, entryModal, exitModal, transferModal, restockModal].forEach(m => {
+                if (m) m.addEventListener('click', e => { if (e.target === m) m.classList.add('hidden'); });
             });
 
             // Select Interaction (Info display in modals)
-            if(transferProductSelect) transferProductSelect.addEventListener('change', () => { 
-                const p = appData.storeProducts[transferProductSelect.value]; 
-                if(p) { 
-                    transferCostDisplay.textContent = formatCurrency(p.purchaseCost, p.currency); 
-                    transferSourceInfo.classList.remove('hidden'); 
+            if (transferProductSelect) transferProductSelect.addEventListener('change', () => {
+                const p = appData.storeProducts[transferProductSelect.value];
+                if (p) {
+                    transferCostDisplay.textContent = formatCurrency(p.purchaseCost, p.currency);
+                    transferSourceInfo.classList.remove('hidden');
                 } else {
-                    transferSourceInfo.classList.add('hidden'); 
+                    transferSourceInfo.classList.add('hidden');
                 }
             });
 
-            if(restockProductSelect) restockProductSelect.addEventListener('change', () => { 
-                const si = appData.shopStock[restockProductSelect.value]; 
-                if(si && appData.storeProducts[si.sourceProductId]) { 
-                    const sp = appData.storeProducts[si.sourceProductId]; 
-                    restockSourceName.textContent = sp.name; 
-                    restockSourceStock.textContent = sp.quantityInStore; 
-                    restockSourceInfo.classList.remove('hidden'); 
+            if (restockProductSelect) restockProductSelect.addEventListener('change', () => {
+                const si = appData.shopStock[restockProductSelect.value];
+                if (si && appData.storeProducts[si.sourceProductId]) {
+                    const sp = appData.storeProducts[si.sourceProductId];
+                    restockSourceName.textContent = sp.name;
+                    restockSourceStock.textContent = sp.quantityInStore;
+                    restockSourceInfo.classList.remove('hidden');
                 } else {
-                    restockSourceInfo.classList.add('hidden'); 
+                    restockSourceInfo.classList.add('hidden');
                 }
             });
 
@@ -2498,37 +3133,37 @@
                 const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
                 const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
-                if(document.getElementById('stat-daily-sales')) 
+                if (document.getElementById('stat-daily-sales'))
                     document.getElementById('stat-daily-sales').textContent = sales.filter(s => s.date >= startOfDay).length;
-                
-                if(document.getElementById('stat-monthly-revenue'))
+
+                if (document.getElementById('stat-monthly-revenue'))
                     document.getElementById('stat-monthly-revenue').textContent = formatCurrency(sales.filter(s => s.date >= startOfMonth).reduce((acc, s) => acc + s.totalAmount, 0));
-                
+
                 const shopCount = shopItems.reduce((acc, i) => acc + i.quantityInShop, 0);
-                if(document.getElementById('stat-shop-stock'))
+                if (document.getElementById('stat-shop-stock'))
                     document.getElementById('stat-shop-stock').textContent = shopCount + " produits";
-                
-                if(document.getElementById('stat-store-stock'))
+
+                if (document.getElementById('stat-store-stock'))
                     document.getElementById('stat-store-stock').textContent = storeItems.reduce((acc, i) => acc + i.quantityInStore, 0) + " produits";
 
-                if(document.getElementById('stat-total-sales'))
+                if (document.getElementById('stat-total-sales'))
                     document.getElementById('stat-total-sales').textContent = sales.length;
-                
-                if(document.getElementById('stat-revenue'))
+
+                if (document.getElementById('stat-revenue'))
                     document.getElementById('stat-revenue').textContent = formatCurrency(sales.reduce((acc, s) => acc + s.totalAmount, 0));
-                
-                if(document.getElementById('stat-products-in-stock'))
+
+                if (document.getElementById('stat-products-in-stock'))
                     document.getElementById('stat-products-in-stock').textContent = shopItems.length;
 
                 // Rendus statistiques (Top produits, etc)
                 const bestSellingContainer = document.getElementById('best-selling-tbody');
-                if(bestSellingContainer) {
+                if (bestSellingContainer) {
                     const productSales = sales.reduce((acc, s) => { acc[s.productName] = (acc[s.productName] || 0) + s.quantity; return acc; }, {});
-                    const sortedProd = Object.entries(productSales).sort((a,b) => b[1]-a[1]).slice(0,5);
+                    const sortedProd = Object.entries(productSales).sort((a, b) => b[1] - a[1]).slice(0, 5);
                     bestSellingContainer.innerHTML = sortedProd.length ? sortedProd.map(([name, qty]) => `<tr class="hover:bg-gray-50"><td class="px-4 py-3 text-sm text-gray-800">${name}</td><td class="px-4 py-3 text-sm text-gray-600 font-bold">${qty}</td><td class="px-4 py-3"></td></tr>`).join('') : '';
-                    if(sortedProd.length) { 
-                        document.getElementById('best-selling-placeholder')?.classList.add('hidden'); 
-                        document.getElementById('best-selling-table-container')?.classList.remove('hidden'); 
+                    if (sortedProd.length) {
+                        document.getElementById('best-selling-placeholder')?.classList.add('hidden');
+                        document.getElementById('best-selling-table-container')?.classList.remove('hidden');
                     }
                 }
             }
@@ -2550,7 +3185,7 @@
                             updateUI();
                         }
                     });
-                } else{
+                } else {
                     if (!isCodeSession) {
                         isAuthenticated = false; currentUser = null; currentUserData = null; dbBasePath = ''; currentPage = 'Tableau de bord'; cleanupFirebaseListeners(); updateUI();
                     }
@@ -2562,4 +3197,5 @@
         });
     </script>
 </body>
+
 </html>
