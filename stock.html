@@ -1578,6 +1578,11 @@
     </div>
 
 
+
+    <!-- jsPDF Libraries for Invoice Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
     <script type="module">
         // --- SDK Firebase ---
         import { initializeApp } from "firebase/app";
@@ -2719,10 +2724,30 @@
                     const totalAmount = calculateCartTotal();
                     showSuccessToast(`Vente groupée enregistrée ! Total: ${formatCurrency(totalAmount)}`);
 
+                    // Préparer les données pour la facture
+                    const invoiceData = {
+                        companyName: currentUserData?.companyName || 'Mon Entreprise',
+                        sellerName,
+                        date: now,
+                        items: cartItems.map(item => ({
+                            name: item.name,
+                            quantity: item.quantity,
+                            price: item.sellingPrice,
+                            total: item.sellingPrice * item.quantity
+                        })),
+                        total: totalAmount,
+                        currency: cartItems[0]?.currency || 'CFA',
+                        comment
+                    };
+
                     // Vider le panier et réinitialiser le formulaire
                     cartItems = [];
                     renderCart();
                     salesComment.value = '';
+
+                    // Proposer la facture après un court délai
+                    setTimeout(() => promptInvoiceGeneration(invoiceData), 500);
+
                 } catch (error) {
                     console.error(error);
                     alert('Une erreur est survenue lors de la validation de la vente');
@@ -2737,6 +2762,236 @@
             window.updateCartQuantity = updateCartQuantity;
             window.clearCart = clearCart;
             window.validateCart = validateCart;
+
+
+            // --- FONCTIONS DE GÉNÉRATION DE FACTURES PDF ---
+
+            /**
+             * Obtenir le prochain numéro de facture
+             */
+            async function getNextInvoiceNumber() {
+                if (!dbBasePath) return 'FACT-0000-0001';
+
+                const year = new Date().getFullYear();
+                const counterPath = `${dbBasePath}/invoiceCounters/${year}`;
+
+                try {
+                    const snapshot = await get(ref(db, counterPath));
+                    const currentCounter = snapshot.val() || 0;
+                    const newCounter = currentCounter + 1;
+
+                    // Incrémenter le compteur dans Firebase
+                    await set(ref(db, counterPath), newCounter);
+
+                    // Format: FACT-2026-0001
+                    const paddedNumber = String(newCounter).padStart(4, '0');
+                    return `FACT-${year}-${paddedNumber}`;
+                } catch (error) {
+                    console.error('Erreur récupération numéro facture:', error);
+                    return `FACT-${year}-0001`;
+                }
+            }
+
+            /**
+             * Générer une facture PDF
+             * @param {Object} invoiceData - Données de la facture
+             */
+            async function generateInvoicePDF(invoiceData) {
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+
+                    // Obtenir le numéro de facture
+                    const invoiceNumber = await getNextInvoiceNumber();
+
+                    // Couleurs
+                    const primaryColor = [6, 182, 212]; // Cyan
+                    const darkGray = [31, 41, 55];
+                    const lightGray = [243, 244, 246];
+
+                    let yPos = 20;
+
+                    // === EN-TÊTE ===
+                    // Nom de l'entreprise
+                    doc.setFillColor(...primaryColor);
+                    doc.rect(0, 0, 210, 40, 'F');
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFontSize(24);
+                    doc.setFont(undefined, 'bold');
+                    doc.text(invoiceData.companyName || 'Mon Entreprise', 20, 20);
+
+                    // Titre FACTURE
+                    doc.setFontSize(16);
+                    doc.text('FACTURE', 150, 20);
+
+                    // Numéro de facture
+                    doc.setFontSize(11);
+                    doc.setFont(undefined, 'normal');
+                    doc.text(`N° ${invoiceNumber}`, 150, 28);
+
+                    // Date
+                    const dateStr = new Date(invoiceData.date).toLocaleDateString('fr-FR');
+                    doc.text(`Date: ${dateStr}`, 150, 35);
+
+                    yPos = 50;
+
+                    // === INFORMATIONS DE VENTE ===
+                    doc.setTextColor(...darkGray);
+                    doc.setFontSize(12);
+                    doc.setFont(undefined, 'bold');
+                    doc.text('INFORMATIONS DE VENTE', 20, yPos);
+
+                    yPos += 8;
+                    doc.setFontSize(10);
+                    doc.setFont(undefined, 'normal');
+                    doc.text(`Vendeur: ${invoiceData.sellerName}`, 20, yPos);
+
+                    yPos += 6;
+                    const saleDateTime = new Date(invoiceData.date).toLocaleString('fr-FR');
+                    doc.text(`Date et heure de vente: ${saleDateTime}`, 20, yPos);
+
+                    yPos += 10;
+
+                    // === TABLEAU DES PRODUITS ===
+                    const tableData = invoiceData.items.map(item => [
+                        item.name,
+                        item.quantity.toString(),
+                        formatCurrency(item.price, invoiceData.currency),
+                        formatCurrency(item.total, invoiceData.currency)
+                    ]);
+
+                    doc.autoTable({
+                        startY: yPos,
+                        head: [['Produit', 'Quantité', 'Prix Unitaire', 'Total']],
+                        body: tableData,
+                        theme: 'grid',
+                        headStyles: {
+                            fillColor: primaryColor,
+                            textColor: [255, 255, 255],
+                            fontStyle: 'bold',
+                            fontSize: 10
+                        },
+                        bodyStyles: {
+                            fontSize: 9
+                        },
+                        columnStyles: {
+                            0: { cellWidth: 80 },
+                            1: { cellWidth: 30, halign: 'center' },
+                            2: { cellWidth: 40, halign: 'right' },
+                            3: { cellWidth: 40, halign: 'right' }
+                        },
+                        margin: { left: 20, right: 20 }
+                    });
+
+                    yPos = doc.lastAutoTable.finalY + 10;
+
+                    // === TOTAL ===
+                    doc.setFillColor(...lightGray);
+                    doc.rect(20, yPos, 170, 12, 'F');
+                    doc.setTextColor(...darkGray);
+                    doc.setFontSize(14);
+                    doc.setFont(undefined, 'bold');
+                    doc.text('TOTAL:', 130, yPos + 8);
+                    doc.text(formatCurrency(invoiceData.total, invoiceData.currency), 170, yPos + 8, { align: 'right' });
+
+                    yPos += 20;
+
+                    // === COMMENTAIRE (si présent) ===
+                    if (invoiceData.comment) {
+                        doc.setFontSize(10);
+                        doc.setFont(undefined, 'italic');
+                        doc.setTextColor(100, 100, 100);
+                        doc.text('Commentaire:', 20, yPos);
+                        yPos += 6;
+                        const commentLines = doc.splitTextToSize(invoiceData.comment, 170);
+                        doc.text(commentLines, 20, yPos);
+                        yPos += (commentLines.length * 5) + 10;
+                    }
+
+                    // === PIED DE PAGE ===
+                    doc.setFillColor(...primaryColor);
+                    doc.rect(0, 270, 210, 27, 'F');
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFontSize(11);
+                    doc.setFont(undefined, 'bold');
+                    doc.text('Merci pour votre achat !', 105, 280, { align: 'center' });
+                    doc.setFontSize(8);
+                    doc.setFont(undefined, 'normal');
+                    doc.text('Facture générée par StockPilot', 105, 287, { align: 'center' });
+
+                    // Sauvegarder la facture dans Firebase
+                    await saveInvoiceRecord(invoiceNumber, invoiceData);
+
+                    // Télécharger le PDF
+                    doc.save(`Facture_${invoiceNumber}.pdf`);
+                    showSuccessToast(`Facture ${invoiceNumber} générée !`);
+
+                } catch (error) {
+                    console.error('Erreur génération PDF:', error);
+                    alert('Erreur lors de la génération de la facture');
+                }
+            }
+
+            /**
+             * Sauvegarder l'enregistrement de la facture dans Firebase
+             */
+            async function saveInvoiceRecord(invoiceNumber, invoiceData) {
+                if (!dbBasePath) return;
+
+                try {
+                    const invoiceKey = push(ref(db, `${dbBasePath}/invoices`)).key;
+                    await set(ref(db, `${dbBasePath}/invoices/${invoiceKey}`), {
+                        id: invoiceKey,
+                        invoiceNumber,
+                        generatedAt: new Date().toISOString(),
+                        saleData: invoiceData
+                    });
+                } catch (error) {
+                    console.error('Erreur sauvegarde facture:', error);
+                }
+            }
+
+            /**
+             * Générer une facture depuis l'historique des ventes
+             */
+            async function generateInvoiceFromSale(saleId) {
+                const sale = appData.salesHistory[saleId];
+                if (!sale) {
+                    alert('Vente introuvable');
+                    return;
+                }
+
+                // Préparer les données de facture
+                const invoiceData = {
+                    companyName: currentUserData?.companyName || 'Mon Entreprise',
+                    sellerName: sale.sellerName || currentUser?.email,
+                    date: sale.date,
+                    items: [{
+                        name: sale.productName,
+                        quantity: sale.quantity,
+                        price: sale.sellingPrice,
+                        total: sale.totalAmount
+                    }],
+                    total: sale.totalAmount,
+                    currency: appData.storeProducts[appData.shopStock[sale.shopProductId]?.sourceProductId]?.currency || 'CFA',
+                    comment: sale.comment || ''
+                };
+
+                await generateInvoicePDF(invoiceData);
+            }
+
+            /**
+             * Proposer de générer la facture après une vente
+             */
+            async function promptInvoiceGeneration(invoiceData) {
+                if (confirm('Vente enregistrée ! Voulez-vous générer la facture ?')) {
+                    await generateInvoicePDF(invoiceData);
+                }
+            }
+
+            // Exposer les fonctions pour les boutons
+            window.generateInvoiceFromSale = generateInvoiceFromSale;
+
 
 
             function updateSidebarMobileState() {
@@ -2882,8 +3137,30 @@
                     updates[`${dbBasePath}/salesHistory/${saleKey}`] = { id: saleKey, shopProductId, productName: shopProduct.name, quantity, sellingPrice: shopProduct.sellingPrice, totalAmount: shopProduct.sellingPrice * quantity, sellerName, comment, date: now };
                     await update(ref(db), updates);
                     showSuccessToast("Vente enregistrée!");
+
+                    // Proposer de générer la facture
+                    const currency = appData.storeProducts[shopProduct.sourceProductId]?.currency || 'CFA';
+                    const invoiceData = {
+                        companyName: currentUserData?.companyName || 'Mon Entreprise',
+                        sellerName,
+                        date: now,
+                        items: [{
+                            name: shopProduct.name,
+                            quantity,
+                            price: shopProduct.sellingPrice,
+                            total: shopProduct.sellingPrice * quantity
+                        }],
+                        total: shopProduct.sellingPrice * quantity,
+                        currency,
+                        comment
+                    };
+
                     salesForm.reset();
                     updateSalesTotal();
+
+                    // Proposer la facture après un court délai
+                    setTimeout(() => promptInvoiceGeneration(invoiceData), 500);
+
                 } catch (error) {
                     console.error(error);
                 } finally {
