@@ -383,6 +383,35 @@
                     </form>
                 </div>
 
+                <!-- Bouton Facture (affiché après vente réussie) -->
+                <div id="invoice-button-container"
+                    class="mt-4 p-4 bg-gradient-to-r from-cyan-50 to-blue-50 rounded-lg border-2 border-cyan-300 hidden">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <svg class="w-6 h-6 text-cyan-600 mr-3" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                </path>
+                            </svg>
+                            <div>
+                                <p class="text-sm font-semibold text-gray-700">Vente enregistrée avec succès !</p>
+                                <p class="text-xs text-gray-500">Générez la facture PDF pour cette vente</p>
+                            </div>
+                        </div>
+                        <button id="generate-invoice-button"
+                            class="px-5 py-2.5 bg-cyan-500 text-white font-semibold rounded-lg shadow-md hover:bg-cyan-600 transition-all duration-200 flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                </path>
+                            </svg>
+                            📄 Générer Facture
+                        </button>
+                    </div>
+                </div>
+
+
                 <!-- Section Panier -->
                 <div id="cart-section" class="mt-8 bg-white p-6 rounded-lg shadow-sm border-2 border-cyan-200 hidden">
                     <div class="flex items-center justify-between mb-4">
@@ -1749,6 +1778,8 @@
             const salesComment = document.getElementById('sales-comment');
             const salesError = document.getElementById('sales-error');
             const salesSubmitButton = document.getElementById('sales-submit-button');
+            const invoiceButtonContainer = document.getElementById('invoice-button-container');
+            const generateInvoiceButton = document.getElementById('generate-invoice-button');
             const salesHistoryPlaceholder = document.getElementById('sales-history-placeholder');
             const salesHistoryTableContainer = document.getElementById('sales-history-table-container');
             const salesHistoryTbody = document.getElementById('sales-history-tbody');
@@ -2981,12 +3012,31 @@
             }
 
             /**
-             * Proposer de générer la facture après une vente
+             * Afficher le bouton de génération de facture
              */
-            async function promptInvoiceGeneration(invoiceData) {
-                if (confirm('Vente enregistrée ! Voulez-vous générer la facture ?')) {
-                    await generateInvoicePDF(invoiceData);
+            let currentInvoiceData = null;
+
+            function showInvoiceButton(invoiceData) {
+                currentInvoiceData = invoiceData;
+
+                if (invoiceButtonContainer) {
+                    invoiceButtonContainer.classList.remove('hidden');
+
+                    // Masquer automatiquement après 30 secondes
+                    setTimeout(() => {
+                        invoiceButtonContainer.classList.add('hidden');
+                    }, 30000);
                 }
+            }
+
+            /**
+             * Masquer le bouton de génération de facture
+             */
+            function hideInvoiceButton() {
+                if (invoiceButtonContainer) {
+                    invoiceButtonContainer.classList.add('hidden');
+                }
+                currentInvoiceData = null;
             }
 
             // Exposer les fonctions pour les boutons
@@ -3061,6 +3111,16 @@
             if (addToCartButton) addToCartButton.addEventListener('click', addToCart);
             if (validateCartButton) validateCartButton.addEventListener('click', validateCart);
             if (clearCartButton) clearCartButton.addEventListener('click', clearCart);
+
+            // Invoice generation button listener
+            if (generateInvoiceButton) {
+                generateInvoiceButton.addEventListener('click', async () => {
+                    if (currentInvoiceData) {
+                        await generateInvoicePDF(currentInvoiceData);
+                        hideInvoiceButton();
+                    }
+                });
+            }
 
 
             // Auth Logic
@@ -3158,8 +3218,8 @@
                     salesForm.reset();
                     updateSalesTotal();
 
-                    // Proposer la facture après un court délai
-                    setTimeout(() => promptInvoiceGeneration(invoiceData), 500);
+                    // Afficher le bouton de génération de facture
+                    showInvoiceButton(invoiceData);
 
                 } catch (error) {
                     console.error(error);
