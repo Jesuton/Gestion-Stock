@@ -1680,7 +1680,7 @@
             let storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, salesHistoryListener, companyMembersListener;
             let storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, salesHistoryRef, companyMembersRef;
 
-            const accessModules = ['Tableau de bord', 'Ventes', 'Stock Boutique', 'Mon Magasin', 'Statistiques', 'Paramètres'];
+            const accessModules = ['Tableau de bord', 'Ventes', 'Stock Boutique', 'Mon Magasin', 'Statistiques', 'Paramètres', 'Supprimer Stock Boutique', 'Supprimer Stock Magasin'];
             let teamMembersState = [];
 
             // Cart state
@@ -1866,6 +1866,15 @@
                 if (settingsTabsWrapper) settingsTabsWrapper.classList.toggle('hidden', !isAdmin);
                 if (settingsAdminBadge) settingsAdminBadge.textContent = `Rôle : ${isAdmin ? 'Admin' : 'Accès limité'}`;
             }
+
+            function hasPermission(permission) {
+                if (!isAuthenticated || !currentUserData) return false;
+                // Admins have all permissions
+                if (currentUserData.role === 'admin') return true;
+                // Check if user has the specific permission
+                return currentUserData.permissions?.includes(permission) || false;
+            }
+
 
             function handleManualLogout() {
                 isAuthenticated = false;
@@ -2254,7 +2263,13 @@
                     storeProductsTableContainer.classList.remove('hidden');
                     let html = '';
                     const sortedProducts = filteredProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    const canDelete = hasPermission('Supprimer Stock Magasin');
                     sortedProducts.forEach(product => {
+                        const deleteButtonHtml = canDelete
+                            ? `<button class="delete-icon text-gray-400 hover:text-red-500" data-type="store" data-product-id="${product.id}">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>`
+                            : `<span class="text-xs text-gray-400">Non autorisé</span>`;
                         html += `
                             <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${product.name}</td>
@@ -2262,9 +2277,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">${product.quantityInStore}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatCurrency(product.purchaseCost, product.currency)}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    <button class="delete-icon text-gray-400 hover:text-red-500" data-type="store" data-product-id="${product.id}">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                    </button>
+                                    ${deleteButtonHtml}
                                 </td>
                             </tr>`;
                     });
@@ -2320,9 +2333,15 @@
                     shopStockTableContainer.classList.remove('hidden');
                     let html = '';
                     const sortedStock = filteredStock.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    const canDelete = hasPermission('Supprimer Stock Boutique');
                     sortedStock.forEach(item => {
                         const isLowStock = item.quantityInShop <= item.alertThreshold;
                         const currency = appData.storeProducts[item.sourceProductId]?.currency || 'CFA';
+                        const deleteButtonHtml = canDelete
+                            ? `<button class="delete-icon text-gray-400 hover:text-red-500" data-type="shop" data-stock-id="${item.id}">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>`
+                            : `<span class="text-xs text-gray-400">Non autorisé</span>`;
                         html += `
                             <tr class="hover:bg-gray-50 ${isLowStock ? 'bg-red-50' : ''}">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${item.name}</td>
@@ -2330,9 +2349,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatCurrency(item.sellingPrice, currency)}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.alertThreshold}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    <button class="delete-icon text-gray-400 hover:text-red-500" data-type="shop" data-stock-id="${item.id}">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                    </button>
+                                    ${deleteButtonHtml}
                                 </td>
                             </tr>`;
                     });
@@ -3082,6 +3099,54 @@
                     signOut(auth);
                 }
             });
+
+            // Delete event listeners with permission checks
+            if (storeProductsTbody) {
+                storeProductsTbody.addEventListener('click', async (e) => {
+                    const btn = e.target.closest('button.delete-icon');
+                    if (btn && btn.dataset.productId) {
+                        // Check permission
+                        if (!hasPermission('Supprimer Stock Magasin')) {
+                            alert('Vous n\'avez pas la permission de supprimer des produits du Stock Magasin.');
+                            return;
+                        }
+
+                        if (confirm('Supprimer ce produit du magasin définitivement ?')) {
+                            try {
+                                await remove(ref(db, `${dbBasePath}/storeProducts/${btn.dataset.productId}`));
+                                showSuccessToast('Produit supprimé du magasin');
+                            } catch (err) {
+                                console.error(err);
+                                alert('Erreur lors de la suppression');
+                            }
+                        }
+                    }
+                });
+            }
+
+            if (shopStockTbody) {
+                shopStockTbody.addEventListener('click', async (e) => {
+                    const btn = e.target.closest('button.delete-icon');
+                    if (btn && btn.dataset.stockId) {
+                        // Check permission
+                        if (!hasPermission('Supprimer Stock Boutique')) {
+                            alert('Vous n\'avez pas la permission de supprimer des produits du Stock Boutique.');
+                            return;
+                        }
+
+                        if (confirm('Supprimer ce produit de la boutique ?')) {
+                            try {
+                                await remove(ref(db, `${dbBasePath}/shopStock/${btn.dataset.stockId}`));
+                                showSuccessToast('Produit retiré de la boutique');
+                            } catch (err) {
+                                console.error(err);
+                                alert('Erreur lors de la suppression');
+                            }
+                        }
+                    }
+                });
+            }
+
 
             // Modals Open
             if (openNewProductModalButton) openNewProductModalButton.addEventListener('click', () => { newProductModal.classList.remove('hidden'); newProductForm.reset(); });
