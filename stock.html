@@ -2884,16 +2884,24 @@
                     yPos += 10;
 
                     // === TABLEAU DES PRODUITS ===
+                    // Fonction de formatage simple pour le PDF (sans symboles spéciaux)
+                    const formatPDFCurrency = (amount) => {
+                        return new Intl.NumberFormat('fr-FR', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                        }).format(amount);
+                    };
+
                     const tableData = invoiceData.items.map(item => [
                         item.name,
                         item.quantity.toString(),
-                        formatCurrency(item.price, invoiceData.currency),
-                        formatCurrency(item.total, invoiceData.currency)
+                        formatPDFCurrency(item.price),
+                        formatPDFCurrency(item.total)
                     ]);
 
                     doc.autoTable({
                         startY: yPos,
-                        head: [['Produit', 'Quantité', 'Prix Unitaire', 'Total']],
+                        head: [['Produit', 'Quantite', 'Prix Unitaire', 'Total']],
                         body: tableData,
                         theme: 'grid',
                         headStyles: {
@@ -2923,7 +2931,7 @@
                     doc.setFontSize(14);
                     doc.setFont(undefined, 'bold');
                     doc.text('TOTAL:', 130, yPos + 8);
-                    doc.text(formatCurrency(invoiceData.total, invoiceData.currency), 170, yPos + 8, { align: 'right' });
+                    doc.text(`${formatPDFCurrency(invoiceData.total)} ${invoiceData.currency}`, 170, yPos + 8, { align: 'right' });
 
                     yPos += 20;
 
