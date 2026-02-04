@@ -2001,21 +2001,37 @@
             };
 
             function canAccessPage(pageName) {
-                if (!isAuthenticated || !currentUserData) return false;
+                if (!isAuthenticated || !currentUserData) {
+                    console.log(`[canAccessPage] Not authenticated or no user data for page: ${pageName}`);
+                    return false;
+                }
 
                 // Admins can access everything
-                if (currentUserData.role === 'admin') return true;
+                if (currentUserData.role === 'admin') {
+                    console.log(`[canAccessPage] Admin access granted for page: ${pageName}`);
+                    return true;
+                }
 
                 const requiredPermission = pagePermissions[pageName];
+                console.log(`[canAccessPage] Checking page: ${pageName}, Required permission: ${requiredPermission}`);
+                console.log(`[canAccessPage] User permissions:`, currentUserData.permissions);
 
                 // Si null, la page est accessible à tous
-                if (requiredPermission === null) return true;
+                if (requiredPermission === null) {
+                    console.log(`[canAccessPage] Page accessible to all: ${pageName}`);
+                    return true;
+                }
 
                 // Si 'admin-only', seuls les admins peuvent accéder
-                if (requiredPermission === 'admin-only') return false;
+                if (requiredPermission === 'admin-only') {
+                    console.log(`[canAccessPage] Admin-only page, access denied: ${pageName}`);
+                    return false;
+                }
 
                 // Sinon, vérifier la permission
-                return hasPermission(requiredPermission);
+                const hasAccess = hasPermission(requiredPermission);
+                console.log(`[canAccessPage] Access result for ${pageName}: ${hasAccess}`);
+                return hasAccess;
             }
 
 
