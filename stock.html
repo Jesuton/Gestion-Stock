@@ -250,12 +250,13 @@
             <div id="page-Tableau-de-bord" class="page-content p-4 md:p-8">
                 <h1 class="text-3xl font-bold text-gray-800">Bienvenue!</h1>
                 <p class="text-gray-500 mt-1">Voici un aperçu de votre activité</p>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
                     <!-- StatCard -->
                     <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
                         <div>
                             <p class="text-sm text-gray-500">Ventes du jour</p>
                             <p id="stat-daily-sales" class="text-2xl font-bold text-gray-800 mt-1">0</p>
+                            <p id="trend-daily-sales" class="text-xs mt-2"></p>
                         </div>
                         <div class="p-3 rounded-lg bg-blue-100">
                             <div data-icon="sales" class="w-6 h-6 text-blue-500"></div>
@@ -266,6 +267,7 @@
                         <div>
                             <p class="text-sm text-gray-500">Stock Boutique</p>
                             <p id="stat-shop-stock" class="text-2xl font-bold text-gray-800 mt-1">0 produits</p>
+                            <p id="trend-shop-stock" class="text-xs mt-2"></p>
                         </div>
                         <div class="p-3 rounded-lg bg-green-100">
                             <div data-icon="box" class="w-6 h-6 text-green-500"></div>
@@ -276,6 +278,7 @@
                         <div>
                             <p class="text-sm text-gray-500">Stock Magasin</p>
                             <p id="stat-store-stock" class="text-2xl font-bold text-gray-800 mt-1">0 produits</p>
+                            <p id="trend-store-stock" class="text-xs mt-2"></p>
                         </div>
                         <div class="p-3 rounded-lg bg-yellow-100">
                             <div data-icon="box" class="w-6 h-6 text-yellow-500"></div>
@@ -286,14 +289,90 @@
                         <div>
                             <p class="text-sm text-gray-500">Revenus du mois</p>
                             <p id="stat-monthly-revenue" class="text-2xl font-bold text-gray-800 mt-1">0 FCFA</p>
+                            <p id="trend-monthly-revenue" class="text-xs mt-2"></p>
                         </div>
                         <div class="p-3 rounded-lg bg-indigo-100">
                             <div data-icon="stats" class="w-6 h-6 text-indigo-500"></div>
                         </div>
                     </div>
+                    <!-- StatCard: Alertes Stock NOUVEAU -->
+                    <div
+                        class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between border-2 border-orange-200">
+                        <div>
+                            <p class="text-sm text-gray-500">Alertes Stock</p>
+                            <p id="stat-low-stock" class="text-2xl font-bold text-gray-800 mt-1">0</p>
+                            <span id="badge-low-stock"
+                                class="hidden inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 mt-2">
+                                ⚠️ Action requise
+                            </span>
+                        </div>
+                        <div class="p-3 rounded-lg bg-orange-100">
+                            <div data-icon="alert" class="w-6 h-6 text-orange-500"></div>
+                        </div>
+                    </div>
+                    <!-- StatCard: Bénéfice NOUVEAU -->
+                    <div
+                        class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between border-2 border-emerald-200">
+                        <div>
+                            <p class="text-sm text-gray-500">Benefice du mois</p>
+                            <p id="stat-monthly-profit" class="text-2xl font-bold text-gray-800 mt-1">0 FCFA</p>
+                            <p id="trend-monthly-profit" class="text-xs mt-2"></p>
+                        </div>
+                        <div class="p-3 rounded-lg bg-emerald-100">
+                            <div data-icon="dollar" class="w-6 h-6 text-emerald-500"></div>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Actions Rapides -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
+                    <button data-quick-action="Ventes"
+                        class="p-6 bg-gradient-to-r from-cyan-500 to-cyan-600 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-white group">
+                        <div class="flex flex-col items-center space-y-2">
+                            <div data-icon="sales"
+                                class="w-8 h-8 text-white group-hover:scale-110 transition-transform"></div>
+                            <span class="font-semibold">Nouvelle Vente</span>
+                        </div>
+                    </button>
+                    <button data-quick-action="Reappro"
+                        class="p-6 bg-gradient-to-r from-green-500 to-green-600 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-white group">
+                        <div class="flex flex-col items-center space-y-2">
+                            <div data-icon="box" class="w-8 h-8 text-white group-hover:scale-110 transition-transform">
+                            </div>
+                            <span class="font-semibold">Reapprovisionner</span>
+                        </div>
+                    </button>
+                    <button data-quick-action="Mon Magasin"
+                        class="p-6 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-white group">
+                        <div class="flex flex-col items-center space-y-2">
+                            <div data-icon="box" class="w-8 h-8 text-white group-hover:scale-110 transition-transform">
+                            </div>
+                            <span class="font-semibold">Ajouter Produit</span>
+                        </div>
+                    </button>
+                    <button data-quick-action="Statistiques"
+                        class="p-6 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-white group">
+                        <div class="flex flex-col items-center space-y-2">
+                            <div data-icon="stats"
+                                class="w-8 h-8 text-white group-hover:scale-110 transition-transform"></div>
+                            <span class="font-semibold">Voir Rapports</span>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- Timeline d'Activités Récentes -->
+                <div class="bg-white p-6 rounded-lg shadow-sm mt-8">
+                    <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                        <div data-icon="clock" class="w-5 h-5 mr-2 text-cyan-500"></div>
+                        Activites Recentes
+                    </h2>
+                    <div id="recent-activities" class="mt-4 space-y-3">
+                        <p class="text-sm text-gray-500">Aucune activite pour le moment</p>
+                    </div>
+                </div>
+
                 <div class="mt-10 bg-white p-6 rounded-lg shadow-sm">
-                    <h2 class="text-xl font-bold text-gray-800">Démarrage rapide</h2>
+                    <h2 class="text-xl font-bold text-gray-800">Demarrage rapide</h2>
                     <div class="mt-4 space-y-4">
                         <div class="p-4 border border-gray-200 rounded-lg">
                             <h3 class="font-semibold text-gray-700">1. Ajouter des produits au magasin</h3>
@@ -1922,6 +2001,308 @@
                 updateUI();
             }
 
+            // === DASHBOARD FUNCTIONS ===
+
+            /**
+             * Met à jour toutes les statistiques du tableau de bord
+             */
+            function updateDashboardStats() {
+                if (!isAuthenticated || !dbBasePath) return;
+
+                // Ventes du jour
+                const dailySales = calculateDailySales();
+                const statDaily = document.getElementById('stat-daily-sales');
+                if (statDaily) statDaily.textContent = dailySales.count;
+
+                // Stock boutique
+                const shopStockCount = Object.keys(appData.shopStock || {}).length;
+                const statShop = document.getElementById('stat-shop-stock');
+                if (statShop) statShop.textContent = `${shopStockCount} produit${shopStockCount > 1 ? 's' : ''}`;
+
+                // Stock magasin
+                const storeStockCount = Object.keys(appData.storeProducts || {}).length;
+                const statStore = document.getElementById('stat-store-stock');
+                if (statStore) statStore.textContent = `${storeStockCount} produit${storeStockCount > 1 ? 's' : ''}`;
+
+                // Revenus du mois
+                const monthlyRevenue = calculateMonthlyRevenue();
+                const statRevenue = document.getElementById('stat-monthly-revenue');
+                if (statRevenue) statRevenue.textContent = `${monthlyRevenue.toLocaleString()} FCFA`;
+
+                // Alertes stock faible
+                const lowStockCount = countLowStockAlerts();
+                const statLowStock = document.getElementById('stat-low-stock');
+                const badgeLowStock = document.getElementById('badge-low-stock');
+                if (statLowStock) statLowStock.textContent = lowStockCount;
+                if (badgeLowStock) {
+                    if (lowStockCount > 0) {
+                        badgeLowStock.classList.remove('hidden');
+                    } else {
+                        badgeLowStock.classList.add('hidden');
+                    }
+                }
+
+                // Bénéfice du mois
+                const monthlyProfit = calculateMonthlyProfit();
+                const statProfit = document.getElementById('stat-monthly-profit');
+                if (statProfit) statProfit.textContent = `${monthlyProfit.toLocaleString()} FCFA`;
+
+                // Mettre à jour les tendances
+                updateTrendIndicators();
+
+                // Mettre à jour la timeline
+                updateActivityTimeline();
+            }
+
+            /**
+             * Calculer les ventes du jour
+             */
+            function calculateDailySales() {
+                const sales = appData.salesHistory || {};
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                let count = 0;
+                let amount = 0;
+
+                Object.values(sales).forEach(sale => {
+                    const saleDate = new Date(sale.date);
+                    saleDate.setHours(0, 0, 0, 0);
+                    if (saleDate.getTime() === today.getTime()) {
+                        count += sale.quantity || 0;
+                        amount += sale.totalAmount || 0;
+                    }
+                });
+
+                return { count, amount };
+            }
+
+            /**
+             * Calculer les revenus du mois
+             */
+            function calculateMonthlyRevenue() {
+                const sales = appData.salesHistory || {};
+                const now = new Date();
+                const currentMonth = now.getMonth();
+                const currentYear = now.getFullYear();
+
+                let total = 0;
+                Object.values(sales).forEach(sale => {
+                    const saleDate = new Date(sale.date);
+                    if (saleDate.getMonth() === currentMonth && saleDate.getFullYear() === currentYear) {
+                        total += sale.totalAmount || 0;
+                    }
+                });
+
+                return total;
+            }
+
+            /**
+             * Compter les produits en alerte stock faible
+             */
+            function countLowStockAlerts() {
+                const shopStock = appData.shopStock || {};
+                return Object.values(shopStock).filter(item =>
+                    item.quantityInShop <= (item.alertThreshold || 5)
+                ).length;
+            }
+
+            /**
+             * Calculer le bénéfice du mois
+             */
+            function calculateMonthlyProfit() {
+                const sales = appData.salesHistory || {};
+                const now = new Date();
+                const currentMonth = now.getMonth();
+                const currentYear = now.getFullYear();
+
+                let profit = 0;
+                Object.values(sales).forEach(sale => {
+                    const saleDate = new Date(sale.date);
+                    if (saleDate.getMonth() === currentMonth && saleDate.getFullYear() === currentYear) {
+                        // Trouver le produit source pour le prix d'achat
+                        const shopProduct = Object.values(appData.shopStock || {}).find(p => p.id === sale.shopProductId);
+                        if (shopProduct) {
+                            const storeProduct = appData.storeProducts[shopProduct.sourceProductId];
+                            if (storeProduct) {
+                                const costPrice = storeProduct.purchasePrice || 0;
+                                const sellingPrice = sale.sellingPrice || 0;
+                                profit += (sellingPrice - costPrice) * sale.quantity;
+                            }
+                        }
+                    }
+                });
+
+                return Math.round(profit);
+            }
+
+            /**
+             * Mettre à jour les indicateurs de tendance
+             */
+            function updateTrendIndicators() {
+                // Ventes du jour vs hier
+                const dailySales = calculateDailySales();
+                const yesterdaySales = calculateYesterdaySales();
+                updateTrend('trend-daily-sales', dailySales.count, yesterdaySales.count, 'ventes');
+
+                // Revenus du mois vs mois dernier
+                const monthlyRevenue = calculateMonthlyRevenue();
+                const lastMonthRevenue = calculateLastMonthRevenue();
+                updateTrend('trend-monthly-revenue', monthlyRevenue, lastMonthRevenue, 'FCFA');
+
+                // Bénéfice vs mois dernier
+                const monthlyProfit = calculateMonthlyProfit();
+                const lastMonthProfit = calculateLastMonthProfit();
+                updateTrend('trend-monthly-profit', monthlyProfit, lastMonthProfit, 'FCFA');
+            }
+
+            /**
+             * Mettre à jour un indicateur de tendance
+             */
+            function updateTrend(elementId, current, previous, unit) {
+                const element = document.getElementById(elementId);
+                if (!element) return;
+
+                if (previous === 0) {
+                    element.innerHTML = '';
+                    return;
+                }
+
+                const diff = current - previous;
+                const percent = Math.abs((diff / previous) * 100).toFixed(1);
+                const arrow = diff >= 0 ? '↗️' : '↘️';
+                const color = diff >= 0 ? 'text-green-600' : 'text-red-600';
+                const sign = diff >= 0 ? '+' : '';
+
+                element.innerHTML = `<span class="${color} font-semibold">${arrow} ${sign}${percent}% vs periode precedente</span>`;
+            }
+
+            /**
+             * Calculer les ventes d'hier
+             */
+            function calculateYesterdaySales() {
+                const sales = appData.salesHistory || {};
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                yesterday.setHours(0, 0, 0, 0);
+
+                let count = 0;
+                Object.values(sales).forEach(sale => {
+                    const saleDate = new Date(sale.date);
+                    saleDate.setHours(0, 0, 0, 0);
+                    if (saleDate.getTime() === yesterday.getTime()) {
+                        count += sale.quantity || 0;
+                    }
+                });
+
+                return { count };
+            }
+
+            /**
+             * Calculer les revenus du mois dernier
+             */
+            function calculateLastMonthRevenue() {
+                const sales = appData.salesHistory || {};
+                const now = new Date();
+                const lastMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+                const year = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+
+                let total = 0;
+                Object.values(sales).forEach(sale => {
+                    const saleDate = new Date(sale.date);
+                    if (saleDate.getMonth() === lastMonth && saleDate.getFullYear() === year) {
+                        total += sale.totalAmount || 0;
+                    }
+                });
+
+                return total;
+            }
+
+            /**
+             * Calculer le bénéfice du mois dernier
+             */
+            function calculateLastMonthProfit() {
+                const sales = appData.salesHistory || {};
+                const now = new Date();
+                const lastMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+                const year = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+
+                let profit = 0;
+                Object.values(sales).forEach(sale => {
+                    const saleDate = new Date(sale.date);
+                    if (saleDate.getMonth() === lastMonth && saleDate.getFullYear() === year) {
+                        const shopProduct = Object.values(appData.shopStock || {}).find(p => p.id === sale.shopProductId);
+                        if (shopProduct) {
+                            const storeProduct = appData.storeProducts[shopProduct.sourceProductId];
+                            if (storeProduct) {
+                                const costPrice = storeProduct.purchasePrice || 0;
+                                const sellingPrice = sale.sellingPrice || 0;
+                                profit += (sellingPrice - costPrice) * sale.quantity;
+                            }
+                        }
+                    }
+                });
+
+                return Math.round(profit);
+            }
+
+            /**
+             * Mettre à jour la timeline d'activités
+             */
+            function updateActivityTimeline() {
+                const container = document.getElementById('recent-activities');
+                if (!container) return;
+
+                // Récupérer les 5 dernières activités (ventes + mouvements)
+                const activities = [];
+
+                // Ventes
+                const sales = Object.values(appData.salesHistory || {});
+                sales.forEach(sale => {
+                    activities.push({
+                        date: new Date(sale.date),
+                        type: 'sale',
+                        icon: '💰',
+                        text: `Vente : ${sale.quantity} ${sale.productName}`,
+                        amount: sale.totalAmount
+                    });
+                });
+
+                // Mouvements boutique
+                const shopMovements = Object.values(appData.shopMovements || {}).filter(m => m.type === 'Entrée');
+                shopMovements.forEach(move => {
+                    activities.push({
+                        date: new Date(move.date),
+                        type: 'entry',
+                        icon: '📦',
+                        text: `Entree stock : ${move.quantityChange} ${move.productName}`
+                    });
+                });
+
+                // Trier par date et prendre les 5 derniers
+                activities.sort((a, b) => b.date - a.date);
+                const recentActivities = activities.slice(0, 5);
+
+                if (recentActivities.length === 0) {
+                    container.innerHTML = '<p class="text-sm text-gray-500">Aucune activite pour le moment</p>';
+                    return;
+                }
+
+                container.innerHTML = recentActivities.map(activity => {
+                    const time = activity.date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                    const amountText = activity.amount ? ` - ${activity.amount.toLocaleString()} FCFA` : '';
+                    return `
+                        <div class="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                            <span class="text-2xl">${activity.icon}</span>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium text-gray-800">${activity.text}${amountText}</p>
+                                <p class="text-xs text-gray-500 mt-1">🕐 ${time}</p>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
             function setActiveSettingsTab(tabId = 'compte') {
                 if (!settingsTabButtons.length) return;
                 settingsTabButtons.forEach(button => {
@@ -2401,6 +2782,7 @@
                 appData.shopStock = snapshot.val() || {};
                 populateShopProductSelects();
                 renderShopStock(shopSearchInput ? shopSearchInput.value : '');
+                updateDashboardStats();
                 updateAllStats();
             }
 
@@ -2460,7 +2842,7 @@
                     salesHistoryTableContainer.classList.add('hidden');
                     salesHistoryTbody.innerHTML = '';
                 }
-                updateAllStats();
+                updateDashboardStats();
             }
 
             function setupFirebaseListeners() {
@@ -3130,6 +3512,25 @@
                     }
                 });
             }
+
+            // Quick Actions buttons
+            const quickActionButtons = document.querySelectorAll('[data-quick-action]');
+            quickActionButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetPage = button.dataset.quickAction;
+                    if (targetPage === 'Reappro') {
+                        // Naviguer vers la section Réappro dans Mon Magasin
+                        setActivePage('Mon Magasin');
+                        // Scroll vers la section de réapprovisionnement
+                        setTimeout(() => {
+                            const reapproSection = document.getElementById('reappro-tab');
+                            if (reapproSection) reapproSection.click();
+                        }, 100);
+                    } else {
+                        setActivePage(targetPage);
+                    }
+                });
+            });
 
 
             // Auth Logic
