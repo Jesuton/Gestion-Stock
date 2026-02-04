@@ -1990,6 +1990,34 @@
                 return currentUserData.permissions?.includes(permission) || false;
             }
 
+            // Mapping des pages aux permissions requises
+            const pagePermissions = {
+                'Tableau de bord': null, // Accessible à tous
+                'Ventes': 'Ventes',
+                'Stock Boutique': 'Gérer Stock Boutique',
+                'Mon Magasin': 'Gérer Stock Magasin',
+                'Statistiques': 'Statistiques',
+                'Paramètres': 'admin-only' // Cas spécial pour admin seulement
+            };
+
+            function canAccessPage(pageName) {
+                if (!isAuthenticated || !currentUserData) return false;
+
+                // Admins can access everything
+                if (currentUserData.role === 'admin') return true;
+
+                const requiredPermission = pagePermissions[pageName];
+
+                // Si null, la page est accessible à tous
+                if (requiredPermission === null) return true;
+
+                // Si 'admin-only', seuls les admins peuvent accéder
+                if (requiredPermission === 'admin-only') return false;
+
+                // Sinon, vérifier la permission
+                return hasPermission(requiredPermission);
+            }
+
 
             function handleManualLogout() {
                 isAuthenticated = false;
@@ -2890,6 +2918,13 @@
                         if (userCompanyDisplay) userCompanyDisplay.textContent = currentUserData.companyName || '';
                     }
                     if (mobilePageTitle) mobilePageTitle.textContent = currentPage;
+
+                    // Vérifier si l'utilisateur peut accéder à la page actuelle
+                    if (!canAccessPage(currentPage)) {
+                        // Rediriger vers le tableau de bord si accès refusé
+                        currentPage = 'Tableau de bord';
+                        if (mobilePageTitle) mobilePageTitle.textContent = currentPage;
+                    }
                 } else {
                     if (authPageContainer) authPageContainer.classList.remove('hidden');
                     if (layoutContainer) layoutContainer.classList.add('hidden');
@@ -2901,6 +2936,17 @@
                 });
 
                 navButtons.forEach(button => {
+                    const pageName = button.dataset.page;
+
+                    // Masquer le bouton si l'utilisateur n'a pas accès à la page
+                    if (!canAccessPage(pageName)) {
+                        button.style.display = 'none';
+                        return;
+                    } else {
+                        button.style.display = '';
+                    }
+
+                    // Mettre en surbrillance le bouton actif
                     if (button.dataset.page === currentPage) {
                         button.classList.add('bg-cyan-400', 'text-white', 'shadow');
                         button.classList.remove('text-gray-600', 'hover:bg-gray-100');
@@ -2911,6 +2957,11 @@
                 });
 
                 updateSettingsAccess();
+
+                // Mettre à jour les boutons d'actions rapides
+                if (isAuthenticated && typeof updateQuickActionButtons === 'function') {
+                    updateQuickActionButtons();
+                }
             }
 
             function updateAuthFormView() {
@@ -3515,16 +3566,53 @@
 
             // Quick Actions buttons
             const quickActionButtons = document.querySelectorAll('[data-quick-action]');
+
+            function setActivePage(pageName) {
+                // Vérifier les permissions avant de naviguer
+                if (!canAccessPage(pageName)) {
+                    alert(`Vous n'avez pas accès à la page "${pageName}".`);
+                    return;
+                }
+                currentPage = pageName;
+                updateUI();
+            }
+
+            function updateQuickActionButtons() {
+                quickActionButtons.forEach(button => {
+                    const targetPage = button.dataset.quickAction;
+                    let canAccess = false;
+
+                    // Déterminer quelle page vérifier
+                    if (targetPage === 'Reappro') {
+                        canAccess = canAccessPage('Stock Boutique');
+                    } else {
+                        canAccess = canAccessPage(targetPage);
+                    }
+
+                    // Masquer le bouton si l'utilisateur n'a pas accès
+                    if (!canAccess) {
+                        button.style.display = 'none';
+                    } else {
+                        button.style.display = '';
+                    }
+                });
+            }
+
             quickActionButtons.forEach(button => {
                 button.addEventListener('click', () => {
                     const targetPage = button.dataset.quickAction;
                     if (targetPage === 'Reappro') {
-                        // Naviguer vers la section Réappro dans Mon Magasin
-                        setActivePage('Mon Magasin');
-                        // Scroll vers la section de réapprovisionnement
+                        // Vérifier l'accès à Stock Boutique
+                        if (!canAccessPage('Stock Boutique')) {
+                            alert('Vous n\'avez pas accès au réapprovisionnement.');
+                            return;
+                        }
+                        // Naviguer vers Stock Boutique
+                        setActivePage('Stock Boutique');
+                        // Ouvrir le modal de réapprovisionnement
                         setTimeout(() => {
-                            const reapproSection = document.getElementById('reappro-tab');
-                            if (reapproSection) reapproSection.click();
+                            const reapproButton = document.getElementById('open-restock-modal-button');
+                            if (reapproButton) reapproButton.click();
                         }, 100);
                     } else {
                         setActivePage(targetPage);
