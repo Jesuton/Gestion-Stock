@@ -397,173 +397,267 @@
             <div id="page-Ventes" class="page-content p-4 md:p-8 hidden">
                 <h1 class="text-3xl font-bold text-gray-800">Ventes</h1>
                 <p class="text-gray-500 mt-1">Enregistrez vos ventes quotidiennes</p>
-                <div class="mt-8 bg-white p-6 rounded-lg shadow-sm">
-                    <h2 class="text-xl font-bold text-gray-800 flex items-center">
-                        <div data-icon="sales" class="w-6 h-6 mr-3 text-cyan-500"></div>
-                        Enregistrer une vente
-                    </h2>
-                    <form id="sales-form" class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="col-span-1">
-                            <label for="sales-product-select"
-                                class="block text-sm font-medium text-gray-700 mb-1">Produit *</label>
-                            <select id="sales-product-select" name="product"
-                                class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500">
-                                <option value="">Sélectionner un produit</option>
-                            </select>
-                        </div>
-                        <div class="col-span-1">
-                            <label for="sales-quantity-input"
-                                class="block text-sm font-medium text-gray-700 mb-1">Quantité *</label>
-                            <input type="number" name="quantity" id="sales-quantity-input" value="1" min="1"
-                                class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500" />
-                        </div>
-
-                        <!-- Nouveau champ : Montant total -->
-                        <div class="col-span-1">
-                            <label for="sales-total-amount" class="block text-sm font-medium text-gray-700 mb-1">Montant
-                                total</label>
-                            <input type="text" id="sales-total-amount" value="0 FCFA"
-                                class="w-full border-gray-300 rounded-lg shadow-sm bg-gray-100 focus:ring-0 focus:border-gray-300"
-                                readonly />
-                        </div>
-
-                        <div class="col-span-1">
-                            <label for="seller-name" class="block text-sm font-medium text-gray-700 mb-1">Vendeur
-                                *</label>
-                            <input type="text" name="seller" id="seller-name"
-                                class="w-full border-gray-300 rounded-lg shadow-sm bg-gray-100 focus:ring-0 focus:border-gray-300"
-                                readonly />
-                        </div>
-
-                        <div class="col-span-2">
-                            <label for="sales-comment" class="block text-sm font-medium text-gray-700 mb-1">Commentaire
-                                (optionnel)</label>
-                            <textarea name="comment" id="sales-comment" rows="3"
-                                class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500"></textarea>
-                        </div>
-
-                        <p id="sales-error" class="text-red-500 text-sm mt-2 hidden col-span-2"></p>
-
-                        <div class="col-span-2 flex gap-3">
-                            <button type="button" id="add-to-cart-button"
-                                class="inline-flex items-center px-4 py-2 bg-cyan-400 text-white font-semibold rounded-lg shadow-md hover:bg-cyan-500 transition-colors">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
-                                    </path>
-                                </svg>
-                                Ajouter au panier
-                            </button>
-                            <button type="submit" id="sales-submit-button"
-                                class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-300 transition-colors">
-                                + Vente directe
-                            </button>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Bouton Facture (affiché après vente réussie) -->
-                <div id="invoice-button-container"
-                    class="mt-4 p-4 bg-gradient-to-r from-cyan-50 to-blue-50 rounded-lg border-2 border-cyan-300 hidden">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            <svg class="w-6 h-6 text-cyan-600 mr-3" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-                                </path>
-                            </svg>
-                            <div>
-                                <p class="text-sm font-semibold text-gray-700">Vente enregistrée avec succès !</p>
-                                <p class="text-xs text-gray-500">Générez la facture PDF pour cette vente</p>
+                <div class="mt-6 grid grid-cols-1 xl:grid-cols-3 gap-6">
+                    <div class="xl:col-span-2 space-y-6">
+                        <div class="bg-white p-6 rounded-lg shadow-sm">
+                            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                                <div>
+                                    <h2 class="text-xl font-bold text-gray-800">Catalogue produits</h2>
+                                    <p class="text-sm text-gray-500 mt-1">Cliquez sur un produit pour l'ajouter a la commande.</p>
+                                </div>
+                                <span class="text-xs font-semibold px-3 py-1 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-100">Stock Boutique</span>
+                            </div>
+                            <div class="mt-4 relative">
+                                <input type="text" id="sales-product-search" placeholder="Rechercher un produit..."
+                                    class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500" />
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <div id="sales-products-placeholder" class="mt-6 flex flex-col items-center justify-center text-center text-gray-500 h-40">
+                                <p>Aucun produit disponible.</p>
+                            </div>
+                            <div id="sales-products-container" class="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <!-- Produits remplis par JS -->
                             </div>
                         </div>
-                        <button id="generate-invoice-button"
-                            class="px-5 py-2.5 bg-cyan-500 text-white font-semibold rounded-lg shadow-md hover:bg-cyan-600 transition-all duration-200 flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-                                </path>
-                            </svg>
-                            📄 Générer Facture
-                        </button>
-                    </div>
-                </div>
 
+                        <div class="bg-white p-6 rounded-lg shadow-sm">
+                            <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                                <div data-icon="sales" class="w-6 h-6 mr-3 text-cyan-500"></div>
+                                Ajout rapide
+                            </h2>
+                            <form id="sales-form" class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="col-span-1">
+                                    <label for="sales-product-select" class="block text-sm font-medium text-gray-700 mb-1">Produit *</label>
+                                    <select id="sales-product-select" name="product"
+                                        class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500">
+                                        <option value="">Selectionner un produit</option>
+                                    </select>
+                                </div>
+                                <div class="col-span-1">
+                                    <label for="sales-quantity-input" class="block text-sm font-medium text-gray-700 mb-1">Quantite *</label>
+                                    <input type="number" name="quantity" id="sales-quantity-input" value="1" min="1"
+                                        class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500" />
+                                </div>
 
-                <!-- Section Panier -->
-                <div id="cart-section" class="mt-8 bg-white p-6 rounded-lg shadow-sm border-2 border-cyan-200 hidden">
-                    <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-xl font-bold text-gray-800 flex items-center">
-                            <svg class="w-6 h-6 mr-3 text-cyan-500" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
-                                </path>
-                            </svg>
-                            Panier
-                            <span id="cart-count"
-                                class="ml-3 px-2.5 py-0.5 text-xs font-semibold rounded-full bg-cyan-100 text-cyan-800">0</span>
-                        </h2>
-                        <button id="clear-cart-button"
-                            class="text-sm text-red-500 hover:text-red-700 font-medium flex items-center">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
-                                </path>
-                            </svg>
-                            Vider le panier
-                        </button>
-                    </div>
+                                <div class="col-span-1">
+                                    <label for="sales-total-amount" class="block text-sm font-medium text-gray-700 mb-1">Montant total</label>
+                                    <input type="text" id="sales-total-amount" value="0 FCFA"
+                                        class="w-full border-gray-300 rounded-lg shadow-sm bg-gray-100 focus:ring-0 focus:border-gray-300" readonly />
+                                </div>
 
-                    <!-- Tableau du panier -->
-                    <div class="overflow-x-auto rounded-lg border border-gray-200">
-                        <table class="min-w-full bg-white divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Produit</th>
-                                    <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Prix unitaire</th>
-                                    <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Quantité</th>
-                                    <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Sous-total</th>
-                                    <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="cart-items-tbody" class="divide-y divide-gray-200">
-                                <!-- Les articles du panier seront insérés ici par JavaScript -->
-                            </tbody>
-                        </table>
-                    </div>
+                                <div class="col-span-1">
+                                    <label for="seller-name" class="block text-sm font-medium text-gray-700 mb-1">Vendeur *</label>
+                                    <input type="text" name="seller" id="seller-name"
+                                        class="w-full border-gray-300 rounded-lg shadow-sm bg-gray-100 focus:ring-0 focus:border-gray-300" readonly />
+                                </div>
 
-                    <!-- Total et validation -->
-                    <div
-                        class="mt-6 flex flex-col md:flex-row items-center justify-between gap-4 p-4 bg-gray-50 rounded-lg">
-                        <div class="text-right">
-                            <p class="text-sm text-gray-500">Total de la commande</p>
-                            <p id="cart-total" class="text-3xl font-bold text-gray-800">0 FCFA</p>
-                        </div>
-                        <div class="flex gap-3">
-                            <button id="validate-cart-button"
-                                class="px-6 py-3 bg-green-500 text-white font-bold rounded-lg shadow-md hover:bg-green-600 transition-colors flex items-center">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                Valider la vente
-                            </button>
+                                <div class="col-span-2">
+                                    <label for="sales-comment" class="block text-sm font-medium text-gray-700 mb-1">Commentaire (optionnel)</label>
+                                    <textarea name="comment" id="sales-comment" rows="3"
+                                        class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500"></textarea>
+                                </div>
+
+                                <p id="sales-error" class="text-red-500 text-sm mt-2 hidden col-span-2"></p>
+
+                                <div class="col-span-2 flex gap-3">
+                                    <button type="button" id="add-to-cart-button"
+                                        class="inline-flex items-center px-4 py-2 bg-cyan-400 text-white font-semibold rounded-lg shadow-md hover:bg-cyan-500 transition-colors">
+                                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                        </svg>
+                                        Ajouter au panier
+                                    </button>
+                                    <button type="submit" id="sales-submit-button"
+                                        class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-300 transition-colors">
+                                        + Vente directe
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
-                </div>
 
+                    <div class="xl:col-span-1 space-y-6">
+                        <div class="bg-white p-6 rounded-lg shadow-sm">
+                            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                                <div>
+                                    <h2 class="text-xl font-bold text-gray-800">Client</h2>
+                                    <p class="text-sm text-gray-500 mt-1">Associez la vente a un client existant ou creez-en un nouveau.</p>
+                                </div>
+                                <button id="open-customer-modal-button"
+                                    class="inline-flex items-center px-3 py-2 bg-cyan-500 text-white text-sm font-semibold rounded-lg shadow-md hover:bg-cyan-600 transition-colors">
+                                    + Nouveau client
+                                </button>
+                            </div>
+                            <div class="mt-4">
+                                <label for="customer-search-input" class="block text-sm font-medium text-gray-700 mb-1">Rechercher un client</label>
+                                <input type="text" id="customer-search-input" list="customer-options" placeholder="Nom, telephone ou email"
+                                    class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500" />
+                                <datalist id="customer-options"></datalist>
+                                <input type="hidden" id="customer-id" />
+                                <p class="text-xs text-gray-500 mt-1">Tapez un nom, un numero ou un email pour retrouver un client.</p>
+                            </div>
+                            <div class="mt-3">
+                                <label for="customer-free-name" class="block text-sm font-medium text-gray-700 mb-1">Client libre</label>
+                                <input type="text" id="customer-free-name" placeholder="Nom du client (optionnel)"
+                                    class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500" />
+                                <p class="text-xs text-gray-500 mt-1">Utilisez ce champ si le client n'est pas enregistre.</p>
+                            </div>
+                            <div id="customer-selected-card" class="mt-4 hidden p-4 rounded-lg border border-cyan-100 bg-cyan-50">
+                                <div class="flex flex-col gap-3">
+                                    <div>
+                                        <p id="customer-selected-name" class="text-sm font-semibold text-gray-800">-</p>
+                                        <p id="customer-selected-contact" class="text-xs text-gray-500">-</p>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <button id="customer-history-button" class="hidden text-xs font-semibold text-cyan-700 hover:text-cyan-900">Historique</button>
+                                        <button id="clear-customer-selection" class="text-xs font-semibold text-gray-600 hover:text-gray-800">Vente sans client</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="order-summary-section" class="bg-white p-6 rounded-lg shadow-sm">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h2 class="text-xl font-bold text-gray-800">Resume de la commande</h2>
+                                    <p id="order-summary-note" class="text-sm text-gray-500 mt-1">Aucun article selectionne.</p>
+                                </div>
+                            </div>
+                            <div id="order-summary-list" class="mt-4 space-y-2">
+                                <p class="text-sm text-gray-500">Ajoutez des articles pour voir le resume.</p>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
+                                <p class="text-sm font-semibold text-gray-700">Total</p>
+                                <p id="order-summary-total" class="text-2xl font-bold text-gray-800">0 FCFA</p>
+                            </div>
+                        </div>
+
+                        <div id="cart-section" class="bg-white p-6 rounded-lg shadow-sm border-2 border-cyan-200 hidden">
+                            <div class="flex items-center justify-between mb-4">
+                                <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                                    <svg class="w-6 h-6 mr-3 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                    </svg>
+                                    Panier
+                                    <span id="cart-count" class="ml-3 px-2.5 py-0.5 text-xs font-semibold rounded-full bg-cyan-100 text-cyan-800">0</span>
+                                </h2>
+                                <button id="clear-cart-button" class="text-sm text-red-500 hover:text-red-700 font-medium flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                    Vider le panier
+                                </button>
+                            </div>
+
+                            <div class="overflow-x-auto rounded-lg border border-gray-200">
+                                <table class="min-w-full bg-white divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prix unitaire</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantite</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sous-total</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="cart-items-tbody" class="divide-y divide-gray-200">
+                                        <!-- Les articles du panier seront inseres ici par JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="mt-6 flex flex-col md:flex-row items-center justify-between gap-4 p-4 bg-gray-50 rounded-lg">
+                                <div class="text-right">
+                                    <p class="text-sm text-gray-500">Total de la commande</p>
+                                    <p id="cart-total" class="text-3xl font-bold text-gray-800">0 FCFA</p>
+                                </div>
+                                <div class="flex gap-3">
+                                    <button id="validate-cart-button"
+                                        class="px-6 py-3 bg-green-500 text-white font-bold rounded-lg shadow-md hover:bg-green-600 transition-colors flex items-center">
+                                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                        Valider la vente
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="invoice-button-container" class="p-4 bg-gradient-to-r from-cyan-50 to-blue-50 rounded-lg border-2 border-cyan-300 hidden">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <svg class="w-6 h-6 text-cyan-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    <div>
+                                        <p class="text-sm font-semibold text-gray-700">Vente enregistree avec succes !</p>
+                                        <p class="text-xs text-gray-500">Generez la facture PDF pour cette vente</p>
+                                    </div>
+                                </div>
+                                <button id="generate-invoice-button"
+                                    class="px-5 py-2.5 bg-cyan-500 text-white font-semibold rounded-lg shadow-md hover:bg-cyan-600 transition-all duration-200 flex items-center">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    Generer Facture
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="customer-history-section" class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 hidden">
+                            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                                <div>
+                                    <h2 class="text-xl font-bold text-gray-800">Historique client</h2>
+                                    <p id="customer-history-subtitle" class="text-sm text-gray-500 mt-1"></p>
+                                </div>
+                                <div class="text-xs font-semibold text-gray-500">Achats recents</div>
+                            </div>
+                            <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="p-4 rounded-lg bg-gray-50 border border-gray-100">
+                                    <p class="text-xs uppercase text-gray-400">Total achats</p>
+                                    <p id="customer-history-total" class="text-2xl font-semibold text-gray-800">0 FCFA</p>
+                                </div>
+                                <div class="p-4 rounded-lg bg-gray-50 border border-gray-100">
+                                    <p class="text-xs uppercase text-gray-400">Nombre d'achats</p>
+                                    <p id="customer-history-count" class="text-2xl font-semibold text-gray-800">0</p>
+                                </div>
+                                <div class="p-4 rounded-lg bg-gray-50 border border-gray-100">
+                                    <p class="text-xs uppercase text-gray-400">Dernier achat</p>
+                                    <p id="customer-history-last" class="text-sm font-semibold text-gray-800">-</p>
+                                </div>
+                            </div>
+                            <div class="mt-6">
+                                <div id="customer-history-placeholder" class="flex flex-col items-center justify-center text-center text-gray-500 h-24">
+                                    <p>Aucun achat pour ce client.</p>
+                                </div>
+                                <div id="customer-history-table-container" class="hidden overflow-x-auto rounded-lg border border-gray-200">
+                                    <table class="min-w-full bg-white divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Articles</th>
+                                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
+                                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendeur</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="customer-history-tbody" class="divide-y divide-gray-200">
+                                            <!-- Historique client insere par JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="mt-10 bg-white p-6 rounded-lg shadow-sm">
                     <h2 class="text-xl font-bold text-gray-800">Historique des ventes</h2>
                     <p class="text-sm text-gray-500 mt-1">Liste de toutes les transactions enregistrées.</p>
@@ -587,6 +681,9 @@
                                         <th scope="col"
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Vendeur</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Client</th>
                                         <th scope="col"
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Qté</th>
@@ -1356,6 +1453,53 @@
         </main>
     </div>
 
+    <!-- Modal: Nouveau client -->
+    <div id="customer-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 m-4">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800">Ajouter un client</h2>
+                <button id="close-customer-modal-button" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <form id="customer-form" class="space-y-4">
+                <div>
+                    <label class="text-sm font-medium text-gray-600" for="customer-name">Nom complet *</label>
+                    <input type="text" id="customer-name"
+                        class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition"
+                        required />
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-600" for="customer-phone">Telephone</label>
+                    <input type="tel" id="customer-phone"
+                        class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" />
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-600" for="customer-email">Email</label>
+                    <input type="email" id="customer-email"
+                        class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" />
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-600" for="customer-address">Adresse</label>
+                    <input type="text" id="customer-address"
+                        class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" />
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-600" for="customer-notes">Notes</label>
+                    <textarea id="customer-notes" rows="3"
+                        class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition"></textarea>
+                </div>
+                <div id="customer-error" class="text-red-500 text-sm hidden"></div>
+                <button type="submit" id="customer-submit-button"
+                    class="w-full bg-cyan-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-600 transition-colors">
+                    Enregistrer le client
+                </button>
+            </form>
+        </div>
+    </div>
+
     <!-- 
       MODAL "AJOUTER UN NOUVEAU PRODUIT"
     -->
@@ -1783,18 +1927,21 @@
             let currentUserData = null;
             let dbBasePath = '';
 
-            const appData = { storeProducts: {}, shopStock: {}, salesHistory: {} };
+            const appData = { storeProducts: {}, shopStock: {}, salesHistory: {}, customers: {} };
             let isSidebarOpen = false;
             let isSidebarCollapsed = false;
             let isCodeLoginMode = false;
             let isCodeSession = false;
 
 
-            let storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, salesHistoryListener, companyMembersListener;
-            let storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, salesHistoryRef, companyMembersRef;
+            let storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, salesHistoryListener, companyMembersListener, companyCustomersListener;
+            let storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, salesHistoryRef, companyMembersRef, companyCustomersRef;
 
             const accessModules = ['Tableau de bord', 'Ventes', 'Stock Boutique', 'Mon Magasin', 'Statistiques', 'Paramètres', 'Supprimer Stock Boutique', 'Supprimer Stock Magasin'];
             let teamMembersState = [];
+            let selectedCustomer = null;
+            let customerOptionLookup = {};
+            let isCustomerHistoryOpen = false;
 
             // Cart state
             let cartItems = [];
@@ -1862,6 +2009,28 @@
             const salesHistoryPlaceholder = document.getElementById('sales-history-placeholder');
             const salesHistoryTableContainer = document.getElementById('sales-history-table-container');
             const salesHistoryTbody = document.getElementById('sales-history-tbody');
+            const salesProductSearch = document.getElementById('sales-product-search');
+            const salesProductsContainer = document.getElementById('sales-products-container');
+            const salesProductsPlaceholder = document.getElementById('sales-products-placeholder');
+            const customerSearchInput = document.getElementById('customer-search-input');
+            const customerOptions = document.getElementById('customer-options');
+            const customerIdInput = document.getElementById('customer-id');
+            const customerFreeNameInput = document.getElementById('customer-free-name');
+            const customerSelectedCard = document.getElementById('customer-selected-card');
+            const customerSelectedName = document.getElementById('customer-selected-name');
+            const customerSelectedContact = document.getElementById('customer-selected-contact');
+            const customerHistoryButton = document.getElementById('customer-history-button');
+            const orderSummaryList = document.getElementById('order-summary-list');
+            const orderSummaryTotal = document.getElementById('order-summary-total');
+            const orderSummaryNote = document.getElementById('order-summary-note');
+            const customerHistorySection = document.getElementById('customer-history-section');
+            const customerHistorySubtitle = document.getElementById('customer-history-subtitle');
+            const customerHistoryTotal = document.getElementById('customer-history-total');
+            const customerHistoryCount = document.getElementById('customer-history-count');
+            const customerHistoryLast = document.getElementById('customer-history-last');
+            const customerHistoryPlaceholder = document.getElementById('customer-history-placeholder');
+            const customerHistoryTableContainer = document.getElementById('customer-history-table-container');
+            const customerHistoryTbody = document.getElementById('customer-history-tbody');
 
             // Cart elements
             const addToCartButton = document.getElementById('add-to-cart-button');
@@ -1919,6 +2088,17 @@
             const restockStockWarning = document.getElementById('restock-stock-warning');
             const restockError = document.getElementById('restock-error');
             const restockSubmitButton = document.getElementById('restock-submit-button');
+            const openCustomerModalButton = document.getElementById('open-customer-modal-button');
+            const customerModal = document.getElementById('customer-modal');
+            const closeCustomerModalButton = document.getElementById('close-customer-modal-button');
+            const customerForm = document.getElementById('customer-form');
+            const customerNameInput = document.getElementById('customer-name');
+            const customerPhoneInput = document.getElementById('customer-phone');
+            const customerEmailInput = document.getElementById('customer-email');
+            const customerAddressInput = document.getElementById('customer-address');
+            const customerNotesInput = document.getElementById('customer-notes');
+            const customerError = document.getElementById('customer-error');
+            const customerSubmitButton = document.getElementById('customer-submit-button');
 
             const successToast = document.getElementById('success-toast');
             const successToastMessage = document.getElementById('success-toast-message');
@@ -1959,6 +2139,198 @@
             function formatDateForDisplay(isoString) {
                 const date = new Date(isoString);
                 return date.toLocaleString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace(' à', ',');
+            }
+
+            function normalizeString(value) {
+                return (value || '').toString().trim().toLowerCase();
+            }
+
+            function normalizePhone(value) {
+                return (value || '').toString().replace(/[\s().-]/g, '').trim();
+            }
+
+            function getSaleCurrency(sale) {
+                const shopItem = appData.shopStock?.[sale.shopProductId];
+                if (shopItem && appData.storeProducts[shopItem.sourceProductId]) {
+                    return appData.storeProducts[shopItem.sourceProductId].currency || 'CFA';
+                }
+                return 'CFA';
+            }
+
+            function buildCustomerOptionLabel(customer) {
+                const name = customer.fullName || customer.name || 'Client';
+                const details = [];
+                if (customer.phone) details.push(customer.phone);
+                if (customer.email) details.push(customer.email);
+                return details.length ? `${name} - ${details.join(' - ')}` : name;
+            }
+
+            function updateCustomerHistoryVisibility() {
+                const canShow = !!selectedCustomer;
+                if (customerHistoryButton) customerHistoryButton.classList.toggle('hidden', !canShow);
+                if (!canShow) isCustomerHistoryOpen = false;
+                if (customerHistorySection) customerHistorySection.classList.toggle('hidden', !canShow || !isCustomerHistoryOpen);
+            }
+
+            function updateCustomerSelectedCard() {
+                if (!customerSelectedCard || !customerSelectedName || !customerSelectedContact) return;
+                if (!selectedCustomer) {
+                    customerSelectedCard.classList.add('hidden');
+                    return;
+                }
+                const name = selectedCustomer.fullName || selectedCustomer.name || 'Client';
+                const contactParts = [];
+                if (selectedCustomer.phone) contactParts.push(selectedCustomer.phone);
+                if (selectedCustomer.email) contactParts.push(selectedCustomer.email);
+                if (selectedCustomer.address) contactParts.push(selectedCustomer.address);
+                customerSelectedName.textContent = name;
+                customerSelectedContact.textContent = contactParts.length ? contactParts.join(' | ') : 'Informations non renseignees';
+                customerSelectedCard.classList.remove('hidden');
+            }
+
+            function renderCustomerOptions() {
+                if (!customerOptions) return;
+                customerOptions.innerHTML = '';
+                customerOptionLookup = {};
+                const customers = Object.values(appData.customers || {}).sort((a, b) => {
+                    const nameA = (a.fullName || a.name || '').toLowerCase();
+                    const nameB = (b.fullName || b.name || '').toLowerCase();
+                    return nameA.localeCompare(nameB);
+                });
+                customers.forEach(customer => {
+                    const label = buildCustomerOptionLabel(customer);
+                    const option = document.createElement('option');
+                    option.value = label;
+                    customerOptions.appendChild(option);
+                    const normalizedLabel = normalizeString(label);
+                    if (normalizedLabel) customerOptionLookup[normalizedLabel] = customer;
+                    if (customer.fullName) customerOptionLookup[normalizeString(customer.fullName)] = customer;
+                    if (customer.phone) customerOptionLookup[normalizePhone(customer.phone)] = customer;
+                    if (customer.email) customerOptionLookup[normalizeString(customer.email)] = customer;
+                });
+            }
+
+            function applySelectedCustomer(customer) {
+                selectedCustomer = customer || null;
+                if (customerIdInput) customerIdInput.value = customer?.id || '';
+                if (customerSearchInput) customerSearchInput.value = customer ? buildCustomerOptionLabel(customer) : '';
+                if (customerFreeNameInput) {
+                    if (customer) {
+                        customerFreeNameInput.value = customer.fullName || customer.name || '';
+                        customerFreeNameInput.readOnly = true;
+                        customerFreeNameInput.classList.add('bg-gray-100');
+                    } else {
+                        customerFreeNameInput.readOnly = false;
+                        customerFreeNameInput.classList.remove('bg-gray-100');
+                    }
+                }
+                updateCustomerSelectedCard();
+                updateCustomerHistoryVisibility();
+                renderCustomerHistory();
+            }
+
+            function clearSelectedCustomer(preserveSearch = false, preserveManual = false) {
+                selectedCustomer = null;
+                if (customerIdInput) customerIdInput.value = '';
+                if (customerSearchInput && !preserveSearch) customerSearchInput.value = '';
+                if (customerFreeNameInput) {
+                    if (!preserveManual) customerFreeNameInput.value = '';
+                    customerFreeNameInput.readOnly = false;
+                    customerFreeNameInput.classList.remove('bg-gray-100');
+                }
+                updateCustomerSelectedCard();
+                updateCustomerHistoryVisibility();
+                renderCustomerHistory();
+            }
+
+            function getCustomerContext() {
+                const manualName = customerFreeNameInput ? customerFreeNameInput.value.trim() : '';
+                const searchName = customerSearchInput ? customerSearchInput.value.trim() : '';
+                const fallbackName = manualName || searchName || 'Client comptoir';
+                const customerName = selectedCustomer?.fullName || selectedCustomer?.name || fallbackName || '';
+                return {
+                    customerId: selectedCustomer?.id || null,
+                    customerName,
+                    customerPhone: selectedCustomer?.phone || '',
+                    customerEmail: selectedCustomer?.email || ''
+                };
+            }
+
+            function renderCustomerHistory() {
+                updateCustomerHistoryVisibility();
+                if (!selectedCustomer || !isCustomerHistoryOpen) return;
+                if (!customerHistorySection) return;
+
+                const targetId = selectedCustomer?.id;
+                const sales = Object.values(appData.salesHistory || {}).filter(sale => sale.customerId === targetId);
+                if (!sales.length) {
+                    if (customerHistoryPlaceholder) customerHistoryPlaceholder.classList.remove('hidden');
+                    if (customerHistoryTableContainer) customerHistoryTableContainer.classList.add('hidden');
+                    if (customerHistoryTbody) customerHistoryTbody.innerHTML = '';
+                    if (customerHistoryTotal) customerHistoryTotal.textContent = formatCurrency(0);
+                    if (customerHistoryCount) customerHistoryCount.textContent = '0';
+                    if (customerHistoryLast) customerHistoryLast.textContent = '-';
+                    if (customerHistorySubtitle) customerHistorySubtitle.textContent = selectedCustomer.fullName || selectedCustomer.name || '';
+                    return;
+                }
+
+                const groupMap = {};
+                sales.forEach(sale => {
+                    const groupId = sale.saleGroupId || sale.id;
+                    if (!groupMap[groupId]) {
+                        groupMap[groupId] = {
+                            id: groupId,
+                            date: sale.date,
+                            sellerName: sale.sellerName || '',
+                            items: [],
+                            total: 0,
+                            currency: getSaleCurrency(sale)
+                        };
+                    }
+                    const group = groupMap[groupId];
+                    if (new Date(sale.date) > new Date(group.date)) group.date = sale.date;
+                    group.items.push({
+                        name: sale.productName,
+                        quantity: sale.quantity || 0,
+                        total: sale.totalAmount || 0
+                    });
+                    group.total += sale.totalAmount || 0;
+                });
+
+                const groups = Object.values(groupMap).sort((a, b) => new Date(b.date) - new Date(a.date));
+                const totalAmount = groups.reduce((sum, group) => sum + group.total, 0);
+                const currency = groups[0]?.currency || 'CFA';
+
+                if (customerHistorySubtitle) customerHistorySubtitle.textContent = selectedCustomer.fullName || selectedCustomer.name || '';
+                if (customerHistoryTotal) customerHistoryTotal.textContent = formatCurrency(totalAmount, currency);
+                if (customerHistoryCount) customerHistoryCount.textContent = `${groups.length}`;
+                if (customerHistoryLast) customerHistoryLast.textContent = formatDateForDisplay(groups[0].date);
+
+                if (customerHistoryPlaceholder) customerHistoryPlaceholder.classList.add('hidden');
+                if (customerHistoryTableContainer) customerHistoryTableContainer.classList.remove('hidden');
+                if (customerHistoryTbody) {
+                    customerHistoryTbody.innerHTML = groups.map(group => {
+                        const itemCount = group.items.reduce((sum, item) => sum + item.quantity, 0);
+                        const itemsLabel = group.items.map(item => `${item.name} x${item.quantity}`).join(', ');
+                        return `
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(group.date)}</td>
+                                <td class="px-4 py-3 text-sm text-gray-700">${itemCount} article${itemCount > 1 ? 's' : ''} · ${itemsLabel}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-700">${formatCurrency(group.total, group.currency)}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${group.sellerName || '-'}</td>
+                            </tr>`;
+                    }).join('');
+                }
+            }
+
+            function openCustomerModalDialog() {
+                if (customerError) customerError.classList.add('hidden');
+                if (customerForm) customerForm.reset();
+                if (customerModal) customerModal.classList.remove('hidden');
+            }
+
+            function closeCustomerModalDialog() {
+                if (customerModal) customerModal.classList.add('hidden');
             }
 
             function generateAccessCode() {
@@ -2890,8 +3262,10 @@
                 appData.shopStock = snapshot.val() || {};
                 populateShopProductSelects();
                 renderShopStock(shopSearchInput ? shopSearchInput.value : '');
+                renderSalesProducts(salesProductSearch ? salesProductSearch.value : '');
                 updateDashboardStats();
                 updateAllStats();
+                renderOrderSummary();
             }
 
             function onShopMovementsValue(snapshot) {
@@ -2932,15 +3306,16 @@
                     let html = '';
                     const sortedSales = Object.values(sales).sort((a, b) => new Date(b.date) - new Date(a.date));
                     sortedSales.forEach(sale => {
-                        const shopItem = appData.shopStock[sale.shopProductId];
-                        const currency = shopItem ? (appData.storeProducts[shopItem.sourceProductId]?.currency || 'CFA') : 'CFA';
+                        const currency = getSaleCurrency(sale);
+                        const customerLabel = sale.customerName || (sale.customerId && appData.customers?.[sale.customerId]?.fullName) || 'Client comptoir';
                         html += `
                             <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${sale.productName}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.sellerName}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${customerLabel}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.quantity}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">${formatCurrency(sale.totalAmount, currency)}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.comment}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.comment || ''}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(sale.date)}</td>
                             </tr>`;
                     });
@@ -2951,6 +3326,21 @@
                     salesHistoryTbody.innerHTML = '';
                 }
                 updateDashboardStats();
+                renderCustomerHistory();
+            }
+
+            function onCompanyCustomersValue(snapshot) {
+                appData.customers = snapshot.val() || {};
+                renderCustomerOptions();
+                if (selectedCustomer?.id) {
+                    const updated = appData.customers[selectedCustomer.id];
+                    if (updated) {
+                        applySelectedCustomer({ id: selectedCustomer.id, ...updated });
+                    } else {
+                        clearSelectedCustomer();
+                    }
+                }
+                renderCustomerHistory();
             }
 
             function setupFirebaseListeners() {
@@ -2974,6 +3364,9 @@
 
                 companyMembersRef = ref(db, `${dbBasePath}/members`);
                 companyMembersListener = onValue(companyMembersRef, onCompanyMembersValue);
+
+                companyCustomersRef = ref(db, `${dbBasePath}/customers`);
+                companyCustomersListener = onValue(companyCustomersRef, onCompanyCustomersValue);
             }
 
             function cleanupFirebaseListeners() {
@@ -2983,9 +3376,13 @@
                 if (shopMovementsListener && shopMovementsRef) off(shopMovementsRef, shopMovementsListener);
                 if (salesHistoryListener && salesHistoryRef) off(salesHistoryRef, salesHistoryListener);
                 if (companyMembersListener && companyMembersRef) off(companyMembersRef, companyMembersListener);
+                if (companyCustomersListener && companyCustomersRef) off(companyCustomersRef, companyCustomersListener);
 
-                storeProductsListener = null; storeMovementsListener = null; shopStockListener = null; shopMovementsListener = null; salesHistoryListener = null; companyMembersListener = null;
-                appData.storeProducts = {}; appData.shopStock = {}; appData.salesHistory = {};
+                storeProductsListener = null; storeMovementsListener = null; shopStockListener = null; shopMovementsListener = null; salesHistoryListener = null; companyMembersListener = null; companyCustomersListener = null;
+                appData.storeProducts = {}; appData.shopStock = {}; appData.salesHistory = {}; appData.customers = {};
+                selectedCustomer = null;
+                customerOptionLookup = {};
+                isCustomerHistoryOpen = false;
             }
 
             function updateUI() {
@@ -3065,6 +3462,7 @@
                 const quantity = parseInt(salesQuantityInput.value, 10);
                 if (!shopProductId || isNaN(quantity) || quantity <= 0) {
                     salesTotalAmount.value = formatCurrency(0);
+                    renderOrderSummary();
                     return;
                 }
                 const shopProduct = appData.shopStock[shopProductId];
@@ -3073,14 +3471,54 @@
                     const currency = appData.storeProducts[shopProduct.sourceProductId]?.currency;
                     salesTotalAmount.value = formatCurrency(total, currency);
                 }
+                renderOrderSummary();
+            }
+
+            function renderSalesProducts(searchTerm = '') {
+                if (!salesProductsContainer || !salesProductsPlaceholder) return;
+                const normalizedSearch = searchTerm.toLowerCase();
+                const stock = Object.values(appData.shopStock || {}).filter(item =>
+                    item.name?.toLowerCase().includes(normalizedSearch)
+                );
+
+                if (!stock.length) {
+                    salesProductsPlaceholder.classList.remove('hidden');
+                    salesProductsContainer.innerHTML = '';
+                    return;
+                }
+
+                salesProductsPlaceholder.classList.add('hidden');
+                salesProductsContainer.innerHTML = stock.map(item => {
+                    const currency = appData.storeProducts[item.sourceProductId]?.currency || 'CFA';
+                    const isLowStock = item.quantityInShop <= (item.alertThreshold || 5);
+                    const isOut = item.quantityInShop <= 0;
+                    const stockLabel = isOut ? 'Stock epuisé' : `Stock: ${item.quantityInShop}`;
+                    const stockClass = isLowStock ? 'text-red-600' : 'text-gray-500';
+                    return `
+                        <button type="button" data-product-id="${item.id}" data-product-card="true"
+                            class="text-left w-full p-4 rounded-xl border border-gray-200 hover:border-cyan-300 hover:shadow-sm transition-all ${isOut ? 'opacity-60 cursor-not-allowed' : ''}" ${isOut ? 'disabled' : ''}>
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <p class="font-semibold text-gray-800">${item.name}</p>
+                                    <p class="text-sm ${stockClass} mt-1">${stockLabel}</p>
+                                </div>
+                                <span class="text-sm font-semibold text-gray-800">${formatCurrency(item.sellingPrice, currency)}</span>
+                            </div>
+                            <div class="mt-3 flex items-center justify-between text-xs text-gray-500">
+                                <span>${isLowStock ? '⚠️ Stock faible' : 'Disponible'}</span>
+                                <span class="text-cyan-600 font-semibold">${isOut ? 'Indisponible' : 'Ajouter'}</span>
+                            </div>
+                        </button>
+                    `;
+                }).join('');
             }
 
             // --- FONCTIONS DE GESTION DU PANIER ---
-            function addToCart() {
-                const shopProductId = salesProductSelect.value;
-                const quantity = parseInt(salesQuantityInput.value, 10);
+            function addToCart(productId = null, quantityOverride = null) {
+                const shopProductId = productId || salesProductSelect.value;
+                const quantityInput = Number.isFinite(quantityOverride) ? quantityOverride : parseInt(salesQuantityInput.value, 10);
 
-                if (!shopProductId || isNaN(quantity) || quantity <= 0) {
+                if (!shopProductId || isNaN(quantityInput) || quantityInput <= 0) {
                     if (salesError) {
                         salesError.textContent = "Veuillez sélectionner un produit et une quantité valide.";
                         salesError.classList.remove('hidden');
@@ -3091,13 +3529,29 @@
 
                 const shopProduct = appData.shopStock[shopProductId];
                 if (!shopProduct) return;
+                if (shopProduct.quantityInShop <= 0) {
+                    if (salesError) {
+                        salesError.textContent = "Stock insuffisant pour ce produit.";
+                        salesError.classList.remove('hidden');
+                        setTimeout(() => salesError.classList.add('hidden'), 3000);
+                    }
+                    return;
+                }
+                if (quantityInput > shopProduct.quantityInShop) {
+                    if (salesError) {
+                        salesError.textContent = `Stock insuffisant. Disponible: ${shopProduct.quantityInShop}`;
+                        salesError.classList.remove('hidden');
+                        setTimeout(() => salesError.classList.add('hidden'), 3000);
+                    }
+                    return;
+                }
 
                 // Vérifier si le produit est déjà dans le panier
                 const existingItemIndex = cartItems.findIndex(item => item.shopProductId === shopProductId);
 
                 if (existingItemIndex !== -1) {
                     // Augmenter la quantité du produit existant
-                    cartItems[existingItemIndex].quantity += quantity;
+                    cartItems[existingItemIndex].quantity += quantityInput;
                 } else {
                     // Ajouter un nouveau produit au panier
                     const currency = appData.storeProducts[shopProduct.sourceProductId]?.currency || 'CFA';
@@ -3105,7 +3559,7 @@
                         shopProductId,
                         name: shopProduct.name,
                         sellingPrice: shopProduct.sellingPrice,
-                        quantity,
+                        quantity: quantityInput,
                         currency
                     });
                 }
@@ -3139,9 +3593,72 @@
                 return cartItems.reduce((total, item) => total + (item.sellingPrice * item.quantity), 0);
             }
 
+            function getOrderSummaryItems() {
+                if (cartItems.length > 0) {
+                    const currency = cartItems[0]?.currency || 'CFA';
+                    return {
+                        source: 'cart',
+                        currency,
+                        items: cartItems.map(item => ({
+                            name: item.name,
+                            quantity: item.quantity,
+                            total: item.sellingPrice * item.quantity
+                        }))
+                    };
+                }
+
+                const shopProductId = salesProductSelect?.value;
+                const quantity = parseInt(salesQuantityInput?.value, 10);
+                if (!shopProductId || isNaN(quantity) || quantity <= 0) {
+                    return { source: 'none', currency: 'CFA', items: [] };
+                }
+                const shopProduct = appData.shopStock[shopProductId];
+                if (!shopProduct) {
+                    return { source: 'none', currency: 'CFA', items: [] };
+                }
+                const currency = appData.storeProducts[shopProduct.sourceProductId]?.currency || 'CFA';
+                return {
+                    source: 'direct',
+                    currency,
+                    items: [{
+                        name: shopProduct.name,
+                        quantity,
+                        total: shopProduct.sellingPrice * quantity
+                    }]
+                };
+            }
+
+            function renderOrderSummary() {
+                if (!orderSummaryList || !orderSummaryTotal || !orderSummaryNote) return;
+                const { source, currency, items } = getOrderSummaryItems();
+                if (!items.length) {
+                    orderSummaryNote.textContent = 'Aucun article selectionne.';
+                    orderSummaryList.innerHTML = '<p class=\"text-sm text-gray-500\">Ajoutez des articles pour voir le resume.</p>';
+                    orderSummaryTotal.textContent = formatCurrency(0, currency);
+                    return;
+                }
+
+                const label = source === 'cart'
+                    ? `Panier: ${items.length} article${items.length > 1 ? 's' : ''}`
+                    : 'Apercu de la vente directe';
+                orderSummaryNote.textContent = label;
+                orderSummaryList.innerHTML = items.map(item => `
+                    <div class=\"flex items-center justify-between text-sm text-gray-700\">
+                        <span>${item.name} x${item.quantity}</span>
+                        <span class=\"font-semibold\">${formatCurrency(item.total, currency)}</span>
+                    </div>
+                `).join('');
+                const total = items.reduce((sum, item) => sum + item.total, 0);
+                orderSummaryTotal.textContent = formatCurrency(total, currency);
+            }
+
             function renderCart() {
                 if (cartItems.length === 0) {
                     cartSection.classList.add('hidden');
+                    if (cartItemsTbody) cartItemsTbody.innerHTML = '';
+                    if (cartCount) cartCount.textContent = '0';
+                    if (cartTotal) cartTotal.textContent = formatCurrency(0);
+                    renderOrderSummary();
                     return;
                 }
 
@@ -3189,6 +3706,7 @@
                 const currency = cartItems[0]?.currency || 'CFA';
                 const total = calculateCartTotal();
                 cartTotal.textContent = formatCurrency(total, currency);
+                renderOrderSummary();
             }
 
             function clearCart() {
@@ -3224,6 +3742,24 @@
                     const now = new Date().toISOString();
                     const sellerName = currentUserData?.fullName || currentUser.email;
                     const comment = salesComment.value || "";
+                    const customerContext = getCustomerContext();
+                    const saleGroupId = push(ref(db, `${dbBasePath}/sales`)).key;
+                    const totalAmount = calculateCartTotal();
+                    const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
+                    updates[`${dbBasePath}/sales/${saleGroupId}`] = {
+                        id: saleGroupId,
+                        date: now,
+                        customerId: customerContext.customerId,
+                        customerName: customerContext.customerName || '',
+                        customerPhone: customerContext.customerPhone || '',
+                        customerEmail: customerContext.customerEmail || '',
+                        sellerName,
+                        total: totalAmount,
+                        itemsCount: totalItems,
+                        status: 'validee',
+                        comment
+                    };
 
                     // Traiter chaque article du panier
                     for (const item of cartItems) {
@@ -3252,12 +3788,17 @@
                         const saleKey = push(ref(db, `${dbBasePath}/salesHistory`)).key;
                         updates[`${dbBasePath}/salesHistory/${saleKey}`] = {
                             id: saleKey,
+                            saleGroupId,
                             shopProductId: item.shopProductId,
                             productName: item.name,
                             quantity: item.quantity,
                             sellingPrice: item.sellingPrice,
                             totalAmount: item.sellingPrice * item.quantity,
                             sellerName,
+                            customerId: customerContext.customerId,
+                            customerName: customerContext.customerName || '',
+                            customerPhone: customerContext.customerPhone || '',
+                            customerEmail: customerContext.customerEmail || '',
                             comment,
                             date: now
                         };
@@ -3265,13 +3806,15 @@
 
                     await update(ref(db), updates);
 
-                    const totalAmount = calculateCartTotal();
                     showSuccessToast(`Vente groupée enregistrée ! Total: ${formatCurrency(totalAmount)}`);
 
                     // Préparer les données pour la facture
                     const invoiceData = {
                         companyName: currentUserData?.companyName || 'Mon Entreprise',
                         sellerName,
+                        customerName: customerContext.customerName || '',
+                        customerPhone: customerContext.customerPhone || '',
+                        customerEmail: customerContext.customerEmail || '',
                         date: now,
                         items: cartItems.map(item => ({
                             name: item.name,
@@ -3393,6 +3936,19 @@
                     yPos += 6;
                     const saleDateTime = new Date(invoiceData.date).toLocaleString('fr-FR');
                     doc.text(`Date et heure de vente: ${saleDateTime}`, 20, yPos);
+
+                    if (invoiceData.customerName) {
+                        yPos += 6;
+                        doc.text(`Client: ${invoiceData.customerName}`, 20, yPos);
+                    }
+                    if (invoiceData.customerPhone) {
+                        yPos += 6;
+                        doc.text(`Telephone: ${invoiceData.customerPhone}`, 20, yPos);
+                    }
+                    if (invoiceData.customerEmail) {
+                        yPos += 6;
+                        doc.text(`Email: ${invoiceData.customerEmail}`, 20, yPos);
+                    }
 
                     yPos += 10;
 
@@ -3518,6 +4074,9 @@
                 const invoiceData = {
                     companyName: currentUserData?.companyName || 'Mon Entreprise',
                     sellerName: sale.sellerName || currentUser?.email,
+                    customerName: sale.customerName || 'Client comptoir',
+                    customerPhone: sale.customerPhone || '',
+                    customerEmail: sale.customerEmail || '',
                     date: sale.date,
                     items: [{
                         name: sale.productName,
@@ -3626,8 +4185,59 @@
             if (authToggleSignup) authToggleSignup.addEventListener('click', () => { isLoginView = false; updateAuthFormView(); });
             if (loginModeAdminButton) loginModeAdminButton.addEventListener('click', () => { isCodeLoginMode = false; updateLoginModeUI(); });
             if (loginModeCodeButton) loginModeCodeButton.addEventListener('click', () => { isCodeLoginMode = true; updateLoginModeUI(); });
+            if (openCustomerModalButton) openCustomerModalButton.addEventListener('click', openCustomerModalDialog);
+            if (closeCustomerModalButton) closeCustomerModalButton.addEventListener('click', closeCustomerModalDialog);
+            if (customerModal) {
+                customerModal.addEventListener('click', (event) => {
+                    if (event.target === customerModal) closeCustomerModalDialog();
+                });
+            }
+            if (customerSearchInput) {
+                customerSearchInput.addEventListener('change', () => {
+                    const normalizedValue = normalizeString(customerSearchInput.value);
+                    const match = customerOptionLookup[normalizedValue] || customerOptionLookup[normalizePhone(customerSearchInput.value)];
+                    if (match) {
+                        applySelectedCustomer(match);
+                    } else if (customerSearchInput.value.trim() === '') {
+                        clearSelectedCustomer(true, true);
+                    } else if (customerFreeNameInput) {
+                        customerFreeNameInput.value = customerSearchInput.value.trim();
+                        clearSelectedCustomer(true, true);
+                    }
+                });
+                customerSearchInput.addEventListener('input', () => {
+                    if (selectedCustomer) clearSelectedCustomer(true, true);
+                });
+            }
+            if (customerFreeNameInput) {
+                customerFreeNameInput.addEventListener('input', () => {
+                    if (selectedCustomer) clearSelectedCustomer(true, true);
+                });
+            }
+            if (customerHistoryButton) {
+                customerHistoryButton.addEventListener('click', () => {
+                    if (!selectedCustomer) return;
+                    isCustomerHistoryOpen = !isCustomerHistoryOpen;
+                    renderCustomerHistory();
+                });
+            }
             if (salesProductSelect) salesProductSelect.addEventListener('change', updateSalesTotal);
             if (salesQuantityInput) salesQuantityInput.addEventListener('input', updateSalesTotal);
+            if (salesProductSearch) salesProductSearch.addEventListener('input', () => {
+                renderSalesProducts(salesProductSearch.value);
+            });
+            if (salesProductsContainer) {
+                salesProductsContainer.addEventListener('click', (event) => {
+                    const card = event.target.closest('[data-product-card]');
+                    if (!card || card.disabled) return;
+                    const productId = card.dataset.productId;
+                    if (productId) addToCart(productId, 1);
+                });
+            }
+            if (customerSelectedCard) {
+                const clearButton = document.getElementById('clear-customer-selection');
+                if (clearButton) clearButton.addEventListener('click', () => clearSelectedCustomer());
+            }
 
             // Cart event listeners
             if (addToCartButton) addToCartButton.addEventListener('click', addToCart);
@@ -3757,6 +4367,7 @@
                 const quantity = parseInt(salesQuantityInput.value, 10);
                 const comment = salesComment.value || "";
                 const sellerName = currentUserData?.fullName || currentUser.email;
+                const customerContext = getCustomerContext();
                 if (!shopProductId || isNaN(quantity) || quantity <= 0) return;
                 const shopProduct = appData.shopStock[shopProductId];
                 if (!shopProduct || quantity > shopProduct.quantityInShop) {
@@ -3767,12 +4378,42 @@
                 try {
                     if (salesSubmitButton) salesSubmitButton.disabled = true;
                     const updates = {}; const now = new Date().toISOString();
+                    const saleGroupId = push(ref(db, `${dbBasePath}/sales`)).key;
+                    const totalAmount = shopProduct.sellingPrice * quantity;
+                    updates[`${dbBasePath}/sales/${saleGroupId}`] = {
+                        id: saleGroupId,
+                        date: now,
+                        customerId: customerContext.customerId,
+                        customerName: customerContext.customerName || '',
+                        customerPhone: customerContext.customerPhone || '',
+                        customerEmail: customerContext.customerEmail || '',
+                        sellerName,
+                        total: totalAmount,
+                        itemsCount: quantity,
+                        status: 'validee',
+                        comment
+                    };
                     const shopNewStock = shopProduct.quantityInShop - quantity;
                     updates[`${dbBasePath}/shopStock/${shopProductId}/quantityInShop`] = shopNewStock;
                     const shopMoveKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
                     updates[`${dbBasePath}/shopMovements/${shopMoveKey}`] = { id: shopMoveKey, shopProductId, productName: shopProduct.name, type: "Sortie", quantityChange: quantity, oldStock: shopProduct.quantityInShop, newStock: shopNewStock, comment: `Vente: ${comment}`, date: now, userEmail: currentUser.email };
                     const saleKey = push(ref(db, `${dbBasePath}/salesHistory`)).key;
-                    updates[`${dbBasePath}/salesHistory/${saleKey}`] = { id: saleKey, shopProductId, productName: shopProduct.name, quantity, sellingPrice: shopProduct.sellingPrice, totalAmount: shopProduct.sellingPrice * quantity, sellerName, comment, date: now };
+                    updates[`${dbBasePath}/salesHistory/${saleKey}`] = {
+                        id: saleKey,
+                        saleGroupId,
+                        shopProductId,
+                        productName: shopProduct.name,
+                        quantity,
+                        sellingPrice: shopProduct.sellingPrice,
+                        totalAmount,
+                        sellerName,
+                        customerId: customerContext.customerId,
+                        customerName: customerContext.customerName || '',
+                        customerPhone: customerContext.customerPhone || '',
+                        customerEmail: customerContext.customerEmail || '',
+                        comment,
+                        date: now
+                    };
                     await update(ref(db), updates);
                     showSuccessToast("Vente enregistrée!");
 
@@ -3781,6 +4422,9 @@
                     const invoiceData = {
                         companyName: currentUserData?.companyName || 'Mon Entreprise',
                         sellerName,
+                        customerName: customerContext.customerName || '',
+                        customerPhone: customerContext.customerPhone || '',
+                        customerEmail: customerContext.customerEmail || '',
                         date: now,
                         items: [{
                             name: shopProduct.name,
@@ -3788,7 +4432,7 @@
                             price: shopProduct.sellingPrice,
                             total: shopProduct.sellingPrice * quantity
                         }],
-                        total: shopProduct.sellingPrice * quantity,
+                        total: totalAmount,
                         currency,
                         comment
                     };
@@ -3803,6 +4447,71 @@
                     console.error(error);
                 } finally {
                     if (salesSubmitButton) salesSubmitButton.disabled = false;
+                }
+            });
+
+            if (customerForm) customerForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                if (!dbBasePath) return;
+                if (customerError) customerError.classList.add('hidden');
+                const name = customerNameInput?.value.trim();
+                const phone = customerPhoneInput?.value.trim() || '';
+                const email = customerEmailInput?.value.trim() || '';
+                const address = customerAddressInput?.value.trim() || '';
+                const notes = customerNotesInput?.value.trim() || '';
+
+                if (!name) {
+                    if (customerError) {
+                        customerError.textContent = "Le nom du client est requis.";
+                        customerError.classList.remove('hidden');
+                    }
+                    return;
+                }
+
+                const normalizedPhone = normalizePhone(phone);
+                const normalizedEmail = normalizeString(email);
+                const existing = Object.values(appData.customers || {}).find(customer => {
+                    if (normalizedPhone && normalizePhone(customer.phone) === normalizedPhone) return true;
+                    if (normalizedEmail && normalizeString(customer.email) === normalizedEmail) return true;
+                    return false;
+                });
+
+                if (existing) {
+                    const shouldSelect = confirm("Un client avec ce telephone ou email existe deja. Voulez-vous le selectionner ?");
+                    if (shouldSelect) {
+                        applySelectedCustomer({ id: existing.id, ...existing });
+                        closeCustomerModalDialog();
+                    } else if (customerError) {
+                        customerError.textContent = "Client existe deja. Selectionnez-le dans la liste.";
+                        customerError.classList.remove('hidden');
+                    }
+                    return;
+                }
+
+                try {
+                    if (customerSubmitButton) customerSubmitButton.disabled = true;
+                    const newRef = push(ref(db, `${dbBasePath}/customers`));
+                    const payload = {
+                        id: newRef.key,
+                        fullName: name,
+                        phone,
+                        email,
+                        address,
+                        notes,
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
+                    };
+                    await set(newRef, payload);
+                    showSuccessToast("Client ajoute avec succes.");
+                    applySelectedCustomer(payload);
+                    closeCustomerModalDialog();
+                } catch (error) {
+                    if (customerError) {
+                        customerError.textContent = "Impossible d'enregistrer ce client.";
+                        customerError.classList.remove('hidden');
+                    }
+                } finally {
+                    if (customerSubmitButton) customerSubmitButton.disabled = false;
                 }
             });
 
@@ -4174,6 +4883,9 @@
 
             updateUI();
             updateAuthFormView();
+            renderOrderSummary();
+            renderSalesProducts();
+            updateCustomerHistoryVisibility();
         });
     </script>
 </body>
