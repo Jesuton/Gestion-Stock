@@ -403,7 +403,7 @@
                             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                                 <div>
                                     <h2 class="text-xl font-bold text-gray-800">Catalogue produits</h2>
-                                    <p class="text-sm text-gray-500 mt-1">Cliquez sur un produit pour l'ajouter a la commande.</p>
+                                    <p class="text-sm text-gray-500 mt-1">Selectionnez un produit dans la liste pour l'ajouter a la commande.</p>
                                 </div>
                                 <span class="text-xs font-semibold px-3 py-1 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-100">Stock Boutique</span>
                             </div>
@@ -419,8 +419,23 @@
                             <div id="sales-products-placeholder" class="mt-6 flex flex-col items-center justify-center text-center text-gray-500 h-40">
                                 <p>Aucun produit disponible.</p>
                             </div>
-                            <div id="sales-products-container" class="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <!-- Produits remplis par JS -->
+                            <div id="sales-products-container" class="mt-4">
+                                <div id="sales-products-table-container" class="hidden overflow-x-auto max-h-80 overflow-y-auto rounded-lg border border-gray-200">
+                                    <table class="min-w-full bg-white divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
+                                                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Prix</th>
+                                                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                                                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="sales-products-tbody" class="divide-y divide-gray-200">
+                                            <!-- Produits remplis par JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <p id="sales-products-limit-note" class="hidden text-xs text-gray-500 mt-2">Affinez la recherche pour voir plus de produits.</p>
                             </div>
                         </div>
 
@@ -677,25 +692,22 @@
                                     <tr>
                                         <th scope="col"
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Produit</th>
+                                            Date</th>
                                         <th scope="col"
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Vendeur</th>
+                                            Vente</th>
                                         <th scope="col"
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Client</th>
                                         <th scope="col"
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Qté</th>
+                                            Articles</th>
                                         <th scope="col"
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Montant</th>
+                                            Total</th>
                                         <th scope="col"
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Commentaire</th>
-                                        <th scope="col"
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Date</th>
+                                            class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Reçu</th>
                                     </tr>
                                 </thead>
                                 <tbody id="sales-history-tbody" class="divide-y divide-gray-200">
@@ -2012,6 +2024,9 @@
             const salesProductSearch = document.getElementById('sales-product-search');
             const salesProductsContainer = document.getElementById('sales-products-container');
             const salesProductsPlaceholder = document.getElementById('sales-products-placeholder');
+            const salesProductsTableContainer = document.getElementById('sales-products-table-container');
+            const salesProductsTbody = document.getElementById('sales-products-tbody');
+            const salesProductsLimitNote = document.getElementById('sales-products-limit-note');
             const customerSearchInput = document.getElementById('customer-search-input');
             const customerOptions = document.getElementById('customer-options');
             const customerIdInput = document.getElementById('customer-id');
@@ -2321,6 +2336,44 @@
                             </tr>`;
                     }).join('');
                 }
+            }
+
+            function buildSalesHistoryGroups() {
+                const sales = Object.values(appData.salesHistory || {});
+                const groups = {};
+                sales.forEach(sale => {
+                    const groupId = sale.saleGroupId || sale.id;
+                    if (!groups[groupId]) {
+                        groups[groupId] = {
+                            id: groupId,
+                            date: sale.date,
+                            sellerName: sale.sellerName || '',
+                            customerId: sale.customerId || null,
+                            customerName: sale.customerName || '',
+                            customerPhone: sale.customerPhone || '',
+                            customerEmail: sale.customerEmail || '',
+                            items: [],
+                            total: 0,
+                            currency: getSaleCurrency(sale),
+                            comments: []
+                        };
+                    }
+                    const group = groups[groupId];
+                    if (new Date(sale.date) > new Date(group.date)) group.date = sale.date;
+                    if (!group.customerName && sale.customerName) group.customerName = sale.customerName;
+                    if (!group.customerPhone && sale.customerPhone) group.customerPhone = sale.customerPhone;
+                    if (!group.customerEmail && sale.customerEmail) group.customerEmail = sale.customerEmail;
+                    group.items.push({
+                        name: sale.productName,
+                        quantity: sale.quantity || 0,
+                        price: sale.sellingPrice || 0,
+                        total: sale.totalAmount || 0
+                    });
+                    group.total += sale.totalAmount || 0;
+                    if (sale.comment && !group.comments.includes(sale.comment)) group.comments.push(sale.comment);
+                });
+
+                return Object.values(groups).sort((a, b) => new Date(b.date) - new Date(a.date));
             }
 
             function openCustomerModalDialog() {
@@ -3299,27 +3352,29 @@
 
             function onSalesHistoryValue(snapshot) {
                 appData.salesHistory = snapshot.val() || {};
-                const sales = appData.salesHistory;
-                if (sales && Object.keys(sales).length > 0) {
+                const groups = buildSalesHistoryGroups();
+                if (groups.length > 0) {
                     salesHistoryPlaceholder.classList.add('hidden');
                     salesHistoryTableContainer.classList.remove('hidden');
-                    let html = '';
-                    const sortedSales = Object.values(sales).sort((a, b) => new Date(b.date) - new Date(a.date));
-                    sortedSales.forEach(sale => {
-                        const currency = getSaleCurrency(sale);
-                        const customerLabel = sale.customerName || (sale.customerId && appData.customers?.[sale.customerId]?.fullName) || 'Client comptoir';
-                        html += `
+                    salesHistoryTbody.innerHTML = groups.map(group => {
+                        const itemsCount = group.items.reduce((sum, item) => sum + item.quantity, 0);
+                        const itemsPreview = group.items.slice(0, 2).map(item => `${item.name} x${item.quantity}`).join(', ');
+                        const itemsSuffix = group.items.length > 2 ? ` +${group.items.length - 2}` : '';
+                        const customerLabel = group.customerName || (group.customerId && appData.customers?.[group.customerId]?.fullName) || 'Client comptoir';
+                        const saleLabel = `#${group.id.slice(-6).toUpperCase()}`;
+                        return `
                             <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${sale.productName}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.sellerName}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(group.date)}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">${saleLabel}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${customerLabel}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.quantity}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">${formatCurrency(sale.totalAmount, currency)}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.comment || ''}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(sale.date)}</td>
-                            </tr>`;
-                    });
-                    salesHistoryTbody.innerHTML = html;
+                                <td class="px-6 py-4 text-sm text-gray-500">${itemsCount} article${itemsCount > 1 ? 's' : ''} · ${itemsPreview}${itemsSuffix}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">${formatCurrency(group.total, group.currency)}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right">
+                                    <button type="button" data-receipt-group="${group.id}" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200">Télécharger</button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
                 } else {
                     salesHistoryPlaceholder.classList.remove('hidden');
                     salesHistoryTableContainer.classList.add('hidden');
@@ -3475,40 +3530,42 @@
             }
 
             function renderSalesProducts(searchTerm = '') {
-                if (!salesProductsContainer || !salesProductsPlaceholder) return;
-                const normalizedSearch = searchTerm.toLowerCase();
+                if (!salesProductsPlaceholder || !salesProductsTableContainer || !salesProductsTbody) return;
+                const normalizedSearch = searchTerm.toLowerCase().trim();
                 const stock = Object.values(appData.shopStock || {}).filter(item =>
                     item.name?.toLowerCase().includes(normalizedSearch)
                 );
+                const maxItems = normalizedSearch ? 30 : 12;
+                const displayItems = stock.slice(0, maxItems);
+                const isLimited = stock.length > displayItems.length;
 
-                if (!stock.length) {
+                if (!displayItems.length) {
                     salesProductsPlaceholder.classList.remove('hidden');
-                    salesProductsContainer.innerHTML = '';
+                    salesProductsTableContainer.classList.add('hidden');
+                    if (salesProductsTbody) salesProductsTbody.innerHTML = '';
+                    if (salesProductsLimitNote) salesProductsLimitNote.classList.add('hidden');
                     return;
                 }
 
                 salesProductsPlaceholder.classList.add('hidden');
-                salesProductsContainer.innerHTML = stock.map(item => {
+                salesProductsTableContainer.classList.remove('hidden');
+                if (salesProductsLimitNote) salesProductsLimitNote.classList.toggle('hidden', !isLimited);
+
+                salesProductsTbody.innerHTML = displayItems.map(item => {
                     const currency = appData.storeProducts[item.sourceProductId]?.currency || 'CFA';
                     const isLowStock = item.quantityInShop <= (item.alertThreshold || 5);
                     const isOut = item.quantityInShop <= 0;
-                    const stockLabel = isOut ? 'Stock epuisé' : `Stock: ${item.quantityInShop}`;
-                    const stockClass = isLowStock ? 'text-red-600' : 'text-gray-500';
+                    const stockClass = isLowStock ? 'text-red-600' : 'text-gray-600';
+                    const actionHtml = isOut
+                        ? `<span class="text-xs font-semibold text-gray-400">Indisponible</span>`
+                        : `<button type="button" data-add-product="${item.id}" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-cyan-500 text-white hover:bg-cyan-600">Ajouter</button>`;
                     return `
-                        <button type="button" data-product-id="${item.id}" data-product-card="true"
-                            class="text-left w-full p-4 rounded-xl border border-gray-200 hover:border-cyan-300 hover:shadow-sm transition-all ${isOut ? 'opacity-60 cursor-not-allowed' : ''}" ${isOut ? 'disabled' : ''}>
-                            <div class="flex items-start justify-between gap-3">
-                                <div>
-                                    <p class="font-semibold text-gray-800">${item.name}</p>
-                                    <p class="text-sm ${stockClass} mt-1">${stockLabel}</p>
-                                </div>
-                                <span class="text-sm font-semibold text-gray-800">${formatCurrency(item.sellingPrice, currency)}</span>
-                            </div>
-                            <div class="mt-3 flex items-center justify-between text-xs text-gray-500">
-                                <span>${isLowStock ? '⚠️ Stock faible' : 'Disponible'}</span>
-                                <span class="text-cyan-600 font-semibold">${isOut ? 'Indisponible' : 'Ajouter'}</span>
-                            </div>
-                        </button>
+                        <tr class="hover:bg-gray-50 ${isOut ? 'opacity-60' : ''}">
+                            <td class="px-4 py-3 text-sm font-medium text-gray-900">${item.name}</td>
+                            <td class="px-4 py-3 text-sm text-right text-gray-700">${formatCurrency(item.sellingPrice, currency)}</td>
+                            <td class="px-4 py-3 text-sm text-right ${stockClass}">${item.quantityInShop}</td>
+                            <td class="px-4 py-3 text-sm text-right">${actionHtml}</td>
+                        </tr>
                     `;
                 }).join('');
             }
@@ -4092,6 +4149,36 @@
                 await generateInvoicePDF(invoiceData);
             }
 
+            async function generateReceiptFromGroup(groupId) {
+                const groups = buildSalesHistoryGroups();
+                const group = groups.find(item => item.id === groupId);
+                if (!group) {
+                    alert('Vente introuvable');
+                    return;
+                }
+                const customerName = group.customerName || (group.customerId && appData.customers?.[group.customerId]?.fullName) || 'Client comptoir';
+                const customerPhone = group.customerPhone || (group.customerId && appData.customers?.[group.customerId]?.phone) || '';
+                const customerEmail = group.customerEmail || (group.customerId && appData.customers?.[group.customerId]?.email) || '';
+                const invoiceData = {
+                    companyName: currentUserData?.companyName || 'Mon Entreprise',
+                    sellerName: group.sellerName || currentUser?.email || '',
+                    customerName,
+                    customerPhone,
+                    customerEmail,
+                    date: group.date,
+                    items: group.items.map(item => ({
+                        name: item.name,
+                        quantity: item.quantity,
+                        price: item.price,
+                        total: item.total
+                    })),
+                    total: group.total,
+                    currency: group.currency || 'CFA',
+                    comment: group.comments?.join(' | ') || ''
+                };
+                await generateInvoicePDF(invoiceData);
+            }
+
             /**
              * Afficher le bouton de génération de facture
              */
@@ -4226,11 +4313,11 @@
             if (salesProductSearch) salesProductSearch.addEventListener('input', () => {
                 renderSalesProducts(salesProductSearch.value);
             });
-            if (salesProductsContainer) {
-                salesProductsContainer.addEventListener('click', (event) => {
-                    const card = event.target.closest('[data-product-card]');
-                    if (!card || card.disabled) return;
-                    const productId = card.dataset.productId;
+            if (salesProductsTbody) {
+                salesProductsTbody.addEventListener('click', (event) => {
+                    const addButton = event.target.closest('[data-add-product]');
+                    if (!addButton) return;
+                    const productId = addButton.dataset.addProduct;
                     if (productId) addToCart(productId, 1);
                 });
             }
@@ -4243,6 +4330,14 @@
             if (addToCartButton) addToCartButton.addEventListener('click', addToCart);
             if (validateCartButton) validateCartButton.addEventListener('click', validateCart);
             if (clearCartButton) clearCartButton.addEventListener('click', clearCart);
+            if (salesHistoryTbody) {
+                salesHistoryTbody.addEventListener('click', (event) => {
+                    const receiptButton = event.target.closest('[data-receipt-group]');
+                    if (!receiptButton) return;
+                    const groupId = receiptButton.dataset.receiptGroup;
+                    if (groupId) generateReceiptFromGroup(groupId);
+                });
+            }
 
             // Invoice generation button listener
             if (generateInvoiceButton) {
