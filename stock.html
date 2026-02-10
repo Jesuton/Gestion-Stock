@@ -1975,6 +1975,11 @@
                 return (currentUserData.role || 'admin').toLowerCase();
             }
 
+            function normalizePermissions(list) {
+                if (!Array.isArray(list)) return [];
+                return [...new Set(list)].sort();
+            }
+
             function updateSettingsAccess() {
                 const isAdmin = getCurrentUserRole() === 'admin';
                 if (settingsRestrictedState) settingsRestrictedState.classList.toggle('hidden', isAdmin);
@@ -2394,27 +2399,63 @@
 
             function ensureCurrentUserInTeam() {
                 if (!currentUser) return;
-                teamMembersState = teamMembersState.filter(member => !member.isCurrentUser);
-                const name = currentUserData?.fullName || 'Utilisateur';
-                const email = currentUser?.email || currentUserData?.email;
-                teamMembersState.unshift({
-                    id: currentUser.uid,
-                    name,
-                    email,
-                    role: getCurrentUserRole(),
-                    status: 'actif',
-                    permissions: [...accessModules],
-                    isCurrentUser: true,
-                    accessCode: currentUserData?.accessCode || 'ADMIN'
+                const normalizedEmail = (currentUserData?.email || currentUser?.email || '').toLowerCase();
+                let hasCurrentUser = false;
+                teamMembersState = teamMembersState.map(member => {
+                    const isCurrent = member.id === currentUser.uid || (normalizedEmail && member.email?.toLowerCase() === normalizedEmail);
+                    if (isCurrent) hasCurrentUser = true;
+                    return { ...member, isCurrentUser: isCurrent };
                 });
-                if (currentUserData && teamMembersState.length) {
-                    const normalizedEmail = currentUserData.email?.toLowerCase();
-                    teamMembersState = teamMembersState.map(member => ({
-                        ...member,
-                        isCurrentUser: member.email?.toLowerCase() === normalizedEmail
-                    }));
+                if (!hasCurrentUser) {
+                    const name = currentUserData?.fullName || 'Utilisateur';
+                    const email = currentUser?.email || currentUserData?.email;
+                    const role = getCurrentUserRole();
+                    const permissions = role === 'admin' ? [...accessModules] : normalizePermissions(currentUserData?.permissions);
+                    teamMembersState.unshift({
+                        id: currentUser.uid,
+                        name,
+                        email,
+                        role,
+                        status: 'actif',
+                        permissions,
+                        isCurrentUser: true,
+                        accessCode: currentUserData?.accessCode || 'ADMIN'
+                    });
                 }
                 renderAccessMembers();
+            }
+
+            function syncCurrentUserFromMembers(membersData) {
+                if (!currentUser || !currentUserData) return false;
+                const normalizedEmail = (currentUserData.email || currentUser.email || '').toLowerCase();
+                let member = null;
+                if (currentUser.uid && membersData[currentUser.uid]) {
+                    member = membersData[currentUser.uid];
+                } else if (normalizedEmail) {
+                    const matchKey = Object.keys(membersData).find(key => (membersData[key].email || '').toLowerCase() === normalizedEmail);
+                    if (matchKey) member = membersData[matchKey];
+                }
+                if (!member) return false;
+
+                let changed = false;
+                const nextRole = member.role || currentUserData.role || 'consultation';
+                if (currentUserData.role !== nextRole) {
+                    currentUserData.role = nextRole;
+                    changed = true;
+                }
+                const nextPermissions = nextRole === 'admin'
+                    ? [...accessModules]
+                    : normalizePermissions(member.permissions);
+                const currentPermissions = normalizePermissions(currentUserData.permissions);
+                if (JSON.stringify(currentPermissions) !== JSON.stringify(normalizePermissions(nextPermissions))) {
+                    currentUserData.permissions = nextPermissions;
+                    changed = true;
+                }
+                if (member.accessCode && currentUserData.accessCode !== member.accessCode) {
+                    currentUserData.accessCode = member.accessCode;
+                    changed = true;
+                }
+                return changed;
             }
 
             function renderAccessMembers() {
@@ -2483,6 +2524,12 @@
                 } else {
                     member.permissions.push(permission);
                 }
+                if (member.isCurrentUser && currentUserData) {
+                    currentUserData.permissions = [...member.permissions];
+                    updateUI();
+                    renderStoreProducts(storeSearchInput ? storeSearchInput.value : '');
+                    renderShopStock(shopSearchInput ? shopSearchInput.value : '');
+                }
                 renderAccessMembers();
                 saveMemberState(member);
                 ensureCurrentUserInTeam();
@@ -2497,6 +2544,13 @@
                 }
                 if (role !== 'admin') {
                     member.permissions = member.permissions.filter(permission => permission !== 'Paramètres');
+                }
+                if (member.isCurrentUser && currentUserData) {
+                    currentUserData.role = role;
+                    currentUserData.permissions = role === 'admin' ? [...accessModules] : [...member.permissions];
+                    updateUI();
+                    renderStoreProducts(storeSearchInput ? storeSearchInput.value : '');
+                    renderShopStock(shopSearchInput ? shopSearchInput.value : '');
                 }
                 renderAccessMembers();
                 saveMemberState(member);
@@ -2557,8 +2611,12 @@
                         companyId: match.companyId,
                         companyName: match.companyName,
                         role: match.member.role || 'consultation',
+                        permissions: Array.isArray(match.member.permissions) ? match.member.permissions : [],
                         accessCode: match.member.accessCode
                     };
+                    if (currentUserData.role === 'admin' && !currentUserData.permissions.length) {
+                        currentUserData.permissions = [...accessModules];
+                    }
                     dbBasePath = `companies/${match.companyId}`;
                     if (match.member.status !== 'actif') {
                         await update(ref(db, `${dbBasePath}/members/${match.memberId}`), { status: 'actif' });
@@ -2596,7 +2654,13 @@
                     id: key,
                     ...membersData[key],
                 }));
+                const permissionsChanged = syncCurrentUserFromMembers(membersData);
                 ensureCurrentUserInTeam();
+                if (permissionsChanged) {
+                    updateUI();
+                    renderStoreProducts(storeSearchInput ? storeSearchInput.value : '');
+                    renderShopStock(shopSearchInput ? shopSearchInput.value : '');
+                }
             }
 
             if (accessMembersTbody) {
