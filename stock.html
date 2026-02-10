@@ -66,11 +66,22 @@
                     </div>
                     <h1 class="text-2xl font-bold text-gray-800">StockPilot</h1>
                     <p class="text-gray-500 mt-1">
-                        Connectez-vous à votre compte pour continuer.
+                        Connectez-vous à votre compte ou créez-en un pour continuer.
                     </p>
                 </div>
 
-                <!-- Formulaire de connexion -->
+                <div class="w-full bg-gray-100 rounded-lg p-1 flex mb-6">
+                    <button id="auth-toggle-login"
+                        class="w-1/2 p-2 rounded-md text-sm font-semibold transition-colors bg-white shadow text-gray-800">
+                        Se connecter
+                    </button>
+                    <button id="auth-toggle-signup"
+                        class="w-1/2 p-2 rounded-md text-sm font-semibold transition-colors text-gray-500 hover:bg-gray-200">
+                        S'inscrire
+                    </button>
+                </div>
+
+                <!-- Formulaire de connexion (initialement visible) -->
                 <form id="login-form">
                     <div class="space-y-4">
                         <div class="flex bg-gray-100 rounded-lg p-1 text-xs font-semibold">
@@ -104,68 +115,47 @@
                             class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
                             Se connecter
                         </button>
-                        <button type="button" id="open-request-access"
-                            class="w-full bg-white text-cyan-600 font-semibold py-3 px-4 rounded-lg border border-cyan-200 hover:bg-cyan-50 transition-colors">
-                            Demander un compte
-                        </button>
                     </div>
                 </form>
-            </div>
-        </div>
-    </div>
 
-    <!-- 
-      CONTENEUR DE DEMANDE D'ACCES (PUBLIC)
-    -->
-    <div id="request-access-container" class="hidden">
-        <div class="min-h-screen bg-gray-50 flex flex-col justify-center items-center p-4">
-            <div class="max-w-2xl w-full bg-white rounded-xl shadow-lg p-8">
-                <div class="flex items-center justify-between mb-6">
-                    <div>
-                        <h1 class="text-2xl font-bold text-gray-800">Demande d'accès</h1>
-                        <p class="text-gray-500 mt-1">Complétez ce formulaire pour créer votre compte StockPilot.</p>
+                <!-- Formulaire d'inscription (initialement caché) -->
+                <form id="signup-form" class="hidden">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-sm font-medium text-gray-600" for="fullName">Nom complet</label>
+                            <input type="text" id="fullName" name="fullName" placeholder="Jean Dupont"
+                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition"
+                                required />
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-600" for="companyName">Nom de
+                                l'entreprise</label>
+                            <input type="text" id="companyName" name="companyName" placeholder="Ma Société"
+                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition"
+                                required />
+                            <p class="text-xs text-gray-500 mt-1">Si le nom correspond à une entreprise existante, vous
+                                la rejoindrez.</p>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-600" for="signup-email">Email</label>
+                            <input type="email" id="signup-email" name="signup-email" placeholder="votre@email.com"
+                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition"
+                                required />
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-600" for="signup-password">Mot de passe</label>
+                            <input type="password" id="signup-password" name="signup-password" placeholder="********"
+                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition"
+                                required />
+                        </div>
+                        <div id="signup-error-container" class="hidden p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <p id="signup-error" class="text-red-500 text-sm"></p>
+                        </div>
+                        <button type="submit" id="signup-submit-button"
+                            class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
+                            Créer mon compte
+                        </button>
                     </div>
-                    <button type="button" id="back-to-login"
-                        class="text-sm font-semibold text-cyan-600 hover:text-cyan-700">Retour à la connexion</button>
-                </div>
-                <form id="request-access-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-sm font-medium text-gray-600" for="request-full-name">Nom complet</label>
-                        <input type="text" id="request-full-name" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
-                    </div>
-                    <div>
-                        <label class="text-sm font-medium text-gray-600" for="request-role">Rôle dans la société</label>
-                        <input type="text" id="request-role" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" placeholder="Ex: Gérant, Directeur" required />
-                    </div>
-                    <div>
-                        <label class="text-sm font-medium text-gray-600" for="request-commerce">Nom du commerce</label>
-                        <input type="text" id="request-commerce" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
-                    </div>
-                    <div>
-                        <label class="text-sm font-medium text-gray-600" for="request-employees">Nombre d'employés</label>
-                        <input type="number" id="request-employees" min="1" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
-                    </div>
-                    <div>
-                        <label class="text-sm font-medium text-gray-600" for="request-email">Email professionnel</label>
-                        <input type="email" id="request-email" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
-                    </div>
-                    <div>
-                        <label class="text-sm font-medium text-gray-600" for="request-whatsapp">Téléphone WhatsApp</label>
-                        <input type="tel" id="request-whatsapp" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" placeholder="+225 xx xx xx xx" required />
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="text-sm font-medium text-gray-600" for="request-address">Adresse</label>
-                        <input type="text" id="request-address" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="text-sm font-medium text-gray-600" for="request-notes">Informations complémentaires</label>
-                        <textarea id="request-notes" rows="3" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" placeholder="Ex: nombre de boutiques, besoins spécifiques..."></textarea>
-                    </div>
-                    <div id="request-error" class="md:col-span-2 text-red-500 text-sm hidden"></div>
-                    <button type="submit" id="request-submit-button"
-                        class="md:col-span-2 w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
-                        Envoyer la demande
-                    </button>
                 </form>
             </div>
         </div>
@@ -219,12 +209,6 @@
                     class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
                     <div data-icon="settings" class="w-5 h-5"></div>
                     <span class="sidebar-text">Paramètres</span>
-                </button>
-                <button data-page="Demandes Clients"
-                    class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100 hidden"
-                    id="platform-admin-nav">
-                    <div data-icon="stats" class="w-5 h-5"></div>
-                    <span class="sidebar-text">Demandes clients</span>
                 </button>
             </nav>
             <div class="p-4 border-t border-gray-200">
@@ -1369,67 +1353,7 @@
                 </div>
             </div>
 
-            <!-- Page: Demandes Clients (StockPilot Admin) -->
-            <div id="page-Demandes-Clients" class="page-content p-4 md:p-8 hidden">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h1 class="text-3xl font-bold text-gray-800">Demandes clients</h1>
-                        <p class="text-gray-500 mt-1">Validez les demandes d'accès et créez les comptes admin.</p>
-                    </div>
-                    <span class="text-xs font-semibold px-3 py-1 rounded-full bg-cyan-50 text-cyan-600 border border-cyan-100">StockPilot Admin</span>
-                </div>
-                <div class="mt-6 bg-white p-6 rounded-lg shadow-sm">
-                    <div class="overflow-x-auto border border-gray-200 rounded-xl">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                                <tr>
-                                    <th class="px-4 py-3">Commerce</th>
-                                    <th class="px-4 py-3">Contact</th>
-                                    <th class="px-4 py-3">WhatsApp</th>
-                                    <th class="px-4 py-3">Employés</th>
-                                    <th class="px-4 py-3">Statut</th>
-                                    <th class="px-4 py-3 text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="customer-requests-tbody" class="divide-y divide-gray-100 text-sm text-gray-700">
-                                <tr>
-                                    <td colspan="6" class="px-4 py-6 text-center text-gray-400">Aucune demande pour le moment.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
         </main>
-    </div>
-
-    <!-- Modal: Creation Admin Client -->
-    <div id="create-admin-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 m-4">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-gray-800">Créer compte Admin</h2>
-                <button id="close-create-admin-modal" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            </div>
-            <form id="create-admin-form" class="space-y-4">
-                <div>
-                    <label class="text-sm font-medium text-gray-600" for="create-admin-email">Email</label>
-                    <input type="email" id="create-admin-email" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
-                </div>
-                <div>
-                    <label class="text-sm font-medium text-gray-600" for="create-admin-password">Mot de passe temporaire</label>
-                    <input type="password" id="create-admin-password" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" required />
-                </div>
-                <div id="create-admin-error" class="text-red-500 text-sm hidden"></div>
-                <button type="submit" class="w-full bg-cyan-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-600 transition-colors">
-                    Créer le compte
-                </button>
-            </form>
-        </div>
     </div>
 
     <!-- 
@@ -1851,8 +1775,6 @@
             const app = initializeApp(firebaseConfig);
             const auth = getAuth(app);
             const db = getDatabase(app);
-            const secondaryApp = initializeApp(firebaseConfig, 'secondary');
-            const secondaryAuth = getAuth(secondaryApp);
 
             let isAuthenticated = false;
             let currentPage = 'Tableau de bord';
@@ -1860,7 +1782,6 @@
             let currentUser = null;
             let currentUserData = null;
             let dbBasePath = '';
-            let isRequestAccessView = false;
 
             const appData = { storeProducts: {}, shopStock: {}, salesHistory: {} };
             let isSidebarOpen = false;
@@ -1869,13 +1790,11 @@
             let isCodeSession = false;
 
 
-            let storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, salesHistoryListener, companyMembersListener, customersListener;
-            let storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, salesHistoryRef, companyMembersRef, customersRef;
+            let storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, salesHistoryListener, companyMembersListener;
+            let storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, salesHistoryRef, companyMembersRef;
 
             const accessModules = ['Tableau de bord', 'Ventes', 'Stock Boutique', 'Mon Magasin', 'Statistiques', 'Paramètres', 'Supprimer Stock Boutique', 'Supprimer Stock Magasin'];
             let teamMembersState = [];
-            const platformAdminEmails = ['turibeabayomi@gmail.com'];
-            let selectedCustomerRequest = null;
 
             // Cart state
             let cartItems = [];
@@ -1886,32 +1805,24 @@
             const logoutButton = document.getElementById('logout-button');
             const navButtons = document.querySelectorAll('.nav-button');
             const pageContents = document.querySelectorAll('.page-content');
+            const authToggleLogin = document.getElementById('auth-toggle-login');
+            const authToggleSignup = document.getElementById('auth-toggle-signup');
             const loginForm = document.getElementById('login-form');
+            const signupForm = document.getElementById('signup-form');
             const userEmailDisplay = document.getElementById('user-email-display');
             const userNameDisplay = document.getElementById('user-name-display');
             const userCompanyDisplay = document.getElementById('user-company-display');
             const loginError = document.getElementById('login-error');
+            const signupError = document.getElementById('signup-error');
+            const signupErrorContainer = document.getElementById('signup-error-container');
             const loginSubmitButton = document.getElementById('login-submit-button');
+            const signupSubmitButton = document.getElementById('signup-submit-button');
             const loginPasswordInput = document.getElementById('password');
             const loginAccessCodeInput = document.getElementById('access-code');
             const loginPasswordField = document.getElementById('login-password-field');
             const loginAccessCodeField = document.getElementById('login-access-code-field');
             const loginModeAdminButton = document.getElementById('login-mode-admin');
             const loginModeCodeButton = document.getElementById('login-mode-code');
-            const requestAccessContainer = document.getElementById('request-access-container');
-            const openRequestAccessButton = document.getElementById('open-request-access');
-            const backToLoginButton = document.getElementById('back-to-login');
-            const requestAccessForm = document.getElementById('request-access-form');
-            const requestError = document.getElementById('request-error');
-            const requestSubmitButton = document.getElementById('request-submit-button');
-            const requestFullName = document.getElementById('request-full-name');
-            const requestRole = document.getElementById('request-role');
-            const requestCommerce = document.getElementById('request-commerce');
-            const requestEmployees = document.getElementById('request-employees');
-            const requestEmail = document.getElementById('request-email');
-            const requestWhatsapp = document.getElementById('request-whatsapp');
-            const requestAddress = document.getElementById('request-address');
-            const requestNotes = document.getElementById('request-notes');
 
             const sidebar = document.getElementById('sidebar');
             const mainContent = document.querySelector('main');
@@ -2027,15 +1938,6 @@
             const accessTotalAdmins = document.getElementById('access-total-admins');
             const accessTotalPending = document.getElementById('access-total-pending');
 
-            const platformAdminNav = document.getElementById('platform-admin-nav');
-            const customerRequestsTbody = document.getElementById('customer-requests-tbody');
-            const createAdminModal = document.getElementById('create-admin-modal');
-            const closeCreateAdminModal = document.getElementById('close-create-admin-modal');
-            const createAdminForm = document.getElementById('create-admin-form');
-            const createAdminEmail = document.getElementById('create-admin-email');
-            const createAdminPassword = document.getElementById('create-admin-password');
-            const createAdminError = document.getElementById('create-admin-error');
-
             function showSuccessToast(message) {
                 if (successToastMessage) successToastMessage.textContent = message;
                 if (successToast) {
@@ -2073,13 +1975,6 @@
                 return (currentUserData.role || 'admin').toLowerCase();
             }
 
-            function isPlatformAdmin() {
-                if (!isAuthenticated || !currentUserData) return false;
-                if (currentUserData.platformAdmin === true) return true;
-                const email = (currentUserData.email || currentUser?.email || '').toLowerCase();
-                return platformAdminEmails.includes(email);
-            }
-
             function normalizePermissions(list) {
                 if (!Array.isArray(list)) return [];
                 return [...new Set(list)].sort();
@@ -2107,8 +2002,7 @@
                 'Stock Boutique': 'Stock Boutique',
                 'Mon Magasin': 'Mon Magasin',
                 'Statistiques': 'Statistiques',
-                'Paramètres': 'admin-only', // Cas spécial pour admin seulement
-                'Demandes Clients': 'platform-admin'
+                'Paramètres': 'admin-only' // Cas spécial pour admin seulement
             };
 
             function canAccessPage(pageName) {
@@ -2137,11 +2031,6 @@
                 if (requiredPermission === 'admin-only') {
                     console.log(`[canAccessPage] Admin-only page, access denied: ${pageName}`);
                     return false;
-                }
-                if (requiredPermission === 'platform-admin') {
-                    const access = isPlatformAdmin();
-                    console.log(`[canAccessPage] Platform admin access for page ${pageName}: ${access}`);
-                    return access;
                 }
 
                 // Sinon, vérifier la permission
@@ -2622,58 +2511,6 @@
                 if (accessTotalPending) accessTotalPending.textContent = teamMembersState.filter(m => m.status === 'pending').length;
             }
 
-            function getCustomerStatusBadge(status) {
-                if (status === 'approved') return 'bg-green-50 text-green-700 border-green-100';
-                if (status === 'rejected') return 'bg-red-50 text-red-700 border-red-100';
-                return 'bg-yellow-50 text-yellow-700 border-yellow-100';
-            }
-
-            function renderCustomerRequests(requests) {
-                if (!customerRequestsTbody) return;
-                if (!requests.length) {
-                    customerRequestsTbody.innerHTML = `<tr><td colspan="6" class="px-4 py-6 text-center text-gray-400">Aucune demande pour le moment.</td></tr>`;
-                    return;
-                }
-                customerRequestsTbody.innerHTML = requests.map(request => {
-                    const badgeClass = getCustomerStatusBadge(request.status);
-                    const statusLabel = request.status === 'approved' ? 'Validée' : request.status === 'rejected' ? 'Refusée' : 'En attente';
-                    const actionButton = request.status === 'pending'
-                        ? `<button type="button" data-create-admin="${request.id}" class="text-sm text-cyan-600 hover:text-cyan-700 font-semibold">Créer compte</button>`
-                        : `<span class="text-xs text-gray-400">-</span>`;
-                    return `
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-4 py-3">
-                                <p class="font-semibold text-gray-900">${request.commerceName || '-'}</p>
-                                <p class="text-xs text-gray-400">${request.address || ''}</p>
-                            </td>
-                            <td class="px-4 py-3">
-                                <p class="text-sm text-gray-700">${request.fullName || '-'}</p>
-                                <p class="text-xs text-gray-400">${request.email || '-'}</p>
-                            </td>
-                            <td class="px-4 py-3 text-sm text-gray-600">${request.whatsapp || '-'}</td>
-                            <td class="px-4 py-3 text-sm text-gray-600">${request.employeesCount || '-'}</td>
-                            <td class="px-4 py-3">
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border ${badgeClass}">${statusLabel}</span>
-                            </td>
-                            <td class="px-4 py-3 text-right">${actionButton}</td>
-                        </tr>
-                    `;
-                }).join('');
-            }
-
-            function openCreateAdminModal(request) {
-                selectedCustomerRequest = request;
-                if (createAdminEmail) createAdminEmail.value = request.email || '';
-                if (createAdminPassword) createAdminPassword.value = '';
-                if (createAdminError) createAdminError.classList.add('hidden');
-                if (createAdminModal) createAdminModal.classList.remove('hidden');
-            }
-
-            function closeCreateAdminModal() {
-                selectedCustomerRequest = null;
-                if (createAdminModal) createAdminModal.classList.add('hidden');
-            }
-
             function toggleMemberPermission(memberId, permission) {
                 const member = teamMembersState.find(m => m.id === memberId);
                 if (!member) return;
@@ -2862,22 +2699,6 @@
                     if (roleSelect) setMemberRole(roleSelect.dataset.roleSelect, roleSelect.value);
                 });
             }
-
-            if (customerRequestsTbody) {
-                customerRequestsTbody.addEventListener('click', (event) => {
-                    const createButton = event.target.closest('button[data-create-admin]');
-                    if (!createButton) return;
-                    const requestId = createButton.dataset.createAdmin;
-                    if (!requestId) return;
-                    get(ref(db, `customers/${requestId}`)).then(snapshot => {
-                        if (snapshot.exists()) {
-                            openCreateAdminModal({ id: requestId, ...snapshot.val() });
-                        }
-                    });
-                });
-            }
-
-            if (closeCreateAdminModal) closeCreateAdminModal.addEventListener('click', closeCreateAdminModal);
 
             if (accessAddMemberForm) {
                 accessAddMemberForm.addEventListener('submit', async (event) => {
@@ -3153,16 +2974,6 @@
 
                 companyMembersRef = ref(db, `${dbBasePath}/members`);
                 companyMembersListener = onValue(companyMembersRef, onCompanyMembersValue);
-
-                if (isPlatformAdmin()) {
-                    customersRef = ref(db, `customers`);
-                    customersListener = onValue(customersRef, (snapshot) => {
-                        const data = snapshot.val() || {};
-                        const requests = Object.keys(data).map(key => ({ id: key, ...data[key] }));
-                        const sorted = requests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                        renderCustomerRequests(sorted);
-                    });
-                }
             }
 
             function cleanupFirebaseListeners() {
@@ -3172,16 +2983,14 @@
                 if (shopMovementsListener && shopMovementsRef) off(shopMovementsRef, shopMovementsListener);
                 if (salesHistoryListener && salesHistoryRef) off(salesHistoryRef, salesHistoryListener);
                 if (companyMembersListener && companyMembersRef) off(companyMembersRef, companyMembersListener);
-                if (customersListener && customersRef) off(customersRef, customersListener);
 
-                storeProductsListener = null; storeMovementsListener = null; shopStockListener = null; shopMovementsListener = null; salesHistoryListener = null; companyMembersListener = null; customersListener = null;
+                storeProductsListener = null; storeMovementsListener = null; shopStockListener = null; shopMovementsListener = null; salesHistoryListener = null; companyMembersListener = null;
                 appData.storeProducts = {}; appData.shopStock = {}; appData.salesHistory = {};
             }
 
             function updateUI() {
                 if (isAuthenticated) {
                     if (authPageContainer) authPageContainer.classList.add('hidden');
-                    if (requestAccessContainer) requestAccessContainer.classList.add('hidden');
                     if (layoutContainer) layoutContainer.classList.remove('hidden');
                     if (currentUser && userEmailDisplay) userEmailDisplay.textContent = currentUser.email;
                     if (currentUserData) {
@@ -3197,14 +3006,8 @@
                         if (mobilePageTitle) mobilePageTitle.textContent = currentPage;
                     }
                 } else {
+                    if (authPageContainer) authPageContainer.classList.remove('hidden');
                     if (layoutContainer) layoutContainer.classList.add('hidden');
-                    if (isRequestAccessView) {
-                        if (requestAccessContainer) requestAccessContainer.classList.remove('hidden');
-                        if (authPageContainer) authPageContainer.classList.add('hidden');
-                    } else {
-                        if (authPageContainer) authPageContainer.classList.remove('hidden');
-                        if (requestAccessContainer) requestAccessContainer.classList.add('hidden');
-                    }
                 }
 
                 pageContents.forEach(page => {
@@ -3233,10 +3036,6 @@
                     }
                 });
 
-                if (platformAdminNav) {
-                    platformAdminNav.classList.toggle('hidden', !isPlatformAdmin());
-                }
-
                 updateSettingsAccess();
 
                 // Mettre à jour les boutons d'actions rapides
@@ -3247,7 +3046,17 @@
 
             function updateAuthFormView() {
                 updateLoginModeUI();
-                if (loginForm) loginForm.classList.remove('hidden');
+                if (isLoginView) {
+                    if (loginForm) loginForm.classList.remove('hidden');
+                    if (signupForm) signupForm.classList.add('hidden');
+                    if (authToggleLogin) authToggleLogin.classList.add('bg-white', 'shadow', 'text-gray-800');
+                    if (authToggleSignup) authToggleSignup.classList.remove('bg-white', 'shadow', 'text-gray-800');
+                } else {
+                    if (loginForm) loginForm.classList.add('hidden');
+                    if (signupForm) signupForm.classList.remove('hidden');
+                    if (authToggleSignup) authToggleSignup.classList.add('bg-white', 'shadow', 'text-gray-800');
+                    if (authToggleLogin) authToggleLogin.classList.remove('bg-white', 'shadow', 'text-gray-800');
+                }
             }
 
             function updateSalesTotal() {
@@ -3813,14 +3622,8 @@
             if (hamburgerButton) hamburgerButton.addEventListener('click', () => { isSidebarOpen = true; updateSidebarMobileState(); });
             if (sidebarOverlay) sidebarOverlay.addEventListener('click', () => { isSidebarOpen = false; updateSidebarMobileState(); });
             if (sidebarCollapseToggle) sidebarCollapseToggle.addEventListener('click', () => { isSidebarCollapsed = !isSidebarCollapsed; updateSidebarDesktopState(); });
-            if (openRequestAccessButton) openRequestAccessButton.addEventListener('click', () => {
-                isRequestAccessView = true;
-                updateUI();
-            });
-            if (backToLoginButton) backToLoginButton.addEventListener('click', () => {
-                isRequestAccessView = false;
-                updateUI();
-            });
+            if (authToggleLogin) authToggleLogin.addEventListener('click', () => { isLoginView = true; updateAuthFormView(); });
+            if (authToggleSignup) authToggleSignup.addEventListener('click', () => { isLoginView = false; updateAuthFormView(); });
             if (loginModeAdminButton) loginModeAdminButton.addEventListener('click', () => { isCodeLoginMode = false; updateLoginModeUI(); });
             if (loginModeCodeButton) loginModeCodeButton.addEventListener('click', () => { isCodeLoginMode = true; updateLoginModeUI(); });
             if (salesProductSelect) salesProductSelect.addEventListener('change', updateSalesTotal);
@@ -3921,108 +3724,29 @@
                 }
             });
 
-            if (requestAccessForm) requestAccessForm.addEventListener('submit', async (event) => {
+            if (signupForm) signupForm.addEventListener('submit', async (event) => {
                 event.preventDefault();
-                if (requestError) requestError.classList.add('hidden');
-                const payload = {
-                    fullName: requestFullName?.value.trim(),
-                    roleInCompany: requestRole?.value.trim(),
-                    commerceName: requestCommerce?.value.trim(),
-                    employeesCount: parseInt(requestEmployees?.value, 10),
-                    email: requestEmail?.value.trim(),
-                    whatsapp: requestWhatsapp?.value.trim(),
-                    address: requestAddress?.value.trim(),
-                    notes: requestNotes?.value.trim(),
-                    status: 'pending',
-                    createdAt: new Date().toISOString()
-                };
-                if (!payload.fullName || !payload.roleInCompany || !payload.commerceName || !payload.email || !payload.whatsapp || !payload.address || isNaN(payload.employeesCount)) {
-                    if (requestError) {
-                        requestError.textContent = "Veuillez remplir tous les champs obligatoires.";
-                        requestError.classList.remove('hidden');
-                    }
-                    return;
-                }
-                try {
-                    if (requestSubmitButton) requestSubmitButton.disabled = true;
-                    const newRequestRef = push(ref(db, 'customers'));
-                    await set(newRequestRef, { id: newRequestRef.key, ...payload });
-                    requestAccessForm.reset();
-                    showSuccessToast("Votre demande a été envoyée.");
-                    isRequestAccessView = false;
-                    updateUI();
-                } catch (error) {
-                    if (requestError) {
-                        requestError.textContent = "Impossible d'envoyer la demande pour le moment.";
-                        requestError.classList.remove('hidden');
-                    }
-                } finally {
-                    if (requestSubmitButton) requestSubmitButton.disabled = false;
-                }
-            });
+                const email = signupForm['signup-email'].value;
+                const password = signupForm['signup-password'].value;
+                const fullName = signupForm.fullName.value;
+                const companyName = signupForm.companyName.value;
 
-            if (createAdminForm) createAdminForm.addEventListener('submit', async (event) => {
-                event.preventDefault();
-                if (createAdminError) createAdminError.classList.add('hidden');
-                if (!selectedCustomerRequest) {
-                    if (createAdminError) {
-                        createAdminError.textContent = "Aucune demande sélectionnée.";
-                        createAdminError.classList.remove('hidden');
-                    }
-                    return;
-                }
-                const email = createAdminEmail?.value.trim();
-                const password = createAdminPassword?.value;
-                if (!email || !password) {
-                    if (createAdminError) {
-                        createAdminError.textContent = "Email et mot de passe requis.";
-                        createAdminError.classList.remove('hidden');
-                    }
-                    return;
-                }
                 try {
-                    const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+                    if (signupSubmitButton) signupSubmitButton.disabled = true;
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     const user = userCredential.user;
                     const companyId = push(ref(db, 'companies')).key;
-                    await set(ref(db, `companies/${companyId}`), {
-                        name: selectedCustomerRequest.commerceName || 'Entreprise',
-                        address: selectedCustomerRequest.address || '',
-                        whatsapp: selectedCustomerRequest.whatsapp || '',
-                        employeesCount: selectedCustomerRequest.employeesCount || 0,
-                        createdAt: new Date().toISOString(),
-                        createdBy: user.uid
-                    });
-                    const userData = {
-                        uid: user.uid,
-                        email,
-                        fullName: selectedCustomerRequest.fullName || 'Admin',
-                        companyName: selectedCustomerRequest.commerceName || '',
-                        companyId,
-                        role: 'admin',
-                        platformAdmin: false
-                    };
+                    await set(ref(db, `companies/${companyId}`), { name: companyName, createdAt: new Date().toISOString(), createdBy: user.uid });
+                    const userData = { uid: user.uid, email, fullName, companyName, companyId, role: 'admin' };
                     await set(ref(db, `users/${user.uid}`), userData);
-                    await set(ref(db, `companies/${companyId}/members/${user.uid}`), {
-                        fullName: userData.fullName,
-                        email,
-                        role: 'admin',
-                        status: 'actif',
-                        permissions: [...accessModules]
-                    });
-                    await signOut(secondaryAuth);
-                    await update(ref(db, `customers/${selectedCustomerRequest.id}`), {
-                        status: 'approved',
-                        approvedAt: new Date().toISOString(),
-                        companyId,
-                        adminUserId: user.uid
-                    });
-                    showSuccessToast("Compte admin créé.");
-                    closeCreateAdminModal();
+                    await set(ref(db, `companies/${companyId}/members/${user.uid}`), { fullName, email, role: 'admin', status: 'actif', permissions: [...accessModules] });
                 } catch (error) {
-                    if (createAdminError) {
-                        createAdminError.textContent = "Impossible de créer ce compte.";
-                        createAdminError.classList.remove('hidden');
+                    if (signupError) {
+                        signupError.textContent = error.message;
+                        if (signupErrorContainer) signupErrorContainer.classList.remove('hidden');
                     }
+                } finally {
+                    if (signupSubmitButton) signupSubmitButton.disabled = false;
                 }
             });
 
