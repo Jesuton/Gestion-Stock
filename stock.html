@@ -1323,6 +1323,53 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="border-t border-gray-100 pt-6 space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-gray-900">Sorties magasin en attente</h3>
+                                        <p class="text-sm text-gray-500">Demandes à valider par un administrateur.</p>
+                                    </div>
+                                    <span id="pending-exit-count"
+                                        class="px-2.5 py-1 text-xs font-semibold rounded-full bg-yellow-50 text-yellow-700 border border-yellow-200">0</span>
+                                </div>
+                                <div id="pending-exit-placeholder"
+                                    class="flex items-center justify-center text-sm text-gray-400 h-20 border border-dashed border-gray-200 rounded-xl">
+                                    Aucune demande en attente.
+                                </div>
+                                <div id="pending-exit-table-container"
+                                    class="hidden overflow-x-auto rounded-xl border border-gray-200">
+                                    <table class="min-w-full bg-white divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th scope="col"
+                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Date</th>
+                                                <th scope="col"
+                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Produit</th>
+                                                <th scope="col"
+                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Quantité</th>
+                                                <th scope="col"
+                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Demandé par</th>
+                                                <th scope="col"
+                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Commentaire</th>
+                                                <th scope="col"
+                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Statut</th>
+                                                <th scope="col"
+                                                    class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="pending-exit-tbody" class="divide-y divide-gray-200">
+                                            <!-- Demandes remplies par JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                             <div class="flex justify-end">
                                 <button
                                     class="px-5 py-2.5 bg-cyan-500 text-white rounded-xl text-sm font-semibold hover:bg-cyan-600">Mettre
@@ -1939,15 +1986,19 @@
             let currentUserData = null;
             let dbBasePath = '';
 
-            const appData = { storeProducts: {}, shopStock: {}, salesHistory: {}, customers: {} };
+            const appData = { storeProducts: {}, shopStock: {}, salesHistory: {}, customers: {}, storeExitRequests: {} };
             let isSidebarOpen = false;
             let isSidebarCollapsed = false;
             let isCodeLoginMode = false;
             let isCodeSession = false;
 
+            const EXIT_STATUS_PENDING = 'en attente de validation';
+            const EXIT_STATUS_APPROVED = 'validée';
+            const EXIT_STATUS_REJECTED = 'refusée';
 
-            let storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, salesHistoryListener, companyMembersListener, companyCustomersListener;
-            let storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, salesHistoryRef, companyMembersRef, companyCustomersRef;
+
+            let storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, salesHistoryListener, companyMembersListener, companyCustomersListener, storeExitRequestsListener;
+            let storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, salesHistoryRef, companyMembersRef, companyCustomersRef, storeExitRequestsRef;
 
             const accessModules = ['Tableau de bord', 'Ventes', 'Stock Boutique', 'Mon Magasin', 'Statistiques', 'Paramètres', 'Supprimer Stock Boutique', 'Supprimer Stock Magasin'];
             let teamMembersState = [];
@@ -2132,6 +2183,10 @@
             const accessTotalUsers = document.getElementById('access-total-users');
             const accessTotalAdmins = document.getElementById('access-total-admins');
             const accessTotalPending = document.getElementById('access-total-pending');
+            const pendingExitCount = document.getElementById('pending-exit-count');
+            const pendingExitPlaceholder = document.getElementById('pending-exit-placeholder');
+            const pendingExitTableContainer = document.getElementById('pending-exit-table-container');
+            const pendingExitTbody = document.getElementById('pending-exit-tbody');
 
             function showSuccessToast(message) {
                 if (successToastMessage) successToastMessage.textContent = message;
@@ -2154,6 +2209,19 @@
             function formatDateForDisplay(isoString) {
                 const date = new Date(isoString);
                 return date.toLocaleString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace(' à', ',');
+            }
+
+            function formatExitStatusBadge(status) {
+                if (status === EXIT_STATUS_APPROVED) return { label: 'Validée', classes: 'bg-green-50 text-green-700 border-green-200' };
+                if (status === EXIT_STATUS_REJECTED) return { label: 'Refusée', classes: 'bg-red-50 text-red-700 border-red-200' };
+                return { label: 'En attente', classes: 'bg-yellow-50 text-yellow-700 border-yellow-200' };
+            }
+
+            function getPendingExitQuantity(productId) {
+                const requests = Object.values(appData.storeExitRequests || {});
+                return requests
+                    .filter(request => request.productId === productId && request.status === EXIT_STATUS_PENDING)
+                    .reduce((sum, request) => sum + (parseInt(request.quantity, 10) || 0), 0);
             }
 
             function normalizeString(value) {
@@ -3162,6 +3230,26 @@
                 });
             }
 
+            if (pendingExitTableContainer) {
+                pendingExitTableContainer.addEventListener('click', (event) => {
+                    const approveButton = event.target.closest('button[data-approve-exit]');
+                    if (approveButton) {
+                        const requestId = approveButton.dataset.approveExit;
+                        if (requestId && confirm("Valider cette sortie ?")) {
+                            approveExitRequest(requestId);
+                        }
+                        return;
+                    }
+                    const rejectButton = event.target.closest('button[data-reject-exit]');
+                    if (rejectButton) {
+                        const requestId = rejectButton.dataset.rejectExit;
+                        if (requestId && confirm("Refuser cette sortie ?")) {
+                            rejectExitRequest(requestId);
+                        }
+                    }
+                });
+            }
+
             function populateStoreProductSelects() {
                 const products = appData.storeProducts;
                 const selects = [entryProductSelect, exitProductSelect, transferProductSelect];
@@ -3264,6 +3352,128 @@
                     storeMovementsTableContainer.classList.add('hidden');
                     storeMovementsTbody.innerHTML = '';
                 }
+            }
+
+            function renderPendingExitRequests() {
+                if (!pendingExitTableContainer || !pendingExitTbody || !pendingExitPlaceholder) return;
+                const requests = Object.values(appData.storeExitRequests || {})
+                    .filter(request => request.status === EXIT_STATUS_PENDING)
+                    .sort((a, b) => new Date(b.requestedAt || b.date) - new Date(a.requestedAt || a.date));
+
+                if (pendingExitCount) pendingExitCount.textContent = requests.length;
+
+                if (!requests.length) {
+                    pendingExitPlaceholder.classList.remove('hidden');
+                    pendingExitTableContainer.classList.add('hidden');
+                    pendingExitTbody.innerHTML = '';
+                    return;
+                }
+
+                pendingExitPlaceholder.classList.add('hidden');
+                pendingExitTableContainer.classList.remove('hidden');
+                const canApprove = getCurrentUserRole() === 'admin';
+                pendingExitTbody.innerHTML = requests.map(request => {
+                    const statusBadge = formatExitStatusBadge(request.status);
+                    const requestedBy = request.requestedByName || request.requestedBy || request.requestedByEmail || '-';
+                    const comment = request.comment ? request.comment : '-';
+                    const date = request.requestedAt || request.date || new Date().toISOString();
+                    const actionsHtml = canApprove
+                        ? `<div class="flex justify-end gap-2">
+                                <button type="button" data-approve-exit="${request.id}" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-green-500 text-white hover:bg-green-600">Valider</button>
+                                <button type="button" data-reject-exit="${request.id}" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-100 text-red-600 hover:bg-red-200">Refuser</button>
+                            </div>`
+                        : `<span class="text-xs text-gray-400">Admin requis</span>`;
+                    return `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(date)}</td>
+                            <td class="px-4 py-3 text-sm font-medium text-gray-900">${request.productName || '-'}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-700">${request.quantity}</td>
+                            <td class="px-4 py-3 text-sm text-gray-500">${requestedBy}</td>
+                            <td class="px-4 py-3 text-sm text-gray-500">${comment}</td>
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold border ${statusBadge.classes}">${statusBadge.label}</span>
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-right">
+                                ${actionsHtml}
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            async function approveExitRequest(requestId) {
+                if (!dbBasePath || !currentUser || getCurrentUserRole() !== 'admin') return;
+                const request = appData.storeExitRequests?.[requestId];
+                if (!request || request.status !== EXIT_STATUS_PENDING) {
+                    showSuccessToast("Cette demande a déjà été traitée.");
+                    return;
+                }
+                const product = appData.storeProducts?.[request.productId];
+                if (!product) {
+                    showSuccessToast("Produit introuvable.");
+                    return;
+                }
+                const quantity = parseInt(request.quantity, 10) || 0;
+                if (quantity <= 0) return;
+                if (quantity > product.quantityInStore) {
+                    showSuccessToast("Stock insuffisant pour valider cette sortie.");
+                    return;
+                }
+
+                try {
+                    const now = new Date().toISOString();
+                    const newStock = product.quantityInStore - quantity;
+                    const updates = {};
+                    updates[`${dbBasePath}/storeProducts/${product.id}/quantityInStore`] = newStock;
+                    const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
+                    updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
+                        id: moveKey,
+                        productId: product.id,
+                        productName: product.name,
+                        type: "Sortie",
+                        quantityChange: quantity,
+                        oldStock: product.quantityInStore,
+                        newStock,
+                        comment: request.comment ? `Sortie validée - ${request.comment}` : "Sortie validée",
+                        date: now,
+                        approvedFromRequest: requestId,
+                        userEmail: request.requestedByEmail || ''
+                    };
+                    updates[`${dbBasePath}/storeExitRequests/${requestId}/status`] = EXIT_STATUS_APPROVED;
+                    updates[`${dbBasePath}/storeExitRequests/${requestId}/validatedAt`] = now;
+                    updates[`${dbBasePath}/storeExitRequests/${requestId}/validatedBy`] = currentUser.email || currentUserData?.email || '';
+                    await update(ref(db), updates);
+                    showSuccessToast("Sortie validée avec succès.");
+                } catch (error) {
+                    console.error(error);
+                    showSuccessToast("Impossible de valider cette sortie pour le moment.");
+                }
+            }
+
+            async function rejectExitRequest(requestId) {
+                if (!dbBasePath || !currentUser || getCurrentUserRole() !== 'admin') return;
+                const request = appData.storeExitRequests?.[requestId];
+                if (!request || request.status !== EXIT_STATUS_PENDING) {
+                    showSuccessToast("Cette demande a déjà été traitée.");
+                    return;
+                }
+                try {
+                    const now = new Date().toISOString();
+                    const updates = {};
+                    updates[`${dbBasePath}/storeExitRequests/${requestId}/status`] = EXIT_STATUS_REJECTED;
+                    updates[`${dbBasePath}/storeExitRequests/${requestId}/validatedAt`] = now;
+                    updates[`${dbBasePath}/storeExitRequests/${requestId}/validatedBy`] = currentUser.email || currentUserData?.email || '';
+                    await update(ref(db), updates);
+                    showSuccessToast("Sortie refusée.");
+                } catch (error) {
+                    console.error(error);
+                    showSuccessToast("Impossible de refuser cette sortie pour le moment.");
+                }
+            }
+
+            function onStoreExitRequestsValue(snapshot) {
+                appData.storeExitRequests = snapshot.val() || {};
+                renderPendingExitRequests();
             }
 
             function onStoreProductsValue(snapshot) {
@@ -3408,6 +3618,9 @@
                 storeMovementsRef = ref(db, `${dbBasePath}/storeMovements`);
                 storeMovementsListener = onValue(storeMovementsRef, onStoreMovementsValue);
 
+                storeExitRequestsRef = ref(db, `${dbBasePath}/storeExitRequests`);
+                storeExitRequestsListener = onValue(storeExitRequestsRef, onStoreExitRequestsValue);
+
                 shopStockRef = ref(db, `${dbBasePath}/shopStock`);
                 shopStockListener = onValue(shopStockRef, onShopStockValue);
 
@@ -3427,14 +3640,15 @@
             function cleanupFirebaseListeners() {
                 if (storeProductsListener && storeProductsRef) off(storeProductsRef, storeProductsListener);
                 if (storeMovementsListener && storeMovementsRef) off(storeMovementsRef, storeMovementsListener);
+                if (storeExitRequestsListener && storeExitRequestsRef) off(storeExitRequestsRef, storeExitRequestsListener);
                 if (shopStockListener && shopStockRef) off(shopStockRef, shopStockListener);
                 if (shopMovementsListener && shopMovementsRef) off(shopMovementsRef, shopMovementsListener);
                 if (salesHistoryListener && salesHistoryRef) off(salesHistoryRef, salesHistoryListener);
                 if (companyMembersListener && companyMembersRef) off(companyMembersRef, companyMembersListener);
                 if (companyCustomersListener && companyCustomersRef) off(companyCustomersRef, companyCustomersListener);
 
-                storeProductsListener = null; storeMovementsListener = null; shopStockListener = null; shopMovementsListener = null; salesHistoryListener = null; companyMembersListener = null; companyCustomersListener = null;
-                appData.storeProducts = {}; appData.shopStock = {}; appData.salesHistory = {}; appData.customers = {};
+                storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; salesHistoryListener = null; companyMembersListener = null; companyCustomersListener = null;
+                appData.storeProducts = {}; appData.shopStock = {}; appData.salesHistory = {}; appData.customers = {}; appData.storeExitRequests = {};
                 selectedCustomer = null;
                 customerOptionLookup = {};
                 isCustomerHistoryOpen = false;
@@ -4685,25 +4899,42 @@
             if (exitForm) exitForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 if (!currentUser || !dbBasePath) return;
+                if (exitError) exitError.classList.add('hidden');
                 const pid = exitProductSelect.value;
                 const qty = parseInt(exitForm['exit-quantity'].value, 10);
                 const comment = exitForm['exit-comment'].value;
                 const prod = appData.storeProducts[pid];
                 if (!prod || qty <= 0) return;
-                if (qty > prod.quantityInStore) {
-                    alert("Stock insuffisant dans le magasin.");
+                const pendingQty = getPendingExitQuantity(pid);
+                const available = prod.quantityInStore - pendingQty;
+                if (qty > available) {
+                    if (exitError) {
+                        exitError.textContent = `Stock insuffisant. Disponible: ${Math.max(available, 0)}.`;
+                        exitError.classList.remove('hidden');
+                    } else {
+                        alert("Stock insuffisant dans le magasin.");
+                    }
                     return;
                 }
 
                 try {
                     if (exitSubmitButton) exitSubmitButton.disabled = true;
-                    const newStock = prod.quantityInStore - qty;
-                    const updates = {};
-                    updates[`${dbBasePath}/storeProducts/${pid}/quantityInStore`] = newStock;
-                    const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
-                    updates[`${dbBasePath}/storeMovements/${moveKey}`] = { id: moveKey, productId: pid, productName: prod.name, type: "Sortie", quantityChange: qty, oldStock: prod.quantityInStore, newStock, comment, date: new Date().toISOString() };
-                    await update(ref(db), updates);
-                    showSuccessToast("Sortie de stock réussie !");
+                    const requestRef = push(ref(db, `${dbBasePath}/storeExitRequests`));
+                    const now = new Date().toISOString();
+                    await set(requestRef, {
+                        id: requestRef.key,
+                        productId: pid,
+                        productName: prod.name,
+                        quantity: qty,
+                        comment,
+                        status: EXIT_STATUS_PENDING,
+                        requestedAt: now,
+                        requestedByName: currentUserData?.fullName || currentUser.email || '',
+                        requestedByEmail: currentUser.email || '',
+                        requestedById: currentUser.uid || '',
+                        stockBefore: prod.quantityInStore
+                    });
+                    showSuccessToast("Demande de sortie envoyée pour validation.");
                     exitForm.reset();
                     exitModal.classList.add('hidden');
                 } catch (err) {
@@ -4870,7 +5101,7 @@
             // Modals Open
             if (openNewProductModalButton) openNewProductModalButton.addEventListener('click', () => { newProductModal.classList.remove('hidden'); newProductForm.reset(); });
             if (openEntryModalButton) openEntryModalButton.addEventListener('click', () => { entryModal.classList.remove('hidden'); entryForm.reset(); });
-            if (openExitModalButton) openExitModalButton.addEventListener('click', () => { exitModal.classList.remove('hidden'); exitForm.reset(); });
+            if (openExitModalButton) openExitModalButton.addEventListener('click', () => { exitModal.classList.remove('hidden'); exitForm.reset(); if (exitError) exitError.classList.add('hidden'); });
             if (openTransferModalButton) openTransferModalButton.addEventListener('click', () => { transferModal.classList.remove('hidden'); transferForm.reset(); transferSourceInfo.classList.add('hidden'); });
             if (openRestockModalButton) openRestockModalButton.addEventListener('click', () => { restockModal.classList.remove('hidden'); restockForm.reset(); restockSourceInfo.classList.add('hidden'); });
 
