@@ -400,232 +400,112 @@
 
             <!-- Page: Ventes -->
             <div id="page-Ventes" class="page-content p-4 md:p-8 hidden">
-                <h1 class="text-3xl font-bold text-gray-800">Ventes</h1>
-                <p class="text-gray-500 mt-1">Enregistrez vos ventes quotidiennes</p>
-                <div class="mt-6 grid grid-cols-1 xl:grid-cols-3 gap-6">
-                    <div class="xl:col-span-2 space-y-6">
-                        <div class="bg-white p-6 rounded-lg shadow-sm">
+                <div class="flex flex-col xl:flex-row gap-6">
+                    <div class="flex-1 space-y-6">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                                 <div>
-                                    <h2 class="text-xl font-bold text-gray-800">Catalogue produits</h2>
-                                    <p class="text-sm text-gray-500 mt-1">Selectionnez un produit dans la liste pour l'ajouter a la commande.</p>
+                                    <h1 class="text-2xl font-bold text-gray-900">Point de Vente</h1>
+                                    <p class="text-sm text-gray-500 mt-1">Recherchez et ajoutez des produits a la facture.</p>
                                 </div>
                                 <span class="text-xs font-semibold px-3 py-1 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-100">Stock Boutique</span>
                             </div>
                             <div class="mt-4 relative">
                                 <input type="text" id="sales-product-search" placeholder="Rechercher un produit..."
-                                    class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500" />
+                                    class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-cyan-500 focus:border-cyan-500" />
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                         <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
                                     </svg>
                                 </div>
                             </div>
-                            <div id="sales-products-placeholder" class="mt-6 flex flex-col items-center justify-center text-center text-gray-500 h-40">
-                                <p>Aucun produit disponible.</p>
-                            </div>
-                            <div id="sales-products-container" class="mt-4">
-                                <div id="sales-products-table-container" class="hidden overflow-x-auto max-h-80 overflow-y-auto rounded-lg border border-gray-200">
-                                    <table class="min-w-full bg-white divide-y divide-gray-200">
-                                        <thead class="bg-gray-50">
-                                            <tr>
-                                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
-                                                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Prix</th>
-                                                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-                                                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="sales-products-tbody" class="divide-y divide-gray-200">
-                                            <!-- Produits remplis par JS -->
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <p id="sales-products-limit-note" class="hidden text-xs text-gray-500 mt-2">Affinez la recherche pour voir plus de produits.</p>
-                            </div>
+                            <div id="sales-category-filters" class="mt-4 flex flex-wrap gap-2"></div>
+                            <p id="sales-error" class="text-red-500 text-sm mt-3 hidden"></p>
                         </div>
 
-                        <div class="bg-white p-6 rounded-lg shadow-sm">
-                            <h2 class="text-xl font-bold text-gray-800 flex items-center">
-                                <div data-icon="sales" class="w-6 h-6 mr-3 text-cyan-500"></div>
-                                Ajout rapide
-                            </h2>
-                            <form id="sales-form" class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div class="col-span-1">
-                                    <label for="sales-product-select" class="block text-sm font-medium text-gray-700 mb-1">Produit *</label>
-                                    <select id="sales-product-select" name="product"
-                                        class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500">
-                                        <option value="">Selectionner un produit</option>
-                                    </select>
-                                </div>
-                                <div class="col-span-1">
-                                    <label for="sales-quantity-input" class="block text-sm font-medium text-gray-700 mb-1">Quantite *</label>
-                                    <input type="number" name="quantity" id="sales-quantity-input" value="1" min="1"
-                                        class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500" />
-                                </div>
-
-                                <div class="col-span-1">
-                                    <label for="sales-total-amount" class="block text-sm font-medium text-gray-700 mb-1">Montant total</label>
-                                    <input type="text" id="sales-total-amount" value="0 FCFA"
-                                        class="w-full border-gray-300 rounded-lg shadow-sm bg-gray-100 focus:ring-0 focus:border-gray-300" readonly />
-                                </div>
-
-                                <div class="col-span-1">
-                                    <label for="seller-name" class="block text-sm font-medium text-gray-700 mb-1">Vendeur *</label>
-                                    <input type="text" name="seller" id="seller-name"
-                                        class="w-full border-gray-300 rounded-lg shadow-sm bg-gray-100 focus:ring-0 focus:border-gray-300" readonly />
-                                </div>
-
-                                <div class="col-span-2">
-                                    <label for="sales-comment" class="block text-sm font-medium text-gray-700 mb-1">Commentaire (optionnel)</label>
-                                    <textarea name="comment" id="sales-comment" rows="3"
-                                        class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500"></textarea>
-                                </div>
-
-                                <p id="sales-error" class="text-red-500 text-sm mt-2 hidden col-span-2"></p>
-
-                                <div class="col-span-2 flex gap-3">
-                                    <button type="button" id="add-to-cart-button"
-                                        class="inline-flex items-center px-4 py-2 bg-cyan-400 text-white font-semibold rounded-lg shadow-md hover:bg-cyan-500 transition-colors">
-                                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                        </svg>
-                                        Ajouter au panier
-                                    </button>
-                                    <button type="submit" id="sales-submit-button"
-                                        class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-300 transition-colors">
-                                        + Vente directe
-                                    </button>
-                                </div>
-                            </form>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                            <div id="sales-products-placeholder" class="flex flex-col items-center justify-center text-center text-gray-500 h-48">
+                                <p>Aucun produit disponible.</p>
+                            </div>
+                            <div id="sales-products-container" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <!-- Cartes produits inserees par JS -->
+                            </div>
                         </div>
                     </div>
 
-                    <div class="xl:col-span-1 space-y-6">
-                        <div class="bg-white p-6 rounded-lg shadow-sm">
-                            <div>
-                                <h2 class="text-xl font-bold text-gray-800">Client</h2>
-                                <p class="text-sm text-gray-500 mt-1">Optionnel - la vente peut se faire sans client.</p>
-                            </div>
-                            <input type="hidden" id="customer-id" />
-                            <button id="open-customer-select-button"
-                                class="mt-4 w-full border-2 border-dashed border-gray-200 rounded-xl p-4 text-left hover:border-cyan-300 hover:bg-cyan-50/40 transition">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-11 h-11 rounded-full bg-cyan-50 text-cyan-600 flex items-center justify-center">
-                                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M5.121 17.804A4 4 0 0112 15a4 4 0 016.879 2.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm font-semibold text-gray-800">Sélectionner / Ajouter un client</p>
-                                        <p class="text-xs text-gray-500 mt-1">Optionnel - vente sans enregistrement possible</p>
-                                    </div>
-                                </div>
-                            </button>
-                            <div id="customer-selected-card" class="mt-4 hidden p-4 rounded-lg border border-cyan-100 bg-cyan-50">
-                                <div class="flex items-start justify-between gap-3">
-                                    <div>
-                                        <p id="customer-selected-name" class="text-sm font-semibold text-gray-800">-</p>
-                                        <p id="customer-selected-contact" class="text-xs text-gray-500">-</p>
-                                    </div>
-                                    <button id="change-customer-selection" class="text-xs font-semibold text-cyan-700 hover:text-cyan-900">Changer</button>
-                                </div>
-                                <div class="flex items-center gap-3 mt-3">
-                                    <button id="customer-history-button" class="hidden text-xs font-semibold text-cyan-700 hover:text-cyan-900">Historique</button>
-                                    <button id="clear-customer-selection" class="text-xs font-semibold text-gray-600 hover:text-gray-800">Vente sans client</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div id="order-summary-section" class="bg-white p-6 rounded-lg shadow-sm">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h2 class="text-xl font-bold text-gray-800">Resume de la commande</h2>
-                                    <p id="order-summary-note" class="text-sm text-gray-500 mt-1">Aucun article selectionne.</p>
-                                </div>
-                            </div>
-                            <div id="order-summary-list" class="mt-4 space-y-2">
-                                <p class="text-sm text-gray-500">Ajoutez des articles pour voir le resume.</p>
-                            </div>
-                            <div class="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
-                                <p class="text-sm font-semibold text-gray-700">Total</p>
-                                <p id="order-summary-total" class="text-2xl font-bold text-gray-800">0 FCFA</p>
-                            </div>
-                        </div>
-
-                        <div id="cart-section" class="bg-white p-6 rounded-lg shadow-sm border-2 border-cyan-200 hidden">
-                            <div class="flex items-center justify-between mb-4">
-                                <h2 class="text-xl font-bold text-gray-800 flex items-center">
-                                    <svg class="w-6 h-6 mr-3 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    <div class="xl:w-[360px] space-y-6">
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div class="p-6 border-b border-gray-100">
+                                <h2 class="text-lg font-semibold text-gray-900">Facture en cours</h2>
+                                <div class="mt-3 flex items-center gap-2 text-xs text-gray-500">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
                                     </svg>
-                                    Panier
-                                    <span id="cart-count" class="ml-3 px-2.5 py-0.5 text-xs font-semibold rounded-full bg-cyan-100 text-cyan-800">0</span>
-                                </h2>
-                                <button id="clear-cart-button" class="text-sm text-red-500 hover:text-red-700 font-medium flex items-center">
-                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                    </svg>
-                                    Vider le panier
+                                    <span id="cart-items-count">0 article(s)</span>
+                                </div>
+                            </div>
+                            <div class="p-6 border-b border-gray-100">
+                                <p class="text-sm font-semibold text-gray-800">Client</p>
+                                <input type="hidden" id="customer-id" />
+                                <button id="open-customer-select-button"
+                                    class="mt-3 w-full border-2 border-dashed border-gray-200 rounded-xl p-4 text-left hover:border-cyan-300 hover:bg-cyan-50/40 transition">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-11 h-11 rounded-full bg-cyan-50 text-cyan-600 flex items-center justify-center">
+                                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M5.121 17.804A4 4 0 0112 15a4 4 0 016.879 2.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-semibold text-gray-800">S?lectionner / Ajouter un client</p>
+                                            <p class="text-xs text-gray-500 mt-1">Optionnel - vente sans enregistrement possible</p>
+                                        </div>
+                                    </div>
                                 </button>
-                            </div>
-
-                            <div class="overflow-x-auto rounded-lg border border-gray-200">
-                                <table class="min-w-full bg-white divide-y divide-gray-200">
-                                    <thead class="bg-gray-50">
-                                        <tr>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prix unitaire</th>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantite</th>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sous-total</th>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="cart-items-tbody" class="divide-y divide-gray-200">
-                                        <!-- Les articles du panier seront inseres ici par JavaScript -->
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <div class="mt-6 flex flex-col md:flex-row items-center justify-between gap-4 p-4 bg-gray-50 rounded-lg">
-                                <div class="text-right">
-                                    <p class="text-sm text-gray-500">Total de la commande</p>
-                                    <p id="cart-total" class="text-3xl font-bold text-gray-800">0 FCFA</p>
-                                </div>
-                                <div class="flex gap-3">
-                                    <button id="validate-cart-button"
-                                        class="px-6 py-3 bg-green-500 text-white font-bold rounded-lg shadow-md hover:bg-green-600 transition-colors flex items-center">
-                                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                        </svg>
-                                        Valider la vente
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div id="invoice-button-container" class="p-4 bg-gradient-to-r from-cyan-50 to-blue-50 rounded-lg border-2 border-cyan-300 hidden">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center">
-                                    <svg class="w-6 h-6 text-cyan-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                    </svg>
-                                    <div>
-                                        <p class="text-sm font-semibold text-gray-700">Vente enregistree avec succes !</p>
-                                        <p class="text-xs text-gray-500">Generez la facture PDF pour cette vente</p>
+                                <div id="customer-selected-card" class="mt-4 hidden p-4 rounded-lg border border-cyan-100 bg-cyan-50">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div>
+                                            <p id="customer-selected-name" class="text-sm font-semibold text-gray-800">-</p>
+                                            <p id="customer-selected-contact" class="text-xs text-gray-500">-</p>
+                                        </div>
+                                        <button id="change-customer-selection" class="text-xs font-semibold text-cyan-700 hover:text-cyan-900">Changer</button>
+                                    </div>
+                                    <div class="flex items-center gap-3 mt-3">
+                                        <button id="customer-history-button" class="hidden text-xs font-semibold text-cyan-700 hover:text-cyan-900">Historique</button>
+                                        <button id="clear-customer-selection" class="text-xs font-semibold text-gray-600 hover:text-gray-800">Vente sans client</button>
                                     </div>
                                 </div>
-                                <button id="generate-invoice-button"
-                                    class="px-5 py-2.5 bg-cyan-500 text-white font-semibold rounded-lg shadow-md hover:bg-cyan-600 transition-all duration-200 flex items-center">
-                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </div>
+                            <div class="p-6">
+                                <div id="cart-empty-state" class="flex flex-col items-center justify-center text-center text-gray-400 h-40">
+                                    <svg class="w-14 h-14 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5m0 0L4 3m3 10l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
                                     </svg>
-                                    Generer Facture
+                                    <p class="mt-4 text-sm font-medium text-gray-500">Aucun article</p>
+                                    <p class="text-xs text-gray-400">S?lectionnez des produits</p>
+                                </div>
+                                <div id="cart-items-list" class="hidden space-y-3"></div>
+                            </div>
+                            <div class="p-6 border-t border-gray-100 space-y-3 bg-gray-50/60">
+                                <div class="flex items-center justify-between text-sm text-gray-600">
+                                    <span>Sous-total</span>
+                                    <span id="cart-subtotal">0 FCFA</span>
+                                </div>
+                                <div class="flex items-center justify-between text-sm text-gray-600">
+                                    <span>TVA (20%)</span>
+                                    <span id="cart-tax">0 FCFA</span>
+                                </div>
+                                <div class="flex items-center justify-between text-base font-semibold text-gray-900 border-t border-gray-200 pt-3">
+                                    <span>Total</span>
+                                    <span id="cart-total" class="text-lg text-cyan-600">0 FCFA</span>
+                                </div>
+                                <button id="validate-cart-button"
+                                    class="w-full py-3 bg-gray-300 text-white font-semibold rounded-xl shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
+                                    G?n?rer la facture
+                                </button>
+                                <button id="hold-cart-button"
+                                    class="w-full py-3 border border-gray-200 bg-white text-gray-700 font-semibold rounded-xl hover:bg-gray-100 transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
+                                    Mettre en attente
                                 </button>
                             </div>
                         </div>
@@ -676,7 +556,6 @@
                     </div>
                 </div>
             </div>
-
             <!-- Page: Historique des ventes -->
             <div id="page-Historique-des-ventes" class="page-content p-4 md:p-8 hidden">
                 <h1 class="text-3xl font-bold text-gray-800">Historique des ventes</h1>
@@ -704,6 +583,9 @@
                                         <th scope="col"
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Client</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Vendeur</th>
                                         <th scope="col"
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Articles</th>
@@ -2054,9 +1936,11 @@
             let selectedCustomer = null;
             let customerOptionLookup = {};
             let isCustomerHistoryOpen = false;
+            let selectedSalesCategory = 'Tous';
 
             // Cart state
             let cartItems = [];
+            const SALES_TAX_RATE = 0.2;
 
             // Références DOM
             const authPageContainer = document.getElementById('auth-page-container');
@@ -2108,25 +1992,14 @@
             const shopMovementsTableContainer = document.getElementById('shop-movements-table-container');
             const shopMovementsTbody = document.getElementById('shop-movements-tbody');
 
-            const salesForm = document.getElementById('sales-form');
-            const salesProductSelect = document.getElementById('sales-product-select');
-            const salesQuantityInput = document.getElementById('sales-quantity-input');
-            const salesTotalAmount = document.getElementById('sales-total-amount');
-            const sellerNameInput = document.getElementById('seller-name');
-            const salesComment = document.getElementById('sales-comment');
             const salesError = document.getElementById('sales-error');
-            const salesSubmitButton = document.getElementById('sales-submit-button');
-            const invoiceButtonContainer = document.getElementById('invoice-button-container');
-            const generateInvoiceButton = document.getElementById('generate-invoice-button');
             const salesHistoryPlaceholder = document.getElementById('sales-history-placeholder');
             const salesHistoryTableContainer = document.getElementById('sales-history-table-container');
             const salesHistoryTbody = document.getElementById('sales-history-tbody');
             const salesProductSearch = document.getElementById('sales-product-search');
+            const salesCategoryFilters = document.getElementById('sales-category-filters');
             const salesProductsContainer = document.getElementById('sales-products-container');
             const salesProductsPlaceholder = document.getElementById('sales-products-placeholder');
-            const salesProductsTableContainer = document.getElementById('sales-products-table-container');
-            const salesProductsTbody = document.getElementById('sales-products-tbody');
-            const salesProductsLimitNote = document.getElementById('sales-products-limit-note');
             const customerIdInput = document.getElementById('customer-id');
             const customerSelectedCard = document.getElementById('customer-selected-card');
             const customerSelectedName = document.getElementById('customer-selected-name');
@@ -2134,9 +2007,6 @@
             const customerHistoryButton = document.getElementById('customer-history-button');
             const openCustomerSelectButton = document.getElementById('open-customer-select-button');
             const changeCustomerSelectionButton = document.getElementById('change-customer-selection');
-            const orderSummaryList = document.getElementById('order-summary-list');
-            const orderSummaryTotal = document.getElementById('order-summary-total');
-            const orderSummaryNote = document.getElementById('order-summary-note');
             const customerHistorySection = document.getElementById('customer-history-section');
             const customerHistorySubtitle = document.getElementById('customer-history-subtitle');
             const customerHistoryTotal = document.getElementById('customer-history-total');
@@ -2147,13 +2017,14 @@
             const customerHistoryTbody = document.getElementById('customer-history-tbody');
 
             // Cart elements
-            const addToCartButton = document.getElementById('add-to-cart-button');
-            const cartSection = document.getElementById('cart-section');
-            const cartCount = document.getElementById('cart-count');
-            const cartItemsTbody = document.getElementById('cart-items-tbody');
+            const cartItemsCount = document.getElementById('cart-items-count');
+            const cartEmptyState = document.getElementById('cart-empty-state');
+            const cartItemsList = document.getElementById('cart-items-list');
+            const cartSubtotal = document.getElementById('cart-subtotal');
+            const cartTax = document.getElementById('cart-tax');
             const cartTotal = document.getElementById('cart-total');
             const validateCartButton = document.getElementById('validate-cart-button');
-            const clearCartButton = document.getElementById('clear-cart-button');
+            const holdCartButton = document.getElementById('hold-cart-button');
 
 
             // Modals
@@ -2518,6 +2389,7 @@
                     }
                     const group = groups[groupId];
                     if (new Date(sale.date) > new Date(group.date)) group.date = sale.date;
+                    if (!group.sellerName && sale.sellerName) group.sellerName = sale.sellerName;
                     if (!group.customerName && sale.customerName) group.customerName = sale.customerName;
                     if (!group.customerPhone && sale.customerPhone) group.customerPhone = sale.customerPhone;
                     if (!group.customerEmail && sale.customerEmail) group.customerEmail = sale.customerEmail;
@@ -3216,7 +3088,6 @@
                         await update(ref(db, `${dbBasePath}/members/${match.memberId}`), { status: 'actif' });
                     }
                     setupFirebaseListeners();
-                    if (sellerNameInput) sellerNameInput.value = currentUserData.fullName || email;
                     updateSettingsAccess();
                     updateUI();
                     showSuccessToast("Connexion réussie !");
@@ -3372,7 +3243,7 @@
 
             function populateShopProductSelects() {
                 const products = appData.shopStock;
-                const selects = [restockProductSelect, salesProductSelect];
+                const selects = [restockProductSelect];
                 selects.forEach(select => {
                     if (!select) return;
                     const firstOption = select.options[0];
@@ -3382,8 +3253,7 @@
                         Object.values(products).forEach(product => {
                             const option = document.createElement('option');
                             option.value = product.id;
-                            if (select.id === 'restock-product-select') option.textContent = `${product.name} (Actuellement : ${product.quantityInShop})`;
-                            else option.textContent = `${product.name} (Stock: ${product.quantityInShop})`;
+                            option.textContent = `${product.name} (Actuellement : ${product.quantityInShop})`;
                             select.appendChild(option);
                         });
                     }
@@ -3626,10 +3496,11 @@
                 appData.shopStock = snapshot.val() || {};
                 populateShopProductSelects();
                 renderShopStock(shopSearchInput ? shopSearchInput.value : '');
+                renderSalesCategoryFilters();
                 renderSalesProducts(salesProductSearch ? salesProductSearch.value : '');
                 updateDashboardStats();
                 updateAllStats();
-                renderOrderSummary();
+                renderCart();
             }
 
             function onShopMovementsValue(snapshot) {
@@ -3672,12 +3543,14 @@
                         const itemsPreview = group.items.slice(0, 2).map(item => `${item.name} x${item.quantity}`).join(', ');
                         const itemsSuffix = group.items.length > 2 ? ` +${group.items.length - 2}` : '';
                         const customerLabel = group.customerName || (group.customerId && appData.customers?.[group.customerId]?.fullName) || 'Client comptoir';
+                        const sellerLabel = group.sellerName || '-';
                         const saleLabel = `#${group.id.slice(-6).toUpperCase()}`;
                         return `
                             <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(group.date)}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">${saleLabel}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${customerLabel}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sellerLabel}</td>
                                 <td class="px-6 py-4 text-sm text-gray-500">${itemsCount} article${itemsCount > 1 ? 's' : ''} · ${itemsPreview}${itemsSuffix}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">${formatCurrency(group.total, group.currency)}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right">
@@ -3826,106 +3699,121 @@
                 }
             }
 
-            function updateSalesTotal() {
-                if (!salesProductSelect || !salesQuantityInput || !salesTotalAmount) return;
-                const shopProductId = salesProductSelect.value;
-                const quantity = parseInt(salesQuantityInput.value, 10);
-                if (!shopProductId || isNaN(quantity) || quantity <= 0) {
-                    salesTotalAmount.value = formatCurrency(0);
-                    renderOrderSummary();
-                    return;
+            function formatCategoryLabel(value) {
+                const trimmed = (value || '').toString().trim();
+                if (!trimmed) return 'Autres';
+                return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+            }
+
+            function getShopItemCategory(item) {
+                const source = appData.storeProducts?.[item.sourceProductId];
+                const raw = item.category || item.categoryName || item.type || source?.category || source?.categoryName || source?.type || '';
+                return formatCategoryLabel(raw || 'Autres');
+            }
+
+            function renderSalesCategoryFilters() {
+                if (!salesCategoryFilters) return;
+                const categories = [...new Set(Object.values(appData.shopStock || {}).map(getShopItemCategory))].sort((a, b) => a.localeCompare(b));
+                if (selectedSalesCategory !== 'Tous' && !categories.includes(selectedSalesCategory)) {
+                    selectedSalesCategory = 'Tous';
                 }
-                const shopProduct = appData.shopStock[shopProductId];
-                if (shopProduct) {
-                    const total = shopProduct.sellingPrice * quantity;
-                    const currency = appData.storeProducts[shopProduct.sourceProductId]?.currency;
-                    salesTotalAmount.value = formatCurrency(total, currency);
-                }
-                renderOrderSummary();
+                const allCategories = ['Tous', ...categories];
+                salesCategoryFilters.innerHTML = allCategories.map(category => {
+                    const isActive = selectedSalesCategory === category;
+                    const classes = isActive
+                        ? 'bg-blue-600 text-white shadow'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200';
+                    return `<button type="button" data-sales-category="${category}" class="px-4 py-2 rounded-full text-sm font-semibold transition ${classes}">${category}</button>`;
+                }).join('');
             }
 
             function renderSalesProducts(searchTerm = '') {
-                if (!salesProductsPlaceholder || !salesProductsTableContainer || !salesProductsTbody) return;
-                const normalizedSearch = searchTerm.toLowerCase().trim();
-                const stock = Object.values(appData.shopStock || {}).filter(item =>
-                    item.name?.toLowerCase().includes(normalizedSearch)
-                );
-                const maxItems = normalizedSearch ? 30 : 12;
-                const displayItems = stock.slice(0, maxItems);
-                const isLimited = stock.length > displayItems.length;
+                if (!salesProductsPlaceholder || !salesProductsContainer) return;
+                const normalizedSearch = normalizeString(searchTerm);
+                const stock = Object.values(appData.shopStock || {}).filter(item => {
+                    const name = normalizeString(item.name);
+                    const category = normalizeString(getShopItemCategory(item));
+                    const matchesSearch = !normalizedSearch || name.includes(normalizedSearch) || category.includes(normalizedSearch);
+                    const matchesCategory = selectedSalesCategory === 'Tous' || getShopItemCategory(item) === selectedSalesCategory;
+                    return matchesSearch && matchesCategory;
+                });
+                const displayItems = stock.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
                 if (!displayItems.length) {
                     salesProductsPlaceholder.classList.remove('hidden');
-                    salesProductsTableContainer.classList.add('hidden');
-                    if (salesProductsTbody) salesProductsTbody.innerHTML = '';
-                    if (salesProductsLimitNote) salesProductsLimitNote.classList.add('hidden');
+                    salesProductsContainer.classList.add('hidden');
+                    salesProductsContainer.innerHTML = '';
                     return;
                 }
 
                 salesProductsPlaceholder.classList.add('hidden');
-                salesProductsTableContainer.classList.remove('hidden');
-                if (salesProductsLimitNote) salesProductsLimitNote.classList.toggle('hidden', !isLimited);
+                salesProductsContainer.classList.remove('hidden');
 
-                salesProductsTbody.innerHTML = displayItems.map(item => {
+                salesProductsContainer.innerHTML = displayItems.map(item => {
                     const currency = appData.storeProducts[item.sourceProductId]?.currency || 'CFA';
+                    const category = getShopItemCategory(item);
                     const isLowStock = item.quantityInShop <= (item.alertThreshold || 5);
                     const isOut = item.quantityInShop <= 0;
-                    const stockClass = isLowStock ? 'text-red-600' : 'text-gray-600';
+                    const stockLabel = isOut ? 'Rupture' : `Stock: ${item.quantityInShop}`;
+                    const stockClass = isOut
+                        ? 'bg-red-100 text-red-600'
+                        : isLowStock
+                            ? 'bg-yellow-100 text-yellow-700'
+                            : 'bg-green-100 text-green-700';
                     const actionHtml = isOut
                         ? `<span class="text-xs font-semibold text-gray-400">Indisponible</span>`
-                        : `<button type="button" data-add-product="${item.id}" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-cyan-500 text-white hover:bg-cyan-600">Ajouter</button>`;
+                        : `<button type="button" data-add-product="${item.id}" class="mt-4 w-full px-3 py-2 text-xs font-semibold rounded-lg bg-cyan-500 text-white hover:bg-cyan-600">Ajouter</button>`;
                     return `
-                        <tr class="hover:bg-gray-50 ${isOut ? 'opacity-60' : ''}">
-                            <td class="px-4 py-3 text-sm font-medium text-gray-900">${item.name}</td>
-                            <td class="px-4 py-3 text-sm text-right text-gray-700">${formatCurrency(item.sellingPrice, currency)}</td>
-                            <td class="px-4 py-3 text-sm text-right ${stockClass}">${item.quantityInShop}</td>
-                            <td class="px-4 py-3 text-sm text-right">${actionHtml}</td>
-                        </tr>
+                        <div class="border border-gray-200 rounded-2xl p-4 hover:shadow-md transition ${isOut ? 'opacity-60' : ''}">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-xs font-semibold text-gray-400 uppercase">${category}</span>
+                                <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${stockClass}">${stockLabel}</span>
+                            </div>
+                            <h3 class="mt-3 text-base font-semibold text-gray-900">${item.name}</h3>
+                            <p class="mt-2 text-lg font-bold text-cyan-600">${formatCurrency(item.sellingPrice, currency)}</p>
+                            ${actionHtml}
+                        </div>
                     `;
                 }).join('');
             }
 
             // --- FONCTIONS DE GESTION DU PANIER ---
+            function showSalesErrorMessage(message) {
+                if (!salesError) {
+                    alert(message);
+                    return;
+                }
+                salesError.textContent = message;
+                salesError.classList.remove('hidden');
+                setTimeout(() => salesError.classList.add('hidden'), 3000);
+            }
+
             function addToCart(productId = null, quantityOverride = null) {
-                const shopProductId = productId || salesProductSelect.value;
-                const quantityInput = Number.isFinite(quantityOverride) ? quantityOverride : parseInt(salesQuantityInput.value, 10);
+                const shopProductId = productId;
+                const quantityInput = Number.isFinite(quantityOverride) ? quantityOverride : 1;
 
                 if (!shopProductId || isNaN(quantityInput) || quantityInput <= 0) {
-                    if (salesError) {
-                        salesError.textContent = "Veuillez sélectionner un produit et une quantité valide.";
-                        salesError.classList.remove('hidden');
-                        setTimeout(() => salesError.classList.add('hidden'), 3000);
-                    }
+                    showSalesErrorMessage("Veuillez sélectionner un produit valide.");
                     return;
                 }
 
                 const shopProduct = appData.shopStock[shopProductId];
                 if (!shopProduct) return;
                 if (shopProduct.quantityInShop <= 0) {
-                    if (salesError) {
-                        salesError.textContent = "Stock insuffisant pour ce produit.";
-                        salesError.classList.remove('hidden');
-                        setTimeout(() => salesError.classList.add('hidden'), 3000);
-                    }
-                    return;
-                }
-                if (quantityInput > shopProduct.quantityInShop) {
-                    if (salesError) {
-                        salesError.textContent = `Stock insuffisant. Disponible: ${shopProduct.quantityInShop}`;
-                        salesError.classList.remove('hidden');
-                        setTimeout(() => salesError.classList.add('hidden'), 3000);
-                    }
+                    showSalesErrorMessage("Stock insuffisant pour ce produit.");
                     return;
                 }
 
-                // Vérifier si le produit est déjà dans le panier
                 const existingItemIndex = cartItems.findIndex(item => item.shopProductId === shopProductId);
+                const existingQty = existingItemIndex !== -1 ? cartItems[existingItemIndex].quantity : 0;
+                if (existingQty + quantityInput > shopProduct.quantityInShop) {
+                    showSalesErrorMessage(`Stock insuffisant. Disponible: ${shopProduct.quantityInShop}`);
+                    return;
+                }
 
                 if (existingItemIndex !== -1) {
-                    // Augmenter la quantité du produit existant
                     cartItems[existingItemIndex].quantity += quantityInput;
                 } else {
-                    // Ajouter un nouveau produit au panier
                     const currency = appData.storeProducts[shopProduct.sourceProductId]?.currency || 'CFA';
                     cartItems.push({
                         shopProductId,
@@ -3936,12 +3824,6 @@
                     });
                 }
 
-                // Réinitialiser le formulaire
-                salesProductSelect.value = '';
-                salesQuantityInput.value = '1';
-                updateSalesTotal();
-
-                // Mettre à jour l'affichage du panier
                 renderCart();
                 showSuccessToast('Article ajouté au panier');
             }
@@ -3953,142 +3835,107 @@
             }
 
             function updateCartQuantity(index, newQty) {
+                const item = cartItems[index];
+                if (!item) return;
                 if (newQty <= 0) {
                     removeFromCart(index);
-                } else {
-                    cartItems[index].quantity = newQty;
-                    renderCart();
+                    return;
                 }
+                const shopProduct = appData.shopStock[item.shopProductId];
+                const maxQty = shopProduct?.quantityInShop ?? item.quantity;
+                if (newQty > maxQty) {
+                    showSalesErrorMessage(`Stock insuffisant. Disponible: ${maxQty}`);
+                    return;
+                }
+                cartItems[index].quantity = newQty;
+                renderCart();
             }
 
             function calculateCartTotal() {
                 return cartItems.reduce((total, item) => total + (item.sellingPrice * item.quantity), 0);
             }
 
-            function getOrderSummaryItems() {
-                if (cartItems.length > 0) {
-                    const currency = cartItems[0]?.currency || 'CFA';
-                    return {
-                        source: 'cart',
-                        currency,
-                        items: cartItems.map(item => ({
-                            name: item.name,
-                            quantity: item.quantity,
-                            total: item.sellingPrice * item.quantity
-                        }))
-                    };
-                }
-
-                const shopProductId = salesProductSelect?.value;
-                const quantity = parseInt(salesQuantityInput?.value, 10);
-                if (!shopProductId || isNaN(quantity) || quantity <= 0) {
-                    return { source: 'none', currency: 'CFA', items: [] };
-                }
-                const shopProduct = appData.shopStock[shopProductId];
-                if (!shopProduct) {
-                    return { source: 'none', currency: 'CFA', items: [] };
-                }
-                const currency = appData.storeProducts[shopProduct.sourceProductId]?.currency || 'CFA';
-                return {
-                    source: 'direct',
-                    currency,
-                    items: [{
-                        name: shopProduct.name,
-                        quantity,
-                        total: shopProduct.sellingPrice * quantity
-                    }]
-                };
-            }
-
-            function renderOrderSummary() {
-                if (!orderSummaryList || !orderSummaryTotal || !orderSummaryNote) return;
-                const { source, currency, items } = getOrderSummaryItems();
-                if (!items.length) {
-                    orderSummaryNote.textContent = 'Aucun article selectionne.';
-                    orderSummaryList.innerHTML = '<p class=\"text-sm text-gray-500\">Ajoutez des articles pour voir le resume.</p>';
-                    orderSummaryTotal.textContent = formatCurrency(0, currency);
-                    return;
-                }
-
-                const label = source === 'cart'
-                    ? `Panier: ${items.length} article${items.length > 1 ? 's' : ''}`
-                    : 'Apercu de la vente directe';
-                orderSummaryNote.textContent = label;
-                orderSummaryList.innerHTML = items.map(item => `
-                    <div class=\"flex items-center justify-between text-sm text-gray-700\">
-                        <span>${item.name} x${item.quantity}</span>
-                        <span class=\"font-semibold\">${formatCurrency(item.total, currency)}</span>
-                    </div>
-                `).join('');
-                const total = items.reduce((sum, item) => sum + item.total, 0);
-                orderSummaryTotal.textContent = formatCurrency(total, currency);
+            function calculateCartSummary() {
+                const subtotal = calculateCartTotal();
+                const tax = subtotal * SALES_TAX_RATE;
+                const total = subtotal + tax;
+                const currency = cartItems[0]?.currency || 'CFA';
+                return { subtotal, tax, total, currency };
             }
 
             function renderCart() {
-                if (cartItems.length === 0) {
-                    cartSection.classList.add('hidden');
-                    if (cartItemsTbody) cartItemsTbody.innerHTML = '';
-                    if (cartCount) cartCount.textContent = '0';
+                const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+                if (cartItemsCount) {
+                    let label = 'article';
+                    if (totalItems === 0) label = 'article(s)';
+                    if (totalItems > 1) label = 'articles';
+                    cartItemsCount.textContent = `${totalItems} ${label}`;
+                }
+
+                const hasItems = cartItems.length > 0;
+                if (cartEmptyState) cartEmptyState.classList.toggle('hidden', hasItems);
+                if (cartItemsList) cartItemsList.classList.toggle('hidden', !hasItems);
+
+                if (!hasItems) {
+                    if (cartItemsList) cartItemsList.innerHTML = '';
+                    if (cartSubtotal) cartSubtotal.textContent = formatCurrency(0);
+                    if (cartTax) cartTax.textContent = formatCurrency(0);
                     if (cartTotal) cartTotal.textContent = formatCurrency(0);
-                    renderOrderSummary();
+                    if (validateCartButton) {
+                        validateCartButton.disabled = true;
+                        validateCartButton.classList.add('bg-gray-300');
+                        validateCartButton.classList.remove('bg-cyan-500', 'hover:bg-cyan-600');
+                    }
+                    if (holdCartButton) holdCartButton.disabled = true;
                     return;
                 }
 
-                cartSection.classList.remove('hidden');
-                cartCount.textContent = cartItems.length;
+                if (validateCartButton) {
+                    validateCartButton.disabled = false;
+                    validateCartButton.classList.remove('bg-gray-300');
+                    validateCartButton.classList.add('bg-cyan-500', 'hover:bg-cyan-600');
+                }
+                if (holdCartButton) holdCartButton.disabled = false;
 
-                let html = '';
-                cartItems.forEach((item, index) => {
-                    const subtotal = item.sellingPrice * item.quantity;
-                    html += `
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${item.name}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatCurrency(item.sellingPrice, item.currency)}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <div class="flex items-center gap-2">
-                                    <button type="button" onclick="updateCartQuantity(${index}, ${item.quantity - 1})" class="text-gray-500 hover:text-gray-700">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9"></path>
-                                        </svg>
-                                    </button>
-                                    <input type="number" value="${item.quantity}" min="1" 
-                                        onchange="updateCartQuantity(${index}, parseInt(this.value))"
-                                        class="w-16 text-center border border-gray-300 rounded px-2 py-1 text-sm">
-                                    <button type="button" onclick="updateCartQuantity(${index}, ${item.quantity + 1})" class="text-gray-500 hover:text-gray-700">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                                        </svg>
-                                    </button>
+                if (cartItemsList) {
+                    cartItemsList.innerHTML = cartItems.map((item, index) => {
+                        const subtotal = item.sellingPrice * item.quantity;
+                        return `
+                            <div class="border border-gray-200 rounded-xl p-3 flex items-start justify-between gap-3">
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-900">${item.name}</p>
+                                    <p class="text-xs text-gray-500 mt-1">${formatCurrency(item.sellingPrice, item.currency)} x ${item.quantity}</p>
                                 </div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">${formatCurrency(subtotal, item.currency)}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                <button type="button" onclick="removeFromCart(${index})" class="text-red-500 hover:text-red-700">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                    </svg>
-                                </button>
-                            </td>
-                        </tr>`;
-                });
+                                <div class="text-right">
+                                    <p class="text-sm font-semibold text-gray-900">${formatCurrency(subtotal, item.currency)}</p>
+                                    <div class="mt-2 flex items-center justify-end gap-2">
+                                        <button type="button" data-cart-action="decrease" data-index="${index}" class="w-7 h-7 rounded-full border border-gray-200 text-gray-500 hover:text-gray-700">-</button>
+                                        <span class="text-xs font-semibold text-gray-700">${item.quantity}</span>
+                                        <button type="button" data-cart-action="increase" data-index="${index}" class="w-7 h-7 rounded-full border border-gray-200 text-gray-500 hover:text-gray-700">+</button>
+                                        <button type="button" data-cart-action="remove" data-index="${index}" class="ml-1 text-xs font-semibold text-red-500 hover:text-red-600">Retirer</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
 
-                cartItemsTbody.innerHTML = html;
-
-                // Utiliser la devise du premier article pour le total
-                const currency = cartItems[0]?.currency || 'CFA';
-                const total = calculateCartTotal();
-                cartTotal.textContent = formatCurrency(total, currency);
-                renderOrderSummary();
+                const summary = calculateCartSummary();
+                if (cartSubtotal) cartSubtotal.textContent = formatCurrency(summary.subtotal, summary.currency);
+                if (cartTax) cartTax.textContent = formatCurrency(summary.tax, summary.currency);
+                if (cartTotal) cartTotal.textContent = formatCurrency(summary.total, summary.currency);
             }
 
-            function clearCart() {
-                if (cartItems.length === 0) return;
-
-                if (confirm('Voulez-vous vraiment vider le panier ?')) {
-                    cartItems = [];
-                    renderCart();
-                    showSuccessToast('Panier vidé');
+            function holdCart() {
+                if (!cartItems.length) return;
+                try {
+                    localStorage.setItem('stockpilot-held-cart', JSON.stringify(cartItems));
+                } catch (error) {
+                    console.warn('Impossible de sauvegarder le panier en attente.', error);
                 }
+                cartItems = [];
+                renderCart();
+                showSuccessToast('Panier mis en attente');
             }
 
             async function validateCart() {
@@ -4113,10 +3960,11 @@
                     const updates = {};
                     const now = new Date().toISOString();
                     const sellerName = currentUserData?.fullName || currentUser.email;
-                    const comment = salesComment.value || "";
+                    const comment = '';
                     const customerContext = getCustomerContext();
                     const saleGroupId = push(ref(db, `${dbBasePath}/sales`)).key;
-                    const totalAmount = calculateCartTotal();
+                    const summary = calculateCartSummary();
+                    const totalAmount = summary.total;
                     const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
                     updates[`${dbBasePath}/sales/${saleGroupId}`] = {
@@ -4178,7 +4026,7 @@
 
                     await update(ref(db), updates);
 
-                    showSuccessToast(`Vente groupée enregistrée ! Total: ${formatCurrency(totalAmount)}`);
+                    showSuccessToast(`Vente groupée enregistrée ! Total: ${formatCurrency(totalAmount, summary.currency)}`);
 
                     // Préparer les données pour la facture
                     const invoiceData = {
@@ -4195,17 +4043,14 @@
                             total: item.sellingPrice * item.quantity
                         })),
                         total: totalAmount,
-                        currency: cartItems[0]?.currency || 'CFA',
+                        currency: summary.currency,
                         comment
                     };
 
                     // Vider le panier et réinitialiser le formulaire
                     cartItems = [];
                     renderCart();
-                    salesComment.value = '';
-
-                    // Afficher le bouton de génération de facture
-                    showInvoiceButton(invoiceData);
+                    await generateInvoicePDF(invoiceData);
 
                 } catch (error) {
                     console.error(error);
@@ -4214,14 +4059,6 @@
                     if (validateCartButton) validateCartButton.disabled = false;
                 }
             }
-
-            // Exposer les fonctions pour les boutons et inputs inline
-            window.addToCart = addToCart;
-            window.removeFromCart = removeFromCart;
-            window.updateCartQuantity = updateCartQuantity;
-            window.clearCart = clearCart;
-            window.validateCart = validateCart;
-
 
             // --- FONCTIONS DE GÉNÉRATION DE FACTURES PDF ---
 
@@ -4494,34 +4331,6 @@
                 await generateInvoicePDF(invoiceData);
             }
 
-            /**
-             * Afficher le bouton de génération de facture
-             */
-            let currentInvoiceData = null;
-
-            function showInvoiceButton(invoiceData) {
-                currentInvoiceData = invoiceData;
-
-                if (invoiceButtonContainer) {
-                    invoiceButtonContainer.classList.remove('hidden');
-
-                    // Masquer automatiquement après 30 secondes
-                    setTimeout(() => {
-                        invoiceButtonContainer.classList.add('hidden');
-                    }, 30000);
-                }
-            }
-
-            /**
-             * Masquer le bouton de génération de facture
-             */
-            function hideInvoiceButton() {
-                if (invoiceButtonContainer) {
-                    invoiceButtonContainer.classList.add('hidden');
-                }
-                currentInvoiceData = null;
-            }
-
             // Exposer les fonctions pour les boutons
             window.generateInvoiceFromSale = generateInvoiceFromSale;
 
@@ -4642,13 +4451,20 @@
                     renderCustomerHistory();
                 });
             }
-            if (salesProductSelect) salesProductSelect.addEventListener('change', updateSalesTotal);
-            if (salesQuantityInput) salesQuantityInput.addEventListener('input', updateSalesTotal);
             if (salesProductSearch) salesProductSearch.addEventListener('input', () => {
                 renderSalesProducts(salesProductSearch.value);
             });
-            if (salesProductsTbody) {
-                salesProductsTbody.addEventListener('click', (event) => {
+            if (salesCategoryFilters) {
+                salesCategoryFilters.addEventListener('click', (event) => {
+                    const button = event.target.closest('[data-sales-category]');
+                    if (!button) return;
+                    selectedSalesCategory = button.dataset.salesCategory || 'Tous';
+                    renderSalesCategoryFilters();
+                    renderSalesProducts(salesProductSearch ? salesProductSearch.value : '');
+                });
+            }
+            if (salesProductsContainer) {
+                salesProductsContainer.addEventListener('click', (event) => {
                     const addButton = event.target.closest('[data-add-product]');
                     if (!addButton) return;
                     const productId = addButton.dataset.addProduct;
@@ -4661,25 +4477,26 @@
             }
 
             // Cart event listeners
-            if (addToCartButton) addToCartButton.addEventListener('click', addToCart);
+            if (cartItemsList) {
+                cartItemsList.addEventListener('click', (event) => {
+                    const actionButton = event.target.closest('[data-cart-action]');
+                    if (!actionButton) return;
+                    const index = parseInt(actionButton.dataset.index, 10);
+                    if (Number.isNaN(index)) return;
+                    const action = actionButton.dataset.cartAction;
+                    if (action === 'increase') updateCartQuantity(index, cartItems[index]?.quantity + 1);
+                    if (action === 'decrease') updateCartQuantity(index, cartItems[index]?.quantity - 1);
+                    if (action === 'remove') removeFromCart(index);
+                });
+            }
             if (validateCartButton) validateCartButton.addEventListener('click', validateCart);
-            if (clearCartButton) clearCartButton.addEventListener('click', clearCart);
+            if (holdCartButton) holdCartButton.addEventListener('click', holdCart);
             if (salesHistoryTbody) {
                 salesHistoryTbody.addEventListener('click', (event) => {
                     const receiptButton = event.target.closest('[data-receipt-group]');
                     if (!receiptButton) return;
                     const groupId = receiptButton.dataset.receiptGroup;
                     if (groupId) generateReceiptFromGroup(groupId);
-                });
-            }
-
-            // Invoice generation button listener
-            if (generateInvoiceButton) {
-                generateInvoiceButton.addEventListener('click', async () => {
-                    if (currentInvoiceData) {
-                        await generateInvoicePDF(currentInvoiceData);
-                        hideInvoiceButton();
-                    }
                 });
             }
 
@@ -4786,96 +4603,6 @@
                     }
                 } finally {
                     if (signupSubmitButton) signupSubmitButton.disabled = false;
-                }
-            });
-
-            if (salesForm) salesForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                if (!currentUser || !dbBasePath) return;
-                const shopProductId = salesProductSelect.value;
-                const quantity = parseInt(salesQuantityInput.value, 10);
-                const comment = salesComment.value || "";
-                const sellerName = currentUserData?.fullName || currentUser.email;
-                const customerContext = getCustomerContext();
-                if (!shopProductId || isNaN(quantity) || quantity <= 0) return;
-                const shopProduct = appData.shopStock[shopProductId];
-                if (!shopProduct || quantity > shopProduct.quantityInShop) {
-                    alert("Stock insuffisant !");
-                    return;
-                }
-
-                try {
-                    if (salesSubmitButton) salesSubmitButton.disabled = true;
-                    const updates = {}; const now = new Date().toISOString();
-                    const saleGroupId = push(ref(db, `${dbBasePath}/sales`)).key;
-                    const totalAmount = shopProduct.sellingPrice * quantity;
-                    updates[`${dbBasePath}/sales/${saleGroupId}`] = {
-                        id: saleGroupId,
-                        date: now,
-                        customerId: customerContext.customerId,
-                        customerName: customerContext.customerName || '',
-                        customerPhone: customerContext.customerPhone || '',
-                        customerEmail: customerContext.customerEmail || '',
-                        sellerName,
-                        total: totalAmount,
-                        itemsCount: quantity,
-                        status: 'validee',
-                        comment
-                    };
-                    const shopNewStock = shopProduct.quantityInShop - quantity;
-                    updates[`${dbBasePath}/shopStock/${shopProductId}/quantityInShop`] = shopNewStock;
-                    const shopMoveKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
-                    updates[`${dbBasePath}/shopMovements/${shopMoveKey}`] = { id: shopMoveKey, shopProductId, productName: shopProduct.name, type: "Sortie", quantityChange: quantity, oldStock: shopProduct.quantityInShop, newStock: shopNewStock, comment: `Vente: ${comment}`, date: now, userEmail: currentUser.email };
-                    const saleKey = push(ref(db, `${dbBasePath}/salesHistory`)).key;
-                    updates[`${dbBasePath}/salesHistory/${saleKey}`] = {
-                        id: saleKey,
-                        saleGroupId,
-                        shopProductId,
-                        productName: shopProduct.name,
-                        quantity,
-                        sellingPrice: shopProduct.sellingPrice,
-                        totalAmount,
-                        sellerName,
-                        customerId: customerContext.customerId,
-                        customerName: customerContext.customerName || '',
-                        customerPhone: customerContext.customerPhone || '',
-                        customerEmail: customerContext.customerEmail || '',
-                        comment,
-                        date: now
-                    };
-                    await update(ref(db), updates);
-                    showSuccessToast("Vente enregistrée!");
-
-                    // Proposer de générer la facture
-                    const currency = appData.storeProducts[shopProduct.sourceProductId]?.currency || 'CFA';
-                    const invoiceData = {
-                        companyName: currentUserData?.companyName || 'Mon Entreprise',
-                        sellerName,
-                        customerName: customerContext.customerName || '',
-                        customerPhone: customerContext.customerPhone || '',
-                        customerEmail: customerContext.customerEmail || '',
-                        date: now,
-                        items: [{
-                            name: shopProduct.name,
-                            quantity,
-                            price: shopProduct.sellingPrice,
-                            total: shopProduct.sellingPrice * quantity
-                        }],
-                        total: totalAmount,
-                        currency,
-                        comment
-                    };
-
-                    salesForm.reset();
-                    updateSalesTotal();
-
-                    // Afficher le bouton de génération de facture
-                    showInvoiceButton(invoiceData);
-
-                } catch (error) {
-                    console.error(error);
-                } finally {
-                    if (salesSubmitButton) salesSubmitButton.disabled = false;
                 }
             });
 
@@ -5312,7 +5039,6 @@
                         if (snapshot.exists()) {
                             currentUserData = snapshot.val();
                             currentUserData.role = currentUserData.role || 'admin';
-                            if (sellerNameInput) sellerNameInput.value = currentUserData.fullName || user.email;
                             dbBasePath = currentUserData.companyId ? `companies/${currentUserData.companyId}` : `users/${user.uid}`;
                             setupFirebaseListeners();
                             ensureCurrentUserInTeam();
@@ -5329,8 +5055,9 @@
 
             updateUI();
             updateAuthFormView();
-            renderOrderSummary();
+            renderSalesCategoryFilters();
             renderSalesProducts();
+            renderCart();
             updateCustomerHistoryVisibility();
         });
     </script>
