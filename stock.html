@@ -493,11 +493,22 @@
                                 </div>
                             </div>
                             <div class="p-6 border-t border-gray-100 space-y-3 bg-gray-50/60">
+                                <div class="flex items-center justify-between text-xs text-gray-500">
+                                    <span class="font-semibold">Appliquer la TVA (20%)</span>
+                                    <label class="inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="tax-toggle-sales" class="sr-only peer" checked>
+                                        <span
+                                            class="w-12 h-6 bg-gray-200 rounded-full peer peer-checked:bg-cyan-500 relative transition">
+                                            <span
+                                                class="absolute top-0.5 left-1 w-5 h-5 bg-white rounded-full shadow transition-all peer-checked:translate-x-6"></span>
+                                        </span>
+                                    </label>
+                                </div>
                                 <div class="flex items-center justify-between text-sm text-gray-600">
                                     <span>Sous-total</span>
                                     <span id="cart-subtotal">0 FCFA</span>
                                 </div>
-                                <div class="flex items-center justify-between text-sm text-gray-400">
+                                <div id="cart-tax-row" class="flex items-center justify-between text-sm text-gray-400">
                                     <span>TVA (20%)</span>
                                     <span id="cart-tax">0 FCFA</span>
                                 </div>
@@ -570,13 +581,26 @@
                             <h1 class="text-3xl font-bold text-gray-900">Historique des ventes</h1>
                             <p class="text-gray-500 mt-1">Gérez toutes vos ventes et factures</p>
                         </div>
-                        <button id="sales-history-export"
-                            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 16V4m0 12l-4-4m4 4l4-4M4 20h16" />
-                            </svg>
-                            Exporter
-                        </button>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <label class="inline-flex items-center gap-3 text-sm text-gray-600 font-semibold">
+                                TVA (20%)
+                                <span class="inline-flex items-center">
+                                    <input type="checkbox" id="tax-toggle-history" class="sr-only peer" checked>
+                                    <span
+                                        class="w-12 h-6 bg-gray-200 rounded-full peer peer-checked:bg-cyan-500 relative transition">
+                                        <span
+                                            class="absolute top-0.5 left-1 w-5 h-5 bg-white rounded-full shadow transition-all peer-checked:translate-x-6"></span>
+                                    </span>
+                                </span>
+                            </label>
+                            <button id="sales-history-export"
+                                class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 16V4m0 12l-4-4m4 4l4-4M4 20h16" />
+                                </svg>
+                                Exporter
+                            </button>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -1891,6 +1915,79 @@
         </div>
     </div>
 
+    <!-- Modal: Détails de vente -->
+    <div id="sales-detail-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-xl p-6 m-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between">
+                <h2 id="sales-detail-title" class="text-xl font-bold text-gray-900">Détails de la vente</h2>
+                <button id="close-sales-detail-modal-button" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="mt-6 space-y-5">
+                <div class="bg-gray-50 rounded-2xl p-4">
+                    <p id="sales-detail-customer-name" class="text-sm font-semibold text-gray-900">Client</p>
+                    <p id="sales-detail-customer-email" class="text-xs text-gray-500 mt-1">Email</p>
+                    <p id="sales-detail-seller-name" class="text-xs text-gray-500 mt-2">Vendeur :</p>
+                </div>
+
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-900">Informations</h3>
+                    <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="rounded-2xl bg-gray-50 p-4">
+                            <p class="text-xs text-gray-500">Date</p>
+                            <p id="sales-detail-date" class="text-sm font-semibold text-gray-900 mt-1">-</p>
+                        </div>
+                        <div class="rounded-2xl bg-gray-50 p-4">
+                            <p class="text-xs text-gray-500">Paiement</p>
+                            <p id="sales-detail-payment" class="text-sm font-semibold text-gray-900 mt-1">Non renseigné</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-900">Produits</h3>
+                    <div id="sales-detail-products" class="mt-3 space-y-3"></div>
+                </div>
+
+                <div class="bg-blue-50 rounded-2xl p-4 space-y-2">
+                    <div class="flex items-center justify-between text-sm text-gray-600">
+                        <span>Sous-total</span>
+                        <span id="sales-detail-subtotal">0 FCFA</span>
+                    </div>
+                    <div id="sales-detail-tax-row" class="flex items-center justify-between text-sm text-gray-400">
+                        <span>TVA (20%)</span>
+                        <span id="sales-detail-tax">0 FCFA</span>
+                    </div>
+                    <div class="flex items-center justify-between text-base font-semibold text-gray-900 border-t border-blue-100 pt-3">
+                        <span>Total</span>
+                        <span id="sales-detail-total" class="text-blue-600">0 FCFA</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button id="sales-detail-print" type="button"
+                        class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9V4h12v5M6 18h12v2H6v-2zM6 14h12v4H6v-4z" />
+                        </svg>
+                        Imprimer
+                    </button>
+                    <button id="sales-detail-email" type="button"
+                        class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-purple-600 text-white font-semibold hover:bg-purple-700">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l9 6 9-6M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
+                        </svg>
+                        Envoyer par email
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
 
     <!-- jsPDF Libraries for Invoice Generation -->
@@ -2012,6 +2109,8 @@
             let salesHistoryTab = 'completed';
             let salesHistorySearch = '';
             let salesHistoryDateFilterValue = 'all';
+            let isTaxEnabled = true;
+            let activeSalesDetailId = null;
 
             // Cart state
             let cartItems = [];
@@ -2107,10 +2206,13 @@
             const cartSubtotal = document.getElementById('cart-subtotal');
             const cartTax = document.getElementById('cart-tax');
             const cartTotal = document.getElementById('cart-total');
+            const cartTaxRow = document.getElementById('cart-tax-row');
             const validateCartButton = document.getElementById('validate-cart-button');
             const holdCartButton = document.getElementById('hold-cart-button');
             const holdCommentInput = document.getElementById('hold-comment');
             const holdCommentError = document.getElementById('hold-comment-error');
+            const taxToggleSales = document.getElementById('tax-toggle-sales');
+            const taxToggleHistory = document.getElementById('tax-toggle-history');
 
 
             // Modals
@@ -2180,6 +2282,21 @@
 
             const successToast = document.getElementById('success-toast');
             const successToastMessage = document.getElementById('success-toast-message');
+            const salesDetailModal = document.getElementById('sales-detail-modal');
+            const closeSalesDetailModalButton = document.getElementById('close-sales-detail-modal-button');
+            const salesDetailTitle = document.getElementById('sales-detail-title');
+            const salesDetailCustomerName = document.getElementById('sales-detail-customer-name');
+            const salesDetailCustomerEmail = document.getElementById('sales-detail-customer-email');
+            const salesDetailSellerName = document.getElementById('sales-detail-seller-name');
+            const salesDetailDate = document.getElementById('sales-detail-date');
+            const salesDetailPayment = document.getElementById('sales-detail-payment');
+            const salesDetailProducts = document.getElementById('sales-detail-products');
+            const salesDetailSubtotal = document.getElementById('sales-detail-subtotal');
+            const salesDetailTaxRow = document.getElementById('sales-detail-tax-row');
+            const salesDetailTax = document.getElementById('sales-detail-tax');
+            const salesDetailTotal = document.getElementById('sales-detail-total');
+            const salesDetailPrint = document.getElementById('sales-detail-print');
+            const salesDetailEmail = document.getElementById('sales-detail-email');
 
             // Paramètres & accès
             const settingsRestrictedState = document.getElementById('settings-restricted-state');
@@ -2216,6 +2333,50 @@
                 } catch (e) {
                     return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', minimumFractionDigits: 0 }).format(value);
                 }
+            }
+
+            const TAX_TOGGLE_STORAGE_KEY = 'stockpilot-tax-enabled';
+
+            function getTaxRate() {
+                return isTaxEnabled ? SALES_TAX_RATE : 0;
+            }
+
+            function getTaxMultiplier() {
+                return 1 + getTaxRate();
+            }
+
+            function syncTaxToggleUI() {
+                if (taxToggleSales) taxToggleSales.checked = isTaxEnabled;
+                if (taxToggleHistory) taxToggleHistory.checked = isTaxEnabled;
+                if (cartTaxRow) cartTaxRow.classList.toggle('hidden', !isTaxEnabled);
+                if (salesDetailTaxRow) salesDetailTaxRow.classList.toggle('hidden', !isTaxEnabled);
+            }
+
+            function setTaxEnabled(value) {
+                isTaxEnabled = Boolean(value);
+                try {
+                    localStorage.setItem(TAX_TOGGLE_STORAGE_KEY, JSON.stringify(isTaxEnabled));
+                } catch (error) {
+                    console.warn('Impossible de sauvegarder le statut TVA.', error);
+                }
+                syncTaxToggleUI();
+                renderCart();
+                renderSalesHistory();
+                if (activeSalesDetailId) {
+                    openSalesDetailModal(activeSalesDetailId);
+                }
+            }
+
+            function loadTaxSetting() {
+                try {
+                    const saved = localStorage.getItem(TAX_TOGGLE_STORAGE_KEY);
+                    if (saved !== null) {
+                        isTaxEnabled = JSON.parse(saved) === true;
+                    }
+                } catch (error) {
+                    console.warn('Impossible de charger le statut TVA.', error);
+                }
+                syncTaxToggleUI();
             }
 
             function formatDateForDisplay(isoString) {
@@ -2538,7 +2699,7 @@
 
             function calculateItemsSummary(items = []) {
                 const subtotal = calculateItemsTotal(items);
-                const tax = subtotal * SALES_TAX_RATE;
+                const tax = subtotal * getTaxRate();
                 const total = subtotal + tax;
                 const currency = items[0]?.currency || 'CFA';
                 return { subtotal, tax, total, currency };
@@ -2582,12 +2743,12 @@
                 const completedCount = groups.length;
                 const pendingCount = pendingSales.length;
                 const completedCurrency = groups[0]?.currency || 'CFA';
-                const totalRevenue = groups.reduce((sum, group) => sum + (group.total * (1 + SALES_TAX_RATE)), 0);
+                const totalRevenue = groups.reduce((sum, group) => sum + (group.total * getTaxMultiplier()), 0);
                 const todayStart = new Date();
                 todayStart.setHours(0, 0, 0, 0);
                 const todayRevenue = groups
                     .filter(group => new Date(group.date) >= todayStart)
-                    .reduce((sum, group) => sum + (group.total * (1 + SALES_TAX_RATE)), 0);
+                    .reduce((sum, group) => sum + (group.total * getTaxMultiplier()), 0);
 
                 if (salesHistoryCompletedCount) salesHistoryCompletedCount.textContent = completedCount;
                 if (salesHistoryPendingCount) salesHistoryPendingCount.textContent = pendingCount;
@@ -2696,6 +2857,12 @@
                                 </div>
                             `;
                         }).join('');
+                        const taxRowHtml = isTaxEnabled ? `
+                            <div class="flex items-center justify-between text-sm text-gray-400">
+                                <span>TVA (20%)</span>
+                                <span>${formatCurrency(summary.tax, summary.currency)}</span>
+                            </div>
+                        ` : '';
                         return `
                             <div class="border border-gray-200 rounded-2xl shadow-sm bg-white overflow-hidden">
                                 <div class="p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -2738,10 +2905,7 @@
                                             <span>Sous-total</span>
                                             <span>${formatCurrency(summary.subtotal, summary.currency)}</span>
                                         </div>
-                                        <div class="flex items-center justify-between text-sm text-gray-400">
-                                            <span>TVA (20%)</span>
-                                            <span>${formatCurrency(summary.tax, summary.currency)}</span>
-                                        </div>
+                                        ${taxRowHtml}
                                         <div class="flex items-center justify-between text-base font-semibold text-gray-900 border-t border-gray-100 pt-3">
                                             <span>Total</span>
                                             <span class="text-blue-600">${formatCurrency(summary.total, summary.currency)}</span>
@@ -2799,6 +2963,12 @@
                             </div>
                         `;
                     }).join('');
+                    const taxRowHtml = isTaxEnabled ? `
+                        <div class="flex items-center justify-between text-sm text-gray-400">
+                            <span>TVA (20%)</span>
+                            <span>${formatCurrency(summary.tax, summary.currency)}</span>
+                        </div>
+                    ` : '';
 
                     return `
                         <div class="border border-gray-200 rounded-2xl shadow-sm bg-white overflow-hidden">
@@ -2843,10 +3013,7 @@
                                         <span>Sous-total</span>
                                         <span>${formatCurrency(summary.subtotal, summary.currency)}</span>
                                     </div>
-                                    <div class="flex items-center justify-between text-sm text-gray-400">
-                                        <span>TVA (20%)</span>
-                                        <span>${formatCurrency(summary.tax, summary.currency)}</span>
-                                    </div>
+                                    ${taxRowHtml}
                                     <div class="flex items-center justify-between text-base font-semibold text-gray-900 border-t border-gray-100 pt-3">
                                         <span>Total</span>
                                         <span class="text-blue-600">${formatCurrency(summary.total, summary.currency)}</span>
@@ -2872,6 +3039,55 @@
                         </div>
                     `;
                 }).join('');
+            }
+
+            function openSalesDetailModal(groupId) {
+                if (!salesDetailModal || !groupId) return;
+                const groups = buildSalesHistoryGroups();
+                const group = groups.find(item => item.id === groupId);
+                if (!group) return;
+
+                activeSalesDetailId = groupId;
+                const customerName = group.customerName || (group.customerId && appData.customers?.[group.customerId]?.fullName) || 'Client comptoir';
+                const customerEmail = group.customerEmail || (group.customerId && appData.customers?.[group.customerId]?.email) || 'Email non renseigné';
+                const sellerName = group.sellerName || 'Non renseigné';
+                const summary = calculateItemsSummary(group.items.map(item => ({
+                    sellingPrice: item.price,
+                    quantity: item.quantity,
+                    currency: group.currency
+                })));
+                const itemsHtml = group.items.map(item => {
+                    const unitPrice = item.price || (item.total / Math.max(item.quantity, 1));
+                    return `
+                        <div class="flex items-center justify-between bg-gray-50 rounded-2xl px-4 py-3">
+                            <div>
+                                <p class="text-sm font-semibold text-gray-900">${item.name}</p>
+                                <p class="text-xs text-gray-500">${item.quantity}x ${formatCurrency(unitPrice, group.currency)}</p>
+                            </div>
+                            <p class="text-sm font-semibold text-gray-900">${formatCurrency(item.total, group.currency)}</p>
+                        </div>
+                    `;
+                }).join('');
+
+                if (salesDetailTitle) salesDetailTitle.textContent = `Détails de la vente INV-${group.id.slice(-6).toUpperCase()}`;
+                if (salesDetailCustomerName) salesDetailCustomerName.textContent = customerName;
+                if (salesDetailCustomerEmail) salesDetailCustomerEmail.textContent = customerEmail;
+                if (salesDetailSellerName) salesDetailSellerName.textContent = `Vendeur : ${sellerName}`;
+                if (salesDetailDate) salesDetailDate.textContent = formatDateForDisplay(group.date);
+                if (salesDetailPayment) salesDetailPayment.textContent = 'Non renseigné';
+                if (salesDetailProducts) salesDetailProducts.innerHTML = itemsHtml;
+                if (salesDetailSubtotal) salesDetailSubtotal.textContent = formatCurrency(summary.subtotal, summary.currency);
+                if (salesDetailTax) salesDetailTax.textContent = formatCurrency(summary.tax, summary.currency);
+                if (salesDetailTotal) salesDetailTotal.textContent = formatCurrency(summary.total, summary.currency);
+                if (salesDetailTaxRow) salesDetailTaxRow.classList.toggle('hidden', !isTaxEnabled);
+
+                salesDetailModal.classList.remove('hidden');
+            }
+
+            function closeSalesDetailModal() {
+                if (!salesDetailModal) return;
+                salesDetailModal.classList.add('hidden');
+                activeSalesDetailId = null;
             }
 
             function openCustomerSelectModal() {
@@ -4297,7 +4513,7 @@
 
             function calculateCartSummary() {
                 const subtotal = calculateCartTotal();
-                const tax = subtotal * SALES_TAX_RATE;
+                const tax = subtotal * getTaxRate();
                 const total = subtotal + tax;
                 const currency = cartItems[0]?.currency || 'CFA';
                 return { subtotal, tax, total, currency };
@@ -4314,6 +4530,7 @@
 
                 const hasItems = cartItems.length > 0;
                 const canHold = hasItems && !!selectedCustomer;
+                if (cartTaxRow) cartTaxRow.classList.toggle('hidden', !isTaxEnabled);
                 if (cartEmptyState) cartEmptyState.classList.toggle('hidden', hasItems);
                 if (cartItemsList) cartItemsList.classList.toggle('hidden', !hasItems);
                 if (holdCommentError) holdCommentError.classList.add('hidden');
@@ -4884,7 +5101,7 @@
                     return;
                 }
                 const subtotal = sale.totalAmount || (sale.sellingPrice || 0) * (sale.quantity || 0);
-                const totalWithTax = subtotal * (1 + SALES_TAX_RATE);
+                const totalWithTax = subtotal * getTaxMultiplier();
 
                 // Préparer les données de facture
                 const invoiceData = {
@@ -5139,7 +5356,11 @@
                         const action = actionButton.dataset.historyAction;
                         const groupId = actionButton.dataset.historyId;
                         if (!groupId) return;
-                        if (action === 'details' || action === 'print') {
+                        if (action === 'details') {
+                            openSalesDetailModal(groupId);
+                            return;
+                        }
+                        if (action === 'print') {
                             generateReceiptFromGroup(groupId);
                             return;
                         }
@@ -5157,6 +5378,35 @@
                     if (cancelButton) {
                         cancelPendingSale(cancelButton.dataset.pendingCancel);
                     }
+                });
+            }
+
+            if (taxToggleSales) {
+                taxToggleSales.addEventListener('change', (event) => {
+                    setTaxEnabled(event.target.checked);
+                });
+            }
+            if (taxToggleHistory) {
+                taxToggleHistory.addEventListener('change', (event) => {
+                    setTaxEnabled(event.target.checked);
+                });
+            }
+            if (closeSalesDetailModalButton) {
+                closeSalesDetailModalButton.addEventListener('click', closeSalesDetailModal);
+            }
+            if (salesDetailModal) {
+                salesDetailModal.addEventListener('click', (event) => {
+                    if (event.target === salesDetailModal) closeSalesDetailModal();
+                });
+            }
+            if (salesDetailPrint) {
+                salesDetailPrint.addEventListener('click', () => {
+                    if (activeSalesDetailId) generateReceiptFromGroup(activeSalesDetailId);
+                });
+            }
+            if (salesDetailEmail) {
+                salesDetailEmail.addEventListener('click', () => {
+                    showSuccessToast('Email envoyé (simulation).');
                 });
             }
 
@@ -5717,6 +5967,7 @@
             updateAuthFormView();
             renderSalesCategoryFilters();
             renderSalesProducts();
+            loadTaxSetting();
             renderCart();
             updateCustomerHistoryVisibility();
             renderSalesHistory();
