@@ -1953,6 +1953,13 @@
                     <div id="sales-detail-products" class="mt-3 space-y-3"></div>
                 </div>
 
+                <div id="sales-detail-comment-section" class="hidden">
+                    <h3 class="text-sm font-semibold text-gray-900">Commentaire</h3>
+                    <div class="mt-3 bg-gray-50 rounded-2xl p-4">
+                        <p id="sales-detail-comment" class="text-sm text-gray-600"></p>
+                    </div>
+                </div>
+
                 <div class="bg-blue-50 rounded-2xl p-4 space-y-2">
                     <div class="flex items-center justify-between text-sm text-gray-600">
                         <span>Sous-total</span>
@@ -2291,6 +2298,8 @@
             const salesDetailDate = document.getElementById('sales-detail-date');
             const salesDetailPayment = document.getElementById('sales-detail-payment');
             const salesDetailProducts = document.getElementById('sales-detail-products');
+            const salesDetailCommentSection = document.getElementById('sales-detail-comment-section');
+            const salesDetailComment = document.getElementById('sales-detail-comment');
             const salesDetailSubtotal = document.getElementById('sales-detail-subtotal');
             const salesDetailTaxRow = document.getElementById('sales-detail-tax-row');
             const salesDetailTax = document.getElementById('sales-detail-tax');
@@ -3068,6 +3077,10 @@
                         </div>
                     `;
                 }).join('');
+                const commentList = Array.isArray(group.comments) ? group.comments.filter(Boolean) : [];
+                const commentText = commentList.length
+                    ? commentList.join(' · ')
+                    : (group.comment || '').toString().trim();
 
                 if (salesDetailTitle) salesDetailTitle.textContent = `Détails de la vente INV-${group.id.slice(-6).toUpperCase()}`;
                 if (salesDetailCustomerName) salesDetailCustomerName.textContent = customerName;
@@ -3076,6 +3089,8 @@
                 if (salesDetailDate) salesDetailDate.textContent = formatDateForDisplay(group.date);
                 if (salesDetailPayment) salesDetailPayment.textContent = 'Non renseigné';
                 if (salesDetailProducts) salesDetailProducts.innerHTML = itemsHtml;
+                if (salesDetailComment) salesDetailComment.textContent = commentText;
+                if (salesDetailCommentSection) salesDetailCommentSection.classList.toggle('hidden', !commentText);
                 if (salesDetailSubtotal) salesDetailSubtotal.textContent = formatCurrency(summary.subtotal, summary.currency);
                 if (salesDetailTax) salesDetailTax.textContent = formatCurrency(summary.tax, summary.currency);
                 if (salesDetailTotal) salesDetailTotal.textContent = formatCurrency(summary.total, summary.currency);
