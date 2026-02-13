@@ -497,7 +497,7 @@
                                     <span>Sous-total</span>
                                     <span id="cart-subtotal">0 FCFA</span>
                                 </div>
-                                <div class="flex items-center justify-between text-sm text-gray-600">
+                                <div class="flex items-center justify-between text-sm text-gray-400">
                                     <span>TVA (20%)</span>
                                     <span id="cart-tax">0 FCFA</span>
                                 </div>
@@ -564,54 +564,120 @@
             </div>
             <!-- Page: Historique des ventes -->
             <div id="page-Historique-des-ventes" class="page-content p-4 md:p-8 hidden">
-                <h1 class="text-3xl font-bold text-gray-800">Historique des ventes</h1>
-                <p class="text-gray-500 mt-1">Liste de toutes les transactions enregistrées.</p>
-                <div class="mt-6 bg-white p-6 rounded-lg shadow-sm">
-                    <!-- Conteneur pour l'historique des ventes -->
-                    <div id="sales-history-container">
-                        <!-- Message si vide -->
-                        <div id="sales-history-placeholder"
-                            class="flex flex-col items-center justify-center text-center text-gray-500 h-32">
+                <div class="flex flex-col gap-6">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div>
+                            <h1 class="text-3xl font-bold text-gray-900">Historique des ventes</h1>
+                            <p class="text-gray-500 mt-1">Gérez toutes vos ventes et factures</p>
+                        </div>
+                        <button id="sales-history-export"
+                            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 16V4m0 12l-4-4m4 4l4-4M4 20h16" />
+                            </svg>
+                            Exporter
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                        <div class="rounded-2xl p-5 text-white bg-gradient-to-r from-blue-500 to-blue-600">
+                            <p class="text-sm opacity-90">Ventes complétées</p>
+                            <div class="mt-3 flex items-center justify-between">
+                                <p id="sales-history-stat-completed" class="text-3xl font-bold">0</p>
+                                <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="rounded-2xl p-5 text-white bg-gradient-to-r from-orange-500 to-orange-600">
+                            <p class="text-sm opacity-90">En attente</p>
+                            <div class="mt-3 flex items-center justify-between">
+                                <p id="sales-history-stat-pending" class="text-3xl font-bold">0</p>
+                                <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3M12 6a6 6 0 100 12 6 6 0 000-12z" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="rounded-2xl p-5 text-white bg-gradient-to-r from-green-500 to-green-600">
+                            <p class="text-sm opacity-90">Revenus du jour</p>
+                            <div class="mt-3 flex items-center justify-between">
+                                <p id="sales-history-stat-today" class="text-3xl font-bold">0 FCFA</p>
+                                <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3m6 0a3 3 0 00-3-3m0 0V4m0 7v6" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="rounded-2xl p-5 text-white bg-gradient-to-r from-purple-500 to-purple-600">
+                            <p class="text-sm opacity-90">Revenus total</p>
+                            <div class="mt-3 flex items-center justify-between">
+                                <p id="sales-history-stat-total" class="text-3xl font-bold">0 FCFA</p>
+                                <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 17l6-6 4 4 8-8" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap gap-3">
+                        <button id="sales-history-tab-completed"
+                            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-blue-600 text-white shadow">
+                            <span class="inline-flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                Ventes complétées
+                            </span>
+                            <span id="sales-history-completed-count" class="px-2 py-0.5 rounded-full text-xs bg-white/20">0</span>
+                        </button>
+                        <button id="sales-history-tab-pending"
+                            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200">
+                            <span class="inline-flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3M12 6a6 6 0 100 12 6 6 0 000-12z" />
+                                </svg>
+                                Ventes en attente
+                            </span>
+                            <span id="sales-history-pending-count" class="px-2 py-0.5 rounded-full text-xs bg-gray-200">0</span>
+                        </button>
+                    </div>
+
+                    <div class="flex flex-col lg:flex-row gap-4">
+                        <div class="relative flex-1">
+                            <input type="text" id="sales-history-search" placeholder="Rechercher par N° facture, client..."
+                                class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-cyan-500 focus:border-cyan-500" />
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </div>
+                        <select id="sales-history-date-filter"
+                            class="w-full lg:w-56 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 focus:ring-cyan-500 focus:border-cyan-500">
+                            <option value="all">Toutes les dates</option>
+                            <option value="today">Aujourd'hui</option>
+                            <option value="last7">7 derniers jours</option>
+                            <option value="last30">30 derniers jours</option>
+                            <option value="thisMonth">Ce mois</option>
+                            <option value="lastMonth">Mois précédent</option>
+                        </select>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+                        <div id="sales-history-empty" class="flex flex-col items-center justify-center text-center text-gray-500 h-32">
                             <p>Aucune vente enregistrée</p>
                         </div>
-                        <!-- Tableau si non vide -->
-                        <div id="sales-history-table-container"
-                            class="hidden overflow-x-auto rounded-lg border border-gray-200">
-                            <table class="min-w-full bg-white divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th scope="col"
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Date</th>
-                                        <th scope="col"
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Vente</th>
-                                        <th scope="col"
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Client</th>
-                                        <th scope="col"
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Vendeur</th>
-                                        <th scope="col"
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Articles</th>
-                                        <th scope="col"
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Total</th>
-                                        <th scope="col"
-                                            class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Reçu</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="sales-history-tbody" class="divide-y divide-gray-200">
-                                    <!-- Lignes de ventes insérées par JS -->
-                                </tbody>
-                            </table>
-                        </div>
+                        <div id="sales-history-list" class="hidden space-y-4"></div>
                     </div>
                 </div>
             </div>
-
             <!-- Page: Stock Boutique -->
             <div id="page-Stock-Boutique" class="page-content p-4 md:p-8 hidden">
                 <h1 class="text-3xl font-bold text-gray-800">Stock de la Boutique</h1>
@@ -1943,6 +2009,9 @@
             let customerOptionLookup = {};
             let isCustomerHistoryOpen = false;
             let selectedSalesCategory = 'Tous';
+            let salesHistoryTab = 'completed';
+            let salesHistorySearch = '';
+            let salesHistoryDateFilterValue = 'all';
 
             // Cart state
             let cartItems = [];
@@ -1999,9 +2068,18 @@
             const shopMovementsTbody = document.getElementById('shop-movements-tbody');
 
             const salesError = document.getElementById('sales-error');
-            const salesHistoryPlaceholder = document.getElementById('sales-history-placeholder');
-            const salesHistoryTableContainer = document.getElementById('sales-history-table-container');
-            const salesHistoryTbody = document.getElementById('sales-history-tbody');
+            const salesHistoryEmpty = document.getElementById('sales-history-empty');
+            const salesHistoryList = document.getElementById('sales-history-list');
+            const salesHistorySearchInput = document.getElementById('sales-history-search');
+            const salesHistoryDateFilter = document.getElementById('sales-history-date-filter');
+            const salesHistoryTabCompleted = document.getElementById('sales-history-tab-completed');
+            const salesHistoryTabPending = document.getElementById('sales-history-tab-pending');
+            const salesHistoryCompletedCount = document.getElementById('sales-history-completed-count');
+            const salesHistoryPendingCount = document.getElementById('sales-history-pending-count');
+            const salesHistoryStatCompleted = document.getElementById('sales-history-stat-completed');
+            const salesHistoryStatPending = document.getElementById('sales-history-stat-pending');
+            const salesHistoryStatToday = document.getElementById('sales-history-stat-today');
+            const salesHistoryStatTotal = document.getElementById('sales-history-stat-total');
             const salesProductSearch = document.getElementById('sales-product-search');
             const salesCategoryFilters = document.getElementById('sales-category-filters');
             const salesProductsContainer = document.getElementById('sales-products-container');
@@ -2414,6 +2492,386 @@
                 });
 
                 return Object.values(groups).sort((a, b) => new Date(b.date) - new Date(a.date));
+            }
+
+            const PENDING_SALES_STORAGE_KEY = 'stockpilot-held-cart';
+
+            function getPendingSalesFromStorage() {
+                try {
+                    const raw = localStorage.getItem(PENDING_SALES_STORAGE_KEY);
+                    if (!raw) return [];
+                    const parsed = JSON.parse(raw);
+                    const list = Array.isArray(parsed) ? parsed : (parsed && typeof parsed === 'object' ? [parsed] : []);
+                    const baseId = Date.now();
+                    return list.map((sale, index) => {
+                        if (!sale || typeof sale !== 'object') return null;
+                        return {
+                            ...sale,
+                            id: sale.id || `HOLD-${baseId}-${index}`
+                        };
+                    }).filter(Boolean);
+                } catch (error) {
+                    console.warn('Impossible de lire les ventes en attente.', error);
+                }
+                return [];
+            }
+
+            function savePendingSalesToStorage(pendingSales) {
+                try {
+                    if (!pendingSales || pendingSales.length === 0) {
+                        localStorage.removeItem(PENDING_SALES_STORAGE_KEY);
+                        return;
+                    }
+                    localStorage.setItem(PENDING_SALES_STORAGE_KEY, JSON.stringify(pendingSales));
+                } catch (error) {
+                    console.warn('Impossible de sauvegarder les ventes en attente.', error);
+                }
+            }
+
+            function calculateItemsTotal(items = []) {
+                return items.reduce((sum, item) => {
+                    const price = Number(item.sellingPrice ?? item.price ?? 0);
+                    const quantity = Number(item.quantity ?? 0);
+                    return sum + (price * quantity);
+                }, 0);
+            }
+
+            function calculateItemsSummary(items = []) {
+                const subtotal = calculateItemsTotal(items);
+                const tax = subtotal * SALES_TAX_RATE;
+                const total = subtotal + tax;
+                const currency = items[0]?.currency || 'CFA';
+                return { subtotal, tax, total, currency };
+            }
+
+            function formatHistoryDateParts(dateValue) {
+                const date = new Date(dateValue);
+                return {
+                    dateLabel: date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }),
+                    timeLabel: date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+                };
+            }
+
+            function isDateInFilter(dateValue, filterKey) {
+                if (!filterKey || filterKey === 'all') return true;
+                const date = new Date(dateValue);
+                const now = new Date();
+                const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                if (filterKey === 'today') return date >= startOfToday;
+                if (filterKey === 'last7') return date >= new Date(startOfToday.getTime() - 6 * 24 * 60 * 60 * 1000);
+                if (filterKey === 'last30') return date >= new Date(startOfToday.getTime() - 29 * 24 * 60 * 60 * 1000);
+                if (filterKey === 'thisMonth') return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+                if (filterKey === 'lastMonth') {
+                    const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                    return date.getMonth() === lastMonthDate.getMonth() && date.getFullYear() === lastMonthDate.getFullYear();
+                }
+                return true;
+            }
+
+            function matchesHistorySearch(query, values) {
+                if (!query) return true;
+                const needle = normalizeString(query);
+                return values.some(value => normalizeString(value).includes(needle));
+            }
+
+            function renderSalesHistory() {
+                if (!salesHistoryList || !salesHistoryEmpty) return;
+
+                const groups = buildSalesHistoryGroups();
+                const pendingSales = getPendingSalesFromStorage();
+                const completedCount = groups.length;
+                const pendingCount = pendingSales.length;
+                const completedCurrency = groups[0]?.currency || 'CFA';
+                const totalRevenue = groups.reduce((sum, group) => sum + (group.total * (1 + SALES_TAX_RATE)), 0);
+                const todayStart = new Date();
+                todayStart.setHours(0, 0, 0, 0);
+                const todayRevenue = groups
+                    .filter(group => new Date(group.date) >= todayStart)
+                    .reduce((sum, group) => sum + (group.total * (1 + SALES_TAX_RATE)), 0);
+
+                if (salesHistoryCompletedCount) salesHistoryCompletedCount.textContent = completedCount;
+                if (salesHistoryPendingCount) salesHistoryPendingCount.textContent = pendingCount;
+                if (salesHistoryStatCompleted) salesHistoryStatCompleted.textContent = completedCount;
+                if (salesHistoryStatPending) salesHistoryStatPending.textContent = pendingCount;
+                if (salesHistoryStatToday) salesHistoryStatToday.textContent = formatCurrency(todayRevenue, completedCurrency);
+                if (salesHistoryStatTotal) salesHistoryStatTotal.textContent = formatCurrency(totalRevenue, completedCurrency);
+
+                if (salesHistoryTabCompleted) {
+                    const isActive = salesHistoryTab === 'completed';
+                    salesHistoryTabCompleted.classList.toggle('bg-blue-600', isActive);
+                    salesHistoryTabCompleted.classList.toggle('text-white', isActive);
+                    salesHistoryTabCompleted.classList.toggle('shadow', isActive);
+                    salesHistoryTabCompleted.classList.toggle('bg-gray-100', !isActive);
+                    salesHistoryTabCompleted.classList.toggle('text-gray-600', !isActive);
+                    if (salesHistoryCompletedCount) {
+                        salesHistoryCompletedCount.classList.toggle('bg-white/20', isActive);
+                        salesHistoryCompletedCount.classList.toggle('bg-gray-200', !isActive);
+                        salesHistoryCompletedCount.classList.toggle('text-white', isActive);
+                        salesHistoryCompletedCount.classList.toggle('text-gray-600', !isActive);
+                    }
+                }
+                if (salesHistoryTabPending) {
+                    const isActive = salesHistoryTab === 'pending';
+                    salesHistoryTabPending.classList.toggle('bg-orange-500', isActive);
+                    salesHistoryTabPending.classList.toggle('text-white', isActive);
+                    salesHistoryTabPending.classList.toggle('shadow', isActive);
+                    salesHistoryTabPending.classList.toggle('bg-gray-100', !isActive);
+                    salesHistoryTabPending.classList.toggle('text-gray-600', !isActive);
+                    if (salesHistoryPendingCount) {
+                        salesHistoryPendingCount.classList.toggle('bg-white/20', isActive);
+                        salesHistoryPendingCount.classList.toggle('bg-gray-200', !isActive);
+                        salesHistoryPendingCount.classList.toggle('text-white', isActive);
+                        salesHistoryPendingCount.classList.toggle('text-gray-600', !isActive);
+                    }
+                }
+
+                const filteredGroups = groups.filter(group => {
+                    if (!isDateInFilter(group.date, salesHistoryDateFilterValue)) return false;
+                    if (!salesHistorySearch) return true;
+                    const customerLabel = group.customerName || (group.customerId && appData.customers?.[group.customerId]?.fullName) || 'Client comptoir';
+                    const values = [
+                        `INV-${group.id.slice(-6).toUpperCase()}`,
+                        group.id,
+                        customerLabel,
+                        group.customerEmail,
+                        group.customerPhone,
+                        group.sellerName,
+                        group.items.map(item => item.name).join(' '),
+                        (group.comments || []).join(' ')
+                    ];
+                    return matchesHistorySearch(salesHistorySearch, values);
+                });
+
+                const filteredPending = pendingSales.filter(pending => {
+                    if (!isDateInFilter(pending.createdAt || pending.date, salesHistoryDateFilterValue)) return false;
+                    if (!salesHistorySearch) return true;
+                    const customer = pending.customer || {};
+                    const values = [
+                        `INV-${(pending.id || '').slice(-6).toUpperCase()}`,
+                        pending.id,
+                        customer.name,
+                        customer.email,
+                        customer.phone,
+                        (pending.items || []).map(item => item.name).join(' '),
+                        pending.comment
+                    ];
+                    return matchesHistorySearch(salesHistorySearch, values);
+                });
+
+                const showCompleted = salesHistoryTab === 'completed';
+                const list = showCompleted ? filteredGroups : filteredPending;
+                if (!list.length) {
+                    salesHistoryEmpty.classList.remove('hidden');
+                    salesHistoryList.classList.add('hidden');
+                    salesHistoryList.innerHTML = '';
+                    return;
+                }
+
+                salesHistoryEmpty.classList.add('hidden');
+                salesHistoryList.classList.remove('hidden');
+
+                if (showCompleted) {
+                    salesHistoryList.innerHTML = filteredGroups.map(group => {
+                        const customerLabel = group.customerName || (group.customerId && appData.customers?.[group.customerId]?.fullName) || 'Client comptoir';
+                        const customerEmail = group.customerEmail || (group.customerId && appData.customers?.[group.customerId]?.email) || '';
+                        const itemsCount = group.items.reduce((sum, item) => sum + item.quantity, 0);
+                        const summary = calculateItemsSummary(group.items.map(item => ({
+                            sellingPrice: item.price,
+                            quantity: item.quantity,
+                            currency: group.currency
+                        })));
+                        const { dateLabel, timeLabel } = formatHistoryDateParts(group.date);
+                        const itemsHtml = group.items.map(item => {
+                            const unitPrice = item.price || (item.total / Math.max(item.quantity, 1));
+                            return `
+                                <div class="flex items-center justify-between text-sm text-gray-700">
+                                    <div class="flex items-center gap-3">
+                                        <span class="px-2 py-0.5 rounded-lg bg-gray-100 text-xs font-semibold text-gray-500">${item.quantity}x</span>
+                                        <span class="font-semibold text-gray-900">${item.name}</span>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-xs text-gray-500">${formatCurrency(unitPrice, group.currency)} / unité</p>
+                                        <p class="text-sm font-semibold text-gray-900">${formatCurrency(item.total, group.currency)}</p>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                        return `
+                            <div class="border border-gray-200 rounded-2xl shadow-sm bg-white overflow-hidden">
+                                <div class="p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l2 2 4-4M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <div class="flex items-center gap-2 flex-wrap">
+                                                <p class="font-semibold text-gray-900">INV-${group.id.slice(-6).toUpperCase()}</p>
+                                                <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-50 text-green-700">Complétée</span>
+                                            </div>
+                                            <div class="mt-1 flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                                                <span>${dateLabel}</span>
+                                                <span>${timeLabel}</span>
+                                                <span>${itemsCount} article${itemsCount > 1 ? 's' : ''}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-2xl font-bold text-blue-600">${formatCurrency(summary.total, summary.currency)}</p>
+                                        <p class="text-xs text-gray-400">${itemsCount} article${itemsCount > 1 ? 's' : ''}</p>
+                                    </div>
+                                </div>
+                                <div class="px-4 pb-4">
+                                    <div class="flex items-center gap-2 text-sm text-gray-600 border-t border-gray-100 pt-3">
+                                        <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A4 4 0 0112 15a4 4 0 016.879 2.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                        <span class="font-semibold text-gray-900">${customerLabel}</span>
+                                        ${customerEmail ? `<span class="text-xs text-gray-400">· ${customerEmail}</span>` : ''}
+                                    </div>
+                                    <div class="mt-4 space-y-3">
+                                        ${itemsHtml}
+                                    </div>
+                                    <div class="mt-4 space-y-2 border-t border-gray-100 pt-4">
+                                        <div class="flex items-center justify-between text-sm text-gray-600">
+                                            <span>Sous-total</span>
+                                            <span>${formatCurrency(summary.subtotal, summary.currency)}</span>
+                                        </div>
+                                        <div class="flex items-center justify-between text-sm text-gray-400">
+                                            <span>TVA (20%)</span>
+                                            <span>${formatCurrency(summary.tax, summary.currency)}</span>
+                                        </div>
+                                        <div class="flex items-center justify-between text-base font-semibold text-gray-900 border-t border-gray-100 pt-3">
+                                            <span>Total</span>
+                                            <span class="text-blue-600">${formatCurrency(summary.total, summary.currency)}</span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-4 flex flex-col md:flex-row gap-3">
+                                        <button type="button" data-history-action="details" data-history-id="${group.id}"
+                                            class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700">
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            Voir détails
+                                        </button>
+                                        <button type="button" data-history-action="print" data-history-id="${group.id}"
+                                            class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gray-900 text-white font-semibold hover:bg-gray-800">
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9V4h12v5M6 18h12v2H6v-2zM6 14h12v4H6v-4z" />
+                                            </svg>
+                                            Imprimer
+                                        </button>
+                                        <button type="button" data-history-action="email" data-history-id="${group.id}"
+                                            class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-purple-600 text-white font-semibold hover:bg-purple-700">
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l9 6 9-6M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
+                                            </svg>
+                                            Email
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                    return;
+                }
+
+                salesHistoryList.innerHTML = filteredPending.map(pending => {
+                    const customer = pending.customer || {};
+                    const items = pending.items || [];
+                    const itemsCount = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+                    const summary = calculateItemsSummary(items);
+                    const { dateLabel, timeLabel } = formatHistoryDateParts(pending.createdAt || pending.date || new Date().toISOString());
+                    const itemsHtml = items.map(item => {
+                        const unitPrice = item.sellingPrice || (item.total / Math.max(item.quantity, 1));
+                        const lineTotal = (item.sellingPrice || item.price || 0) * (item.quantity || 0);
+                        return `
+                            <div class="flex items-center justify-between text-sm text-gray-700">
+                                <div class="flex items-center gap-3">
+                                    <span class="px-2 py-0.5 rounded-lg bg-gray-100 text-xs font-semibold text-gray-500">${item.quantity}x</span>
+                                    <span class="font-semibold text-gray-900">${item.name}</span>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xs text-gray-500">${formatCurrency(unitPrice, summary.currency)} / unité</p>
+                                    <p class="text-sm font-semibold text-gray-900">${formatCurrency(lineTotal, summary.currency)}</p>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    return `
+                        <div class="border border-gray-200 rounded-2xl shadow-sm bg-white overflow-hidden">
+                            <div class="p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-12 h-12 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center">
+                                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3M12 6a6 6 0 100 12 6 6 0 000-12z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <p class="font-semibold text-gray-900">INV-${(pending.id || '').slice(-6).toUpperCase()}</p>
+                                            <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-50 text-orange-700">En attente</span>
+                                        </div>
+                                        <div class="mt-1 flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                                            <span>${dateLabel}</span>
+                                            <span>${timeLabel}</span>
+                                            <span>${itemsCount} article${itemsCount > 1 ? 's' : ''}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-2xl font-bold text-blue-600">${formatCurrency(summary.total, summary.currency)}</p>
+                                    <p class="text-xs text-gray-400">${itemsCount} article${itemsCount > 1 ? 's' : ''}</p>
+                                </div>
+                            </div>
+                            <div class="px-4 pb-4">
+                                <div class="flex items-center gap-2 text-sm text-gray-600 border-t border-gray-100 pt-3">
+                                    <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A4 4 0 0112 15a4 4 0 016.879 2.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                    <span class="font-semibold text-gray-900">${customer.name || 'Client'}</span>
+                                    ${customer.email ? `<span class="text-xs text-gray-400">· ${customer.email}</span>` : ''}
+                                </div>
+                                ${pending.comment ? `<p class="mt-2 text-xs text-gray-500">Commentaire: ${pending.comment}</p>` : ''}
+                                <div class="mt-4 space-y-3">
+                                    ${itemsHtml}
+                                </div>
+                                <div class="mt-4 space-y-2 border-t border-gray-100 pt-4">
+                                    <div class="flex items-center justify-between text-sm text-gray-600">
+                                        <span>Sous-total</span>
+                                        <span>${formatCurrency(summary.subtotal, summary.currency)}</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-sm text-gray-400">
+                                        <span>TVA (20%)</span>
+                                        <span>${formatCurrency(summary.tax, summary.currency)}</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-base font-semibold text-gray-900 border-t border-gray-100 pt-3">
+                                        <span>Total</span>
+                                        <span class="text-blue-600">${formatCurrency(summary.total, summary.currency)}</span>
+                                    </div>
+                                </div>
+                                <div class="mt-4 flex flex-col md:flex-row gap-3">
+                                    <button type="button" data-pending-validate="${pending.id}"
+                                        class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        Valider la vente
+                                    </button>
+                                    <button type="button" data-pending-cancel="${pending.id}"
+                                        class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                        Annuler
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
             }
 
             function openCustomerSelectModal() {
@@ -3544,36 +4002,7 @@
 
             function onSalesHistoryValue(snapshot) {
                 appData.salesHistory = snapshot.val() || {};
-                const groups = buildSalesHistoryGroups();
-                if (groups.length > 0) {
-                    salesHistoryPlaceholder.classList.add('hidden');
-                    salesHistoryTableContainer.classList.remove('hidden');
-                    salesHistoryTbody.innerHTML = groups.map(group => {
-                        const itemsCount = group.items.reduce((sum, item) => sum + item.quantity, 0);
-                        const itemsPreview = group.items.slice(0, 2).map(item => `${item.name} x${item.quantity}`).join(', ');
-                        const itemsSuffix = group.items.length > 2 ? ` +${group.items.length - 2}` : '';
-                        const customerLabel = group.customerName || (group.customerId && appData.customers?.[group.customerId]?.fullName) || 'Client comptoir';
-                        const sellerLabel = group.sellerName || '-';
-                        const saleLabel = `#${group.id.slice(-6).toUpperCase()}`;
-                        return `
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(group.date)}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">${saleLabel}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${customerLabel}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sellerLabel}</td>
-                                <td class="px-6 py-4 text-sm text-gray-500">${itemsCount} article${itemsCount > 1 ? 's' : ''} · ${itemsPreview}${itemsSuffix}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">${formatCurrency(group.total, group.currency)}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right">
-                                    <button type="button" data-receipt-group="${group.id}" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200">Télécharger</button>
-                                </td>
-                            </tr>
-                        `;
-                    }).join('');
-                } else {
-                    salesHistoryPlaceholder.classList.remove('hidden');
-                    salesHistoryTableContainer.classList.add('hidden');
-                    salesHistoryTbody.innerHTML = '';
-                }
+                renderSalesHistory();
                 updateDashboardStats();
                 renderCustomerHistory();
             }
@@ -3590,6 +4019,7 @@
                     }
                 }
                 renderCustomerHistory();
+                renderSalesHistory();
             }
 
             function setupFirebaseListeners() {
@@ -3973,13 +4403,16 @@
                         },
                         items: cartItems
                     };
-                    localStorage.setItem('stockpilot-held-cart', JSON.stringify(heldSale));
+                    const pendingSales = getPendingSalesFromStorage();
+                    pendingSales.unshift(heldSale);
+                    savePendingSalesToStorage(pendingSales);
                 } catch (error) {
                     console.warn('Impossible de sauvegarder le panier en attente.', error);
                 }
                 cartItems = [];
                 if (holdCommentInput) holdCommentInput.value = '';
                 renderCart();
+                renderSalesHistory();
                 showSuccessToast('Panier mis en attente');
             }
 
@@ -4096,6 +4529,7 @@
                     cartItems = [];
                     if (holdCommentInput) holdCommentInput.value = '';
                     renderCart();
+                    renderSalesHistory();
                     await generateInvoicePDF(invoiceData);
 
                 } catch (error) {
@@ -4104,6 +4538,131 @@
                 } finally {
                     if (validateCartButton) validateCartButton.disabled = false;
                 }
+            }
+
+            async function validatePendingSale(pendingId) {
+                if (!currentUser || !dbBasePath || !pendingId) return;
+                const pendingSales = getPendingSalesFromStorage();
+                const pendingIndex = pendingSales.findIndex(sale => sale.id === pendingId);
+                if (pendingIndex === -1) return;
+                const pending = pendingSales[pendingIndex];
+                const items = pending.items || [];
+                if (!items.length) {
+                    showSalesErrorMessage('Aucun article dans cette vente en attente.');
+                    return;
+                }
+
+                for (const item of items) {
+                    const shopProduct = appData.shopStock[item.shopProductId];
+                    if (!shopProduct || item.quantity > shopProduct.quantityInShop) {
+                        alert(`Stock insuffisant pour ${item.name}. Disponible: ${shopProduct?.quantityInShop || 0}`);
+                        return;
+                    }
+                }
+
+                try {
+                    const updates = {};
+                    const now = new Date().toISOString();
+                    const sellerName = currentUserData?.fullName || currentUser.email;
+                    const comment = pending.comment || '';
+                    const customer = pending.customer || {};
+                    const saleGroupId = push(ref(db, `${dbBasePath}/sales`)).key;
+                    const summary = calculateItemsSummary(items);
+                    const totalAmount = summary.total;
+                    const totalItems = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+
+                    updates[`${dbBasePath}/sales/${saleGroupId}`] = {
+                        id: saleGroupId,
+                        date: now,
+                        customerId: customer.id || null,
+                        customerName: customer.name || '',
+                        customerPhone: customer.phone || '',
+                        customerEmail: customer.email || '',
+                        sellerName,
+                        total: totalAmount,
+                        itemsCount: totalItems,
+                        status: 'validee',
+                        comment
+                    };
+
+                    for (const item of items) {
+                        const shopProduct = appData.shopStock[item.shopProductId];
+                        const shopNewStock = shopProduct.quantityInShop - item.quantity;
+
+                        updates[`${dbBasePath}/shopStock/${item.shopProductId}/quantityInShop`] = shopNewStock;
+
+                        const shopMoveKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
+                        updates[`${dbBasePath}/shopMovements/${shopMoveKey}`] = {
+                            id: shopMoveKey,
+                            shopProductId: item.shopProductId,
+                            productName: item.name,
+                            type: "Sortie",
+                            quantityChange: item.quantity,
+                            oldStock: shopProduct.quantityInShop,
+                            newStock: shopNewStock,
+                            comment: comment ? `Vente en attente: ${comment}` : 'Vente en attente',
+                            date: now,
+                            userEmail: currentUser.email
+                        };
+
+                        const saleKey = push(ref(db, `${dbBasePath}/salesHistory`)).key;
+                        updates[`${dbBasePath}/salesHistory/${saleKey}`] = {
+                            id: saleKey,
+                            saleGroupId,
+                            shopProductId: item.shopProductId,
+                            productName: item.name,
+                            quantity: item.quantity,
+                            sellingPrice: item.sellingPrice,
+                            totalAmount: item.sellingPrice * item.quantity,
+                            sellerName,
+                            customerId: customer.id || null,
+                            customerName: customer.name || '',
+                            customerPhone: customer.phone || '',
+                            customerEmail: customer.email || '',
+                            comment,
+                            date: now
+                        };
+                    }
+
+                    await update(ref(db), updates);
+
+                    pendingSales.splice(pendingIndex, 1);
+                    savePendingSalesToStorage(pendingSales);
+                    renderSalesHistory();
+
+                    const invoiceData = {
+                        companyName: currentUserData?.companyName || 'Mon Entreprise',
+                        sellerName,
+                        customerName: customer.name || '',
+                        customerPhone: customer.phone || '',
+                        customerEmail: customer.email || '',
+                        date: now,
+                        items: items.map(item => ({
+                            name: item.name,
+                            quantity: item.quantity,
+                            price: item.sellingPrice,
+                            total: item.sellingPrice * item.quantity
+                        })),
+                        total: totalAmount,
+                        currency: summary.currency,
+                        comment
+                    };
+
+                    await generateInvoicePDF(invoiceData);
+                    showSuccessToast('Vente en attente validée.');
+                } catch (error) {
+                    console.error(error);
+                    alert('Une erreur est survenue lors de la validation de la vente en attente.');
+                }
+            }
+
+            function cancelPendingSale(pendingId) {
+                if (!pendingId) return;
+                const pendingSales = getPendingSalesFromStorage();
+                const nextSales = pendingSales.filter(sale => sale.id !== pendingId);
+                savePendingSalesToStorage(nextSales);
+                renderSalesHistory();
+                showSuccessToast('Vente en attente annulée.');
             }
 
             // --- FONCTIONS DE GÉNÉRATION DE FACTURES PDF ---
@@ -4324,6 +4883,8 @@
                     alert('Vente introuvable');
                     return;
                 }
+                const subtotal = sale.totalAmount || (sale.sellingPrice || 0) * (sale.quantity || 0);
+                const totalWithTax = subtotal * (1 + SALES_TAX_RATE);
 
                 // Préparer les données de facture
                 const invoiceData = {
@@ -4339,7 +4900,7 @@
                         price: sale.sellingPrice,
                         total: sale.totalAmount
                     }],
-                    total: sale.totalAmount,
+                    total: totalWithTax,
                     currency: appData.storeProducts[appData.shopStock[sale.shopProductId]?.sourceProductId]?.currency || 'CFA',
                     comment: sale.comment || ''
                 };
@@ -4357,6 +4918,11 @@
                 const customerName = group.customerName || (group.customerId && appData.customers?.[group.customerId]?.fullName) || 'Client comptoir';
                 const customerPhone = group.customerPhone || (group.customerId && appData.customers?.[group.customerId]?.phone) || '';
                 const customerEmail = group.customerEmail || (group.customerId && appData.customers?.[group.customerId]?.email) || '';
+                const summary = calculateItemsSummary(group.items.map(item => ({
+                    sellingPrice: item.price,
+                    quantity: item.quantity,
+                    currency: group.currency
+                })));
                 const invoiceData = {
                     companyName: currentUserData?.companyName || 'Mon Entreprise',
                     sellerName: group.sellerName || currentUser?.email || '',
@@ -4370,8 +4936,8 @@
                         price: item.price,
                         total: item.total
                     })),
-                    total: group.total,
-                    currency: group.currency || 'CFA',
+                    total: summary.total,
+                    currency: summary.currency || group.currency || 'CFA',
                     comment: group.comments?.join(' | ') || ''
                 };
                 await generateInvoicePDF(invoiceData);
@@ -4542,12 +5108,55 @@
             }
             if (validateCartButton) validateCartButton.addEventListener('click', validateCart);
             if (holdCartButton) holdCartButton.addEventListener('click', holdCart);
-            if (salesHistoryTbody) {
-                salesHistoryTbody.addEventListener('click', (event) => {
-                    const receiptButton = event.target.closest('[data-receipt-group]');
-                    if (!receiptButton) return;
-                    const groupId = receiptButton.dataset.receiptGroup;
-                    if (groupId) generateReceiptFromGroup(groupId);
+            if (salesHistoryTabCompleted) {
+                salesHistoryTabCompleted.addEventListener('click', () => {
+                    salesHistoryTab = 'completed';
+                    renderSalesHistory();
+                });
+            }
+            if (salesHistoryTabPending) {
+                salesHistoryTabPending.addEventListener('click', () => {
+                    salesHistoryTab = 'pending';
+                    renderSalesHistory();
+                });
+            }
+            if (salesHistorySearchInput) {
+                salesHistorySearchInput.addEventListener('input', (event) => {
+                    salesHistorySearch = event.target.value;
+                    renderSalesHistory();
+                });
+            }
+            if (salesHistoryDateFilter) {
+                salesHistoryDateFilter.addEventListener('change', (event) => {
+                    salesHistoryDateFilterValue = event.target.value || 'all';
+                    renderSalesHistory();
+                });
+            }
+            if (salesHistoryList) {
+                salesHistoryList.addEventListener('click', (event) => {
+                    const actionButton = event.target.closest('[data-history-action]');
+                    if (actionButton) {
+                        const action = actionButton.dataset.historyAction;
+                        const groupId = actionButton.dataset.historyId;
+                        if (!groupId) return;
+                        if (action === 'details' || action === 'print') {
+                            generateReceiptFromGroup(groupId);
+                            return;
+                        }
+                        if (action === 'email') {
+                            showSuccessToast('Email envoyé (simulation).');
+                            return;
+                        }
+                    }
+                    const validateButton = event.target.closest('[data-pending-validate]');
+                    if (validateButton) {
+                        validatePendingSale(validateButton.dataset.pendingValidate);
+                        return;
+                    }
+                    const cancelButton = event.target.closest('[data-pending-cancel]');
+                    if (cancelButton) {
+                        cancelPendingSale(cancelButton.dataset.pendingCancel);
+                    }
                 });
             }
 
@@ -5110,6 +5719,7 @@
             renderSalesProducts();
             renderCart();
             updateCustomerHistoryVisibility();
+            renderSalesHistory();
         });
     </script>
 </body>
