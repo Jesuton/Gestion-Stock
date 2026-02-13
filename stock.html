@@ -406,7 +406,7 @@
                             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                                 <div>
                                     <h1 class="text-2xl font-bold text-gray-900">Point de Vente</h1>
-                                    <p class="text-sm text-gray-500 mt-1">Recherchez et ajoutez des produits a la facture.</p>
+                                    <p class="text-sm text-gray-500 mt-1">Recherchez et ajoutez des produits à la facture.</p>
                                 </div>
                                 <span class="text-xs font-semibold px-3 py-1 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-100">Stock Boutique</span>
                             </div>
@@ -457,7 +457,7 @@
                                             </svg>
                                         </div>
                                         <div>
-                                            <p class="text-sm font-semibold text-gray-800">S?lectionner / Ajouter un client</p>
+                                            <p class="text-sm font-semibold text-gray-800">Sélectionner / Ajouter un client</p>
                                             <p class="text-xs text-gray-500 mt-1">Optionnel - vente sans enregistrement possible</p>
                                         </div>
                                     </div>
@@ -482,9 +482,15 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5m0 0L4 3m3 10l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
                                     </svg>
                                     <p class="mt-4 text-sm font-medium text-gray-500">Aucun article</p>
-                                    <p class="text-xs text-gray-400">S?lectionnez des produits</p>
+                                    <p class="text-xs text-gray-400">Sélectionnez des produits</p>
                                 </div>
                                 <div id="cart-items-list" class="hidden space-y-3"></div>
+                                <div class="mt-5">
+                                    <label for="hold-comment" class="text-xs font-semibold text-gray-500">Commentaire (mise en attente) *</label>
+                                    <textarea id="hold-comment" rows="2" placeholder="Ex: Client revient à 16h"
+                                        class="mt-2 w-full rounded-xl border border-gray-200 p-3 text-sm focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"></textarea>
+                                    <p id="hold-comment-error" class="text-xs text-red-500 mt-2 hidden"></p>
+                                </div>
                             </div>
                             <div class="p-6 border-t border-gray-100 space-y-3 bg-gray-50/60">
                                 <div class="flex items-center justify-between text-sm text-gray-600">
@@ -501,10 +507,10 @@
                                 </div>
                                 <button id="validate-cart-button"
                                     class="w-full py-3 bg-gray-300 text-white font-semibold rounded-xl shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
-                                    G?n?rer la facture
+                                    Générer la facture
                                 </button>
                                 <button id="hold-cart-button"
-                                    class="w-full py-3 border border-gray-200 bg-white text-gray-700 font-semibold rounded-xl hover:bg-gray-100 transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
+                                    class="w-full py-3 border border-gray-200 bg-white text-gray-700 font-semibold rounded-xl hover:bg-gray-100 transition-colors disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400">
                                     Mettre en attente
                                 </button>
                             </div>
@@ -2025,6 +2031,8 @@
             const cartTotal = document.getElementById('cart-total');
             const validateCartButton = document.getElementById('validate-cart-button');
             const holdCartButton = document.getElementById('hold-cart-button');
+            const holdCommentInput = document.getElementById('hold-comment');
+            const holdCommentError = document.getElementById('hold-comment-error');
 
 
             // Modals
@@ -2280,6 +2288,7 @@
                 updateCustomerSelectedCard();
                 updateCustomerHistoryVisibility();
                 renderCustomerHistory();
+                renderCart();
             }
 
             function clearSelectedCustomer() {
@@ -2288,6 +2297,7 @@
                 updateCustomerSelectedCard();
                 updateCustomerHistoryVisibility();
                 renderCustomerHistory();
+                renderCart();
             }
 
             function getCustomerContext() {
@@ -3873,8 +3883,10 @@
                 }
 
                 const hasItems = cartItems.length > 0;
+                const canHold = hasItems && !!selectedCustomer;
                 if (cartEmptyState) cartEmptyState.classList.toggle('hidden', hasItems);
                 if (cartItemsList) cartItemsList.classList.toggle('hidden', !hasItems);
+                if (holdCommentError) holdCommentError.classList.add('hidden');
 
                 if (!hasItems) {
                     if (cartItemsList) cartItemsList.innerHTML = '';
@@ -3886,7 +3898,10 @@
                         validateCartButton.classList.add('bg-gray-300');
                         validateCartButton.classList.remove('bg-cyan-500', 'hover:bg-cyan-600');
                     }
-                    if (holdCartButton) holdCartButton.disabled = true;
+                    if (holdCartButton) {
+                        holdCartButton.disabled = true;
+                        holdCartButton.title = 'Ajoutez des articles pour mettre en attente';
+                    }
                     return;
                 }
 
@@ -3895,7 +3910,10 @@
                     validateCartButton.classList.remove('bg-gray-300');
                     validateCartButton.classList.add('bg-cyan-500', 'hover:bg-cyan-600');
                 }
-                if (holdCartButton) holdCartButton.disabled = false;
+                if (holdCartButton) {
+                    holdCartButton.disabled = !canHold;
+                    holdCartButton.title = canHold ? '' : 'Sélectionnez un client pour mettre en attente';
+                }
 
                 if (cartItemsList) {
                     cartItemsList.innerHTML = cartItems.map((item, index) => {
@@ -3928,12 +3946,39 @@
 
             function holdCart() {
                 if (!cartItems.length) return;
+                if (!selectedCustomer) {
+                    showSalesErrorMessage("Sélectionnez un client pour mettre en attente.");
+                    return;
+                }
+                const comment = (holdCommentInput?.value || '').trim();
+                if (!comment) {
+                    if (holdCommentError) {
+                        holdCommentError.textContent = "Le commentaire est requis pour la mise en attente.";
+                        holdCommentError.classList.remove('hidden');
+                    } else {
+                        showSalesErrorMessage("Le commentaire est requis pour la mise en attente.");
+                    }
+                    return;
+                }
                 try {
-                    localStorage.setItem('stockpilot-held-cart', JSON.stringify(cartItems));
+                    const heldSale = {
+                        id: `HOLD-${Date.now()}`,
+                        createdAt: new Date().toISOString(),
+                        comment,
+                        customer: {
+                            id: selectedCustomer.id,
+                            name: selectedCustomer.fullName || selectedCustomer.name || 'Client',
+                            phone: selectedCustomer.phone || '',
+                            email: selectedCustomer.email || ''
+                        },
+                        items: cartItems
+                    };
+                    localStorage.setItem('stockpilot-held-cart', JSON.stringify(heldSale));
                 } catch (error) {
                     console.warn('Impossible de sauvegarder le panier en attente.', error);
                 }
                 cartItems = [];
+                if (holdCommentInput) holdCommentInput.value = '';
                 renderCart();
                 showSuccessToast('Panier mis en attente');
             }
@@ -3960,7 +4005,7 @@
                     const updates = {};
                     const now = new Date().toISOString();
                     const sellerName = currentUserData?.fullName || currentUser.email;
-                    const comment = '';
+                    const comment = (holdCommentInput?.value || '').trim();
                     const customerContext = getCustomerContext();
                     const saleGroupId = push(ref(db, `${dbBasePath}/sales`)).key;
                     const summary = calculateCartSummary();
@@ -3999,7 +4044,7 @@
                             quantityChange: item.quantity,
                             oldStock: shopProduct.quantityInShop,
                             newStock: shopNewStock,
-                            comment: `Vente groupée: ${comment}`,
+                            comment: comment ? `Vente groupée: ${comment}` : 'Vente groupée',
                             date: now,
                             userEmail: currentUser.email
                         };
@@ -4049,6 +4094,7 @@
 
                     // Vider le panier et réinitialiser le formulaire
                     cartItems = [];
+                    if (holdCommentInput) holdCommentInput.value = '';
                     renderCart();
                     await generateInvoicePDF(invoiceData);
 
@@ -4474,6 +4520,11 @@
             if (customerSelectedCard) {
                 const clearButton = document.getElementById('clear-customer-selection');
                 if (clearButton) clearButton.addEventListener('click', () => clearSelectedCustomer());
+            }
+            if (holdCommentInput) {
+                holdCommentInput.addEventListener('input', () => {
+                    if (holdCommentError) holdCommentError.classList.add('hidden');
+                });
             }
 
             // Cart event listeners
