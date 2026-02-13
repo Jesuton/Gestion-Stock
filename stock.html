@@ -190,6 +190,11 @@
                     <div data-icon="sales" class="w-5 h-5"></div>
                     <span class="sidebar-text">Ventes</span>
                 </button>
+                <button data-page="Historique des ventes"
+                    class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
+                    <div data-icon="stats" class="w-5 h-5"></div>
+                    <span class="sidebar-text">Historique ventes</span>
+                </button>
                 <button data-page="Stock Boutique"
                     class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
                     <div data-icon="box" class="w-5 h-5"></div>
@@ -498,40 +503,37 @@
 
                     <div class="xl:col-span-1 space-y-6">
                         <div class="bg-white p-6 rounded-lg shadow-sm">
-                            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                                <div>
-                                    <h2 class="text-xl font-bold text-gray-800">Client</h2>
-                                    <p class="text-sm text-gray-500 mt-1">Associez la vente a un client existant ou creez-en un nouveau.</p>
+                            <div>
+                                <h2 class="text-xl font-bold text-gray-800">Client</h2>
+                                <p class="text-sm text-gray-500 mt-1">Optionnel - la vente peut se faire sans client.</p>
+                            </div>
+                            <input type="hidden" id="customer-id" />
+                            <button id="open-customer-select-button"
+                                class="mt-4 w-full border-2 border-dashed border-gray-200 rounded-xl p-4 text-left hover:border-cyan-300 hover:bg-cyan-50/40 transition">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-11 h-11 rounded-full bg-cyan-50 text-cyan-600 flex items-center justify-center">
+                                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M5.121 17.804A4 4 0 0112 15a4 4 0 016.879 2.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-semibold text-gray-800">Sélectionner / Ajouter un client</p>
+                                        <p class="text-xs text-gray-500 mt-1">Optionnel - vente sans enregistrement possible</p>
+                                    </div>
                                 </div>
-                                <button id="open-customer-modal-button"
-                                    class="inline-flex items-center px-3 py-2 bg-cyan-500 text-white text-sm font-semibold rounded-lg shadow-md hover:bg-cyan-600 transition-colors">
-                                    + Nouveau client
-                                </button>
-                            </div>
-                            <div class="mt-4">
-                                <label for="customer-search-input" class="block text-sm font-medium text-gray-700 mb-1">Rechercher un client</label>
-                                <input type="text" id="customer-search-input" list="customer-options" placeholder="Nom, telephone ou email"
-                                    class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500" />
-                                <datalist id="customer-options"></datalist>
-                                <input type="hidden" id="customer-id" />
-                                <p class="text-xs text-gray-500 mt-1">Tapez un nom, un numero ou un email pour retrouver un client.</p>
-                            </div>
-                            <div class="mt-3">
-                                <label for="customer-free-name" class="block text-sm font-medium text-gray-700 mb-1">Client libre</label>
-                                <input type="text" id="customer-free-name" placeholder="Nom du client (optionnel)"
-                                    class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500" />
-                                <p class="text-xs text-gray-500 mt-1">Utilisez ce champ si le client n'est pas enregistre.</p>
-                            </div>
+                            </button>
                             <div id="customer-selected-card" class="mt-4 hidden p-4 rounded-lg border border-cyan-100 bg-cyan-50">
-                                <div class="flex flex-col gap-3">
+                                <div class="flex items-start justify-between gap-3">
                                     <div>
                                         <p id="customer-selected-name" class="text-sm font-semibold text-gray-800">-</p>
                                         <p id="customer-selected-contact" class="text-xs text-gray-500">-</p>
                                     </div>
-                                    <div class="flex items-center gap-3">
-                                        <button id="customer-history-button" class="hidden text-xs font-semibold text-cyan-700 hover:text-cyan-900">Historique</button>
-                                        <button id="clear-customer-selection" class="text-xs font-semibold text-gray-600 hover:text-gray-800">Vente sans client</button>
-                                    </div>
+                                    <button id="change-customer-selection" class="text-xs font-semibold text-cyan-700 hover:text-cyan-900">Changer</button>
+                                </div>
+                                <div class="flex items-center gap-3 mt-3">
+                                    <button id="customer-history-button" class="hidden text-xs font-semibold text-cyan-700 hover:text-cyan-900">Historique</button>
+                                    <button id="clear-customer-selection" class="text-xs font-semibold text-gray-600 hover:text-gray-800">Vente sans client</button>
                                 </div>
                             </div>
                         </div>
@@ -673,12 +675,15 @@
                         </div>
                     </div>
                 </div>
-                <div class="mt-10 bg-white p-6 rounded-lg shadow-sm">
-                    <h2 class="text-xl font-bold text-gray-800">Historique des ventes</h2>
-                    <p class="text-sm text-gray-500 mt-1">Liste de toutes les transactions enregistrées.</p>
+            </div>
 
+            <!-- Page: Historique des ventes -->
+            <div id="page-Historique-des-ventes" class="page-content p-4 md:p-8 hidden">
+                <h1 class="text-3xl font-bold text-gray-800">Historique des ventes</h1>
+                <p class="text-gray-500 mt-1">Liste de toutes les transactions enregistrées.</p>
+                <div class="mt-6 bg-white p-6 rounded-lg shadow-sm">
                     <!-- Conteneur pour l'historique des ventes -->
-                    <div id="sales-history-container" class="mt-6">
+                    <div id="sales-history-container">
                         <!-- Message si vide -->
                         <div id="sales-history-placeholder"
                             class="flex flex-col items-center justify-center text-center text-gray-500 h-32">
@@ -1512,11 +1517,54 @@
         </main>
     </div>
 
+    <!-- Modal: Sélectionner un client -->
+    <div id="customer-select-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-xl p-6 m-4 max-h-[90vh] flex flex-col">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-bold text-gray-800">Sélectionner un client</h2>
+                <button id="close-customer-select-modal-button" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="mt-4 relative">
+                <input type="text" id="customer-select-search" placeholder="Rechercher un client..."
+                    class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" />
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+            </div>
+            <button id="open-new-customer-modal-button"
+                class="mt-4 w-full inline-flex items-center justify-center px-4 py-3 bg-cyan-500 text-white text-sm font-semibold rounded-xl shadow-md hover:bg-cyan-600 transition-colors">
+                <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Créer un nouveau client
+            </button>
+            <div class="mt-4 flex-1 overflow-hidden">
+                <div id="customer-select-placeholder"
+                    class="flex items-center justify-center text-sm text-gray-400 h-32 border border-dashed border-gray-200 rounded-xl">
+                    Aucun client enregistré.
+                </div>
+                <div id="customer-select-list" class="hidden space-y-3 max-h-80 overflow-y-auto pr-1">
+                    <!-- Clients insérés par JS -->
+                </div>
+            </div>
+            <button id="continue-without-customer-button"
+                class="mt-4 w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-colors">
+                Continuer sans client
+            </button>
+        </div>
+    </div>
+
     <!-- Modal: Nouveau client -->
     <div id="customer-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 m-4">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-gray-800">Ajouter un client</h2>
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 m-4">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800">Nouveau client</h2>
                 <button id="close-customer-modal-button" class="text-gray-400 hover:text-gray-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -1526,35 +1574,36 @@
             <form id="customer-form" class="space-y-4">
                 <div>
                     <label class="text-sm font-medium text-gray-600" for="customer-name">Nom complet *</label>
-                    <input type="text" id="customer-name"
+                    <input type="text" id="customer-name" placeholder="Ex: Jean Dupont"
                         class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition"
                         required />
                 </div>
                 <div>
-                    <label class="text-sm font-medium text-gray-600" for="customer-phone">Telephone</label>
-                    <input type="tel" id="customer-phone"
-                        class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" />
-                </div>
-                <div>
                     <label class="text-sm font-medium text-gray-600" for="customer-email">Email</label>
-                    <input type="email" id="customer-email"
+                    <input type="email" id="customer-email" placeholder="jean.dupont@email.com"
                         class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" />
                 </div>
                 <div>
-                    <label class="text-sm font-medium text-gray-600" for="customer-address">Adresse</label>
-                    <input type="text" id="customer-address"
+                    <label class="text-sm font-medium text-gray-600" for="customer-phone">Téléphone</label>
+                    <input type="tel" id="customer-phone" placeholder="+225 01 02 03 04 05"
                         class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" />
                 </div>
                 <div>
-                    <label class="text-sm font-medium text-gray-600" for="customer-notes">Notes</label>
-                    <textarea id="customer-notes" rows="3"
-                        class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition"></textarea>
+                    <label class="text-sm font-medium text-gray-600" for="customer-address">Adresse (optionnel)</label>
+                    <input type="text" id="customer-address" placeholder="Rue, ville, pays"
+                        class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" />
                 </div>
                 <div id="customer-error" class="text-red-500 text-sm hidden"></div>
-                <button type="submit" id="customer-submit-button"
-                    class="w-full bg-cyan-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-600 transition-colors">
-                    Enregistrer le client
-                </button>
+                <div class="flex gap-3 pt-4">
+                    <button type="button" id="back-to-customer-select-button"
+                        class="w-1/2 px-4 py-3 rounded-xl border border-gray-200 bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-colors">
+                        Retour
+                    </button>
+                    <button type="submit" id="customer-submit-button"
+                        class="w-1/2 bg-cyan-500 text-white font-semibold py-3 px-4 rounded-xl hover:bg-cyan-600 transition-colors">
+                        Enregistrer le client
+                    </button>
+                </div>
             </form>
         </div>
     </div>
@@ -2078,14 +2127,13 @@
             const salesProductsTableContainer = document.getElementById('sales-products-table-container');
             const salesProductsTbody = document.getElementById('sales-products-tbody');
             const salesProductsLimitNote = document.getElementById('sales-products-limit-note');
-            const customerSearchInput = document.getElementById('customer-search-input');
-            const customerOptions = document.getElementById('customer-options');
             const customerIdInput = document.getElementById('customer-id');
-            const customerFreeNameInput = document.getElementById('customer-free-name');
             const customerSelectedCard = document.getElementById('customer-selected-card');
             const customerSelectedName = document.getElementById('customer-selected-name');
             const customerSelectedContact = document.getElementById('customer-selected-contact');
             const customerHistoryButton = document.getElementById('customer-history-button');
+            const openCustomerSelectButton = document.getElementById('open-customer-select-button');
+            const changeCustomerSelectionButton = document.getElementById('change-customer-selection');
             const orderSummaryList = document.getElementById('order-summary-list');
             const orderSummaryTotal = document.getElementById('order-summary-total');
             const orderSummaryNote = document.getElementById('order-summary-note');
@@ -2154,9 +2202,9 @@
             const restockStockWarning = document.getElementById('restock-stock-warning');
             const restockError = document.getElementById('restock-error');
             const restockSubmitButton = document.getElementById('restock-submit-button');
-            const openCustomerModalButton = document.getElementById('open-customer-modal-button');
             const customerModal = document.getElementById('customer-modal');
             const closeCustomerModalButton = document.getElementById('close-customer-modal-button');
+            const backToCustomerSelectButton = document.getElementById('back-to-customer-select-button');
             const customerForm = document.getElementById('customer-form');
             const customerNameInput = document.getElementById('customer-name');
             const customerPhoneInput = document.getElementById('customer-phone');
@@ -2165,6 +2213,13 @@
             const customerNotesInput = document.getElementById('customer-notes');
             const customerError = document.getElementById('customer-error');
             const customerSubmitButton = document.getElementById('customer-submit-button');
+            const customerSelectModal = document.getElementById('customer-select-modal');
+            const closeCustomerSelectModalButton = document.getElementById('close-customer-select-modal-button');
+            const customerSelectSearchInput = document.getElementById('customer-select-search');
+            const customerSelectList = document.getElementById('customer-select-list');
+            const customerSelectPlaceholder = document.getElementById('customer-select-placeholder');
+            const openNewCustomerModalButton = document.getElementById('open-new-customer-modal-button');
+            const continueWithoutCustomerButton = document.getElementById('continue-without-customer-button');
 
             const successToast = document.getElementById('success-toast');
             const successToastMessage = document.getElementById('success-toast-message');
@@ -2267,13 +2322,11 @@
                 if (selectedCustomer.email) contactParts.push(selectedCustomer.email);
                 if (selectedCustomer.address) contactParts.push(selectedCustomer.address);
                 customerSelectedName.textContent = name;
-                customerSelectedContact.textContent = contactParts.length ? contactParts.join(' | ') : 'Informations non renseignees';
+                customerSelectedContact.textContent = contactParts.length ? contactParts.join(' | ') : 'Informations non renseignées';
                 customerSelectedCard.classList.remove('hidden');
             }
 
             function renderCustomerOptions() {
-                if (!customerOptions) return;
-                customerOptions.innerHTML = '';
                 customerOptionLookup = {};
                 const customers = Object.values(appData.customers || {}).sort((a, b) => {
                     const nameA = (a.fullName || a.name || '').toLowerCase();
@@ -2282,55 +2335,92 @@
                 });
                 customers.forEach(customer => {
                     const label = buildCustomerOptionLabel(customer);
-                    const option = document.createElement('option');
-                    option.value = label;
-                    customerOptions.appendChild(option);
                     const normalizedLabel = normalizeString(label);
                     if (normalizedLabel) customerOptionLookup[normalizedLabel] = customer;
                     if (customer.fullName) customerOptionLookup[normalizeString(customer.fullName)] = customer;
                     if (customer.phone) customerOptionLookup[normalizePhone(customer.phone)] = customer;
                     if (customer.email) customerOptionLookup[normalizeString(customer.email)] = customer;
                 });
+                renderCustomerSelectList(customerSelectSearchInput ? customerSelectSearchInput.value : '');
+            }
+
+            function renderCustomerSelectList(filter = '') {
+                if (!customerSelectList || !customerSelectPlaceholder) return;
+                const normalizedFilter = normalizeString(filter);
+                const customers = Object.values(appData.customers || {}).sort((a, b) => {
+                    const nameA = (a.fullName || a.name || '').toLowerCase();
+                    const nameB = (b.fullName || b.name || '').toLowerCase();
+                    return nameA.localeCompare(nameB);
+                });
+                const filtered = customers.filter(customer => {
+                    if (!normalizedFilter) return true;
+                    const name = normalizeString(customer.fullName || customer.name || '');
+                    const email = normalizeString(customer.email || '');
+                    const address = normalizeString(customer.address || '');
+                    const phone = normalizePhone(customer.phone || '');
+                    return name.includes(normalizedFilter)
+                        || email.includes(normalizedFilter)
+                        || address.includes(normalizedFilter)
+                        || phone.includes(normalizePhone(filter));
+                });
+
+                if (!filtered.length) {
+                    customerSelectPlaceholder.classList.remove('hidden');
+                    customerSelectList.classList.add('hidden');
+                    customerSelectList.innerHTML = '';
+                    return;
+                }
+
+                customerSelectPlaceholder.classList.add('hidden');
+                customerSelectList.classList.remove('hidden');
+                customerSelectList.innerHTML = filtered.map(customer => {
+                    const name = customer.fullName || customer.name || 'Client';
+                    const email = customer.email ? `<p class="text-xs text-gray-500">${customer.email}</p>` : '';
+                    const phone = customer.phone ? `<p class="text-xs text-gray-500">${customer.phone}</p>` : '';
+                    const address = customer.address ? `<p class="text-xs text-gray-400">${customer.address}</p>` : '';
+                    return `
+                        <button type="button" data-customer-id="${customer.id}"
+                            class="w-full text-left p-4 border border-gray-200 rounded-xl hover:border-cyan-300 hover:bg-cyan-50/30 transition">
+                            <div class="flex items-start gap-3">
+                                <div class="w-10 h-10 rounded-full bg-cyan-50 text-cyan-600 flex items-center justify-center">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M5.121 17.804A4 4 0 0112 15a4 4 0 016.879 2.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-sm font-semibold text-gray-900">${name}</p>
+                                    ${email}
+                                    ${phone}
+                                    ${address}
+                                </div>
+                                <svg class="w-5 h-5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </div>
+                        </button>
+                    `;
+                }).join('');
             }
 
             function applySelectedCustomer(customer) {
                 selectedCustomer = customer || null;
                 if (customerIdInput) customerIdInput.value = customer?.id || '';
-                if (customerSearchInput) customerSearchInput.value = customer ? buildCustomerOptionLabel(customer) : '';
-                if (customerFreeNameInput) {
-                    if (customer) {
-                        customerFreeNameInput.value = customer.fullName || customer.name || '';
-                        customerFreeNameInput.readOnly = true;
-                        customerFreeNameInput.classList.add('bg-gray-100');
-                    } else {
-                        customerFreeNameInput.readOnly = false;
-                        customerFreeNameInput.classList.remove('bg-gray-100');
-                    }
-                }
                 updateCustomerSelectedCard();
                 updateCustomerHistoryVisibility();
                 renderCustomerHistory();
             }
 
-            function clearSelectedCustomer(preserveSearch = false, preserveManual = false) {
+            function clearSelectedCustomer() {
                 selectedCustomer = null;
                 if (customerIdInput) customerIdInput.value = '';
-                if (customerSearchInput && !preserveSearch) customerSearchInput.value = '';
-                if (customerFreeNameInput) {
-                    if (!preserveManual) customerFreeNameInput.value = '';
-                    customerFreeNameInput.readOnly = false;
-                    customerFreeNameInput.classList.remove('bg-gray-100');
-                }
                 updateCustomerSelectedCard();
                 updateCustomerHistoryVisibility();
                 renderCustomerHistory();
             }
 
             function getCustomerContext() {
-                const manualName = customerFreeNameInput ? customerFreeNameInput.value.trim() : '';
-                const searchName = customerSearchInput ? customerSearchInput.value.trim() : '';
-                const fallbackName = manualName || searchName || 'Client comptoir';
-                const customerName = selectedCustomer?.fullName || selectedCustomer?.name || fallbackName || '';
+                const customerName = selectedCustomer?.fullName || selectedCustomer?.name || 'Client comptoir';
                 return {
                     customerId: selectedCustomer?.id || null,
                     customerName,
@@ -2444,6 +2534,16 @@
                 return Object.values(groups).sort((a, b) => new Date(b.date) - new Date(a.date));
             }
 
+            function openCustomerSelectModal() {
+                if (customerSelectSearchInput) customerSelectSearchInput.value = '';
+                renderCustomerSelectList('');
+                if (customerSelectModal) customerSelectModal.classList.remove('hidden');
+            }
+
+            function closeCustomerSelectModal() {
+                if (customerSelectModal) customerSelectModal.classList.add('hidden');
+            }
+
             function openCustomerModalDialog() {
                 if (customerError) customerError.classList.add('hidden');
                 if (customerForm) customerForm.reset();
@@ -2492,6 +2592,7 @@
             const pagePermissions = {
                 'Tableau de bord': null, // Accessible à tous
                 'Ventes': 'Ventes',
+                'Historique des ventes': 'Ventes',
                 'Stock Boutique': 'Stock Boutique',
                 'Mon Magasin': 'Mon Magasin',
                 'Statistiques': 'Statistiques',
@@ -4486,33 +4587,52 @@
             if (authToggleSignup) authToggleSignup.addEventListener('click', () => { isLoginView = false; updateAuthFormView(); });
             if (loginModeAdminButton) loginModeAdminButton.addEventListener('click', () => { isCodeLoginMode = false; updateLoginModeUI(); });
             if (loginModeCodeButton) loginModeCodeButton.addEventListener('click', () => { isCodeLoginMode = true; updateLoginModeUI(); });
-            if (openCustomerModalButton) openCustomerModalButton.addEventListener('click', openCustomerModalDialog);
+            if (openCustomerSelectButton) openCustomerSelectButton.addEventListener('click', openCustomerSelectModal);
+            if (changeCustomerSelectionButton) changeCustomerSelectionButton.addEventListener('click', openCustomerSelectModal);
+            if (closeCustomerSelectModalButton) closeCustomerSelectModalButton.addEventListener('click', closeCustomerSelectModal);
+            if (customerSelectModal) {
+                customerSelectModal.addEventListener('click', (event) => {
+                    if (event.target === customerSelectModal) closeCustomerSelectModal();
+                });
+            }
+            if (customerSelectSearchInput) {
+                customerSelectSearchInput.addEventListener('input', () => {
+                    renderCustomerSelectList(customerSelectSearchInput.value);
+                });
+            }
+            if (customerSelectList) {
+                customerSelectList.addEventListener('click', (event) => {
+                    const button = event.target.closest('button[data-customer-id]');
+                    if (!button) return;
+                    const customer = appData.customers?.[button.dataset.customerId];
+                    if (customer) {
+                        applySelectedCustomer({ id: button.dataset.customerId, ...customer });
+                        closeCustomerSelectModal();
+                    }
+                });
+            }
+            if (openNewCustomerModalButton) {
+                openNewCustomerModalButton.addEventListener('click', () => {
+                    closeCustomerSelectModal();
+                    openCustomerModalDialog();
+                });
+            }
+            if (continueWithoutCustomerButton) {
+                continueWithoutCustomerButton.addEventListener('click', () => {
+                    clearSelectedCustomer();
+                    closeCustomerSelectModal();
+                });
+            }
             if (closeCustomerModalButton) closeCustomerModalButton.addEventListener('click', closeCustomerModalDialog);
+            if (backToCustomerSelectButton) {
+                backToCustomerSelectButton.addEventListener('click', () => {
+                    closeCustomerModalDialog();
+                    openCustomerSelectModal();
+                });
+            }
             if (customerModal) {
                 customerModal.addEventListener('click', (event) => {
                     if (event.target === customerModal) closeCustomerModalDialog();
-                });
-            }
-            if (customerSearchInput) {
-                customerSearchInput.addEventListener('change', () => {
-                    const normalizedValue = normalizeString(customerSearchInput.value);
-                    const match = customerOptionLookup[normalizedValue] || customerOptionLookup[normalizePhone(customerSearchInput.value)];
-                    if (match) {
-                        applySelectedCustomer(match);
-                    } else if (customerSearchInput.value.trim() === '') {
-                        clearSelectedCustomer(true, true);
-                    } else if (customerFreeNameInput) {
-                        customerFreeNameInput.value = customerSearchInput.value.trim();
-                        clearSelectedCustomer(true, true);
-                    }
-                });
-                customerSearchInput.addEventListener('input', () => {
-                    if (selectedCustomer) clearSelectedCustomer(true, true);
-                });
-            }
-            if (customerFreeNameInput) {
-                customerFreeNameInput.addEventListener('input', () => {
-                    if (selectedCustomer) clearSelectedCustomer(true, true);
                 });
             }
             if (customerHistoryButton) {
