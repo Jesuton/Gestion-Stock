@@ -2931,6 +2931,27 @@
                                 <span>${formatCurrency(summary.tax, summary.currency)}</span>
                             </div>
                         ` : '';
+                        const statusHtml = group.payLater
+                            ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-700">A payer plus tard</span>`
+                            : `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-50 text-green-700">Complétée</span>`;
+                        const markPaidButtonHtml = group.payLater ? `
+                            <button type="button" data-history-action="mark-paid" data-history-id="${group.id}"
+                                class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                Marquer comme payé
+                            </button>
+                        ` : '';
+                        const detailsButtonHtml = `
+                            <button type="button" data-history-action="details" data-history-id="${group.id}"
+                                class="${group.payLater ? 'inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700' : 'flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700'}">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Voir détails
+                            </button>
+                        `;
                         return `
                             <div class="border border-gray-200 rounded-2xl shadow-sm bg-white overflow-hidden">
                                 <div class="p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -2943,8 +2964,7 @@
                                         <div>
                                             <div class="flex items-center gap-2 flex-wrap">
                                                 <p class="font-semibold text-gray-900">INV-${group.id.slice(-6).toUpperCase()}</p>
-                                                <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-50 text-green-700">Complétée</span>
-                                                ${group.payLater ? `<button type="button" data-history-action="details" data-history-id="${group.id}" class="px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 hover:bg-purple-200">A payer plus tard</button>` : ''}
+                                                ${statusHtml}
                                             </div>
                                             <div class="mt-1 flex flex-wrap items-center gap-3 text-xs text-gray-500">
                                                 <span>${dateLabel}</span>
@@ -2981,27 +3001,24 @@
                                         </div>
                                     </div>
                                     <div class="mt-4 flex flex-col md:flex-row gap-3">
-                                        <button type="button" data-history-action="details" data-history-id="${group.id}"
-                                            class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700">
-                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            Voir détails
-                                        </button>
-                                        <button type="button" data-history-action="print" data-history-id="${group.id}"
-                                            class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gray-900 text-white font-semibold hover:bg-gray-800">
-                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9V4h12v5M6 18h12v2H6v-2zM6 14h12v4H6v-4z" />
-                                            </svg>
-                                            Imprimer
-                                        </button>
-                                        <button type="button" data-history-action="email" data-history-id="${group.id}"
-                                            class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-purple-600 text-white font-semibold hover:bg-purple-700">
-                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l9 6 9-6M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
-                                            </svg>
-                                            Email
-                                        </button>
+                                        ${markPaidButtonHtml}
+                                        ${detailsButtonHtml}
+                                        ${group.payLater ? '' : `
+                                            <button type="button" data-history-action="print" data-history-id="${group.id}"
+                                                class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gray-900 text-white font-semibold hover:bg-gray-800">
+                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9V4h12v5M6 18h12v2H6v-2zM6 14h12v4H6v-4z" />
+                                                </svg>
+                                                Imprimer
+                                            </button>
+                                            <button type="button" data-history-action="email" data-history-id="${group.id}"
+                                                class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-purple-600 text-white font-semibold hover:bg-purple-700">
+                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l9 6 9-6M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
+                                                </svg>
+                                                Email
+                                            </button>
+                                        `}
                                     </div>
                                 </div>
                             </div>
@@ -3147,7 +3164,7 @@
                 if (salesDetailCustomerEmail) salesDetailCustomerEmail.textContent = customerEmail;
                 if (salesDetailSellerName) salesDetailSellerName.textContent = `Vendeur : ${sellerName}`;
                 if (salesDetailDate) salesDetailDate.textContent = formatDateForDisplay(group.date);
-                if (salesDetailPayment) salesDetailPayment.textContent = 'Non renseigné';
+                if (salesDetailPayment) salesDetailPayment.textContent = group.payLater ? 'A payer plus tard' : 'Payée';
                 if (salesDetailProducts) salesDetailProducts.innerHTML = itemsHtml;
                 if (salesDetailComment) salesDetailComment.textContent = commentText;
                 if (salesDetailCommentSection) salesDetailCommentSection.classList.toggle('hidden', !commentText);
@@ -4885,6 +4902,50 @@
                 return finalizeSale({ generateInvoice: false, payLater: true });
             }
 
+            async function markPayLaterAsPaid(groupId) {
+                if (!currentUser || !dbBasePath || !groupId) return;
+                try {
+                    const salesHistoryEntries = Object.values(appData.salesHistory || {});
+                    const updates = {};
+                    const hasGroup = salesHistoryEntries.some(sale => sale.saleGroupId === groupId);
+
+                    if (hasGroup) {
+                        updates[`${dbBasePath}/sales/${groupId}/paymentStatus`] = 'paid';
+                        updates[`${dbBasePath}/sales/${groupId}/payLater`] = false;
+                    }
+
+                    salesHistoryEntries.forEach(sale => {
+                        if (sale.saleGroupId === groupId || sale.id === groupId) {
+                            updates[`${dbBasePath}/salesHistory/${sale.id}/paymentStatus`] = 'paid';
+                            updates[`${dbBasePath}/salesHistory/${sale.id}/payLater`] = false;
+                        }
+                    });
+
+                    if (Object.keys(updates).length === 0) {
+                        showSalesErrorMessage('Impossible de trouver cette vente à mettre à jour.');
+                        return;
+                    }
+
+                    await update(ref(db), updates);
+
+                    salesHistoryEntries.forEach(sale => {
+                        if (sale.saleGroupId === groupId || sale.id === groupId) {
+                            sale.paymentStatus = 'paid';
+                            sale.payLater = false;
+                        }
+                    });
+
+                    renderSalesHistory();
+                    if (activeSalesDetailId === groupId) {
+                        openSalesDetailModal(groupId);
+                    }
+                    showSuccessToast('Vente marquée comme payée.');
+                } catch (error) {
+                    console.error(error);
+                    alert('Une erreur est survenue lors de la mise à jour du paiement.');
+                }
+            }
+
             async function validatePendingSale(pendingId) {
                 if (!currentUser || !dbBasePath || !pendingId) return;
                 const pendingSales = getPendingSalesFromStorage();
@@ -5498,6 +5559,10 @@
                         if (!groupId) return;
                         if (action === 'details') {
                             openSalesDetailModal(groupId);
+                            return;
+                        }
+                        if (action === 'mark-paid') {
+                            markPayLaterAsPaid(groupId);
                             return;
                         }
                         if (action === 'print') {
