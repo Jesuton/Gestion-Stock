@@ -518,7 +518,15 @@
                                 </div>
                                 <button id="validate-cart-button"
                                     class="w-full py-3 bg-gray-300 text-white font-semibold rounded-xl shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
+                                    Valider la vente
+                                </button>
+                                <button id="generate-invoice-button"
+                                    class="w-full py-3 bg-gray-300 text-white font-semibold rounded-xl shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
                                     Générer la facture
+                                </button>
+                                <button id="pay-later-button"
+                                    class="w-full py-3 bg-gray-300 text-white font-semibold rounded-xl shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
+                                    A payer plus tard
                                 </button>
                                 <button id="hold-cart-button"
                                     class="w-full py-3 border border-gray-200 bg-white text-gray-700 font-semibold rounded-xl hover:bg-gray-100 transition-colors disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400">
@@ -601,6 +609,21 @@
                                 Exporter
                             </button>
                         </div>
+                    </div>
+
+                    <div id="sales-history-pay-later-card" class="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                            <div>
+                                <h2 class="text-lg font-semibold text-amber-900">A payer plus tard</h2>
+                                <p class="text-sm text-amber-700">Transactions en attente de paiement</p>
+                            </div>
+                            <span id="sales-history-pay-later-count"
+                                class="px-3 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">0</span>
+                        </div>
+                        <div id="sales-history-pay-later-empty" class="mt-4 text-sm text-amber-700">
+                            Aucune transaction en attente de paiement.
+                        </div>
+                        <div id="sales-history-pay-later-list" class="mt-4 space-y-3 hidden"></div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -2186,6 +2209,10 @@
             const salesHistoryStatPending = document.getElementById('sales-history-stat-pending');
             const salesHistoryStatToday = document.getElementById('sales-history-stat-today');
             const salesHistoryStatTotal = document.getElementById('sales-history-stat-total');
+            const salesHistoryPayLaterCard = document.getElementById('sales-history-pay-later-card');
+            const salesHistoryPayLaterList = document.getElementById('sales-history-pay-later-list');
+            const salesHistoryPayLaterEmpty = document.getElementById('sales-history-pay-later-empty');
+            const salesHistoryPayLaterCount = document.getElementById('sales-history-pay-later-count');
             const salesProductSearch = document.getElementById('sales-product-search');
             const salesCategoryFilters = document.getElementById('sales-category-filters');
             const salesProductsContainer = document.getElementById('sales-products-container');
@@ -2215,6 +2242,8 @@
             const cartTotal = document.getElementById('cart-total');
             const cartTaxRow = document.getElementById('cart-tax-row');
             const validateCartButton = document.getElementById('validate-cart-button');
+            const generateInvoiceButton = document.getElementById('generate-invoice-button');
+            const payLaterButton = document.getElementById('pay-later-button');
             const holdCartButton = document.getElementById('hold-cart-button');
             const holdCommentInput = document.getElementById('hold-comment');
             const holdCommentError = document.getElementById('hold-comment-error');
@@ -2642,7 +2671,8 @@
                             items: [],
                             total: 0,
                             currency: getSaleCurrency(sale),
-                            comments: []
+                            comments: [],
+                            payLater: false
                         };
                     }
                     const group = groups[groupId];
@@ -2659,6 +2689,7 @@
                     });
                     group.total += sale.totalAmount || 0;
                     if (sale.comment && !group.comments.includes(sale.comment)) group.comments.push(sale.comment);
+                    if (sale.payLater === true || sale.paymentStatus === 'pay_later') group.payLater = true;
                 });
 
                 return Object.values(groups).sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -2758,6 +2789,54 @@
                 const todayRevenue = groups
                     .filter(group => new Date(group.date) >= todayStart)
                     .reduce((sum, group) => sum + (group.total * getTaxMultiplier()), 0);
+                const payLaterGroups = groups.filter(group => group.payLater);
+
+                if (salesHistoryPayLaterCount) salesHistoryPayLaterCount.textContent = payLaterGroups.length;
+                if (salesHistoryPayLaterList && salesHistoryPayLaterEmpty) {
+                    if (!payLaterGroups.length) {
+                        salesHistoryPayLaterEmpty.classList.remove('hidden');
+                        salesHistoryPayLaterList.classList.add('hidden');
+                        salesHistoryPayLaterList.innerHTML = '';
+                    } else {
+                        salesHistoryPayLaterEmpty.classList.add('hidden');
+                        salesHistoryPayLaterList.classList.remove('hidden');
+                        salesHistoryPayLaterList.innerHTML = payLaterGroups.map(group => {
+                            const customerLabel = group.customerName || (group.customerId && appData.customers?.[group.customerId]?.fullName) || 'Client comptoir';
+                            const itemsCount = group.items.reduce((sum, item) => sum + item.quantity, 0);
+                            const summary = calculateItemsSummary(group.items.map(item => ({
+                                sellingPrice: item.price,
+                                quantity: item.quantity,
+                                currency: group.currency
+                            })));
+                            const { dateLabel, timeLabel } = formatHistoryDateParts(group.date);
+                            return `
+                                <div class="bg-white border border-amber-200 rounded-2xl p-4">
+                                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                                        <div>
+                                            <div class="flex items-center gap-2 flex-wrap">
+                                                <p class="font-semibold text-amber-900">INV-${group.id.slice(-6).toUpperCase()}</p>
+                                                <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">A payer plus tard</span>
+                                            </div>
+                                            <div class="mt-1 flex flex-wrap items-center gap-3 text-xs text-amber-700">
+                                                <span>${dateLabel}</span>
+                                                <span>${timeLabel}</span>
+                                                <span>${itemsCount} article${itemsCount > 1 ? 's' : ''}</span>
+                                                <span>${customerLabel}</span>
+                                            </div>
+                                        </div>
+                                        <div class="flex flex-col items-start md:items-end gap-2">
+                                            <p class="text-lg font-semibold text-amber-800">${formatCurrency(summary.total, summary.currency)}</p>
+                                            <button type="button" data-history-action="details" data-history-id="${group.id}"
+                                                class="inline-flex items-center justify-center px-3 py-2 rounded-lg text-xs font-semibold bg-amber-500 text-white hover:bg-amber-600">
+                                                Voir détails
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                    }
+                }
 
                 if (salesHistoryCompletedCount) salesHistoryCompletedCount.textContent = completedCount;
                 if (salesHistoryPendingCount) salesHistoryPendingCount.textContent = pendingCount;
@@ -2885,6 +2964,7 @@
                                             <div class="flex items-center gap-2 flex-wrap">
                                                 <p class="font-semibold text-gray-900">INV-${group.id.slice(-6).toUpperCase()}</p>
                                                 <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-50 text-green-700">Complétée</span>
+                                                ${group.payLater ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">A payer plus tard</span>` : ''}
                                             </div>
                                             <div class="mt-1 flex flex-wrap items-center gap-3 text-xs text-gray-500">
                                                 <span>${dateLabel}</span>
@@ -4560,6 +4640,17 @@
                         validateCartButton.classList.add('bg-gray-300');
                         validateCartButton.classList.remove('bg-cyan-500', 'hover:bg-cyan-600');
                     }
+                    if (generateInvoiceButton) {
+                        generateInvoiceButton.disabled = true;
+                        generateInvoiceButton.classList.add('bg-gray-300');
+                        generateInvoiceButton.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                    }
+                    if (payLaterButton) {
+                        payLaterButton.disabled = true;
+                        payLaterButton.title = 'Ajoutez des articles pour marquer à payer plus tard';
+                        payLaterButton.classList.add('bg-gray-300');
+                        payLaterButton.classList.remove('bg-amber-500', 'hover:bg-amber-600');
+                    }
                     if (holdCartButton) {
                         holdCartButton.disabled = true;
                         holdCartButton.title = 'Ajoutez des articles pour mettre en attente';
@@ -4571,6 +4662,19 @@
                     validateCartButton.disabled = false;
                     validateCartButton.classList.remove('bg-gray-300');
                     validateCartButton.classList.add('bg-cyan-500', 'hover:bg-cyan-600');
+                }
+                if (generateInvoiceButton) {
+                    generateInvoiceButton.disabled = false;
+                    generateInvoiceButton.classList.remove('bg-gray-300');
+                    generateInvoiceButton.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                }
+                if (payLaterButton) {
+                    const canPayLater = hasItems && !!selectedCustomer;
+                    payLaterButton.disabled = !canPayLater;
+                    payLaterButton.title = canPayLater ? '' : 'Sélectionnez un client pour marquer à payer plus tard';
+                    payLaterButton.classList.toggle('bg-gray-300', !canPayLater);
+                    payLaterButton.classList.toggle('bg-amber-500', canPayLater);
+                    payLaterButton.classList.toggle('hover:bg-amber-600', canPayLater);
                 }
                 if (holdCartButton) {
                     holdCartButton.disabled = !canHold;
@@ -4648,10 +4752,14 @@
                 showSuccessToast('Panier mis en attente');
             }
 
-            async function validateCart() {
+            async function finalizeSale({ generateInvoice = false, payLater = false } = {}) {
                 if (!currentUser || !dbBasePath) return;
                 if (cartItems.length === 0) {
                     alert('Le panier est vide !');
+                    return;
+                }
+                if (payLater && !selectedCustomer) {
+                    showSalesErrorMessage("Sélectionnez un client pour marquer la vente 'A payer plus tard'.");
                     return;
                 }
 
@@ -4665,7 +4773,9 @@
                 }
 
                 try {
-                    if (validateCartButton) validateCartButton.disabled = true;
+                    [validateCartButton, generateInvoiceButton, payLaterButton].filter(Boolean).forEach(btn => {
+                        btn.disabled = true;
+                    });
 
                     const updates = {};
                     const now = new Date().toISOString();
@@ -4676,6 +4786,13 @@
                     const summary = calculateCartSummary();
                     const totalAmount = summary.total;
                     const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+                    const paymentStatus = payLater ? 'pay_later' : 'paid';
+                    const itemsSnapshot = cartItems.map(item => ({
+                        name: item.name,
+                        quantity: item.quantity,
+                        price: item.sellingPrice,
+                        total: item.sellingPrice * item.quantity
+                    }));
 
                     updates[`${dbBasePath}/sales/${saleGroupId}`] = {
                         id: saleGroupId,
@@ -4688,7 +4805,9 @@
                         total: totalAmount,
                         itemsCount: totalItems,
                         status: 'validee',
-                        comment
+                        comment,
+                        paymentStatus,
+                        payLater: payLater === true
                     };
 
                     // Traiter chaque article du panier
@@ -4730,46 +4849,60 @@
                             customerPhone: customerContext.customerPhone || '',
                             customerEmail: customerContext.customerEmail || '',
                             comment,
+                            paymentStatus,
+                            payLater: payLater === true,
                             date: now
                         };
                     }
 
                     await update(ref(db), updates);
 
-                    showSuccessToast(`Vente groupée enregistrée ! Total: ${formatCurrency(totalAmount, summary.currency)}`);
-
-                    // Préparer les données pour la facture
-                    const invoiceData = {
-                        companyName: currentUserData?.companyName || 'Mon Entreprise',
-                        sellerName,
-                        customerName: customerContext.customerName || '',
-                        customerPhone: customerContext.customerPhone || '',
-                        customerEmail: customerContext.customerEmail || '',
-                        date: now,
-                        items: cartItems.map(item => ({
-                            name: item.name,
-                            quantity: item.quantity,
-                            price: item.sellingPrice,
-                            total: item.sellingPrice * item.quantity
-                        })),
-                        total: totalAmount,
-                        currency: summary.currency,
-                        comment
-                    };
+                    if (payLater) {
+                        showSuccessToast(`Vente enregistrée : A payer plus tard · Total: ${formatCurrency(totalAmount, summary.currency)}`);
+                    } else if (generateInvoice) {
+                        showSuccessToast(`Vente enregistrée et facture générée · Total: ${formatCurrency(totalAmount, summary.currency)}`);
+                    } else {
+                        showSuccessToast(`Vente enregistrée · Total: ${formatCurrency(totalAmount, summary.currency)}`);
+                    }
 
                     // Vider le panier et réinitialiser le formulaire
                     cartItems = [];
                     if (holdCommentInput) holdCommentInput.value = '';
-                    renderCart();
                     renderSalesHistory();
-                    await generateInvoicePDF(invoiceData);
+                    if (generateInvoice) {
+                        const invoiceData = {
+                            companyName: currentUserData?.companyName || 'Mon Entreprise',
+                            sellerName,
+                            customerName: customerContext.customerName || '',
+                            customerPhone: customerContext.customerPhone || '',
+                            customerEmail: customerContext.customerEmail || '',
+                            date: now,
+                            items: itemsSnapshot,
+                            total: totalAmount,
+                            currency: summary.currency,
+                            comment
+                        };
+                        await generateInvoicePDF(invoiceData);
+                    }
 
                 } catch (error) {
                     console.error(error);
                     alert('Une erreur est survenue lors de la validation de la vente');
                 } finally {
-                    if (validateCartButton) validateCartButton.disabled = false;
+                    renderCart();
                 }
+            }
+
+            function validateCart() {
+                return finalizeSale({ generateInvoice: false, payLater: false });
+            }
+
+            function generateInvoiceFromCart() {
+                return finalizeSale({ generateInvoice: true, payLater: false });
+            }
+
+            function markPayLaterFromCart() {
+                return finalizeSale({ generateInvoice: false, payLater: true });
             }
 
             async function validatePendingSale(pendingId) {
@@ -4814,7 +4947,9 @@
                         total: totalAmount,
                         itemsCount: totalItems,
                         status: 'validee',
-                        comment
+                        comment,
+                        paymentStatus: 'paid',
+                        payLater: false
                     };
 
                     for (const item of items) {
@@ -4852,6 +4987,8 @@
                             customerPhone: customer.phone || '',
                             customerEmail: customer.email || '',
                             comment,
+                            paymentStatus: 'paid',
+                            payLater: false,
                             date: now
                         };
                     }
@@ -5339,6 +5476,8 @@
                 });
             }
             if (validateCartButton) validateCartButton.addEventListener('click', validateCart);
+            if (generateInvoiceButton) generateInvoiceButton.addEventListener('click', generateInvoiceFromCart);
+            if (payLaterButton) payLaterButton.addEventListener('click', markPayLaterFromCart);
             if (holdCartButton) holdCartButton.addEventListener('click', holdCart);
             if (salesHistoryTabCompleted) {
                 salesHistoryTabCompleted.addEventListener('click', () => {
@@ -5392,6 +5531,18 @@
                     const cancelButton = event.target.closest('[data-pending-cancel]');
                     if (cancelButton) {
                         cancelPendingSale(cancelButton.dataset.pendingCancel);
+                    }
+                });
+            }
+            if (salesHistoryPayLaterList) {
+                salesHistoryPayLaterList.addEventListener('click', (event) => {
+                    const actionButton = event.target.closest('[data-history-action]');
+                    if (!actionButton) return;
+                    const action = actionButton.dataset.historyAction;
+                    const groupId = actionButton.dataset.historyId;
+                    if (!groupId) return;
+                    if (action === 'details') {
+                        openSalesDetailModal(groupId);
                     }
                 });
             }
