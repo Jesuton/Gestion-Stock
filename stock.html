@@ -205,6 +205,11 @@
                     <div data-icon="box" class="w-5 h-5"></div>
                     <span class="sidebar-text">Mon Magasin</span>
                 </button>
+                <button data-page="Mouvements Magasin"
+                    class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
+                    <div data-icon="clock" class="w-5 h-5"></div>
+                    <span class="sidebar-text">Mouvements Magasin</span>
+                </button>
                 <button data-page="Statistiques"
                     class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
                     <div data-icon="stats" class="w-5 h-5"></div>
@@ -947,18 +952,26 @@
                     </div>
 
                 </div>
-                <div class="mt-10 bg-white p-6 rounded-lg shadow-sm">
-                    <h2 class="text-xl font-bold text-gray-800">Mouvements du Magasin</h2>
-                    <p class="text-sm text-gray-500 mt-1">Historique de toutes les entrées et sorties du magasin.</p>
+            </div>
 
-                    <!-- Conteneur pour les mouvements du magasin -->
-                    <div id="store-movements-container" class="mt-6">
-                        <!-- Message si vide (visible par défaut) -->
+            <!-- Page: Mouvements Magasin -->
+            <div id="page-Mouvements-Magasin" class="page-content p-4 md:p-8 hidden">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center">
+                        <div data-icon="clock" class="w-5 h-5"></div>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Historique des mouvements</h1>
+                        <p class="text-sm text-gray-500">Suivi des entrées, sorties et transferts du magasin.</p>
+                    </div>
+                </div>
+
+                <div class="mt-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                    <div id="store-movements-container" class="mt-2">
                         <div id="store-movements-placeholder"
                             class="flex flex-col items-center justify-center text-center text-gray-500 h-32">
                             <p>Aucun mouvement enregistré.</p>
                         </div>
-                        <!-- Tableau si non vide (caché par défaut) -->
                         <div id="store-movements-table-container"
                             class="hidden overflow-x-auto rounded-lg border border-gray-200">
                             <table class="min-w-full bg-white divide-y divide-gray-200">
@@ -975,13 +988,19 @@
                                             Quantité</th>
                                         <th scope="col"
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Changement Stock</th>
+                                            Changement</th>
                                         <th scope="col"
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Commentaire</th>
                                         <th scope="col"
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Date</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Statut</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Action</th>
                                     </tr>
                                 </thead>
                                 <tbody id="store-movements-tbody" class="divide-y divide-gray-200">
@@ -2143,6 +2162,7 @@
                 trash: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>`,
                 arrowUp: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>`,
                 arrowDown: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>`,
+                clock: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v5l3 3" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 100-18 9 9 0 000 18z" /></svg>`,
                 menu: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>`,
                 arrowLeft: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>`,
                 arrowRight: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>`
@@ -2196,7 +2216,7 @@
             let currentUserData = null;
             let dbBasePath = '';
 
-            const appData = { storeProducts: {}, shopStock: {}, salesHistory: {}, customers: {}, storeExitRequests: {} };
+            const appData = { storeProducts: {}, storeMovements: {}, shopStock: {}, salesHistory: {}, customers: {}, storeExitRequests: {} };
             let isSidebarOpen = false;
             let isSidebarCollapsed = false;
             let isCodeLoginMode = false;
@@ -3330,6 +3350,7 @@
                 'Historique des ventes': 'Ventes',
                 'Stock Boutique': 'Stock Boutique',
                 'Mon Magasin': 'Mon Magasin',
+                'Mouvements Magasin': 'Mon Magasin',
                 'Statistiques': 'Statistiques',
                 'Paramètres': 'admin-only' // Cas spécial pour admin seulement
             };
@@ -4685,41 +4706,120 @@
                 }
             }
 
-            function onStoreMovementsValue(snapshot) {
-                const movements = snapshot.val();
-                if (movements) {
-                    const filteredMovements = Object.values(movements).filter(move => {
-                        const comment = (move?.comment || '').toString().trim().toLowerCase();
-                        return !comment.startsWith('vente');
-                    });
-                    if (!filteredMovements.length) {
-                        storeMovementsPlaceholder.classList.remove('hidden');
-                        storeMovementsTableContainer.classList.add('hidden');
-                        storeMovementsTbody.innerHTML = '';
-                        return;
-                    }
-                    storeMovementsPlaceholder.classList.add('hidden');
-                    storeMovementsTableContainer.classList.remove('hidden');
-                    let html = '';
-                    const sortedMovements = filteredMovements.sort((a, b) => new Date(b.date) - new Date(a.date));
-                    sortedMovements.forEach(move => {
-                        const isEntry = move.type === 'Entrée';
-                        html += `
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${move.productName}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${move.type}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${isEntry ? 'text-green-600' : 'text-red-600'}">${isEntry ? '+' : '-'}${move.quantityChange}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${move.newStock}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${move.comment}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(move.date)}</td>
-                            </tr>`;
-                    });
-                    storeMovementsTbody.innerHTML = html;
-                } else {
+            function formatMovementDate(value) {
+                const date = new Date(value);
+                if (Number.isNaN(date.getTime())) return '-';
+                const pad = (num) => String(num).padStart(2, '0');
+                return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+            }
+
+            function getMovementTypeBadge(move) {
+                const comment = (move?.comment || '').toString().toLowerCase();
+                if (comment.includes('transfert')) {
+                    return { label: 'Transfert', classes: 'bg-purple-100 text-purple-700' };
+                }
+                if (move?.type === 'Entrée') {
+                    return { label: 'Entrée', classes: 'bg-emerald-100 text-emerald-700' };
+                }
+                if (move?.type === 'Sortie') {
+                    return { label: 'Sortie', classes: 'bg-orange-100 text-orange-700' };
+                }
+                return { label: move?.type || '—', classes: 'bg-gray-100 text-gray-600' };
+            }
+
+            function getStatusBadge(status) {
+                if (status === EXIT_STATUS_PENDING) return { label: 'En attente', classes: 'bg-yellow-100 text-yellow-700' };
+                if (status === EXIT_STATUS_REJECTED) return { label: 'Refusé', classes: 'bg-red-100 text-red-700' };
+                return { label: 'Validé', classes: 'bg-blue-100 text-blue-700' };
+            }
+
+            function renderStoreMovementsPage() {
+                if (!storeMovementsPlaceholder || !storeMovementsTableContainer || !storeMovementsTbody) return;
+                const movements = Object.values(appData.storeMovements || {}).filter(move => {
+                    const comment = (move?.comment || '').toString().trim().toLowerCase();
+                    return !comment.startsWith('vente');
+                });
+                const pendingRequests = Object.values(appData.storeExitRequests || {}).filter(request => request.status === EXIT_STATUS_PENDING);
+                const combined = [
+                    ...movements.map(move => ({ kind: 'movement', data: move, date: move.date })),
+                    ...pendingRequests.map(request => ({ kind: 'request', data: request, date: request.requestedAt || request.date }))
+                ].filter(item => item.date);
+
+                if (!combined.length) {
                     storeMovementsPlaceholder.classList.remove('hidden');
                     storeMovementsTableContainer.classList.add('hidden');
                     storeMovementsTbody.innerHTML = '';
+                    return;
                 }
+
+                combined.sort((a, b) => new Date(b.date) - new Date(a.date));
+                storeMovementsPlaceholder.classList.add('hidden');
+                storeMovementsTableContainer.classList.remove('hidden');
+
+                const canApprove = getCurrentUserRole() === 'admin';
+                storeMovementsTbody.innerHTML = combined.map(item => {
+                    if (item.kind === 'request') {
+                        const request = item.data;
+                        const qty = parseInt(request.quantity, 10) || 0;
+                        const changeValue = -Math.abs(qty);
+                        const statusBadge = getStatusBadge(request.status);
+                        const comment = request.comment ? request.comment : 'Sortie en attente';
+                        const customerLine = request.customerName ? `<p class="text-xs text-gray-500 mt-1">Client: ${request.customerName}</p>` : '';
+                        const actionHtml = canApprove
+                            ? `<button type="button" data-approve-exit="${request.id}" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-green-600 text-white hover:bg-green-700">Valider</button>`
+                            : `<span class="text-xs text-gray-400">Admin requis</span>`;
+                        return `
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${request.productName || '-'}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-700">Sortie</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">${Math.abs(qty)}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-red-600">${changeValue}</td>
+                                <td class="px-6 py-4 text-sm text-gray-600">
+                                    <p>${comment}</p>
+                                    ${customerLine}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatMovementDate(item.date)}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${statusBadge.classes}">${statusBadge.label}</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right">
+                                    ${actionHtml}
+                                </td>
+                            </tr>`;
+                    }
+
+                    const move = item.data;
+                    const qty = parseInt(move.quantityChange, 10) || 0;
+                    const isEntry = move.type === 'Entrée';
+                    const changeValue = isEntry ? Math.abs(qty) : -Math.abs(qty);
+                    const typeBadge = getMovementTypeBadge(move);
+                    const statusBadge = getStatusBadge(EXIT_STATUS_APPROVED);
+                    const comment = move.comment ? move.comment : '-';
+                    return `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${move.productName || '-'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${typeBadge.classes}">${typeBadge.label}</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">${Math.abs(qty)}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${changeValue >= 0 ? 'text-emerald-600' : 'text-red-600'}">${changeValue >= 0 ? '+' : ''}${changeValue}</td>
+                            <td class="px-6 py-4 text-sm text-gray-600">${comment}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatMovementDate(item.date)}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${statusBadge.classes}">${statusBadge.label}</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right">
+                                <span class="text-xs text-gray-400">—</span>
+                            </td>
+                        </tr>`;
+                }).join('');
+            }
+
+            function onStoreMovementsValue(snapshot) {
+                appData.storeMovements = snapshot.val() || {};
+                renderStoreMovementsPage();
             }
 
             function renderPendingExitRequests() {
@@ -4842,6 +4942,7 @@
             function onStoreExitRequestsValue(snapshot) {
                 appData.storeExitRequests = snapshot.val() || {};
                 renderPendingExitRequests();
+                renderStoreMovementsPage();
             }
 
             function onStoreProductsValue(snapshot) {
@@ -5003,7 +5104,7 @@
                 if (companyCustomersListener && companyCustomersRef) off(companyCustomersRef, companyCustomersListener);
 
                 storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; salesHistoryListener = null; companyMembersListener = null; companyCustomersListener = null;
-                appData.storeProducts = {}; appData.shopStock = {}; appData.salesHistory = {}; appData.customers = {}; appData.storeExitRequests = {};
+                appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.salesHistory = {}; appData.customers = {}; appData.storeExitRequests = {};
                 selectedCustomer = null;
                 customerOptionLookup = {};
                 isCustomerHistoryOpen = false;
@@ -6035,6 +6136,18 @@
                                 await remove(ref(db, `${dbBasePath}/storeProducts/${btn.dataset.productId}`));
                                 showSuccessToast('Produit supprimé du magasin');
                             } catch (err) { console.error(err); }
+                        }
+                    }
+                });
+            }
+
+            if (storeMovementsTableContainer) {
+                storeMovementsTableContainer.addEventListener('click', (event) => {
+                    const approveButton = event.target.closest('button[data-approve-exit]');
+                    if (approveButton) {
+                        const requestId = approveButton.dataset.approveExit;
+                        if (requestId && confirm("Valider cette sortie ?")) {
+                            approveExitRequest(requestId);
                         }
                     }
                 });
