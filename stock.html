@@ -350,6 +350,8 @@
                                     <g id="dashboard-sales-dots" fill="#3B82F6"></g>
                                     <polyline id="dashboard-orders-line" fill="none" stroke="#10B981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="" />
                                     <g id="dashboard-orders-dots" fill="#10B981"></g>
+                                    <line id="dashboard-chart-guide" x1="0" y1="40" x2="0" y2="240" stroke="#CBD5F5" stroke-width="1" class="hidden" />
+                                    <g id="dashboard-hover-points"></g>
                                     <g fill="#6B7280" font-size="12">
                                         <text x="60" y="258">Lun</text>
                                         <text x="160" y="258">Mar</text>
@@ -360,6 +362,12 @@
                                         <text x="650" y="258">Dim</text>
                                     </g>
                                 </svg>
+                                <div id="dashboard-chart-tooltip"
+                                    class="absolute hidden rounded-xl border border-gray-200 bg-white px-4 py-3 text-xs text-gray-600 shadow-lg pointer-events-none z-10">
+                                    <p id="dashboard-tooltip-day" class="text-sm font-semibold text-gray-900">—</p>
+                                    <p id="dashboard-tooltip-sales" class="mt-2 text-blue-600">Ventes : 0</p>
+                                    <p id="dashboard-tooltip-orders" class="mt-1 text-emerald-600">Commandes : 0</p>
+                                </div>
                             </div>
                             <div class="flex items-center justify-center gap-6 text-xs text-gray-500 mt-3">
                                 <span class="inline-flex items-center gap-2">
@@ -3450,10 +3458,17 @@
                 const salesDots = document.getElementById('dashboard-sales-dots');
                 const ordersLine = document.getElementById('dashboard-orders-line');
                 const ordersDots = document.getElementById('dashboard-orders-dots');
+                const hoverPoints = document.getElementById('dashboard-hover-points');
+                const guideLine = document.getElementById('dashboard-chart-guide');
+                const tooltip = document.getElementById('dashboard-chart-tooltip');
+                const tooltipDay = document.getElementById('dashboard-tooltip-day');
+                const tooltipSales = document.getElementById('dashboard-tooltip-sales');
+                const tooltipOrders = document.getElementById('dashboard-tooltip-orders');
+                const chartSvg = document.getElementById('dashboard-weekly-sales-chart');
                 const maxLabel = document.getElementById('dashboard-chart-max');
                 const midLabel = document.getElementById('dashboard-chart-mid');
                 const minLabel = document.getElementById('dashboard-chart-min');
-                if (!salesLine || !ordersLine || !salesDots || !ordersDots || !maxLabel || !midLabel || !minLabel) return;
+                if (!salesLine || !ordersLine || !salesDots || !ordersDots || !hoverPoints || !guideLine || !tooltip || !tooltipDay || !tooltipSales || !tooltipOrders || !chartSvg || !maxLabel || !midLabel || !minLabel) return;
 
                 const startOfWeek = getStartOfWeek(new Date());
                 const dailySales = Array(7).fill(0);
@@ -3481,12 +3496,17 @@
                 const chartBottom = 240;
                 const chartHeight = chartBottom - chartTop;
                 const toY = value => chartBottom - (value / chartMax) * chartHeight;
+                const dayLabels = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+                const chartWidth = 700;
+                const chartHeightTotal = 260;
+                const container = chartSvg.parentElement;
+                const weeklyCurrency = groups.find(group => (group.total || 0) > 0)?.currency || 'CFA';
 
                 const salesPoints = xPositions.map((x, index) => `${x},${toY(dailySales[index])}`).join(' ');
                 salesLine.setAttribute('points', salesPoints);
                 salesDots.innerHTML = xPositions.map((x, index) => {
                     const y = toY(dailySales[index]);
-                    return `<circle cx="${x}" cy="${y}" r="4"></circle>`;
+                    return `<circle class="dashboard-sales-dot" data-index="${index}" cx="${x}" cy="${y}" r="4"></circle>`;
                 }).join('');
 
                 const maxOrders = Math.max(...dailyOrders, 0);
@@ -3497,8 +3517,97 @@
                 ordersLine.setAttribute('points', ordersPoints);
                 ordersDots.innerHTML = xPositions.map((x, index) => {
                     const y = toY(ordersScaled[index]);
-                    return `<circle cx="${x}" cy="${y}" r="4"></circle>`;
+                    return `<circle class="dashboard-orders-dot" data-index="${index}" cx="${x}" cy="${y}" r="4"></circle>`;
                 }).join('');
+
+                hoverPoints.innerHTML = xPositions.map((x, index) => {
+                    const y = toY(dailySales[index]);
+                    return `
+                        <circle class="dashboard-hover-point" data-index="${index}" data-day="${dayLabels[index]}" data-sales="${dailySales[index]}" data-orders="${dailyOrders[index]}"
+                            cx="${x}" cy="${y}" r="18" fill="transparent" style="cursor: pointer;"></circle>
+                    `;
+                }).join('');
+
+                const resetDots = () => {
+                    salesDots.querySelectorAll('.dashboard-sales-dot').forEach(dot => {
+                        dot.setAttribute('r', '4');
+                        dot.removeAttribute('fill');
+                        dot.removeAttribute('stroke');
+                        dot.removeAttribute('stroke-width');
+                    });
+                    ordersDots.querySelectorAll('.dashboard-orders-dot').forEach(dot => {
+                        dot.setAttribute('r', '4');
+                        dot.removeAttribute('fill');
+                        dot.removeAttribute('stroke');
+                        dot.removeAttribute('stroke-width');
+                    });
+                };
+
+                const hideTooltip = () => {
+                    tooltip.classList.add('hidden');
+                    guideLine.classList.add('hidden');
+                    resetDots();
+                };
+
+                const showTooltip = (index) => {
+                    const day = dayLabels[index] || '';
+                    const salesValue = dailySales[index] || 0;
+                    const ordersValue = dailyOrders[index] || 0;
+                    const x = xPositions[index];
+                    const y = toY(dailySales[index]);
+
+                    tooltipDay.textContent = day;
+                    tooltipSales.textContent = `Ventes : ${formatCurrency(salesValue, weeklyCurrency)}`;
+                    tooltipOrders.textContent = `Commandes : ${ordersValue}`;
+                    tooltip.classList.remove('hidden');
+
+                    const svgRect = chartSvg.getBoundingClientRect();
+                    const containerRect = container.getBoundingClientRect();
+                    const xPos = ((x / chartWidth) * svgRect.width) + (svgRect.left - containerRect.left);
+                    const yPos = ((y / chartHeightTotal) * svgRect.height) + (svgRect.top - containerRect.top);
+
+                    const tooltipWidth = tooltip.offsetWidth || 160;
+                    const tooltipHeight = tooltip.offsetHeight || 80;
+                    let left = xPos + 14;
+                    if (left + tooltipWidth > containerRect.width - 8) {
+                        left = xPos - tooltipWidth - 14;
+                    }
+                    left = Math.max(8, left);
+                    let top = yPos - tooltipHeight - 12;
+                    if (top < 8) {
+                        top = yPos + 14;
+                    }
+                    tooltip.style.left = `${left}px`;
+                    tooltip.style.top = `${top}px`;
+
+                    guideLine.setAttribute('x1', `${x}`);
+                    guideLine.setAttribute('x2', `${x}`);
+                    guideLine.classList.remove('hidden');
+
+                    resetDots();
+                    const salesDot = salesDots.querySelector(`.dashboard-sales-dot[data-index="${index}"]`);
+                    if (salesDot) {
+                        salesDot.setAttribute('r', '6');
+                        salesDot.setAttribute('fill', '#FFFFFF');
+                        salesDot.setAttribute('stroke', '#3B82F6');
+                        salesDot.setAttribute('stroke-width', '2');
+                    }
+                    const ordersDot = ordersDots.querySelector(`.dashboard-orders-dot[data-index="${index}"]`);
+                    if (ordersDot) {
+                        ordersDot.setAttribute('r', '6');
+                        ordersDot.setAttribute('fill', '#FFFFFF');
+                        ordersDot.setAttribute('stroke', '#10B981');
+                        ordersDot.setAttribute('stroke-width', '2');
+                    }
+                };
+
+                hoverPoints.querySelectorAll('.dashboard-hover-point').forEach(point => {
+                    const index = Number(point.getAttribute('data-index'));
+                    point.addEventListener('mouseenter', () => showTooltip(index));
+                    point.addEventListener('mouseleave', hideTooltip);
+                });
+
+                chartSvg.onmouseleave = hideTooltip;
             }
 
             function renderDashboardTopProducts() {
