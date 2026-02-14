@@ -611,7 +611,7 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
                         <div class="rounded-2xl p-5 text-white bg-gradient-to-r from-blue-500 to-blue-600">
                             <p class="text-sm opacity-90">Ventes complétées</p>
                             <div class="mt-3 flex items-center justify-between">
@@ -630,6 +630,17 @@
                                 <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
                                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3M12 6a6 6 0 100 12 6 6 0 000-12z" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="rounded-2xl p-5 text-white bg-gradient-to-r from-fuchsia-500 to-pink-500">
+                            <p class="text-sm opacity-90">A payer plus tard</p>
+                            <div class="mt-3 flex items-center justify-between">
+                                <p id="sales-history-stat-paylater" class="text-3xl font-bold">0 FCFA</p>
+                                <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 11h18M5 7v10a2 2 0 002 2h10a2 2 0 002-2V7" />
                                     </svg>
                                 </div>
                             </div>
@@ -658,21 +669,6 @@
                         </div>
                     </div>
 
-                    <div id="sales-history-pay-later-card" class="bg-amber-50 border border-amber-200 rounded-2xl p-5">
-                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                            <div>
-                                <h2 class="text-lg font-semibold text-amber-900">A payer plus tard</h2>
-                                <p class="text-sm text-amber-700">Transactions en attente de paiement</p>
-                            </div>
-                            <span id="sales-history-pay-later-count"
-                                class="px-3 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">0</span>
-                        </div>
-                        <div id="sales-history-pay-later-empty" class="mt-4 text-sm text-amber-700">
-                            Aucune transaction en attente de paiement.
-                        </div>
-                        <div id="sales-history-pay-later-list" class="mt-4 space-y-3 hidden"></div>
-                    </div>
-
                     <div class="flex flex-wrap gap-3">
                         <button id="sales-history-tab-completed"
                             class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-blue-600 text-white shadow">
@@ -693,6 +689,16 @@
                                 Ventes en attente
                             </span>
                             <span id="sales-history-pending-count" class="px-2 py-0.5 rounded-full text-xs bg-gray-200">0</span>
+                        </button>
+                        <button id="sales-history-tab-paylater"
+                            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200">
+                            <span class="inline-flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 11h18M5 7v10a2 2 0 002 2h10a2 2 0 002-2V7" />
+                                </svg>
+                                A payer plus tard
+                            </span>
+                            <span id="sales-history-paylater-count" class="px-2 py-0.5 rounded-full text-xs bg-gray-200">0</span>
                         </button>
                     </div>
 
@@ -2203,16 +2209,15 @@
             const salesHistoryDateFilter = document.getElementById('sales-history-date-filter');
             const salesHistoryTabCompleted = document.getElementById('sales-history-tab-completed');
             const salesHistoryTabPending = document.getElementById('sales-history-tab-pending');
+            const salesHistoryTabPayLater = document.getElementById('sales-history-tab-paylater');
             const salesHistoryCompletedCount = document.getElementById('sales-history-completed-count');
             const salesHistoryPendingCount = document.getElementById('sales-history-pending-count');
+            const salesHistoryPayLaterCount = document.getElementById('sales-history-paylater-count');
             const salesHistoryStatCompleted = document.getElementById('sales-history-stat-completed');
             const salesHistoryStatPending = document.getElementById('sales-history-stat-pending');
             const salesHistoryStatToday = document.getElementById('sales-history-stat-today');
             const salesHistoryStatTotal = document.getElementById('sales-history-stat-total');
-            const salesHistoryPayLaterCard = document.getElementById('sales-history-pay-later-card');
-            const salesHistoryPayLaterList = document.getElementById('sales-history-pay-later-list');
-            const salesHistoryPayLaterEmpty = document.getElementById('sales-history-pay-later-empty');
-            const salesHistoryPayLaterCount = document.getElementById('sales-history-pay-later-count');
+            const salesHistoryStatPayLater = document.getElementById('sales-history-stat-paylater');
             const salesProductSearch = document.getElementById('sales-product-search');
             const salesCategoryFilters = document.getElementById('sales-category-filters');
             const salesProductsContainer = document.getElementById('sales-products-container');
@@ -2780,9 +2785,10 @@
 
                 const groups = buildSalesHistoryGroups();
                 const pendingSales = getPendingSalesFromStorage();
-                const completedCount = groups.length;
+                const paidGroups = groups.filter(group => !group.payLater);
+                const completedCount = paidGroups.length;
                 const pendingCount = pendingSales.length;
-                const completedCurrency = groups[0]?.currency || 'CFA';
+                const completedCurrency = paidGroups[0]?.currency || groups[0]?.currency || 'CFA';
                 const totalRevenue = groups.reduce((sum, group) => sum + (group.total * getTaxMultiplier()), 0);
                 const todayStart = new Date();
                 todayStart.setHours(0, 0, 0, 0);
@@ -2790,61 +2796,14 @@
                     .filter(group => new Date(group.date) >= todayStart)
                     .reduce((sum, group) => sum + (group.total * getTaxMultiplier()), 0);
                 const payLaterGroups = groups.filter(group => group.payLater);
-
-                if (salesHistoryPayLaterCount) salesHistoryPayLaterCount.textContent = payLaterGroups.length;
-                if (salesHistoryPayLaterList && salesHistoryPayLaterEmpty) {
-                    if (!payLaterGroups.length) {
-                        salesHistoryPayLaterEmpty.classList.remove('hidden');
-                        salesHistoryPayLaterList.classList.add('hidden');
-                        salesHistoryPayLaterList.innerHTML = '';
-                    } else {
-                        salesHistoryPayLaterEmpty.classList.add('hidden');
-                        salesHistoryPayLaterList.classList.remove('hidden');
-                        salesHistoryPayLaterList.innerHTML = payLaterGroups.map(group => {
-                            const customerLabel = group.customerName || (group.customerId && appData.customers?.[group.customerId]?.fullName) || 'Client comptoir';
-                            const itemsCount = group.items.reduce((sum, item) => sum + item.quantity, 0);
-                            const summary = calculateItemsSummary(group.items.map(item => ({
-                                sellingPrice: item.price,
-                                quantity: item.quantity,
-                                currency: group.currency
-                            })));
-                            const { dateLabel, timeLabel } = formatHistoryDateParts(group.date);
-                            return `
-                                <div class="bg-white border border-amber-200 rounded-2xl p-4">
-                                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                                        <div>
-                                            <div class="flex items-center gap-2 flex-wrap">
-                                                <p class="font-semibold text-amber-900">INV-${group.id.slice(-6).toUpperCase()}</p>
-                                                <button type="button" data-history-action="details" data-history-id="${group.id}"
-                                                    class="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 hover:bg-amber-200">
-                                                    A payer plus tard
-                                                </button>
-                                            </div>
-                                            <div class="mt-1 flex flex-wrap items-center gap-3 text-xs text-amber-700">
-                                                <span>${dateLabel}</span>
-                                                <span>${timeLabel}</span>
-                                                <span>${itemsCount} article${itemsCount > 1 ? 's' : ''}</span>
-                                                <span>${customerLabel}</span>
-                                            </div>
-                                        </div>
-                                        <div class="flex flex-col items-start md:items-end gap-2">
-                                            <p class="text-lg font-semibold text-amber-800">${formatCurrency(summary.total, summary.currency)}</p>
-                                            <button type="button" data-history-action="details" data-history-id="${group.id}"
-                                                class="inline-flex items-center justify-center px-3 py-2 rounded-lg text-xs font-semibold bg-amber-500 text-white hover:bg-amber-600">
-                                                Voir détails
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                        }).join('');
-                    }
-                }
+                const payLaterTotal = payLaterGroups.reduce((sum, group) => sum + (group.total * getTaxMultiplier()), 0);
 
                 if (salesHistoryCompletedCount) salesHistoryCompletedCount.textContent = completedCount;
                 if (salesHistoryPendingCount) salesHistoryPendingCount.textContent = pendingCount;
+                if (salesHistoryPayLaterCount) salesHistoryPayLaterCount.textContent = payLaterGroups.length;
                 if (salesHistoryStatCompleted) salesHistoryStatCompleted.textContent = completedCount;
                 if (salesHistoryStatPending) salesHistoryStatPending.textContent = pendingCount;
+                if (salesHistoryStatPayLater) salesHistoryStatPayLater.textContent = formatCurrency(payLaterTotal, completedCurrency);
                 if (salesHistoryStatToday) salesHistoryStatToday.textContent = formatCurrency(todayRevenue, completedCurrency);
                 if (salesHistoryStatTotal) salesHistoryStatTotal.textContent = formatCurrency(totalRevenue, completedCurrency);
 
@@ -2876,6 +2835,20 @@
                         salesHistoryPendingCount.classList.toggle('text-gray-600', !isActive);
                     }
                 }
+                if (salesHistoryTabPayLater) {
+                    const isActive = salesHistoryTab === 'pay_later';
+                    salesHistoryTabPayLater.classList.toggle('bg-purple-600', isActive);
+                    salesHistoryTabPayLater.classList.toggle('text-white', isActive);
+                    salesHistoryTabPayLater.classList.toggle('shadow', isActive);
+                    salesHistoryTabPayLater.classList.toggle('bg-gray-100', !isActive);
+                    salesHistoryTabPayLater.classList.toggle('text-gray-600', !isActive);
+                    if (salesHistoryPayLaterCount) {
+                        salesHistoryPayLaterCount.classList.toggle('bg-white/20', isActive);
+                        salesHistoryPayLaterCount.classList.toggle('bg-gray-200', !isActive);
+                        salesHistoryPayLaterCount.classList.toggle('text-white', isActive);
+                        salesHistoryPayLaterCount.classList.toggle('text-gray-600', !isActive);
+                    }
+                }
 
                 const filteredGroups = groups.filter(group => {
                     if (!isDateInFilter(group.date, salesHistoryDateFilterValue)) return false;
@@ -2893,6 +2866,8 @@
                     ];
                     return matchesHistorySearch(salesHistorySearch, values);
                 });
+                const filteredPaid = filteredGroups.filter(group => !group.payLater);
+                const filteredPayLater = filteredGroups.filter(group => group.payLater);
 
                 const filteredPending = pendingSales.filter(pending => {
                     if (!isDateInFilter(pending.createdAt || pending.date, salesHistoryDateFilterValue)) return false;
@@ -2911,7 +2886,8 @@
                 });
 
                 const showCompleted = salesHistoryTab === 'completed';
-                const list = showCompleted ? filteredGroups : filteredPending;
+                const showPayLater = salesHistoryTab === 'pay_later';
+                const list = showCompleted ? filteredPaid : (showPayLater ? filteredPayLater : filteredPending);
                 if (!list.length) {
                     salesHistoryEmpty.classList.remove('hidden');
                     salesHistoryList.classList.add('hidden');
@@ -2922,8 +2898,9 @@
                 salesHistoryEmpty.classList.add('hidden');
                 salesHistoryList.classList.remove('hidden');
 
-                if (showCompleted) {
-                    salesHistoryList.innerHTML = filteredGroups.map(group => {
+                if (showCompleted || showPayLater) {
+                    const groupsToRender = showPayLater ? filteredPayLater : filteredPaid;
+                    salesHistoryList.innerHTML = groupsToRender.map(group => {
                         const customerLabel = group.customerName || (group.customerId && appData.customers?.[group.customerId]?.fullName) || 'Client comptoir';
                         const customerEmail = group.customerEmail || (group.customerId && appData.customers?.[group.customerId]?.email) || '';
                         const itemsCount = group.items.reduce((sum, item) => sum + item.quantity, 0);
@@ -2967,7 +2944,7 @@
                                             <div class="flex items-center gap-2 flex-wrap">
                                                 <p class="font-semibold text-gray-900">INV-${group.id.slice(-6).toUpperCase()}</p>
                                                 <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-50 text-green-700">Complétée</span>
-                                                ${group.payLater ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">A payer plus tard</span>` : ''}
+                                                ${group.payLater ? `<button type="button" data-history-action="details" data-history-id="${group.id}" class="px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 hover:bg-purple-200">A payer plus tard</button>` : ''}
                                             </div>
                                             <div class="mt-1 flex flex-wrap items-center gap-3 text-xs text-gray-500">
                                                 <span>${dateLabel}</span>
@@ -5494,6 +5471,12 @@
                     renderSalesHistory();
                 });
             }
+            if (salesHistoryTabPayLater) {
+                salesHistoryTabPayLater.addEventListener('click', () => {
+                    salesHistoryTab = 'pay_later';
+                    renderSalesHistory();
+                });
+            }
             if (salesHistorySearchInput) {
                 salesHistorySearchInput.addEventListener('input', (event) => {
                     salesHistorySearch = event.target.value;
@@ -5534,18 +5517,6 @@
                     const cancelButton = event.target.closest('[data-pending-cancel]');
                     if (cancelButton) {
                         cancelPendingSale(cancelButton.dataset.pendingCancel);
-                    }
-                });
-            }
-            if (salesHistoryPayLaterList) {
-                salesHistoryPayLaterList.addEventListener('click', (event) => {
-                    const actionButton = event.target.closest('[data-history-action]');
-                    if (!actionButton) return;
-                    const action = actionButton.dataset.historyAction;
-                    const groupId = actionButton.dataset.historyId;
-                    if (!groupId) return;
-                    if (action === 'details') {
-                        openSalesDetailModal(groupId);
                     }
                 });
             }
