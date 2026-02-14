@@ -2225,6 +2225,9 @@
             const EXIT_STATUS_PENDING = 'en attente de validation';
             const EXIT_STATUS_APPROVED = 'validée';
             const EXIT_STATUS_REJECTED = 'refusée';
+            const SALE_SOURCE_SHOP = 'shop';
+            const SALE_SOURCE_STORE = 'store_direct';
+            const SALE_SOURCE_MIXED = 'mixed';
 
 
             let storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, salesHistoryListener, companyMembersListener, companyCustomersListener, storeExitRequestsListener;
@@ -2556,11 +2559,33 @@
             }
 
             function getSaleCurrency(sale) {
+                if (!sale) return 'CFA';
+                if (sale.currency) return sale.currency;
+                if (sale.storeProductId && appData.storeProducts?.[sale.storeProductId]?.currency) {
+                    return appData.storeProducts[sale.storeProductId].currency || 'CFA';
+                }
                 const shopItem = appData.shopStock?.[sale.shopProductId];
                 if (shopItem && appData.storeProducts[shopItem.sourceProductId]) {
                     return appData.storeProducts[shopItem.sourceProductId].currency || 'CFA';
                 }
                 return 'CFA';
+            }
+
+            function getSaleSource(sale) {
+                if (!sale) return SALE_SOURCE_SHOP;
+                const raw = (sale.saleSource || sale.source || '').toString().trim().toLowerCase();
+                if (raw) {
+                    if (raw === 'shop' || raw === 'boutique') return SALE_SOURCE_SHOP;
+                    if (raw === 'store' || raw === 'store_direct' || raw === 'magasin' || raw === 'magasin_direct') return SALE_SOURCE_STORE;
+                    if (raw === 'mixed' || raw === 'mixte') return SALE_SOURCE_MIXED;
+                }
+                return sale.shopProductId ? SALE_SOURCE_SHOP : SALE_SOURCE_STORE;
+            }
+
+            function formatSaleSourceBadge(source) {
+                if (source === SALE_SOURCE_STORE) return { label: 'Magasin direct', classes: 'bg-purple-50 text-purple-700' };
+                if (source === SALE_SOURCE_MIXED) return { label: 'Mixte', classes: 'bg-slate-100 text-slate-700' };
+                return { label: 'Boutique', classes: 'bg-cyan-50 text-cyan-700' };
             }
 
             function buildCustomerOptionLabel(customer) {
@@ -2784,7 +2809,8 @@
                             total: 0,
                             currency: getSaleCurrency(sale),
                             comments: [],
-                            payLater: false
+                            payLater: false,
+                            saleSource: getSaleSource(sale)
                         };
                     }
                     const group = groups[groupId];
@@ -2802,6 +2828,12 @@
                     group.total += sale.totalAmount || 0;
                     if (sale.comment && !group.comments.includes(sale.comment)) group.comments.push(sale.comment);
                     if (sale.payLater === true || sale.paymentStatus === 'pay_later') group.payLater = true;
+                    const saleSource = getSaleSource(sale);
+                    if (!group.saleSource) {
+                        group.saleSource = saleSource;
+                    } else if (group.saleSource !== saleSource) {
+                        group.saleSource = SALE_SOURCE_MIXED;
+                    }
                 });
 
                 return Object.values(groups).sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -2961,6 +2993,7 @@
                     if (!isDateInFilter(group.date, salesHistoryDateFilterValue)) return false;
                     if (!salesHistorySearch) return true;
                     const customerLabel = group.customerName || (group.customerId && appData.customers?.[group.customerId]?.fullName) || 'Client comptoir';
+                    const sourceLabel = formatSaleSourceBadge(group.saleSource)?.label || '';
                     const values = [
                         `INV-${group.id.slice(-6).toUpperCase()}`,
                         group.id,
@@ -2969,7 +3002,8 @@
                         group.customerPhone,
                         group.sellerName,
                         group.items.map(item => item.name).join(' '),
-                        (group.comments || []).join(' ')
+                        (group.comments || []).join(' '),
+                        sourceLabel
                     ];
                     return matchesHistorySearch(salesHistorySearch, values);
                 });
@@ -3041,6 +3075,10 @@
                         const statusHtml = group.payLater
                             ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-700">A payer plus tard</span>`
                             : `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-50 text-green-700">Complétée</span>`;
+                        const sourceBadge = formatSaleSourceBadge(group.saleSource);
+                        const sourceHtml = sourceBadge
+                            ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold ${sourceBadge.classes}">${sourceBadge.label}</span>`
+                            : '';
                         const markPaidButtonHtml = group.payLater ? `
                             <button type="button" data-history-action="mark-paid" data-history-id="${group.id}"
                                 class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700">
@@ -3072,6 +3110,7 @@
                                             <div class="flex items-center gap-2 flex-wrap">
                                                 <p class="font-semibold text-gray-900">INV-${group.id.slice(-6).toUpperCase()}</p>
                                                 ${statusHtml}
+                                                ${sourceHtml}
                                             </div>
                                             <div class="mt-1 flex flex-wrap items-center gap-3 text-xs text-gray-500">
                                                 <span>${dateLabel}</span>
@@ -3265,13 +3304,14 @@
                 const commentText = commentList.length
                     ? commentList.join(' · ')
                     : (group.comment || '').toString().trim();
+                const sourceLabel = formatSaleSourceBadge(group.saleSource)?.label || 'Boutique';
 
                 if (salesDetailTitle) salesDetailTitle.textContent = `Détails de la vente INV-${group.id.slice(-6).toUpperCase()}`;
                 if (salesDetailCustomerName) salesDetailCustomerName.textContent = customerName;
                 if (salesDetailCustomerEmail) salesDetailCustomerEmail.textContent = customerEmail;
                 if (salesDetailSellerName) salesDetailSellerName.textContent = `Vendeur : ${sellerName}`;
                 if (salesDetailDate) salesDetailDate.textContent = formatDateForDisplay(group.date);
-                if (salesDetailPayment) salesDetailPayment.textContent = group.payLater ? 'A payer plus tard' : 'Payée';
+                if (salesDetailPayment) salesDetailPayment.textContent = `${group.payLater ? 'A payer plus tard' : 'Payée'} · ${sourceLabel}`;
                 if (salesDetailProducts) salesDetailProducts.innerHTML = itemsHtml;
                 if (salesDetailComment) salesDetailComment.textContent = commentText;
                 if (salesDetailCommentSection) salesDetailCommentSection.classList.toggle('hidden', !commentText);
@@ -4721,6 +4761,9 @@
                 if (move?.type === 'Entrée') {
                     return { label: 'Entrée', classes: 'bg-emerald-100 text-emerald-700' };
                 }
+                if (move?.type === 'Sortie directe') {
+                    return { label: 'Sortie directe', classes: 'bg-orange-100 text-orange-700' };
+                }
                 if (move?.type === 'Sortie') {
                     return { label: 'Sortie', classes: 'bg-orange-100 text-orange-700' };
                 }
@@ -4890,6 +4933,7 @@
 
                 try {
                     const now = new Date().toISOString();
+                    const sellerName = currentUserData?.fullName || currentUser.email || '';
                     const newStock = product.quantityInStore - quantity;
                     const updates = {};
                     updates[`${dbBasePath}/storeProducts/${product.id}/quantityInStore`] = newStock;
@@ -4898,7 +4942,7 @@
                         id: moveKey,
                         productId: product.id,
                         productName: product.name,
-                        type: "Sortie",
+                        type: "Sortie directe",
                         quantityChange: quantity,
                         oldStock: product.quantityInStore,
                         newStock,
@@ -4906,6 +4950,29 @@
                         date: now,
                         approvedFromRequest: requestId,
                         userEmail: request.requestedByEmail || ''
+                    };
+                    const saleKey = push(ref(db, `${dbBasePath}/salesHistory`)).key;
+                    const sellingPrice = Number(product.purchaseCost ?? 0);
+                    const totalAmount = sellingPrice * quantity;
+                    updates[`${dbBasePath}/salesHistory/${saleKey}`] = {
+                        id: saleKey,
+                        storeProductId: product.id,
+                        productName: product.name,
+                        quantity,
+                        sellingPrice,
+                        totalAmount,
+                        sellerName,
+                        customerId: null,
+                        customerName: request.customerName || '',
+                        customerPhone: request.customerPhone || '',
+                        customerEmail: request.customerEmail || '',
+                        comment: request.comment || 'Sortie directe magasin',
+                        paymentStatus: 'paid',
+                        payLater: false,
+                        date: now,
+                        saleSource: SALE_SOURCE_STORE,
+                        currency: product.currency || 'CFA',
+                        approvedFromRequest: requestId
                     };
                     updates[`${dbBasePath}/storeExitRequests/${requestId}/status`] = EXIT_STATUS_APPROVED;
                     updates[`${dbBasePath}/storeExitRequests/${requestId}/validatedAt`] = now;
@@ -5582,7 +5649,8 @@
                             comment,
                             paymentStatus,
                             payLater: payLater === true,
-                            date: now
+                            date: now,
+                            saleSource: SALE_SOURCE_SHOP
                         };
                     }
 
@@ -5764,7 +5832,8 @@
                             comment,
                             paymentStatus: 'paid',
                             payLater: false,
-                            date: now
+                            date: now,
+                            saleSource: SALE_SOURCE_SHOP
                         };
                     }
 
@@ -6045,7 +6114,7 @@
                         total: sale.totalAmount
                     }],
                     total: totalWithTax,
-                    currency: appData.storeProducts[appData.shopStock[sale.shopProductId]?.sourceProductId]?.currency || 'CFA',
+                    currency: getSaleCurrency(sale) || 'CFA',
                     comment: sale.comment || ''
                 };
 
