@@ -2233,7 +2233,18 @@
             let storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, salesHistoryListener, companyMembersListener, companyCustomersListener, storeExitRequestsListener;
             let storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, salesHistoryRef, companyMembersRef, companyCustomersRef, storeExitRequestsRef;
 
-            const accessModules = ['Tableau de bord', 'Ventes', 'Stock Boutique', 'Mon Magasin', 'Statistiques', 'Paramètres', 'Supprimer Stock Boutique', 'Supprimer Stock Magasin'];
+            const accessModules = [
+                'Tableau de bord',
+                'Ventes',
+                'Historique des ventes',
+                'Stock Boutique',
+                'Mon Magasin',
+                'Mouvements Magasin',
+                'Statistiques',
+                'Paramètres',
+                'Supprimer Stock Boutique',
+                'Supprimer Stock Magasin'
+            ];
             let teamMembersState = [];
             let selectedCustomer = null;
             let customerOptionLookup = {};
@@ -3387,10 +3398,10 @@
             const pagePermissions = {
                 'Tableau de bord': null, // Accessible à tous
                 'Ventes': 'Ventes',
-                'Historique des ventes': 'Ventes',
+                'Historique des ventes': ['Historique des ventes', 'Ventes'],
                 'Stock Boutique': 'Stock Boutique',
                 'Mon Magasin': 'Mon Magasin',
-                'Mouvements Magasin': 'Mon Magasin',
+                'Mouvements Magasin': ['Mouvements Magasin', 'Mon Magasin'],
                 'Statistiques': 'Statistiques',
                 'Paramètres': 'admin-only' // Cas spécial pour admin seulement
             };
@@ -3417,6 +3428,11 @@
                     return true;
                 }
 
+                if (requiredPermission === undefined) {
+                    console.log(`[canAccessPage] Unknown page, access denied: ${pageName}`);
+                    return false;
+                }
+
                 // Si 'admin-only', seuls les admins peuvent accéder
                 if (requiredPermission === 'admin-only') {
                     console.log(`[canAccessPage] Admin-only page, access denied: ${pageName}`);
@@ -3424,7 +3440,8 @@
                 }
 
                 // Sinon, vérifier la permission
-                const hasAccess = hasPermission(requiredPermission);
+                const requiredList = Array.isArray(requiredPermission) ? requiredPermission : [requiredPermission];
+                const hasAccess = requiredList.some(permission => hasPermission(permission));
                 console.log(`[canAccessPage] Access result for ${pageName}: ${hasAccess}`);
                 return hasAccess;
             }
@@ -4544,7 +4561,11 @@
                     if (!name || !email) return;
 
                     const accessCode = generateAccessCode();
-                    const basePermissions = role === 'consultation' ? ['Tableau de bord', 'Statistiques'] : ['Tableau de bord', 'Ventes', 'Stock Boutique'];
+                    const basePermissions = role === 'consultation'
+                        ? ['Tableau de bord', 'Statistiques']
+                        : (role === 'manager'
+                            ? ['Tableau de bord', 'Ventes', 'Historique des ventes', 'Stock Boutique', 'Mon Magasin', 'Mouvements Magasin', 'Statistiques']
+                            : ['Tableau de bord', 'Ventes', 'Historique des ventes', 'Stock Boutique']);
 
                     try {
                         const newMemberRef = push(ref(db, `${dbBasePath}/members`));
