@@ -1702,7 +1702,7 @@
       MODAL "ENREGISTRER UNE ENTRÉE"
     -->
     <div id="entry-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 m-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 m-4">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold text-gray-800">Enregistrer une entrée</h2>
                 <button id="close-entry-modal-button" class="text-gray-400 hover:text-gray-600">
@@ -1715,33 +1715,42 @@
             </div>
             <form id="entry-form">
                 <div class="space-y-4">
-                    <div>
+                    <div id="entry-product-info" class="hidden rounded-xl bg-emerald-50 border border-emerald-100 p-4">
+                        <p id="entry-product-name" class="text-sm font-semibold text-gray-900">—</p>
+                        <p class="text-xs text-emerald-700 mt-1">Stock actuel: <span id="entry-product-stock">—</span></p>
+                    </div>
+                    <div id="entry-product-select-row">
                         <label for="entry-product-select" class="block text-sm font-medium text-gray-700">Produit
                             *</label>
                         <select id="entry-product-select"
-                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400"
                             required>
                             <option value="">Sélectionnez un produit</option>
                             <!-- Options remplies par JS -->
                         </select>
                     </div>
                     <div>
-                        <label for="entry-quantity" class="block text-sm font-medium text-gray-700">Quantité *</label>
+                        <label for="entry-quantity" class="block text-sm font-medium text-gray-700">Quantité à ajouter *</label>
                         <input type="number" id="entry-quantity" placeholder="0" min="1"
-                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400"
                             required>
                     </div>
                     <div>
-                        <label for="entry-comment" class="block text-sm font-medium text-gray-700">Commentaire
-                            (Optionnel)</label>
-                        <textarea id="entry-comment" placeholder="ex: Arrivage fournisseur..." rows="3"
-                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"></textarea>
+                        <label for="entry-comment" class="block text-sm font-medium text-gray-700">Commentaire</label>
+                        <textarea id="entry-comment" placeholder="Motif de l'entrée..." rows="3"
+                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400"></textarea>
                     </div>
                     <p id="entry-error" class="text-red-500 text-sm mt-2 hidden"></p>
-                    <button type="submit" id="entry-submit-button"
-                        class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
-                        Enregistrer l'entrée
-                    </button>
+                    <div class="pt-4 border-t border-gray-100 flex items-center gap-3">
+                        <button type="button" id="entry-cancel-button"
+                            class="flex-1 py-2.5 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200">
+                            Annuler
+                        </button>
+                        <button type="submit" id="entry-submit-button"
+                            class="flex-1 bg-emerald-600 text-white font-semibold py-2.5 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
+                            Valider l'entrée
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -1751,7 +1760,7 @@
       MODAL "ENREGISTRER UNE SORTIE"
     -->
     <div id="exit-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 m-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 m-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold text-gray-800">Enregistrer une sortie</h2>
                 <button id="close-exit-modal-button" class="text-gray-400 hover:text-gray-600">
@@ -1764,33 +1773,78 @@
             </div>
             <form id="exit-form">
                 <div class="space-y-4">
-                    <div>
+                    <div id="exit-product-info" class="hidden rounded-xl border border-orange-200 bg-orange-50 p-4">
+                        <div class="flex items-start gap-2 text-orange-600">
+                            <svg class="w-5 h-5 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div>
+                                <p class="text-sm font-semibold text-gray-900">Informations produit</p>
+                                <p id="exit-product-name" class="text-sm text-gray-800 mt-1">—</p>
+                                <p class="text-xs text-orange-700 mt-1">Stock disponible: <span id="exit-product-stock">—</span></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="exit-product-select-row">
                         <label for="exit-product-select" class="block text-sm font-medium text-gray-700">Produit
                             *</label>
                         <select id="exit-product-select"
-                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
                             required>
                             <option value="">Sélectionnez un produit</option>
                             <!-- Options remplies par JS -->
                         </select>
                     </div>
                     <div>
-                        <label for="exit-quantity" class="block text-sm font-medium text-gray-700">Quantité *</label>
+                        <label for="exit-quantity" class="block text-sm font-medium text-gray-700">Quantité à sortir *</label>
                         <input type="number" id="exit-quantity" placeholder="0" min="1"
-                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
                             required>
                     </div>
+                    <div class="pt-2">
+                        <div class="flex items-center gap-2 text-sm font-semibold text-gray-800">
+                            <svg class="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A4 4 0 0112 15a4 4 0 016.879 2.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            Informations client
+                        </div>
+                        <div class="mt-3 space-y-3">
+                            <div>
+                                <label for="exit-customer-name" class="block text-sm font-medium text-gray-700">Nom du client *</label>
+                                <input type="text" id="exit-customer-name" placeholder="Jean Dupont"
+                                    class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
+                                    required>
+                            </div>
+                            <div>
+                                <label for="exit-customer-email" class="block text-sm font-medium text-gray-700">Email *</label>
+                                <input type="email" id="exit-customer-email" placeholder="jean.dupont@email.com"
+                                    class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
+                                    required>
+                            </div>
+                            <div>
+                                <label for="exit-customer-phone" class="block text-sm font-medium text-gray-700">Téléphone *</label>
+                                <input type="tel" id="exit-customer-phone" placeholder="+33 6 12 34 56 78"
+                                    class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
+                                    required>
+                            </div>
+                        </div>
+                    </div>
                     <div>
-                        <label for="exit-comment" class="block text-sm font-medium text-gray-700">Commentaire
-                            (Optionnel)</label>
-                        <textarea id="exit-comment" placeholder="ex: Transfert vers boutique..." rows="3"
-                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"></textarea>
+                        <label for="exit-comment" class="block text-sm font-medium text-gray-700">Commentaire</label>
+                        <textarea id="exit-comment" placeholder="Informations additionnelles sur la vente..." rows="3"
+                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400"></textarea>
                     </div>
                     <p id="exit-error" class="text-red-500 text-sm mt-2 hidden"></p>
-                    <button type="submit" id="exit-submit-button"
-                        class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
-                        Enregistrer la sortie
-                    </button>
+                    <div class="pt-4 border-t border-gray-100 flex items-center gap-3">
+                        <button type="button" id="exit-cancel-button"
+                            class="flex-1 py-2.5 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200">
+                            Annuler
+                        </button>
+                        <button type="submit" id="exit-submit-button"
+                            class="flex-1 bg-orange-500 text-white font-semibold py-2.5 rounded-lg hover:bg-orange-600 transition-colors shadow-sm">
+                            Envoyer pour validation
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -2289,16 +2343,29 @@
             const closeEntryModalButton = document.getElementById('close-entry-modal-button');
             const entryForm = document.getElementById('entry-form');
             const entryProductSelect = document.getElementById('entry-product-select');
+            const entryProductInfo = document.getElementById('entry-product-info');
+            const entryProductName = document.getElementById('entry-product-name');
+            const entryProductStock = document.getElementById('entry-product-stock');
+            const entryProductSelectRow = document.getElementById('entry-product-select-row');
             const entryError = document.getElementById('entry-error');
             const entrySubmitButton = document.getElementById('entry-submit-button');
+            const entryCancelButton = document.getElementById('entry-cancel-button');
 
             const openExitModalButton = document.getElementById('open-exit-modal-button');
             const exitModal = document.getElementById('exit-modal');
             const closeExitModalButton = document.getElementById('close-exit-modal-button');
             const exitForm = document.getElementById('exit-form');
             const exitProductSelect = document.getElementById('exit-product-select');
+            const exitProductInfo = document.getElementById('exit-product-info');
+            const exitProductName = document.getElementById('exit-product-name');
+            const exitProductStock = document.getElementById('exit-product-stock');
+            const exitProductSelectRow = document.getElementById('exit-product-select-row');
+            const exitCustomerNameInput = document.getElementById('exit-customer-name');
+            const exitCustomerEmailInput = document.getElementById('exit-customer-email');
+            const exitCustomerPhoneInput = document.getElementById('exit-customer-phone');
             const exitError = document.getElementById('exit-error');
             const exitSubmitButton = document.getElementById('exit-submit-button');
+            const exitCancelButton = document.getElementById('exit-cancel-button');
 
             const openTransferModalButton = document.getElementById('open-transfer-modal-button');
             const transferModal = document.getElementById('transfer-modal');
@@ -4477,6 +4544,60 @@
                         });
                     }
                 });
+                if (entryProductSelect && entryProductSelect.value) {
+                    updateEntryProductInfo(appData.storeProducts?.[entryProductSelect.value]);
+                }
+                if (exitProductSelect && exitProductSelect.value) {
+                    updateExitProductInfo(appData.storeProducts?.[exitProductSelect.value]);
+                }
+            }
+
+            function updateEntryProductInfo(product) {
+                if (!entryProductInfo || !entryProductName || !entryProductStock) return;
+                if (!product) {
+                    entryProductInfo.classList.add('hidden');
+                    entryProductName.textContent = '—';
+                    entryProductStock.textContent = '—';
+                    return;
+                }
+                entryProductInfo.classList.remove('hidden');
+                entryProductName.textContent = product.name || '—';
+                entryProductStock.textContent = `${product.quantityInStore ?? 0}`;
+            }
+
+            function updateExitProductInfo(product) {
+                if (!exitProductInfo || !exitProductName || !exitProductStock) return;
+                if (!product) {
+                    exitProductInfo.classList.add('hidden');
+                    exitProductName.textContent = '—';
+                    exitProductStock.textContent = '—';
+                    return;
+                }
+                const pendingQty = getPendingExitQuantity(product.id);
+                const available = Math.max((product.quantityInStore || 0) - pendingQty, 0);
+                exitProductInfo.classList.remove('hidden');
+                exitProductName.textContent = product.name || '—';
+                exitProductStock.textContent = `${available}`;
+            }
+
+            function openEntryModalForProduct(productId = null) {
+                if (!entryModal || !entryForm) return;
+                entryForm.reset();
+                if (entryError) entryError.classList.add('hidden');
+                if (entryProductSelectRow) entryProductSelectRow.classList.toggle('hidden', !!productId);
+                if (entryProductSelect) entryProductSelect.value = productId || '';
+                updateEntryProductInfo(productId ? appData.storeProducts[productId] : null);
+                entryModal.classList.remove('hidden');
+            }
+
+            function openExitModalForProduct(productId = null) {
+                if (!exitModal || !exitForm) return;
+                exitForm.reset();
+                if (exitError) exitError.classList.add('hidden');
+                if (exitProductSelectRow) exitProductSelectRow.classList.toggle('hidden', !!productId);
+                if (exitProductSelect) exitProductSelect.value = productId || '';
+                updateExitProductInfo(productId ? appData.storeProducts[productId] : null);
+                exitModal.classList.remove('hidden');
             }
 
             function populateShopProductSelects() {
@@ -4512,19 +4633,47 @@
                     const sortedProducts = filteredProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                     const canDelete = hasPermission('Supprimer Stock Magasin');
                     sortedProducts.forEach(product => {
+                        const quantity = Number(product.quantityInStore ?? 0);
+                        const quantityClass = quantity <= 10
+                            ? 'bg-red-100 text-red-700'
+                            : quantity <= 50
+                                ? 'bg-amber-100 text-amber-700'
+                                : 'bg-emerald-100 text-emerald-700';
+                        const entryButtonHtml = `
+                            <button type="button"
+                                class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-emerald-100 text-emerald-600 hover:bg-emerald-200"
+                                data-store-action="entry" data-product-id="${product.id}">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>`;
+                        const exitButtonHtml = `
+                            <button type="button"
+                                class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-orange-100 text-orange-600 hover:bg-orange-200"
+                                data-store-action="exit" data-product-id="${product.id}">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                                </svg>
+                            </button>`;
                         const deleteButtonHtml = canDelete
-                            ? `<button class="delete-icon text-gray-400 hover:text-red-500" data-type="store" data-product-id="${product.id}">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            ? `<button type="button" class="delete-icon inline-flex items-center justify-center w-9 h-9 rounded-lg bg-red-50 text-red-500 hover:bg-red-100" data-type="store" data-product-id="${product.id}">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                 </button>`
                             : `<span class="text-xs text-gray-400">Non autorisé</span>`;
                         html += `
                             <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${product.name}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.description || ''}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">${product.quantityInStore}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${quantityClass}">${quantity}</span>
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatCurrency(product.purchaseCost, product.currency)}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    ${deleteButtonHtml}
+                                    <div class="flex items-center gap-2">
+                                        ${entryButtonHtml}
+                                        ${exitButtonHtml}
+                                        ${deleteButtonHtml}
+                                    </div>
                                 </td>
                             </tr>`;
                     });
@@ -5868,6 +6017,17 @@
             // --- ÉCOUTEURS POUR LA SUPPRESSION ---
             if (storeProductsTbody) {
                 storeProductsTbody.addEventListener('click', async (e) => {
+                    const actionButton = e.target.closest('button[data-store-action]');
+                    if (actionButton && actionButton.dataset.productId) {
+                        const action = actionButton.dataset.storeAction;
+                        if (action === 'entry') {
+                            openEntryModalForProduct(actionButton.dataset.productId);
+                        } else if (action === 'exit') {
+                            openExitModalForProduct(actionButton.dataset.productId);
+                        }
+                        return;
+                    }
+
                     const btn = e.target.closest('button.delete-icon');
                     if (btn && btn.dataset.productId) {
                         if (confirm('Supprimer ce produit du magasin définitivement ?')) {
@@ -6349,8 +6509,18 @@
                 const pid = exitProductSelect.value;
                 const qty = parseInt(exitForm['exit-quantity'].value, 10);
                 const comment = exitForm['exit-comment'].value;
+                const customerName = exitCustomerNameInput ? exitCustomerNameInput.value.trim() : '';
+                const customerEmail = exitCustomerEmailInput ? exitCustomerEmailInput.value.trim() : '';
+                const customerPhone = exitCustomerPhoneInput ? exitCustomerPhoneInput.value.trim() : '';
                 const prod = appData.storeProducts[pid];
                 if (!prod || qty <= 0) return;
+                if (!customerName || !customerEmail || !customerPhone) {
+                    if (exitError) {
+                        exitError.textContent = 'Veuillez renseigner les informations client obligatoires.';
+                        exitError.classList.remove('hidden');
+                    }
+                    return;
+                }
                 const pendingQty = getPendingExitQuantity(pid);
                 const available = prod.quantityInStore - pendingQty;
                 if (qty > available) {
@@ -6373,6 +6543,9 @@
                         productName: prod.name,
                         quantity: qty,
                         comment,
+                        customerName,
+                        customerEmail,
+                        customerPhone,
                         status: EXIT_STATUS_PENDING,
                         requestedAt: now,
                         requestedByName: currentUserData?.fullName || currentUser.email || '',
@@ -6546,8 +6719,8 @@
 
             // Modals Open
             if (openNewProductModalButton) openNewProductModalButton.addEventListener('click', () => { newProductModal.classList.remove('hidden'); newProductForm.reset(); });
-            if (openEntryModalButton) openEntryModalButton.addEventListener('click', () => { entryModal.classList.remove('hidden'); entryForm.reset(); });
-            if (openExitModalButton) openExitModalButton.addEventListener('click', () => { exitModal.classList.remove('hidden'); exitForm.reset(); if (exitError) exitError.classList.add('hidden'); });
+            if (openEntryModalButton) openEntryModalButton.addEventListener('click', () => openEntryModalForProduct());
+            if (openExitModalButton) openExitModalButton.addEventListener('click', () => openExitModalForProduct());
             if (openTransferModalButton) openTransferModalButton.addEventListener('click', () => { transferModal.classList.remove('hidden'); transferForm.reset(); transferSourceInfo.classList.add('hidden'); });
             if (openRestockModalButton) openRestockModalButton.addEventListener('click', () => { restockModal.classList.remove('hidden'); restockForm.reset(); restockSourceInfo.classList.add('hidden'); });
 
@@ -6555,8 +6728,21 @@
             if (closeNewProductModalButton) closeNewProductModalButton.addEventListener('click', () => newProductModal.classList.add('hidden'));
             if (closeEntryModalButton) closeEntryModalButton.addEventListener('click', () => entryModal.classList.add('hidden'));
             if (closeExitModalButton) closeExitModalButton.addEventListener('click', () => exitModal.classList.add('hidden'));
+            if (entryCancelButton) entryCancelButton.addEventListener('click', () => entryModal.classList.add('hidden'));
+            if (exitCancelButton) exitCancelButton.addEventListener('click', () => exitModal.classList.add('hidden'));
             if (closeTransferModalButton) closeTransferModalButton.addEventListener('click', () => transferModal.classList.add('hidden'));
             if (closeRestockModalButton) closeRestockModalButton.addEventListener('click', () => restockModal.classList.add('hidden'));
+
+            if (entryProductSelect) {
+                entryProductSelect.addEventListener('change', () => {
+                    updateEntryProductInfo(appData.storeProducts?.[entryProductSelect.value]);
+                });
+            }
+            if (exitProductSelect) {
+                exitProductSelect.addEventListener('change', () => {
+                    updateExitProductInfo(appData.storeProducts?.[exitProductSelect.value]);
+                });
+            }
 
             // Background Modal Close
             [newProductModal, entryModal, exitModal, transferModal, restockModal].forEach(m => {
