@@ -4077,10 +4077,20 @@
             function onStoreMovementsValue(snapshot) {
                 const movements = snapshot.val();
                 if (movements) {
+                    const filteredMovements = Object.values(movements).filter(move => {
+                        const comment = (move?.comment || '').toString().trim().toLowerCase();
+                        return !comment.startsWith('vente');
+                    });
+                    if (!filteredMovements.length) {
+                        storeMovementsPlaceholder.classList.remove('hidden');
+                        storeMovementsTableContainer.classList.add('hidden');
+                        storeMovementsTbody.innerHTML = '';
+                        return;
+                    }
                     storeMovementsPlaceholder.classList.add('hidden');
                     storeMovementsTableContainer.classList.remove('hidden');
                     let html = '';
-                    const sortedMovements = Object.values(movements).sort((a, b) => new Date(b.date) - new Date(a.date));
+                    const sortedMovements = filteredMovements.sort((a, b) => new Date(b.date) - new Date(a.date));
                     sortedMovements.forEach(move => {
                         const isEntry = move.type === 'Entrée';
                         html += `
@@ -4282,10 +4292,20 @@
             function onShopMovementsValue(snapshot) {
                 const movements = snapshot.val();
                 if (movements) {
+                    const filteredMovements = Object.values(movements).filter(move => {
+                        const comment = (move?.comment || '').toString().trim().toLowerCase();
+                        return !comment.startsWith('vente');
+                    });
+                    if (!filteredMovements.length) {
+                        shopMovementsPlaceholder.classList.remove('hidden');
+                        shopMovementsTableContainer.classList.add('hidden');
+                        shopMovementsTbody.innerHTML = '';
+                        return;
+                    }
                     shopMovementsPlaceholder.classList.add('hidden');
                     shopMovementsTableContainer.classList.remove('hidden');
                     let html = '';
-                    const sortedMovements = Object.values(movements).sort((a, b) => new Date(b.date) - new Date(a.date));
+                    const sortedMovements = filteredMovements.sort((a, b) => new Date(b.date) - new Date(a.date));
                     sortedMovements.forEach(move => {
                         const isEntry = move.type === 'Entrée';
                         const userDisplay = move.userEmail ? move.userEmail.split('@')[0] : 'N/A';
