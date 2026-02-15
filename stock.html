@@ -722,6 +722,17 @@
                             </span>
                             <span id="sales-history-paylater-count" class="px-2 py-0.5 rounded-full text-xs bg-gray-200">0</span>
                         </button>
+                        <button id="sales-history-tab-store-validation"
+                            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200">
+                            <span class="inline-flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 7l9-4 9 4-9 4-9-4zM3 7v10l9 4 9-4V7" />
+                                </svg>
+                                Validation ventes Magasin
+                            </span>
+                            <span id="sales-history-store-validation-count" class="px-2 py-0.5 rounded-full text-xs bg-gray-200">0</span>
+                        </button>
                     </div>
 
                     <div class="flex flex-col lg:flex-row gap-4">
@@ -2318,9 +2329,11 @@
             const salesHistoryTabCompleted = document.getElementById('sales-history-tab-completed');
             const salesHistoryTabPending = document.getElementById('sales-history-tab-pending');
             const salesHistoryTabPayLater = document.getElementById('sales-history-tab-paylater');
+            const salesHistoryTabStoreValidation = document.getElementById('sales-history-tab-store-validation');
             const salesHistoryCompletedCount = document.getElementById('sales-history-completed-count');
             const salesHistoryPendingCount = document.getElementById('sales-history-pending-count');
             const salesHistoryPayLaterCount = document.getElementById('sales-history-paylater-count');
+            const salesHistoryStoreValidationCount = document.getElementById('sales-history-store-validation-count');
             const salesHistoryStatCompleted = document.getElementById('sales-history-stat-completed');
             const salesHistoryStatPending = document.getElementById('sales-history-stat-pending');
             const salesHistoryStatToday = document.getElementById('sales-history-stat-today');
@@ -2599,6 +2612,15 @@
                 return { label: 'Boutique', classes: 'bg-cyan-50 text-cyan-700' };
             }
 
+            function isStoreValidationPending(sale) {
+                if (!sale) return false;
+                return sale.validationStatus === 'pending' || sale.paymentStatus === 'store_validation';
+            }
+
+            function getCountableSalesEntries() {
+                return Object.values(appData.salesHistory || {}).filter(sale => !isStoreValidationPending(sale));
+            }
+
             function buildCustomerOptionLabel(customer) {
                 const name = customer.fullName || customer.name || 'Client';
                 const details = [];
@@ -2741,7 +2763,7 @@
                 if (!customerHistorySection) return;
 
                 const targetId = selectedCustomer?.id;
-                const sales = Object.values(appData.salesHistory || {}).filter(sale => sale.customerId === targetId);
+                const sales = getCountableSalesEntries().filter(sale => sale.customerId === targetId);
                 if (!sales.length) {
                     if (customerHistoryPlaceholder) customerHistoryPlaceholder.classList.remove('hidden');
                     if (customerHistoryTableContainer) customerHistoryTableContainer.classList.add('hidden');
@@ -2803,9 +2825,10 @@
             }
 
             function buildSalesHistoryGroups() {
-                const sales = Object.values(appData.salesHistory || {});
+                const sales = getCountableSalesEntries();
                 const groups = {};
                 sales.forEach(sale => {
+                    if (isStoreValidationPending(sale)) return;
                     const groupId = sale.saleGroupId || sale.id;
                     if (!groups[groupId]) {
                         groups[groupId] = {
@@ -2821,7 +2844,8 @@
                             currency: getSaleCurrency(sale),
                             comments: [],
                             payLater: false,
-                            saleSource: getSaleSource(sale)
+                            saleSource: getSaleSource(sale),
+                            paymentStatus: sale.paymentStatus || (sale.payLater ? 'pay_later' : 'paid')
                         };
                     }
                     const group = groups[groupId];
@@ -2839,6 +2863,11 @@
                     group.total += sale.totalAmount || 0;
                     if (sale.comment && !group.comments.includes(sale.comment)) group.comments.push(sale.comment);
                     if (sale.payLater === true || sale.paymentStatus === 'pay_later') group.payLater = true;
+                    if (!group.paymentStatus && sale.paymentStatus) {
+                        group.paymentStatus = sale.paymentStatus;
+                    } else if (sale.paymentStatus && group.paymentStatus !== sale.paymentStatus) {
+                        group.paymentStatus = sale.paymentStatus;
+                    }
                     const saleSource = getSaleSource(sale);
                     if (!group.saleSource) {
                         group.saleSource = saleSource;
@@ -2935,22 +2964,26 @@
 
                 const groups = buildSalesHistoryGroups();
                 const pendingSales = getPendingSalesFromStorage();
-                const paidGroups = groups.filter(group => !group.payLater);
+                const storeValidationSales = Object.values(appData.salesHistory || {}).filter(isStoreValidationPending);
+                const pendingGroups = groups.filter(group => group.paymentStatus === 'pending');
+                const payLaterGroups = groups.filter(group => group.paymentStatus === 'pay_later' || group.payLater);
+                const paidGroups = groups.filter(group => group.paymentStatus !== 'pending' && group.paymentStatus !== 'pay_later');
                 const completedCount = paidGroups.length;
-                const pendingCount = pendingSales.length;
-                const completedCurrency = paidGroups[0]?.currency || groups[0]?.currency || 'CFA';
-                const totalRevenue = groups.reduce((sum, group) => sum + (group.total * getTaxMultiplier()), 0);
+                const pendingCount = pendingSales.length + pendingGroups.length;
+                const completedCurrency = paidGroups[0]?.currency || payLaterGroups[0]?.currency || groups[0]?.currency || storeValidationSales[0]?.currency || 'CFA';
+                const revenueGroups = groups.filter(group => group.paymentStatus !== 'pending');
+                const totalRevenue = revenueGroups.reduce((sum, group) => sum + (group.total * getTaxMultiplier()), 0);
                 const todayStart = new Date();
                 todayStart.setHours(0, 0, 0, 0);
-                const todayRevenue = groups
+                const todayRevenue = revenueGroups
                     .filter(group => new Date(group.date) >= todayStart)
                     .reduce((sum, group) => sum + (group.total * getTaxMultiplier()), 0);
-                const payLaterGroups = groups.filter(group => group.payLater);
                 const payLaterTotal = payLaterGroups.reduce((sum, group) => sum + (group.total * getTaxMultiplier()), 0);
 
                 if (salesHistoryCompletedCount) salesHistoryCompletedCount.textContent = completedCount;
                 if (salesHistoryPendingCount) salesHistoryPendingCount.textContent = pendingCount;
                 if (salesHistoryPayLaterCount) salesHistoryPayLaterCount.textContent = payLaterGroups.length;
+                if (salesHistoryStoreValidationCount) salesHistoryStoreValidationCount.textContent = storeValidationSales.length;
                 if (salesHistoryStatCompleted) salesHistoryStatCompleted.textContent = completedCount;
                 if (salesHistoryStatPending) salesHistoryStatPending.textContent = pendingCount;
                 if (salesHistoryStatPayLater) salesHistoryStatPayLater.textContent = formatCurrency(payLaterTotal, completedCurrency);
@@ -2999,6 +3032,20 @@
                         salesHistoryPayLaterCount.classList.toggle('text-gray-600', !isActive);
                     }
                 }
+                if (salesHistoryTabStoreValidation) {
+                    const isActive = salesHistoryTab === 'store_validation';
+                    salesHistoryTabStoreValidation.classList.toggle('bg-emerald-600', isActive);
+                    salesHistoryTabStoreValidation.classList.toggle('text-white', isActive);
+                    salesHistoryTabStoreValidation.classList.toggle('shadow', isActive);
+                    salesHistoryTabStoreValidation.classList.toggle('bg-gray-100', !isActive);
+                    salesHistoryTabStoreValidation.classList.toggle('text-gray-600', !isActive);
+                    if (salesHistoryStoreValidationCount) {
+                        salesHistoryStoreValidationCount.classList.toggle('bg-white/20', isActive);
+                        salesHistoryStoreValidationCount.classList.toggle('bg-gray-200', !isActive);
+                        salesHistoryStoreValidationCount.classList.toggle('text-white', isActive);
+                        salesHistoryStoreValidationCount.classList.toggle('text-gray-600', !isActive);
+                    }
+                }
 
                 const filteredGroups = groups.filter(group => {
                     if (!isDateInFilter(group.date, salesHistoryDateFilterValue)) return false;
@@ -3018,8 +3065,9 @@
                     ];
                     return matchesHistorySearch(salesHistorySearch, values);
                 });
-                const filteredPaid = filteredGroups.filter(group => !group.payLater);
-                const filteredPayLater = filteredGroups.filter(group => group.payLater);
+                const filteredPaid = filteredGroups.filter(group => group.paymentStatus !== 'pending' && group.paymentStatus !== 'pay_later');
+                const filteredPayLater = filteredGroups.filter(group => group.paymentStatus === 'pay_later' || group.payLater);
+                const filteredPendingGroups = filteredGroups.filter(group => group.paymentStatus === 'pending');
 
                 const filteredPending = pendingSales.filter(pending => {
                     if (!isDateInFilter(pending.createdAt || pending.date, salesHistoryDateFilterValue)) return false;
@@ -3037,10 +3085,37 @@
                     return matchesHistorySearch(salesHistorySearch, values);
                 });
 
+                const filteredStoreValidation = storeValidationSales.filter(sale => {
+                    const dateValue = sale.date || sale.requestedAt || sale.createdAt;
+                    if (!isDateInFilter(dateValue, salesHistoryDateFilterValue)) return false;
+                    if (!salesHistorySearch) return true;
+                    const customerLabel = sale.customerName || 'Client comptoir';
+                    const sourceLabel = formatSaleSourceBadge(getSaleSource(sale))?.label || '';
+                    const values = [
+                        `INV-${(sale.saleGroupId || sale.id || '').slice(-6).toUpperCase()}`,
+                        sale.id,
+                        customerLabel,
+                        sale.customerEmail,
+                        sale.customerPhone,
+                        sale.sellerName,
+                        sale.productName,
+                        sale.comment,
+                        sourceLabel
+                    ];
+                    return matchesHistorySearch(salesHistorySearch, values);
+                });
+
                 const showCompleted = salesHistoryTab === 'completed';
                 const showPayLater = salesHistoryTab === 'pay_later';
-                const list = showCompleted ? filteredPaid : (showPayLater ? filteredPayLater : filteredPending);
-                if (!list.length) {
+                const showStoreValidation = salesHistoryTab === 'store_validation';
+                const listHasItems = showCompleted
+                    ? filteredPaid.length
+                    : (showPayLater
+                        ? filteredPayLater.length
+                        : (showStoreValidation
+                            ? filteredStoreValidation.length
+                            : (filteredPendingGroups.length + filteredPending.length)));
+                if (!listHasItems) {
                     salesHistoryEmpty.classList.remove('hidden');
                     salesHistoryList.classList.add('hidden');
                     salesHistoryList.innerHTML = '';
@@ -3049,6 +3124,121 @@
 
                 salesHistoryEmpty.classList.add('hidden');
                 salesHistoryList.classList.remove('hidden');
+
+                if (showStoreValidation) {
+                    const canValidateStore = getCurrentUserRole() === 'admin';
+                    salesHistoryList.innerHTML = filteredStoreValidation.map(sale => {
+                        const quantity = Number(sale.quantity || 0) || 1;
+                        const unitPrice = Number(sale.sellingPrice || (sale.totalAmount / Math.max(quantity, 1)) || 0);
+                        const currency = getSaleCurrency(sale) || 'CFA';
+                        const summary = calculateItemsSummary([{
+                            sellingPrice: unitPrice,
+                            quantity,
+                            currency
+                        }]);
+                        const { dateLabel, timeLabel } = formatHistoryDateParts(sale.date || new Date().toISOString());
+                        const customerLabel = sale.customerName || 'Client comptoir';
+                        const customerEmail = sale.customerEmail || '';
+                        const sourceBadge = formatSaleSourceBadge(getSaleSource(sale));
+                        const sourceHtml = sourceBadge
+                            ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold ${sourceBadge.classes}">${sourceBadge.label}</span>`
+                            : '';
+                        const validationActions = canValidateStore ? `
+                            <button type="button" data-store-validation-id="${sale.id}" data-store-validation-action="paid"
+                                class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                Valider
+                            </button>
+                            <button type="button" data-store-validation-id="${sale.id}" data-store-validation-action="pending"
+                                class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-orange-500 text-white font-semibold hover:bg-orange-600">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3M12 6a6 6 0 100 12 6 6 0 000-12z" />
+                                </svg>
+                                En attente
+                            </button>
+                            <button type="button" data-store-validation-id="${sale.id}" data-store-validation-action="pay_later"
+                                class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-purple-600 text-white font-semibold hover:bg-purple-700">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 11h18M5 7v10a2 2 0 002 2h10a2 2 0 002-2V7" />
+                                </svg>
+                                A payer plus tard
+                            </button>
+                        ` : `<span class="text-xs text-gray-400">Admin requis</span>`;
+                        return `
+                            <div class="border border-gray-200 rounded-2xl shadow-sm bg-white overflow-hidden">
+                                <div class="p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7l9-4 9 4-9 4-9-4zM3 7v10l9 4 9-4V7" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <div class="flex items-center gap-2 flex-wrap">
+                                                <p class="font-semibold text-gray-900">INV-${(sale.saleGroupId || sale.id || '').slice(-6).toUpperCase()}</p>
+                                                <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">Validation magasin</span>
+                                                ${sourceHtml}
+                                            </div>
+                                            <div class="mt-1 flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                                                <span>${dateLabel}</span>
+                                                <span>${timeLabel}</span>
+                                                <span>${quantity} article${quantity > 1 ? 's' : ''}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-2xl font-bold text-emerald-600">${formatCurrency(summary.total, summary.currency)}</p>
+                                        <p class="text-xs text-gray-400">${quantity} article${quantity > 1 ? 's' : ''}</p>
+                                    </div>
+                                </div>
+                                <div class="px-4 pb-4">
+                                    <div class="flex items-center gap-2 text-sm text-gray-600 border-t border-gray-100 pt-3">
+                                        <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A4 4 0 0112 15a4 4 0 016.879 2.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                        <span class="font-semibold text-gray-900">${customerLabel}</span>
+                                        ${customerEmail ? `<span class="text-xs text-gray-400">· ${customerEmail}</span>` : ''}
+                                    </div>
+                                    ${sale.comment ? `<p class="mt-2 text-xs text-gray-500">Commentaire: ${sale.comment}</p>` : ''}
+                                    <div class="mt-4 space-y-3">
+                                        <div class="flex items-center justify-between text-sm text-gray-700">
+                                            <div class="flex items-center gap-3">
+                                                <span class="px-2 py-0.5 rounded-lg bg-gray-100 text-xs font-semibold text-gray-500">${quantity}x</span>
+                                                <span class="font-semibold text-gray-900">${sale.productName || 'Produit'}</span>
+                                            </div>
+                                            <div class="text-right">
+                                                <p class="text-xs text-gray-500">${formatCurrency(unitPrice, summary.currency)} / unité</p>
+                                                <p class="text-sm font-semibold text-gray-900">${formatCurrency(sale.totalAmount || (unitPrice * quantity), summary.currency)}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-4 space-y-2 border-t border-gray-100 pt-4">
+                                        <div class="flex items-center justify-between text-sm text-gray-600">
+                                            <span>Sous-total</span>
+                                            <span>${formatCurrency(summary.subtotal, summary.currency)}</span>
+                                        </div>
+                                        ${isTaxEnabled ? `
+                                            <div class="flex items-center justify-between text-sm text-gray-400">
+                                                <span>TVA (20%)</span>
+                                                <span>${formatCurrency(summary.tax, summary.currency)}</span>
+                                            </div>
+                                        ` : ''}
+                                        <div class="flex items-center justify-between text-base font-semibold text-gray-900 border-t border-gray-100 pt-3">
+                                            <span>Total</span>
+                                            <span class="text-emerald-600">${formatCurrency(summary.total, summary.currency)}</span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-4 flex flex-col md:flex-row gap-3">
+                                        ${validationActions}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                    return;
+                }
 
                 if (showCompleted || showPayLater) {
                     const groupsToRender = showPayLater ? filteredPayLater : filteredPaid;
@@ -3083,14 +3273,15 @@
                                 <span>${formatCurrency(summary.tax, summary.currency)}</span>
                             </div>
                         ` : '';
-                        const statusHtml = group.payLater
+                        const isPayLater = group.paymentStatus === 'pay_later' || group.payLater;
+                        const statusHtml = isPayLater
                             ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-700">A payer plus tard</span>`
                             : `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-50 text-green-700">Complétée</span>`;
                         const sourceBadge = formatSaleSourceBadge(group.saleSource);
                         const sourceHtml = sourceBadge
                             ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold ${sourceBadge.classes}">${sourceBadge.label}</span>`
                             : '';
-                        const markPaidButtonHtml = group.payLater ? `
+                        const markPaidButtonHtml = isPayLater ? `
                             <button type="button" data-history-action="mark-paid" data-history-id="${group.id}"
                                 class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -3101,7 +3292,7 @@
                         ` : '';
                         const detailsButtonHtml = `
                             <button type="button" data-history-action="details" data-history-id="${group.id}"
-                                class="${group.payLater ? 'inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700' : 'flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700'}">
+                                class="${isPayLater ? 'inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700' : 'flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700'}">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
@@ -3160,7 +3351,7 @@
                                     <div class="mt-4 flex flex-col md:flex-row gap-3">
                                         ${markPaidButtonHtml}
                                         ${detailsButtonHtml}
-                                        ${group.payLater ? '' : `
+                                        ${isPayLater ? '' : `
                                             <button type="button" data-history-action="print" data-history-id="${group.id}"
                                                 class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gray-900 text-white font-semibold hover:bg-gray-800">
                                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -3184,7 +3375,120 @@
                     return;
                 }
 
-                salesHistoryList.innerHTML = filteredPending.map(pending => {
+                const pendingGroupsHtml = filteredPendingGroups.map(group => {
+                    const customerLabel = group.customerName || (group.customerId && appData.customers?.[group.customerId]?.fullName) || 'Client comptoir';
+                    const customerEmail = group.customerEmail || (group.customerId && appData.customers?.[group.customerId]?.email) || '';
+                    const itemsCount = group.items.reduce((sum, item) => sum + item.quantity, 0);
+                    const summary = calculateItemsSummary(group.items.map(item => ({
+                        sellingPrice: item.price,
+                        quantity: item.quantity,
+                        currency: group.currency
+                    })));
+                    const { dateLabel, timeLabel } = formatHistoryDateParts(group.date);
+                    const itemsHtml = group.items.map(item => {
+                        const unitPrice = item.price || (item.total / Math.max(item.quantity, 1));
+                        return `
+                            <div class="flex items-center justify-between text-sm text-gray-700">
+                                <div class="flex items-center gap-3">
+                                    <span class="px-2 py-0.5 rounded-lg bg-gray-100 text-xs font-semibold text-gray-500">${item.quantity}x</span>
+                                    <span class="font-semibold text-gray-900">${item.name}</span>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xs text-gray-500">${formatCurrency(unitPrice, group.currency)} / unité</p>
+                                    <p class="text-sm font-semibold text-gray-900">${formatCurrency(item.total, group.currency)}</p>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                    const taxRowHtml = isTaxEnabled ? `
+                        <div class="flex items-center justify-between text-sm text-gray-400">
+                            <span>TVA (20%)</span>
+                            <span>${formatCurrency(summary.tax, summary.currency)}</span>
+                        </div>
+                    ` : '';
+                    const statusHtml = `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-50 text-orange-700">En attente</span>`;
+                    const sourceBadge = formatSaleSourceBadge(group.saleSource);
+                    const sourceHtml = sourceBadge
+                        ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold ${sourceBadge.classes}">${sourceBadge.label}</span>`
+                        : '';
+                    return `
+                        <div class="border border-gray-200 rounded-2xl shadow-sm bg-white overflow-hidden">
+                            <div class="p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-12 h-12 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center">
+                                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3M12 6a6 6 0 100 12 6 6 0 000-12z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <p class="font-semibold text-gray-900">INV-${group.id.slice(-6).toUpperCase()}</p>
+                                            ${statusHtml}
+                                            ${sourceHtml}
+                                        </div>
+                                        <div class="mt-1 flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                                            <span>${dateLabel}</span>
+                                            <span>${timeLabel}</span>
+                                            <span>${itemsCount} article${itemsCount > 1 ? 's' : ''}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-2xl font-bold text-blue-600">${formatCurrency(summary.total, summary.currency)}</p>
+                                    <p class="text-xs text-gray-400">${itemsCount} article${itemsCount > 1 ? 's' : ''}</p>
+                                </div>
+                            </div>
+                            <div class="px-4 pb-4">
+                                <div class="flex items-center gap-2 text-sm text-gray-600 border-t border-gray-100 pt-3">
+                                    <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A4 4 0 0112 15a4 4 0 016.879 2.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                    <span class="font-semibold text-gray-900">${customerLabel}</span>
+                                    ${customerEmail ? `<span class="text-xs text-gray-400">· ${customerEmail}</span>` : ''}
+                                </div>
+                                <div class="mt-4 space-y-3">
+                                    ${itemsHtml}
+                                </div>
+                                <div class="mt-4 space-y-2 border-t border-gray-100 pt-4">
+                                    <div class="flex items-center justify-between text-sm text-gray-600">
+                                        <span>Sous-total</span>
+                                        <span>${formatCurrency(summary.subtotal, summary.currency)}</span>
+                                    </div>
+                                    ${taxRowHtml}
+                                    <div class="flex items-center justify-between text-base font-semibold text-gray-900 border-t border-gray-100 pt-3">
+                                        <span>Total</span>
+                                        <span class="text-blue-600">${formatCurrency(summary.total, summary.currency)}</span>
+                                    </div>
+                                </div>
+                                <div class="mt-4 flex flex-col md:flex-row gap-3">
+                                    <button type="button" data-history-action="mark-paid" data-history-id="${group.id}"
+                                        class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        Valider
+                                    </button>
+                                    <button type="button" data-history-action="mark-paylater" data-history-id="${group.id}"
+                                        class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-purple-600 text-white font-semibold hover:bg-purple-700">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 11h18M5 7v10a2 2 0 002 2h10a2 2 0 002-2V7" />
+                                        </svg>
+                                        A payer plus tard
+                                    </button>
+                                    <button type="button" data-history-action="details" data-history-id="${group.id}"
+                                        class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        Voir détails
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                const pendingLocalHtml = filteredPending.map(pending => {
                     const customer = pending.customer || {};
                     const items = pending.items || [];
                     const itemsCount = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
@@ -3282,6 +3586,8 @@
                         </div>
                     `;
                 }).join('');
+
+                salesHistoryList.innerHTML = `${pendingGroupsHtml}${pendingLocalHtml}`;
             }
 
             function openSalesDetailModal(groupId) {
@@ -3322,7 +3628,10 @@
                 if (salesDetailCustomerEmail) salesDetailCustomerEmail.textContent = customerEmail;
                 if (salesDetailSellerName) salesDetailSellerName.textContent = `Vendeur : ${sellerName}`;
                 if (salesDetailDate) salesDetailDate.textContent = formatDateForDisplay(group.date);
-                if (salesDetailPayment) salesDetailPayment.textContent = `${group.payLater ? 'A payer plus tard' : 'Payée'} · ${sourceLabel}`;
+                const paymentLabel = group.paymentStatus === 'pending'
+                    ? 'En attente'
+                    : (group.paymentStatus === 'pay_later' || group.payLater ? 'A payer plus tard' : 'Payée');
+                if (salesDetailPayment) salesDetailPayment.textContent = `${paymentLabel} · ${sourceLabel}`;
                 if (salesDetailProducts) salesDetailProducts.innerHTML = itemsHtml;
                 if (salesDetailComment) salesDetailComment.textContent = commentText;
                 if (salesDetailCommentSection) salesDetailCommentSection.classList.toggle('hidden', !commentText);
@@ -3527,13 +3836,13 @@
             }
 
             function calculateMonthlyRevenueSummary() {
-                const sales = appData.salesHistory || {};
+                const sales = getCountableSalesEntries();
                 const now = new Date();
                 const currentMonth = now.getMonth();
                 const currentYear = now.getFullYear();
                 let total = 0;
                 let currency = 'CFA';
-                Object.values(sales).forEach(sale => {
+                sales.forEach(sale => {
                     const saleDate = new Date(sale.date);
                     if (saleDate.getMonth() === currentMonth && saleDate.getFullYear() === currentYear) {
                         total += sale.totalAmount || 0;
@@ -3760,7 +4069,7 @@
                 const emptyState = document.getElementById('dashboard-top-products-empty');
                 if (!container || !emptyState) return;
 
-                const sales = Object.values(appData.salesHistory || {});
+                const sales = getCountableSalesEntries();
                 if (!sales.length) {
                     container.innerHTML = '';
                     emptyState.classList.remove('hidden');
@@ -3882,7 +4191,7 @@
                     { label: 'Stockage', percent: 10 }
                 ];
 
-                const sales = Object.values(appData.salesHistory || {});
+                const sales = getCountableSalesEntries();
                 if (!sales.length) {
                     const segments = fallback.reduce((acc, item, index) => {
                         const start = acc.total;
@@ -3945,14 +4254,14 @@
              * Calculer les ventes du jour
              */
             function calculateDailySales() {
-                const sales = appData.salesHistory || {};
+                const sales = getCountableSalesEntries();
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
 
                 let count = 0;
                 let amount = 0;
 
-                Object.values(sales).forEach(sale => {
+                sales.forEach(sale => {
                     const saleDate = new Date(sale.date);
                     saleDate.setHours(0, 0, 0, 0);
                     if (saleDate.getTime() === today.getTime()) {
@@ -3988,13 +4297,13 @@
              * Calculer les revenus du mois
              */
             function calculateMonthlyRevenue() {
-                const sales = appData.salesHistory || {};
+                const sales = getCountableSalesEntries();
                 const now = new Date();
                 const currentMonth = now.getMonth();
                 const currentYear = now.getFullYear();
 
                 let total = 0;
-                Object.values(sales).forEach(sale => {
+                sales.forEach(sale => {
                     const saleDate = new Date(sale.date);
                     if (saleDate.getMonth() === currentMonth && saleDate.getFullYear() === currentYear) {
                         total += sale.totalAmount || 0;
@@ -4018,13 +4327,13 @@
              * Calculer le bénéfice du mois
              */
             function calculateMonthlyProfit() {
-                const sales = appData.salesHistory || {};
+                const sales = getCountableSalesEntries();
                 const now = new Date();
                 const currentMonth = now.getMonth();
                 const currentYear = now.getFullYear();
 
                 let profit = 0;
-                Object.values(sales).forEach(sale => {
+                sales.forEach(sale => {
                     const saleDate = new Date(sale.date);
                     if (saleDate.getMonth() === currentMonth && saleDate.getFullYear() === currentYear) {
                         // Trouver le produit source pour le prix d'achat
@@ -4079,13 +4388,13 @@
              * Calculer les ventes d'hier
              */
             function calculateYesterdaySales() {
-                const sales = appData.salesHistory || {};
+                const sales = getCountableSalesEntries();
                 const yesterday = new Date();
                 yesterday.setDate(yesterday.getDate() - 1);
                 yesterday.setHours(0, 0, 0, 0);
 
                 let count = 0;
-                Object.values(sales).forEach(sale => {
+                sales.forEach(sale => {
                     const saleDate = new Date(sale.date);
                     saleDate.setHours(0, 0, 0, 0);
                     if (saleDate.getTime() === yesterday.getTime()) {
@@ -4100,13 +4409,13 @@
              * Calculer les revenus du mois dernier
              */
             function calculateLastMonthRevenue() {
-                const sales = appData.salesHistory || {};
+                const sales = getCountableSalesEntries();
                 const now = new Date();
                 const lastMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
                 const year = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
 
                 let total = 0;
-                Object.values(sales).forEach(sale => {
+                sales.forEach(sale => {
                     const saleDate = new Date(sale.date);
                     if (saleDate.getMonth() === lastMonth && saleDate.getFullYear() === year) {
                         total += sale.totalAmount || 0;
@@ -4120,13 +4429,13 @@
              * Calculer le bénéfice du mois dernier
              */
             function calculateLastMonthProfit() {
-                const sales = appData.salesHistory || {};
+                const sales = getCountableSalesEntries();
                 const now = new Date();
                 const lastMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
                 const year = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
 
                 let profit = 0;
-                Object.values(sales).forEach(sale => {
+                sales.forEach(sale => {
                     const saleDate = new Date(sale.date);
                     if (saleDate.getMonth() === lastMonth && saleDate.getFullYear() === year) {
                         const shopProduct = Object.values(appData.shopStock || {}).find(p => p.id === sale.shopProductId);
@@ -4155,7 +4464,7 @@
                 const activities = [];
 
                 // Ventes
-                const sales = Object.values(appData.salesHistory || {});
+                const sales = getCountableSalesEntries();
                 sales.forEach(sale => {
                     activities.push({
                         date: new Date(sale.date),
@@ -4801,6 +5110,7 @@
                 if (!storeMovementsPlaceholder || !storeMovementsTableContainer || !storeMovementsTbody) return;
                 const movements = Object.values(appData.storeMovements || {}).filter(move => {
                     const comment = (move?.comment || '').toString().trim().toLowerCase();
+                    if (move?.type === 'Sortie directe') return true;
                     return !comment.startsWith('vente');
                 });
                 const pendingRequests = Object.values(appData.storeExitRequests || {}).filter(request => request.status === EXIT_STATUS_PENDING);
@@ -4820,7 +5130,6 @@
                 storeMovementsPlaceholder.classList.add('hidden');
                 storeMovementsTableContainer.classList.remove('hidden');
 
-                const canApprove = getCurrentUserRole() === 'admin';
                 storeMovementsTbody.innerHTML = combined.map(item => {
                     if (item.kind === 'request') {
                         const request = item.data;
@@ -4829,9 +5138,7 @@
                         const statusBadge = getStatusBadge(request.status);
                         const comment = request.comment ? request.comment : 'Sortie en attente';
                         const customerLine = request.customerName ? `<p class="text-xs text-gray-500 mt-1">Client: ${request.customerName}</p>` : '';
-                        const actionHtml = canApprove
-                            ? `<button type="button" data-approve-exit="${request.id}" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-green-600 text-white hover:bg-green-700">Valider</button>`
-                            : `<span class="text-xs text-gray-400">Admin requis</span>`;
+                        const actionHtml = `<span class="text-xs text-gray-400 italic">En attente de validation</span>`;
                         return `
                             <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${request.productName || '-'}</td>
@@ -4851,7 +5158,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-right">
                                     ${actionHtml}
                                 </td>
-                            </tr>`;
+                        </tr>`;
                     }
 
                     const move = item.data;
@@ -4859,7 +5166,7 @@
                     const isEntry = move.type === 'Entrée';
                     const changeValue = isEntry ? Math.abs(qty) : -Math.abs(qty);
                     const typeBadge = getMovementTypeBadge(move);
-                    const statusBadge = getStatusBadge(EXIT_STATUS_APPROVED);
+                    const statusBadge = getStatusBadge(move.status || EXIT_STATUS_APPROVED);
                     const comment = move.comment ? move.comment : '-';
                     return `
                         <tr class="hover:bg-gray-50">
@@ -4903,18 +5210,12 @@
 
                 pendingExitPlaceholder.classList.add('hidden');
                 pendingExitTableContainer.classList.remove('hidden');
-                const canApprove = getCurrentUserRole() === 'admin';
                 pendingExitTbody.innerHTML = requests.map(request => {
                     const statusBadge = formatExitStatusBadge(request.status);
                     const requestedBy = request.requestedByName || request.requestedBy || request.requestedByEmail || '-';
                     const comment = request.comment ? request.comment : '-';
                     const date = request.requestedAt || request.date || new Date().toISOString();
-                    const actionsHtml = canApprove
-                        ? `<div class="flex justify-end gap-2">
-                                <button type="button" data-approve-exit="${request.id}" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-green-500 text-white hover:bg-green-600">Valider</button>
-                                <button type="button" data-reject-exit="${request.id}" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-100 text-red-600 hover:bg-red-200">Refuser</button>
-                            </div>`
-                        : `<span class="text-xs text-gray-400">Admin requis</span>`;
+                    const actionsHtml = `<span class="text-xs text-gray-400">À valider dans Historique des ventes</span>`;
                     return `
                         <tr class="hover:bg-gray-50">
                             <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(date)}</td>
@@ -4933,11 +5234,95 @@
                 }).join('');
             }
 
+            async function resolveStoreValidationSale(saleId, action) {
+                if (!dbBasePath || !currentUser) return;
+                if (getCurrentUserRole() !== 'admin') {
+                    showSuccessToast("Accès réservé aux administrateurs.");
+                    return;
+                }
+                const sale = appData.salesHistory?.[saleId];
+                if (!sale || !isStoreValidationPending(sale)) {
+                    showSuccessToast("Cette vente a déjà été traitée.");
+                    return;
+                }
+                if (!['paid', 'pending', 'pay_later'].includes(action)) return;
+                const product = appData.storeProducts?.[sale.storeProductId];
+                if (!product) {
+                    showSuccessToast("Produit introuvable.");
+                    return;
+                }
+                const quantity = parseInt(sale.quantity, 10) || 0;
+                if (quantity <= 0) return;
+                if (quantity > (product.quantityInStore || 0)) {
+                    showSuccessToast("Stock insuffisant pour valider cette sortie.");
+                    return;
+                }
+
+                const paymentStatus = action === 'pay_later'
+                    ? 'pay_later'
+                    : (action === 'pending' ? 'pending' : 'paid');
+                const payLater = paymentStatus === 'pay_later';
+
+                try {
+                    const now = new Date().toISOString();
+                    const newStock = (product.quantityInStore || 0) - quantity;
+                    const updates = {};
+
+                    updates[`${dbBasePath}/storeProducts/${product.id}/quantityInStore`] = newStock;
+
+                    const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
+                    updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
+                        id: moveKey,
+                        productId: product.id,
+                        productName: product.name,
+                        type: "Sortie directe",
+                        quantityChange: quantity,
+                        oldStock: product.quantityInStore,
+                        newStock,
+                        comment: sale.comment ? `Sortie directe: ${sale.comment}` : "Sortie directe magasin",
+                        date: now,
+                        approvedFromRequest: sale.storeRequestId || sale.approvedFromRequest || null,
+                        userEmail: currentUser.email || '',
+                        status: EXIT_STATUS_APPROVED
+                    };
+
+                    updates[`${dbBasePath}/salesHistory/${saleId}/paymentStatus`] = paymentStatus;
+                    updates[`${dbBasePath}/salesHistory/${saleId}/payLater`] = payLater;
+                    updates[`${dbBasePath}/salesHistory/${saleId}/validationStatus`] = 'validated';
+                    updates[`${dbBasePath}/salesHistory/${saleId}/validatedAt`] = now;
+                    updates[`${dbBasePath}/salesHistory/${saleId}/validatedBy`] = currentUser.email || currentUserData?.email || '';
+                    updates[`${dbBasePath}/salesHistory/${saleId}/storeMovementId`] = moveKey;
+
+                    const requestId = sale.storeRequestId || sale.approvedFromRequest || sale.requestId;
+                    if (requestId) {
+                        updates[`${dbBasePath}/storeExitRequests/${requestId}/status`] = EXIT_STATUS_APPROVED;
+                        updates[`${dbBasePath}/storeExitRequests/${requestId}/validatedAt`] = now;
+                        updates[`${dbBasePath}/storeExitRequests/${requestId}/validatedBy`] = currentUser.email || currentUserData?.email || '';
+                    }
+
+                    await update(ref(db), updates);
+
+                    const messageMap = {
+                        paid: 'Vente magasin validée.',
+                        pending: 'Vente mise en attente.',
+                        pay_later: 'Vente en paiement différé.'
+                    };
+                    showSuccessToast(messageMap[paymentStatus] || 'Mise à jour effectuée.');
+                } catch (error) {
+                    console.error(error);
+                    showSuccessToast("Impossible de valider cette vente pour le moment.");
+                }
+            }
+
             async function approveExitRequest(requestId) {
                 if (!dbBasePath || !currentUser || getCurrentUserRole() !== 'admin') return;
                 const request = appData.storeExitRequests?.[requestId];
                 if (!request || request.status !== EXIT_STATUS_PENDING) {
                     showSuccessToast("Cette demande a déjà été traitée.");
+                    return;
+                }
+                if (request.saleHistoryId) {
+                    await resolveStoreValidationSale(request.saleHistoryId, 'paid');
                     return;
                 }
                 const product = appData.storeProducts?.[request.productId];
@@ -5769,6 +6154,50 @@
                 }
             }
 
+            async function markSaleAsPayLater(groupId) {
+                if (!currentUser || !dbBasePath || !groupId) return;
+                try {
+                    const salesHistoryEntries = Object.values(appData.salesHistory || {});
+                    const updates = {};
+                    const hasGroup = salesHistoryEntries.some(sale => sale.saleGroupId === groupId);
+
+                    if (hasGroup) {
+                        updates[`${dbBasePath}/sales/${groupId}/paymentStatus`] = 'pay_later';
+                        updates[`${dbBasePath}/sales/${groupId}/payLater`] = true;
+                    }
+
+                    salesHistoryEntries.forEach(sale => {
+                        if (sale.saleGroupId === groupId || sale.id === groupId) {
+                            updates[`${dbBasePath}/salesHistory/${sale.id}/paymentStatus`] = 'pay_later';
+                            updates[`${dbBasePath}/salesHistory/${sale.id}/payLater`] = true;
+                        }
+                    });
+
+                    if (Object.keys(updates).length === 0) {
+                        showSalesErrorMessage('Impossible de trouver cette vente à mettre à jour.');
+                        return;
+                    }
+
+                    await update(ref(db), updates);
+
+                    salesHistoryEntries.forEach(sale => {
+                        if (sale.saleGroupId === groupId || sale.id === groupId) {
+                            sale.paymentStatus = 'pay_later';
+                            sale.payLater = true;
+                        }
+                    });
+
+                    renderSalesHistory();
+                    if (activeSalesDetailId === groupId) {
+                        openSalesDetailModal(groupId);
+                    }
+                    showSuccessToast('Vente passée en paiement différé.');
+                } catch (error) {
+                    console.error(error);
+                    alert('Une erreur est survenue lors de la mise à jour du paiement.');
+                }
+            }
+
             async function validatePendingSale(pendingId) {
                 if (!currentUser || !dbBasePath || !pendingId) return;
                 const pendingSales = getPendingSalesFromStorage();
@@ -6385,6 +6814,12 @@
                     renderSalesHistory();
                 });
             }
+            if (salesHistoryTabStoreValidation) {
+                salesHistoryTabStoreValidation.addEventListener('click', () => {
+                    salesHistoryTab = 'store_validation';
+                    renderSalesHistory();
+                });
+            }
             if (salesHistorySearchInput) {
                 salesHistorySearchInput.addEventListener('input', (event) => {
                     salesHistorySearch = event.target.value;
@@ -6412,6 +6847,10 @@
                             markPayLaterAsPaid(groupId);
                             return;
                         }
+                        if (action === 'mark-paylater') {
+                            markSaleAsPayLater(groupId);
+                            return;
+                        }
                         if (action === 'print') {
                             generateReceiptFromGroup(groupId);
                             return;
@@ -6420,6 +6859,15 @@
                             showSuccessToast('Email envoyé (simulation).');
                             return;
                         }
+                    }
+                    const storeValidationButton = event.target.closest('[data-store-validation-action]');
+                    if (storeValidationButton) {
+                        const saleId = storeValidationButton.dataset.storeValidationId;
+                        const action = storeValidationButton.dataset.storeValidationAction;
+                        if (saleId && action) {
+                            resolveStoreValidationSale(saleId, action);
+                        }
+                        return;
                     }
                     const validateButton = event.target.closest('[data-pending-validate]');
                     if (validateButton) {
@@ -6739,8 +7187,14 @@
                 try {
                     if (exitSubmitButton) exitSubmitButton.disabled = true;
                     const requestRef = push(ref(db, `${dbBasePath}/storeExitRequests`));
+                    const saleRef = push(ref(db, `${dbBasePath}/salesHistory`));
                     const now = new Date().toISOString();
-                    await set(requestRef, {
+                    const sellerName = currentUserData?.fullName || currentUser.email || '';
+                    const sellingPrice = Number(prod.purchaseCost ?? 0);
+                    const totalAmount = sellingPrice * qty;
+                    const updates = {};
+
+                    updates[`${dbBasePath}/storeExitRequests/${requestRef.key}`] = {
                         id: requestRef.key,
                         productId: pid,
                         productName: prod.name,
@@ -6754,9 +7208,35 @@
                         requestedByName: currentUserData?.fullName || currentUser.email || '',
                         requestedByEmail: currentUser.email || '',
                         requestedById: currentUser.uid || '',
-                        stockBefore: prod.quantityInStore
-                    });
-                    showSuccessToast("Demande de sortie envoyée pour validation.");
+                        stockBefore: prod.quantityInStore,
+                        saleHistoryId: saleRef.key
+                    };
+
+                    updates[`${dbBasePath}/salesHistory/${saleRef.key}`] = {
+                        id: saleRef.key,
+                        saleGroupId: saleRef.key,
+                        storeProductId: pid,
+                        productName: prod.name,
+                        quantity: qty,
+                        sellingPrice,
+                        totalAmount,
+                        sellerName,
+                        customerId: null,
+                        customerName,
+                        customerPhone,
+                        customerEmail,
+                        comment: comment || 'Vente directe magasin',
+                        paymentStatus: 'store_validation',
+                        validationStatus: 'pending',
+                        payLater: false,
+                        date: now,
+                        saleSource: SALE_SOURCE_STORE,
+                        currency: prod.currency || 'CFA',
+                        storeRequestId: requestRef.key
+                    };
+
+                    await update(ref(db), updates);
+                    showSuccessToast("Vente magasin envoyée pour validation.");
                     exitForm.reset();
                     exitModal.classList.add('hidden');
                 } catch (err) {
@@ -6976,7 +7456,7 @@
             });
 
             function updateAllStats() {
-                const sales = Object.values(appData.salesHistory);
+                const sales = getCountableSalesEntries();
                 const shopItems = Object.values(appData.shopStock);
                 const storeItems = Object.values(appData.storeProducts);
                 const now = new Date();
