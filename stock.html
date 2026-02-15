@@ -2612,6 +2612,11 @@
                 return { label: 'Boutique', classes: 'bg-cyan-50 text-cyan-700' };
             }
 
+            function formatStoreFlagLabel(baseLabel, isStoreFlag) {
+                if (!baseLabel) return '';
+                return isStoreFlag ? `${baseLabel} Magasin` : baseLabel;
+            }
+
             function isStoreValidationPending(sale) {
                 if (!sale) return false;
                 return sale.validationStatus === 'pending' || sale.paymentStatus === 'store_validation';
@@ -2845,7 +2850,10 @@
                             comments: [],
                             payLater: false,
                             saleSource: getSaleSource(sale),
-                            paymentStatus: sale.paymentStatus || (sale.payLater ? 'pay_later' : 'paid')
+                            paymentStatus: sale.paymentStatus || (sale.payLater ? 'pay_later' : 'paid'),
+                            hasStoreSource: false,
+                            hasShopSource: false,
+                            storeFlag: false
                         };
                     }
                     const group = groups[groupId];
@@ -2869,11 +2877,14 @@
                         group.paymentStatus = sale.paymentStatus;
                     }
                     const saleSource = getSaleSource(sale);
+                    if (saleSource === SALE_SOURCE_STORE) group.hasStoreSource = true;
+                    if (saleSource === SALE_SOURCE_SHOP) group.hasShopSource = true;
                     if (!group.saleSource) {
                         group.saleSource = saleSource;
                     } else if (group.saleSource !== saleSource) {
                         group.saleSource = SALE_SOURCE_MIXED;
                     }
+                    group.storeFlag = group.hasStoreSource && !group.hasShopSource;
                 });
 
                 return Object.values(groups).sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -3143,6 +3154,15 @@
                         const sourceHtml = sourceBadge
                             ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold ${sourceBadge.classes}">${sourceBadge.label}</span>`
                             : '';
+                        const detailsButtonHtml = `
+                            <button type="button" data-history-action="details" data-history-id="${sale.id}"
+                                class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Détails
+                            </button>
+                        `;
                         const validationActions = canValidateStore ? `
                             <button type="button" data-store-validation-id="${sale.id}" data-store-validation-action="paid"
                                 class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700">
@@ -3165,7 +3185,8 @@
                                 </svg>
                                 A payer plus tard
                             </button>
-                        ` : `<span class="text-xs text-gray-400">Admin requis</span>`;
+                            ${detailsButtonHtml}
+                        ` : detailsButtonHtml;
                         return `
                             <div class="border border-gray-200 rounded-2xl shadow-sm bg-white overflow-hidden">
                                 <div class="p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -3274,9 +3295,13 @@
                             </div>
                         ` : '';
                         const isPayLater = group.paymentStatus === 'pay_later' || group.payLater;
+                        const isStoreFlagged = group.storeFlag === true;
+                        const statusLabel = isPayLater
+                            ? formatStoreFlagLabel('A payer plus tard', isStoreFlagged)
+                            : formatStoreFlagLabel('Complétée', isStoreFlagged);
                         const statusHtml = isPayLater
-                            ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-700">A payer plus tard</span>`
-                            : `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-50 text-green-700">Complétée</span>`;
+                            ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-700">${statusLabel}</span>`
+                            : `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-50 text-green-700">${statusLabel}</span>`;
                         const sourceBadge = formatSaleSourceBadge(group.saleSource);
                         const sourceHtml = sourceBadge
                             ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold ${sourceBadge.classes}">${sourceBadge.label}</span>`
@@ -3406,7 +3431,8 @@
                             <span>${formatCurrency(summary.tax, summary.currency)}</span>
                         </div>
                     ` : '';
-                    const statusHtml = `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-50 text-orange-700">En attente</span>`;
+                    const pendingLabel = formatStoreFlagLabel('En attente', group.storeFlag === true);
+                    const statusHtml = `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-50 text-orange-700">${pendingLabel}</span>`;
                     const sourceBadge = formatSaleSourceBadge(group.saleSource);
                     const sourceHtml = sourceBadge
                         ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold ${sourceBadge.classes}">${sourceBadge.label}</span>`
@@ -3593,8 +3619,36 @@
             function openSalesDetailModal(groupId) {
                 if (!salesDetailModal || !groupId) return;
                 const groups = buildSalesHistoryGroups();
-                const group = groups.find(item => item.id === groupId);
-                if (!group) return;
+                let group = groups.find(item => item.id === groupId);
+                if (!group) {
+                    const sale = appData.salesHistory?.[groupId];
+                    if (!sale) return;
+                    const quantity = Number(sale.quantity || 0) || 1;
+                    const totalAmount = Number(sale.totalAmount || 0);
+                    const unitPrice = Number(sale.sellingPrice || (totalAmount / Math.max(quantity, 1)) || 0);
+                    const currency = getSaleCurrency(sale) || 'CFA';
+                    group = {
+                        id: sale.saleGroupId || sale.id || groupId,
+                        date: sale.date || sale.requestedAt || sale.createdAt || new Date().toISOString(),
+                        sellerName: sale.sellerName || '',
+                        customerId: sale.customerId || null,
+                        customerName: sale.customerName || '',
+                        customerPhone: sale.customerPhone || '',
+                        customerEmail: sale.customerEmail || '',
+                        items: [{
+                            name: sale.productName || 'Produit',
+                            quantity,
+                            price: unitPrice,
+                            total: totalAmount || (unitPrice * quantity)
+                        }],
+                        total: totalAmount || (unitPrice * quantity),
+                        currency,
+                        comments: sale.comment ? [sale.comment] : [],
+                        payLater: sale.payLater === true || sale.paymentStatus === 'pay_later',
+                        saleSource: getSaleSource(sale),
+                        paymentStatus: sale.paymentStatus || (sale.payLater ? 'pay_later' : (isStoreValidationPending(sale) ? 'store_validation' : 'paid'))
+                    };
+                }
 
                 activeSalesDetailId = groupId;
                 const customerName = group.customerName || (group.customerId && appData.customers?.[group.customerId]?.fullName) || 'Client comptoir';
@@ -3628,9 +3682,11 @@
                 if (salesDetailCustomerEmail) salesDetailCustomerEmail.textContent = customerEmail;
                 if (salesDetailSellerName) salesDetailSellerName.textContent = `Vendeur : ${sellerName}`;
                 if (salesDetailDate) salesDetailDate.textContent = formatDateForDisplay(group.date);
-                const paymentLabel = group.paymentStatus === 'pending'
-                    ? 'En attente'
-                    : (group.paymentStatus === 'pay_later' || group.payLater ? 'A payer plus tard' : 'Payée');
+                const paymentLabel = group.paymentStatus === 'store_validation'
+                    ? 'Validation magasin'
+                    : (group.paymentStatus === 'pending'
+                        ? 'En attente'
+                        : (group.paymentStatus === 'pay_later' || group.payLater ? 'A payer plus tard' : 'Payée'));
                 if (salesDetailPayment) salesDetailPayment.textContent = `${paymentLabel} · ${sourceLabel}`;
                 if (salesDetailProducts) salesDetailProducts.innerHTML = itemsHtml;
                 if (salesDetailComment) salesDetailComment.textContent = commentText;
