@@ -3745,30 +3745,28 @@
             }
 
             function updateSettingsAccess() {
-                const isAdmin = getCurrentUserRole() === 'admin';
-                if (settingsRestrictedState) settingsRestrictedState.classList.toggle('hidden', isAdmin);
-                if (settingsTabsWrapper) settingsTabsWrapper.classList.toggle('hidden', !isAdmin);
-                if (settingsAdminBadge) settingsAdminBadge.textContent = `Rôle : ${isAdmin ? 'Admin' : 'Accès limité'}`;
+                const canAccessSettings = hasPermission('Paramètres');
+                if (settingsRestrictedState) settingsRestrictedState.classList.toggle('hidden', canAccessSettings);
+                if (settingsTabsWrapper) settingsTabsWrapper.classList.toggle('hidden', !canAccessSettings);
+                if (settingsAdminBadge) settingsAdminBadge.textContent = `Rôle : ${canAccessSettings ? 'Admin' : 'Accès limité'}`;
             }
 
             function hasPermission(permission) {
                 if (!isAuthenticated || !currentUserData) return false;
-                // Admins have all permissions
-                if (currentUserData.role === 'admin') return true;
-                // Check if user has the specific permission
-                return currentUserData.permissions?.includes(permission) || false;
+                if (!Array.isArray(currentUserData.permissions)) return false;
+                return currentUserData.permissions.includes(permission);
             }
 
             // Mapping des pages aux permissions requises
             const pagePermissions = {
-                'Tableau de bord': null, // Accessible à tous
+                'Tableau de bord': 'Tableau de bord',
                 'Ventes': 'Ventes',
                 'Historique des ventes': ['Historique des ventes', 'Ventes'],
                 'Stock Boutique': 'Stock Boutique',
                 'Mon Magasin': 'Mon Magasin',
                 'Mouvements Magasin': ['Mouvements Magasin', 'Mon Magasin'],
                 'Statistiques': 'Statistiques',
-                'Paramètres': 'admin-only' // Cas spécial pour admin seulement
+                'Paramètres': 'Paramètres'
             };
 
             function canAccessPage(pageName) {
@@ -3777,30 +3775,12 @@
                     return false;
                 }
 
-                // Admins can access everything
-                if (currentUserData.role === 'admin') {
-                    console.log(`[canAccessPage] Admin access granted for page: ${pageName}`);
-                    return true;
-                }
-
                 const requiredPermission = pagePermissions[pageName];
                 console.log(`[canAccessPage] Checking page: ${pageName}, Required permission: ${requiredPermission}`);
                 console.log(`[canAccessPage] User permissions:`, currentUserData.permissions);
 
-                // Si null, la page est accessible à tous
-                if (requiredPermission === null) {
-                    console.log(`[canAccessPage] Page accessible to all: ${pageName}`);
-                    return true;
-                }
-
                 if (requiredPermission === undefined) {
                     console.log(`[canAccessPage] Unknown page, access denied: ${pageName}`);
-                    return false;
-                }
-
-                // Si 'admin-only', seuls les admins peuvent accéder
-                if (requiredPermission === 'admin-only') {
-                    console.log(`[canAccessPage] Admin-only page, access denied: ${pageName}`);
                     return false;
                 }
 
@@ -4624,7 +4604,7 @@
                     const name = currentUserData?.fullName || 'Utilisateur';
                     const email = currentUser?.email || currentUserData?.email;
                     const role = getCurrentUserRole();
-                    const permissions = role === 'admin' ? [...accessModules] : normalizePermissions(currentUserData?.permissions);
+                    const permissions = normalizePermissions(currentUserData?.permissions);
                     teamMembersState.unshift({
                         id: currentUser.uid,
                         name,
@@ -4657,9 +4637,7 @@
                     currentUserData.role = nextRole;
                     changed = true;
                 }
-                const nextPermissions = nextRole === 'admin'
-                    ? [...accessModules]
-                    : normalizePermissions(member.permissions);
+                const nextPermissions = normalizePermissions(member.permissions);
                 const currentPermissions = normalizePermissions(currentUserData.permissions);
                 if (JSON.stringify(currentPermissions) !== JSON.stringify(normalizePermissions(nextPermissions))) {
                     currentUserData.permissions = nextPermissions;
@@ -4753,6 +4731,7 @@
                 const member = teamMembersState.find(m => m.id === memberId);
                 if (!member) return;
                 member.role = role;
+                member.permissions = member.permissions || [];
                 if (role === 'admin' && !member.permissions.includes('Paramètres')) {
                     member.permissions.push('Paramètres');
                 }
@@ -4761,7 +4740,7 @@
                 }
                 if (member.isCurrentUser && currentUserData) {
                     currentUserData.role = role;
-                    currentUserData.permissions = role === 'admin' ? [...accessModules] : [...member.permissions];
+                    currentUserData.permissions = [...member.permissions];
                     updateUI();
                     renderStoreProducts(storeSearchInput ? storeSearchInput.value : '');
                     renderShopStock(shopSearchInput ? shopSearchInput.value : '');
@@ -4828,9 +4807,6 @@
                         permissions: Array.isArray(match.member.permissions) ? match.member.permissions : [],
                         accessCode: match.member.accessCode
                     };
-                    if (currentUserData.role === 'admin' && !currentUserData.permissions.length) {
-                        currentUserData.permissions = [...accessModules];
-                    }
                     dbBasePath = `companies/${match.companyId}`;
                     if (match.member.status !== 'actif') {
                         await update(ref(db, `${dbBasePath}/members/${match.memberId}`), { status: 'actif' });
@@ -5106,7 +5082,7 @@
                             ? `<button type="button" class="delete-icon inline-flex items-center justify-center w-9 h-9 rounded-lg bg-red-50 text-red-500 hover:bg-red-100" data-type="store" data-product-id="${product.id}">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                 </button>`
-                            : `<span class="text-xs text-gray-400">Non autorisé</span>`;
+                            : '';
                         html += `
                             <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${product.name}</td>
@@ -5500,7 +5476,7 @@
                             ? `<button class="delete-icon text-gray-400 hover:text-red-500" data-type="shop" data-stock-id="${item.id}">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                 </button>`
-                            : `<span class="text-xs text-gray-400">Non autorisé</span>`;
+                            : '';
                         html += `
                             <tr class="hover:bg-gray-50 ${isLowStock ? 'bg-red-50' : ''}">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${item.name}</td>
@@ -5652,9 +5628,9 @@
 
                     // Vérifier si l'utilisateur peut accéder à la page actuelle
                     if (!canAccessPage(currentPage)) {
-                        // Rediriger vers le tableau de bord si accès refusé
-                        currentPage = 'Tableau de bord';
-                        if (mobilePageTitle) mobilePageTitle.textContent = currentPage;
+                        const availablePage = Object.keys(pagePermissions).find(page => canAccessPage(page)) || '';
+                        currentPage = availablePage;
+                        if (mobilePageTitle) mobilePageTitle.textContent = currentPage || '';
                     }
                 } else {
                     if (authPageContainer) authPageContainer.classList.remove('hidden');
@@ -5662,7 +5638,7 @@
                 }
 
                 pageContents.forEach(page => {
-                    if (page.id === `page-${currentPage.replace(/ /g, '-')}`) page.classList.remove('hidden');
+                    if (currentPage && page.id === `page-${currentPage.replace(/ /g, '-')}`) page.classList.remove('hidden');
                     else page.classList.add('hidden');
                 });
 
