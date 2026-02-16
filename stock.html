@@ -782,17 +782,6 @@
                                 </svg>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <button id="open-transfer-modal-button"
-                                class="px-4 py-2 bg-cyan-400 text-white font-semibold rounded-lg shadow-md hover:bg-cyan-500 transition-colors flex items-center gap-2">
-                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 4v16m8-8H4" />
-                                </svg>
-                                Transférer depuis Magasin
-                            </button>
-                        </div>
                     </div>
                     <!-- Conteneur pour la liste des produits de la boutique -->
                     <div id="shop-stock-container" class="mt-6">
@@ -887,14 +876,25 @@
                         <h1 class="text-3xl font-bold text-gray-800">Gestion du Magasin</h1>
                         <p class="text-gray-500 mt-1">Gestion du stock principal</p>
                     </div>
-                    <button id="open-restock-modal-button"
-                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 text-white font-semibold shadow-sm hover:bg-purple-700">
-                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h10M7 11h10M7 15h10M5 7h.01M5 11h.01M5 15h.01" />
-                        </svg>
-                        Réapprovisionner la boutique
-                    </button>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <button id="open-transfer-modal-button"
+                            class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-400 text-white font-semibold shadow-md hover:bg-cyan-500 transition-colors">
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4" />
+                            </svg>
+                            Nouveau produit vers Boutique
+                        </button>
+                        <button id="open-restock-modal-button"
+                            class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 text-white font-semibold shadow-sm hover:bg-purple-700">
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h10M7 11h10M7 15h10M5 7h.01M5 11h.01M5 15h.01" />
+                            </svg>
+                            Réapprovisionner la boutique
+                        </button>
+                    </div>
                 </div>
                 <div class="mt-8 bg-white p-6 rounded-lg shadow-sm">
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -5569,11 +5569,8 @@
             function onShopMovementsValue(snapshot) {
                 const movements = snapshot.val();
                 if (movements) {
-                    const filteredMovements = Object.values(movements).filter(move => {
-                        const comment = (move?.comment || '').toString().trim().toLowerCase();
-                        return !comment.startsWith('vente');
-                    });
-                    if (!filteredMovements.length) {
+                    const allMovements = Object.values(movements);
+                    if (!allMovements.length) {
                         shopMovementsPlaceholder.classList.remove('hidden');
                         shopMovementsTableContainer.classList.add('hidden');
                         shopMovementsTbody.innerHTML = '';
@@ -5582,7 +5579,7 @@
                     shopMovementsPlaceholder.classList.add('hidden');
                     shopMovementsTableContainer.classList.remove('hidden');
                     let html = '';
-                    const sortedMovements = filteredMovements.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    const sortedMovements = allMovements.sort((a, b) => new Date(b.date) - new Date(a.date));
                     sortedMovements.forEach(move => {
                         const isEntry = move.type === 'Entrée';
                         const userDisplay = move.userEmail ? move.userEmail.split('@')[0] : 'N/A';
