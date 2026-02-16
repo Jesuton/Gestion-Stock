@@ -2953,7 +2953,8 @@
                             customer: pending.customer || {},
                             items: Array.isArray(pending.items) ? pending.items : [],
                             legacyId: pending.id || null,
-                            createdBy: currentUser.email || ''
+                            createdBy: currentUser.email || '',
+                            stockReserved: pending.stockReserved === true
                         };
                     });
                     await update(ref(db), updates);
@@ -6015,7 +6016,7 @@
                 if (cartTotal) cartTotal.textContent = formatCurrency(summary.total, summary.currency);
             }
 
-            function holdCart() {
+            async function holdCart() {
                 if (!cartItems.length) return;
                 if (!selectedCustomer) {
                     showSalesErrorMessage("Sélectionnez un client pour mettre en attente.");
@@ -6031,9 +6032,11 @@
                     }
                     return;
                 }
+
                 try {
+                    const now = new Date().toISOString();
                     const heldSale = {
-                        createdAt: new Date().toISOString(),
+                        createdAt: now,
                         comment,
                         customer: {
                             id: selectedCustomer.id,
@@ -6043,20 +6046,56 @@
                         },
                         items: cartItems
                     };
+
                     if (dbBasePath) {
+                        if (!currentUser) return;
+                        for (const item of cartItems) {
+                            const shopProduct = appData.shopStock[item.shopProductId];
+                            if (!shopProduct || item.quantity > shopProduct.quantityInShop) {
+                                showSalesErrorMessage(`Stock insuffisant pour ${item.name}. Disponible: ${shopProduct?.quantityInShop || 0}`);
+                                return;
+                            }
+                        }
+
+                        const updates = {};
                         const pendingRef = push(ref(db, `${dbBasePath}/pendingSales`));
                         heldSale.id = pendingRef.key;
                         heldSale.createdBy = currentUser?.email || '';
-                        set(pendingRef, heldSale);
+                        heldSale.stockReserved = true;
+                        updates[`${dbBasePath}/pendingSales/${pendingRef.key}`] = heldSale;
+
+                        cartItems.forEach(item => {
+                            const shopProduct = appData.shopStock[item.shopProductId];
+                            const newStock = (Number(shopProduct?.quantityInShop) || 0) - item.quantity;
+                            updates[`${dbBasePath}/shopStock/${item.shopProductId}/quantityInShop`] = newStock;
+                            const shopMoveKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
+                            updates[`${dbBasePath}/shopMovements/${shopMoveKey}`] = {
+                                id: shopMoveKey,
+                                shopProductId: item.shopProductId,
+                                productName: item.name,
+                                type: "Sortie",
+                                quantityChange: item.quantity,
+                                oldStock: shopProduct?.quantityInShop ?? 0,
+                                newStock,
+                                comment: comment ? `Vente en attente: ${comment}` : 'Vente en attente',
+                                date: now,
+                                userEmail: currentUser.email || ''
+                            };
+                        });
+
+                        await update(ref(db), updates);
                     } else {
                         heldSale.id = `HOLD-${Date.now()}`;
+                        heldSale.stockReserved = false;
                         const pendingSales = getPendingSalesFromStorage();
                         pendingSales.unshift(heldSale);
                         savePendingSalesToStorage(pendingSales);
                     }
                 } catch (error) {
                     console.warn('Impossible de sauvegarder le panier en attente.', error);
+                    return;
                 }
+
                 cartItems = [];
                 if (holdCommentInput) holdCommentInput.value = '';
                 renderCart();
@@ -6317,12 +6356,15 @@
                     showSalesErrorMessage('Aucun article dans cette vente en attente.');
                     return;
                 }
+                const isReserved = pending.stockReserved === true;
 
-                for (const item of items) {
-                    const shopProduct = appData.shopStock[item.shopProductId];
-                    if (!shopProduct || item.quantity > shopProduct.quantityInShop) {
-                        alert(`Stock insuffisant pour ${item.name}. Disponible: ${shopProduct?.quantityInShop || 0}`);
-                        return;
+                if (!isReserved) {
+                    for (const item of items) {
+                        const shopProduct = appData.shopStock[item.shopProductId];
+                        if (!shopProduct || item.quantity > shopProduct.quantityInShop) {
+                            alert(`Stock insuffisant pour ${item.name}. Disponible: ${shopProduct?.quantityInShop || 0}`);
+                            return;
+                        }
                     }
                 }
 
@@ -6354,24 +6396,26 @@
                     };
 
                     for (const item of items) {
-                        const shopProduct = appData.shopStock[item.shopProductId];
-                        const shopNewStock = shopProduct.quantityInShop - item.quantity;
+                        if (!isReserved) {
+                            const shopProduct = appData.shopStock[item.shopProductId];
+                            const shopNewStock = shopProduct.quantityInShop - item.quantity;
 
-                        updates[`${dbBasePath}/shopStock/${item.shopProductId}/quantityInShop`] = shopNewStock;
+                            updates[`${dbBasePath}/shopStock/${item.shopProductId}/quantityInShop`] = shopNewStock;
 
-                        const shopMoveKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
-                        updates[`${dbBasePath}/shopMovements/${shopMoveKey}`] = {
-                            id: shopMoveKey,
-                            shopProductId: item.shopProductId,
-                            productName: item.name,
-                            type: "Sortie",
-                            quantityChange: item.quantity,
-                            oldStock: shopProduct.quantityInShop,
-                            newStock: shopNewStock,
-                            comment: comment ? `Vente en attente: ${comment}` : 'Vente en attente',
-                            date: now,
-                            userEmail: currentUser.email
-                        };
+                            const shopMoveKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
+                            updates[`${dbBasePath}/shopMovements/${shopMoveKey}`] = {
+                                id: shopMoveKey,
+                                shopProductId: item.shopProductId,
+                                productName: item.name,
+                                type: "Sortie",
+                                quantityChange: item.quantity,
+                                oldStock: shopProduct.quantityInShop,
+                                newStock: shopNewStock,
+                                comment: comment ? `Vente en attente: ${comment}` : 'Vente en attente',
+                                date: now,
+                                userEmail: currentUser.email
+                            };
+                        }
 
                         const saleKey = push(ref(db, `${dbBasePath}/salesHistory`)).key;
                         updates[`${dbBasePath}/salesHistory/${saleKey}`] = {
@@ -6431,17 +6475,59 @@
                 }
             }
 
-            function cancelPendingSale(pendingId) {
+            async function cancelPendingSale(pendingId) {
                 if (!pendingId) return;
-                if (dbBasePath) {
-                    remove(ref(db, `${dbBasePath}/pendingSales/${pendingId}`));
-                } else {
-                    const pendingSales = getPendingSalesFromStorage();
-                    const nextSales = pendingSales.filter(sale => sale.id !== pendingId);
-                    savePendingSalesToStorage(nextSales);
+                const pendingSales = getPendingSalesList();
+                const pending = pendingSales.find(sale => sale.id === pendingId);
+                const isReserved = pending?.stockReserved === true;
+
+                try {
+                    if (dbBasePath) {
+                        const updates = {};
+                        const now = new Date().toISOString();
+
+                        if (isReserved && Array.isArray(pending?.items) && pending.items.length) {
+                            for (const item of pending.items) {
+                                const shopProduct = appData.shopStock?.[item.shopProductId];
+                                if (!shopProduct) {
+                                    showSalesErrorMessage("Produit introuvable pour remettre le stock en boutique.");
+                                    return;
+                                }
+                            }
+
+                            pending.items.forEach(item => {
+                                const shopProduct = appData.shopStock[item.shopProductId];
+                                const newStock = (Number(shopProduct.quantityInShop) || 0) + (Number(item.quantity) || 0);
+                                updates[`${dbBasePath}/shopStock/${item.shopProductId}/quantityInShop`] = newStock;
+                                const shopMoveKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
+                                updates[`${dbBasePath}/shopMovements/${shopMoveKey}`] = {
+                                    id: shopMoveKey,
+                                    shopProductId: item.shopProductId,
+                                    productName: item.name || shopProduct.name || 'Produit',
+                                    type: "Entrée",
+                                    quantityChange: item.quantity,
+                                    oldStock: shopProduct.quantityInShop,
+                                    newStock,
+                                    comment: pending.comment ? `Vente en attente: ${pending.comment}` : 'Vente en attente',
+                                    date: now,
+                                    userEmail: currentUser?.email || ''
+                                };
+                            });
+                        }
+
+                        updates[`${dbBasePath}/pendingSales/${pendingId}`] = null;
+                        await update(ref(db), updates);
+                    } else {
+                        const nextSales = pendingSales.filter(sale => sale.id !== pendingId);
+                        savePendingSalesToStorage(nextSales);
+                    }
+
+                    renderSalesHistory();
+                    showSuccessToast('Vente en attente annulée.');
+                } catch (error) {
+                    console.error(error);
+                    showSalesErrorMessage("Impossible d'annuler cette vente pour le moment.");
                 }
-                renderSalesHistory();
-                showSuccessToast('Vente en attente annulée.');
             }
 
             async function removePendingSaleItem(pendingId, itemIndex) {
@@ -6453,6 +6539,10 @@
                 if (!pending || !Array.isArray(pending.items)) return;
                 if (index < 0 || index >= pending.items.length) return;
 
+                const removedItem = pending.items[index];
+                const itemLabel = removedItem?.name ? `« ${removedItem.name} »` : 'cet article';
+                if (!confirm(`Confirmer le retrait de ${itemLabel} de la vente en attente ?`)) return;
+
                 const nextItems = pending.items.slice();
                 nextItems.splice(index, 1);
 
@@ -6463,10 +6553,36 @@
 
                 try {
                     if (dbBasePath) {
-                        await update(ref(db, `${dbBasePath}/pendingSales/${pendingId}`), {
-                            items: nextItems,
-                            updatedAt: new Date().toISOString()
-                        });
+                        const updates = {};
+                        const now = new Date().toISOString();
+                        const isReserved = pending.stockReserved === true;
+
+                        if (isReserved) {
+                            const shopProduct = appData.shopStock?.[removedItem.shopProductId];
+                            if (!shopProduct) {
+                                showSalesErrorMessage("Produit introuvable pour remettre le stock en boutique.");
+                                return;
+                            }
+                            const newStock = (Number(shopProduct.quantityInShop) || 0) + (Number(removedItem.quantity) || 0);
+                            updates[`${dbBasePath}/shopStock/${removedItem.shopProductId}/quantityInShop`] = newStock;
+                            const shopMoveKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
+                            updates[`${dbBasePath}/shopMovements/${shopMoveKey}`] = {
+                                id: shopMoveKey,
+                                shopProductId: removedItem.shopProductId,
+                                productName: removedItem.name || shopProduct.name || 'Produit',
+                                type: "Entrée",
+                                quantityChange: removedItem.quantity,
+                                oldStock: shopProduct.quantityInShop,
+                                newStock,
+                                comment: pending.comment ? `Vente en attente: ${pending.comment}` : 'Vente en attente',
+                                date: now,
+                                userEmail: currentUser?.email || ''
+                            };
+                        }
+
+                        updates[`${dbBasePath}/pendingSales/${pendingId}/items`] = nextItems;
+                        updates[`${dbBasePath}/pendingSales/${pendingId}/updatedAt`] = now;
+                        await update(ref(db), updates);
                         if (appData.pendingSales?.[pendingId]) {
                             appData.pendingSales[pendingId].items = nextItems;
                         }
@@ -6502,6 +6618,8 @@
 
                 const quantity = parseInt(sale.quantity, 10) || 0;
                 if (quantity <= 0) return;
+                const itemLabel = sale.productName ? `« ${sale.productName} »` : 'cet article';
+                if (!confirm(`Confirmer le retrait de ${itemLabel} de la facture ?`)) return;
 
                 const updates = {};
                 const now = new Date().toISOString();
