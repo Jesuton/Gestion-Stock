@@ -2863,6 +2863,9 @@
                     if (!group.customerPhone && sale.customerPhone) group.customerPhone = sale.customerPhone;
                     if (!group.customerEmail && sale.customerEmail) group.customerEmail = sale.customerEmail;
                     group.items.push({
+                        saleId: sale.id,
+                        shopProductId: sale.shopProductId || null,
+                        storeProductId: sale.storeProductId || null,
                         name: sale.productName,
                         quantity: sale.quantity || 0,
                         price: sale.sellingPrice || 0,
@@ -3303,6 +3306,7 @@
                         const customerLabel = group.customerName || (group.customerId && appData.customers?.[group.customerId]?.fullName) || 'Client comptoir';
                         const customerEmail = group.customerEmail || (group.customerId && appData.customers?.[group.customerId]?.email) || '';
                         const itemsCount = group.items.reduce((sum, item) => sum + item.quantity, 0);
+                        const isPayLater = group.paymentStatus === 'pay_later' || group.payLater;
                         const summary = calculateItemsSummary(group.items.map(item => ({
                             sellingPrice: item.price,
                             quantity: item.quantity,
@@ -3311,6 +3315,13 @@
                         const { dateLabel, timeLabel } = formatHistoryDateParts(group.date);
                         const itemsHtml = group.items.map(item => {
                             const unitPrice = item.price || (item.total / Math.max(item.quantity, 1));
+                            const canRemove = isPayLater && item.saleId;
+                            const removeButtonHtml = canRemove ? `
+                                <button type="button" data-history-item-remove="${item.saleId}" data-history-item-group="${group.id}"
+                                    class="mt-1 text-xs font-semibold text-red-600 hover:text-red-700">
+                                    Retirer
+                                </button>
+                            ` : '';
                             return `
                                 <div class="flex items-center justify-between text-sm text-gray-700">
                                     <div class="flex items-center gap-3">
@@ -3320,6 +3331,7 @@
                                     <div class="text-right">
                                         <p class="text-xs text-gray-500">${formatCurrency(unitPrice, group.currency)} / unité</p>
                                         <p class="text-sm font-semibold text-gray-900">${formatCurrency(item.total, group.currency)}</p>
+                                        ${removeButtonHtml}
                                     </div>
                                 </div>
                             `;
@@ -3330,7 +3342,6 @@
                                 <span>${formatCurrency(summary.tax, summary.currency)}</span>
                             </div>
                         ` : '';
-                        const isPayLater = group.paymentStatus === 'pay_later' || group.payLater;
                         const isStoreFlagged = group.storeFlag === true;
                         const statusLabel = isPayLater
                             ? formatStoreFlagLabel('A payer plus tard', isStoreFlagged)
@@ -3448,6 +3459,12 @@
                     const { dateLabel, timeLabel } = formatHistoryDateParts(group.date);
                     const itemsHtml = group.items.map(item => {
                         const unitPrice = item.price || (item.total / Math.max(item.quantity, 1));
+                        const removeButtonHtml = item.saleId ? `
+                            <button type="button" data-history-item-remove="${item.saleId}" data-history-item-group="${group.id}"
+                                class="mt-1 text-xs font-semibold text-red-600 hover:text-red-700">
+                                Retirer
+                            </button>
+                        ` : '';
                         return `
                             <div class="flex items-center justify-between text-sm text-gray-700">
                                 <div class="flex items-center gap-3">
@@ -3457,6 +3474,7 @@
                                 <div class="text-right">
                                     <p class="text-xs text-gray-500">${formatCurrency(unitPrice, group.currency)} / unité</p>
                                     <p class="text-sm font-semibold text-gray-900">${formatCurrency(item.total, group.currency)}</p>
+                                    ${removeButtonHtml}
                                 </div>
                             </div>
                         `;
@@ -3556,7 +3574,7 @@
                     const itemsCount = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
                     const summary = calculateItemsSummary(items);
                     const { dateLabel, timeLabel } = formatHistoryDateParts(pending.createdAt || pending.date || new Date().toISOString());
-                    const itemsHtml = items.map(item => {
+                    const itemsHtml = items.map((item, itemIndex) => {
                         const unitPrice = item.sellingPrice || (item.total / Math.max(item.quantity, 1));
                         const lineTotal = (item.sellingPrice || item.price || 0) * (item.quantity || 0);
                         return `
@@ -3568,6 +3586,10 @@
                                 <div class="text-right">
                                     <p class="text-xs text-gray-500">${formatCurrency(unitPrice, summary.currency)} / unité</p>
                                     <p class="text-sm font-semibold text-gray-900">${formatCurrency(lineTotal, summary.currency)}</p>
+                                    <button type="button" data-pending-item-remove="${pending.id}" data-pending-item-index="${itemIndex}"
+                                        class="mt-1 text-xs font-semibold text-red-600 hover:text-red-700">
+                                        Retirer
+                                    </button>
                                 </div>
                             </div>
                         `;
@@ -6422,6 +6444,168 @@
                 showSuccessToast('Vente en attente annulée.');
             }
 
+            async function removePendingSaleItem(pendingId, itemIndex) {
+                if (!pendingId) return;
+                const index = Number(itemIndex);
+                if (Number.isNaN(index)) return;
+                const pendingSales = getPendingSalesList();
+                const pending = pendingSales.find(sale => sale.id === pendingId);
+                if (!pending || !Array.isArray(pending.items)) return;
+                if (index < 0 || index >= pending.items.length) return;
+
+                const nextItems = pending.items.slice();
+                nextItems.splice(index, 1);
+
+                if (!nextItems.length) {
+                    cancelPendingSale(pendingId);
+                    return;
+                }
+
+                try {
+                    if (dbBasePath) {
+                        await update(ref(db, `${dbBasePath}/pendingSales/${pendingId}`), {
+                            items: nextItems,
+                            updatedAt: new Date().toISOString()
+                        });
+                        if (appData.pendingSales?.[pendingId]) {
+                            appData.pendingSales[pendingId].items = nextItems;
+                        }
+                    } else {
+                        const localPending = getPendingSalesFromStorage();
+                        const updatedPending = localPending.map(sale => {
+                            if (sale.id !== pendingId) return sale;
+                            return { ...sale, items: nextItems, updatedAt: new Date().toISOString() };
+                        });
+                        savePendingSalesToStorage(updatedPending);
+                    }
+                    renderSalesHistory();
+                    showSuccessToast('Article retiré de la vente en attente.');
+                } catch (error) {
+                    console.error(error);
+                    showSalesErrorMessage("Impossible de retirer l'article pour le moment.");
+                }
+            }
+
+            async function removeSalesHistoryItem(groupId, saleId) {
+                if (!dbBasePath || !currentUser || !saleId) return;
+                const sale = appData.salesHistory?.[saleId];
+                if (!sale) return;
+
+                const saleGroupId = sale.saleGroupId || sale.id;
+                if (groupId && saleGroupId !== groupId) return;
+
+                const paymentStatus = sale.paymentStatus || (sale.payLater ? 'pay_later' : 'paid');
+                if (!['pending', 'pay_later'].includes(paymentStatus)) {
+                    showSalesErrorMessage("Le retrait d'articles est disponible uniquement pour les ventes en attente ou en paiement différé.");
+                    return;
+                }
+
+                const quantity = parseInt(sale.quantity, 10) || 0;
+                if (quantity <= 0) return;
+
+                const updates = {};
+                const now = new Date().toISOString();
+                const invoiceLabel = `INV-${saleGroupId.slice(-6).toUpperCase()}`;
+                const statusLabel = paymentStatus === 'pay_later' ? 'paiement différé' : 'en attente';
+                const movementComment = `Retrait facture ${invoiceLabel} (${statusLabel})`;
+
+                if (sale.shopProductId) {
+                    const shopProduct = appData.shopStock?.[sale.shopProductId];
+                    if (!shopProduct) {
+                        showSalesErrorMessage("Produit introuvable pour remettre le stock en boutique.");
+                        return;
+                    }
+                    const newStock = (Number(shopProduct.quantityInShop) || 0) + quantity;
+                    updates[`${dbBasePath}/shopStock/${sale.shopProductId}/quantityInShop`] = newStock;
+                    const shopMoveKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
+                    updates[`${dbBasePath}/shopMovements/${shopMoveKey}`] = {
+                        id: shopMoveKey,
+                        shopProductId: sale.shopProductId,
+                        productName: sale.productName || shopProduct.name || 'Produit',
+                        type: "Entrée",
+                        quantityChange: quantity,
+                        oldStock: shopProduct.quantityInShop,
+                        newStock,
+                        comment: movementComment,
+                        date: now,
+                        userEmail: currentUser.email || ''
+                    };
+                } else if (sale.storeProductId) {
+                    const storeProduct = appData.storeProducts?.[sale.storeProductId];
+                    if (!storeProduct) {
+                        showSalesErrorMessage("Produit introuvable pour remettre le stock magasin.");
+                        return;
+                    }
+                    const newStock = (Number(storeProduct.quantityInStore) || 0) + quantity;
+                    updates[`${dbBasePath}/storeProducts/${storeProduct.id}/quantityInStore`] = newStock;
+                    const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
+                    updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
+                        id: moveKey,
+                        productId: storeProduct.id,
+                        productName: storeProduct.name || 'Produit',
+                        type: "Entrée",
+                        quantityChange: quantity,
+                        oldStock: storeProduct.quantityInStore,
+                        newStock,
+                        comment: movementComment,
+                        date: now,
+                        userEmail: currentUser.email || '',
+                        status: EXIT_STATUS_APPROVED
+                    };
+                } else {
+                    showSalesErrorMessage("Impossible d'identifier le produit pour ajuster le stock.");
+                    return;
+                }
+
+                updates[`${dbBasePath}/salesHistory/${saleId}`] = null;
+
+                if (saleGroupId && saleGroupId !== sale.id) {
+                    const remainingSales = Object.values(appData.salesHistory || {}).filter(s => {
+                        const group = s.saleGroupId || s.id;
+                        return group === saleGroupId && s.id !== saleId;
+                    });
+                    if (remainingSales.length) {
+                        const total = remainingSales.reduce((sum, s) => {
+                            const lineTotal = Number(s.totalAmount) || (Number(s.sellingPrice) || 0) * (Number(s.quantity) || 0);
+                            return sum + lineTotal;
+                        }, 0);
+                        const itemsCount = remainingSales.reduce((sum, s) => sum + (Number(s.quantity) || 0), 0);
+                        updates[`${dbBasePath}/sales/${saleGroupId}/total`] = total;
+                        updates[`${dbBasePath}/sales/${saleGroupId}/itemsCount`] = itemsCount;
+                        updates[`${dbBasePath}/sales/${saleGroupId}/updatedAt`] = now;
+                    } else {
+                        updates[`${dbBasePath}/sales/${saleGroupId}`] = null;
+                    }
+                }
+
+                try {
+                    await update(ref(db), updates);
+
+                    if (appData.salesHistory?.[saleId]) {
+                        delete appData.salesHistory[saleId];
+                    }
+                    if (sale.shopProductId && appData.shopStock?.[sale.shopProductId]) {
+                        appData.shopStock[sale.shopProductId].quantityInShop =
+                            (Number(appData.shopStock[sale.shopProductId].quantityInShop) || 0) + quantity;
+                    }
+                    if (sale.storeProductId && appData.storeProducts?.[sale.storeProductId]) {
+                        appData.storeProducts[sale.storeProductId].quantityInStore =
+                            (Number(appData.storeProducts[sale.storeProductId].quantityInStore) || 0) + quantity;
+                    }
+
+                    renderSalesHistory();
+                    updateDashboardStats();
+                    updateAllStats();
+                    if (activeSalesDetailId === saleGroupId) {
+                        openSalesDetailModal(saleGroupId);
+                    }
+                    showSuccessToast('Article retiré de la facture.');
+                } catch (error) {
+                    console.error(error);
+                    showSalesErrorMessage("Impossible de retirer l'article pour le moment.");
+                }
+            }
+
             // --- FONCTIONS DE GÉNÉRATION DE FACTURES PDF ---
 
             /**
@@ -6928,6 +7112,20 @@
             }
             if (salesHistoryList) {
                 salesHistoryList.addEventListener('click', (event) => {
+                    const pendingItemRemoveButton = event.target.closest('[data-pending-item-remove]');
+                    if (pendingItemRemoveButton) {
+                        const pendingId = pendingItemRemoveButton.dataset.pendingItemRemove;
+                        const itemIndex = pendingItemRemoveButton.dataset.pendingItemIndex;
+                        removePendingSaleItem(pendingId, itemIndex);
+                        return;
+                    }
+                    const historyItemRemoveButton = event.target.closest('[data-history-item-remove]');
+                    if (historyItemRemoveButton) {
+                        const saleId = historyItemRemoveButton.dataset.historyItemRemove;
+                        const groupId = historyItemRemoveButton.dataset.historyItemGroup;
+                        removeSalesHistoryItem(groupId, saleId);
+                        return;
+                    }
                     const actionButton = event.target.closest('[data-history-action]');
                     if (actionButton) {
                         const action = actionButton.dataset.historyAction;
