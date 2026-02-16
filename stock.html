@@ -2227,7 +2227,7 @@
             let currentUserData = null;
             let dbBasePath = '';
 
-            const appData = { storeProducts: {}, storeMovements: {}, shopStock: {}, salesHistory: {}, customers: {}, storeExitRequests: {} };
+            const appData = { storeProducts: {}, storeMovements: {}, shopStock: {}, salesHistory: {}, customers: {}, storeExitRequests: {}, pendingSales: {} };
             let isSidebarOpen = false;
             let isSidebarCollapsed = false;
             let isCodeLoginMode = false;
@@ -2241,8 +2241,8 @@
             const SALE_SOURCE_MIXED = 'mixed';
 
 
-            let storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, salesHistoryListener, companyMembersListener, companyCustomersListener, storeExitRequestsListener;
-            let storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, salesHistoryRef, companyMembersRef, companyCustomersRef, storeExitRequestsRef;
+            let storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, salesHistoryListener, companyMembersListener, companyCustomersListener, storeExitRequestsListener, pendingSalesListener;
+            let storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, salesHistoryRef, companyMembersRef, companyCustomersRef, storeExitRequestsRef, pendingSalesRef;
 
             const accessModules = [
                 'Tableau de bord',
@@ -2924,6 +2924,42 @@
                 }
             }
 
+            function getPendingSalesList() {
+                const pending = Object.values(appData.pendingSales || {}).map(item => ({
+                    ...item,
+                    id: item.id || item.key || item.pendingId
+                })).filter(item => item.id);
+                if (pending.length) {
+                    return pending.sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
+                }
+                return getPendingSalesFromStorage();
+            }
+
+            async function migrateLocalPendingSales() {
+                if (!dbBasePath || !currentUser) return;
+                const localPending = getPendingSalesFromStorage();
+                if (!localPending.length) return;
+                try {
+                    const updates = {};
+                    localPending.forEach(pending => {
+                        const pendingRef = push(ref(db, `${dbBasePath}/pendingSales`));
+                        updates[`${dbBasePath}/pendingSales/${pendingRef.key}`] = {
+                            id: pendingRef.key,
+                            createdAt: pending.createdAt || new Date().toISOString(),
+                            comment: pending.comment || '',
+                            customer: pending.customer || {},
+                            items: Array.isArray(pending.items) ? pending.items : [],
+                            legacyId: pending.id || null,
+                            createdBy: currentUser.email || ''
+                        };
+                    });
+                    await update(ref(db), updates);
+                    savePendingSalesToStorage([]);
+                } catch (error) {
+                    console.warn('Impossible de migrer les paniers en attente.', error);
+                }
+            }
+
             function calculateItemsTotal(items = []) {
                 return items.reduce((sum, item) => {
                     const price = Number(item.sellingPrice ?? item.price ?? 0);
@@ -2974,7 +3010,7 @@
                 if (!salesHistoryList || !salesHistoryEmpty) return;
 
                 const groups = buildSalesHistoryGroups();
-                const pendingSales = getPendingSalesFromStorage();
+                const pendingSales = getPendingSalesList();
                 const storeValidationSales = Object.values(appData.salesHistory || {}).filter(isStoreValidationPending);
                 const pendingGroups = groups.filter(group => group.paymentStatus === 'pending');
                 const payLaterGroups = groups.filter(group => group.paymentStatus === 'pay_later' || group.payLater);
@@ -5553,6 +5589,11 @@
                 renderCustomerHistory();
             }
 
+            function onPendingSalesValue(snapshot) {
+                appData.pendingSales = snapshot.val() || {};
+                renderSalesHistory();
+            }
+
             function onCompanyCustomersValue(snapshot) {
                 appData.customers = snapshot.val() || {};
                 renderCustomerOptions();
@@ -5591,11 +5632,16 @@
                 salesHistoryRef = ref(db, `${dbBasePath}/salesHistory`);
                 salesHistoryListener = onValue(salesHistoryRef, onSalesHistoryValue);
 
+                pendingSalesRef = ref(db, `${dbBasePath}/pendingSales`);
+                pendingSalesListener = onValue(pendingSalesRef, onPendingSalesValue);
+
                 companyMembersRef = ref(db, `${dbBasePath}/members`);
                 companyMembersListener = onValue(companyMembersRef, onCompanyMembersValue);
 
                 companyCustomersRef = ref(db, `${dbBasePath}/customers`);
                 companyCustomersListener = onValue(companyCustomersRef, onCompanyCustomersValue);
+
+                migrateLocalPendingSales();
             }
 
             function cleanupFirebaseListeners() {
@@ -5605,11 +5651,12 @@
                 if (shopStockListener && shopStockRef) off(shopStockRef, shopStockListener);
                 if (shopMovementsListener && shopMovementsRef) off(shopMovementsRef, shopMovementsListener);
                 if (salesHistoryListener && salesHistoryRef) off(salesHistoryRef, salesHistoryListener);
+                if (pendingSalesListener && pendingSalesRef) off(pendingSalesRef, pendingSalesListener);
                 if (companyMembersListener && companyMembersRef) off(companyMembersRef, companyMembersListener);
                 if (companyCustomersListener && companyCustomersRef) off(companyCustomersRef, companyCustomersListener);
 
-                storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; salesHistoryListener = null; companyMembersListener = null; companyCustomersListener = null;
-                appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.salesHistory = {}; appData.customers = {}; appData.storeExitRequests = {};
+                storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; salesHistoryListener = null; pendingSalesListener = null; companyMembersListener = null; companyCustomersListener = null;
+                appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.salesHistory = {}; appData.customers = {}; appData.storeExitRequests = {}; appData.pendingSales = {};
                 selectedCustomer = null;
                 customerOptionLookup = {};
                 isCustomerHistoryOpen = false;
@@ -5964,7 +6011,6 @@
                 }
                 try {
                     const heldSale = {
-                        id: `HOLD-${Date.now()}`,
                         createdAt: new Date().toISOString(),
                         comment,
                         customer: {
@@ -5975,9 +6021,17 @@
                         },
                         items: cartItems
                     };
-                    const pendingSales = getPendingSalesFromStorage();
-                    pendingSales.unshift(heldSale);
-                    savePendingSalesToStorage(pendingSales);
+                    if (dbBasePath) {
+                        const pendingRef = push(ref(db, `${dbBasePath}/pendingSales`));
+                        heldSale.id = pendingRef.key;
+                        heldSale.createdBy = currentUser?.email || '';
+                        set(pendingRef, heldSale);
+                    } else {
+                        heldSale.id = `HOLD-${Date.now()}`;
+                        const pendingSales = getPendingSalesFromStorage();
+                        pendingSales.unshift(heldSale);
+                        savePendingSalesToStorage(pendingSales);
+                    }
                 } catch (error) {
                     console.warn('Impossible de sauvegarder le panier en attente.', error);
                 }
@@ -6232,7 +6286,7 @@
 
             async function validatePendingSale(pendingId) {
                 if (!currentUser || !dbBasePath || !pendingId) return;
-                const pendingSales = getPendingSalesFromStorage();
+                const pendingSales = getPendingSalesList();
                 const pendingIndex = pendingSales.findIndex(sale => sale.id === pendingId);
                 if (pendingIndex === -1) return;
                 const pending = pendingSales[pendingIndex];
@@ -6321,8 +6375,12 @@
 
                     await update(ref(db), updates);
 
-                    pendingSales.splice(pendingIndex, 1);
-                    savePendingSalesToStorage(pendingSales);
+                    if (dbBasePath) {
+                        await remove(ref(db, `${dbBasePath}/pendingSales/${pendingId}`));
+                    } else {
+                        pendingSales.splice(pendingIndex, 1);
+                        savePendingSalesToStorage(pendingSales);
+                    }
                     renderSalesHistory();
 
                     const invoiceData = {
@@ -6353,9 +6411,13 @@
 
             function cancelPendingSale(pendingId) {
                 if (!pendingId) return;
-                const pendingSales = getPendingSalesFromStorage();
-                const nextSales = pendingSales.filter(sale => sale.id !== pendingId);
-                savePendingSalesToStorage(nextSales);
+                if (dbBasePath) {
+                    remove(ref(db, `${dbBasePath}/pendingSales/${pendingId}`));
+                } else {
+                    const pendingSales = getPendingSalesFromStorage();
+                    const nextSales = pendingSales.filter(sale => sale.id !== pendingId);
+                    savePendingSalesToStorage(nextSales);
+                }
                 renderSalesHistory();
                 showSuccessToast('Vente en attente annulée.');
             }
