@@ -6000,7 +6000,8 @@
                                     <p class="text-sm font-semibold text-gray-900">${formatCurrency(subtotal, item.currency)}</p>
                                     <div class="mt-2 flex items-center justify-end gap-2">
                                         <button type="button" data-cart-action="decrease" data-index="${index}" class="w-7 h-7 rounded-full border border-gray-200 text-gray-500 hover:text-gray-700">-</button>
-                                        <span class="text-xs font-semibold text-gray-700">${item.quantity}</span>
+                                        <input type="number" min="1" step="1" value="${item.quantity}" data-cart-quantity data-index="${index}"
+                                            class="w-14 h-7 rounded-md border border-gray-200 text-xs text-center text-gray-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" />
                                         <button type="button" data-cart-action="increase" data-index="${index}" class="w-7 h-7 rounded-full border border-gray-200 text-gray-500 hover:text-gray-700">+</button>
                                         <button type="button" data-cart-action="remove" data-index="${index}" class="ml-1 text-xs font-semibold text-red-500 hover:text-red-600">Retirer</button>
                                     </div>
@@ -7186,6 +7187,18 @@
                     if (action === 'increase') updateCartQuantity(index, cartItems[index]?.quantity + 1);
                     if (action === 'decrease') updateCartQuantity(index, cartItems[index]?.quantity - 1);
                     if (action === 'remove') removeFromCart(index);
+                });
+                cartItemsList.addEventListener('change', (event) => {
+                    const qtyInput = event.target.closest('[data-cart-quantity]');
+                    if (!qtyInput) return;
+                    const index = parseInt(qtyInput.dataset.index, 10);
+                    if (Number.isNaN(index)) return;
+                    const newQty = parseInt(qtyInput.value, 10);
+                    if (!Number.isFinite(newQty)) {
+                        qtyInput.value = cartItems[index]?.quantity ?? 1;
+                        return;
+                    }
+                    updateCartQuantity(index, newQty);
                 });
             }
             if (validateCartButton) validateCartButton.addEventListener('click', validateCart);
