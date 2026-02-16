@@ -5908,6 +5908,49 @@
                 renderCart();
             }
 
+            function syncCartQuantitiesFromInputs() {
+                if (!cartItemsList) return;
+                const inputs = cartItemsList.querySelectorAll('[data-cart-quantity]');
+                if (!inputs.length) return;
+                let hasChanges = false;
+
+                inputs.forEach(input => {
+                    const index = parseInt(input.dataset.index, 10);
+                    if (Number.isNaN(index)) return;
+                    const item = cartItems[index];
+                    if (!item) return;
+                    const rawValue = (input.value || '').trim();
+
+                    if (!rawValue) {
+                        input.value = item.quantity;
+                        return;
+                    }
+
+                    const desiredQty = parseInt(rawValue, 10);
+                    if (!Number.isFinite(desiredQty) || desiredQty <= 0) {
+                        input.value = item.quantity;
+                        return;
+                    }
+
+                    const shopProduct = appData.shopStock[item.shopProductId];
+                    const maxQty = shopProduct?.quantityInShop ?? item.quantity;
+                    if (desiredQty > maxQty) {
+                        showSalesErrorMessage(`Stock insuffisant. Disponible: ${maxQty}`);
+                        input.value = item.quantity;
+                        return;
+                    }
+
+                    if (desiredQty !== item.quantity) {
+                        cartItems[index].quantity = desiredQty;
+                        hasChanges = true;
+                    }
+                });
+
+                if (hasChanges) {
+                    renderCart();
+                }
+            }
+
             function calculateCartTotal() {
                 return cartItems.reduce((total, item) => total + (item.sellingPrice * item.quantity), 0);
             }
@@ -6018,6 +6061,7 @@
             }
 
             async function holdCart() {
+                syncCartQuantitiesFromInputs();
                 if (!cartItems.length) return;
                 if (!selectedCustomer) {
                     showSalesErrorMessage("Sélectionnez un client pour mettre en attente.");
@@ -6105,6 +6149,7 @@
             }
 
             async function finalizeSale({ generateInvoice = false, payLater = false } = {}) {
+                syncCartQuantitiesFromInputs();
                 if (!currentUser || !dbBasePath) return;
                 if (cartItems.length === 0) {
                     alert('Le panier est vide !');
@@ -7191,14 +7236,20 @@
                 cartItemsList.addEventListener('change', (event) => {
                     const qtyInput = event.target.closest('[data-cart-quantity]');
                     if (!qtyInput) return;
-                    const index = parseInt(qtyInput.dataset.index, 10);
-                    if (Number.isNaN(index)) return;
-                    const newQty = parseInt(qtyInput.value, 10);
-                    if (!Number.isFinite(newQty)) {
-                        qtyInput.value = cartItems[index]?.quantity ?? 1;
-                        return;
-                    }
-                    updateCartQuantity(index, newQty);
+                    syncCartQuantitiesFromInputs();
+                });
+                cartItemsList.addEventListener('keydown', (event) => {
+                    const qtyInput = event.target.closest('[data-cart-quantity]');
+                    if (!qtyInput) return;
+                    if (event.key !== 'Enter') return;
+                    event.preventDefault();
+                    syncCartQuantitiesFromInputs();
+                    qtyInput.blur();
+                });
+                cartItemsList.addEventListener('focusout', (event) => {
+                    const qtyInput = event.target.closest('[data-cart-quantity]');
+                    if (!qtyInput) return;
+                    syncCartQuantitiesFromInputs();
                 });
             }
             if (validateCartButton) validateCartButton.addEventListener('click', validateCart);
