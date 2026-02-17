@@ -1811,7 +1811,11 @@
                             <div>
                                 <p class="text-sm font-semibold text-gray-900">Informations produit</p>
                                 <p id="exit-product-name" class="text-sm text-gray-800 mt-1">—</p>
-                                <p class="text-xs text-orange-700 mt-1">Stock disponible: <span id="exit-product-stock">—</span></p>
+                                <p class="text-xs text-orange-700 mt-1">Stock total: <span id="exit-product-total">—</span></p>
+                                <p class="text-xs text-orange-700 mt-1">Disponible (hors validation): <span id="exit-product-stock">—</span></p>
+                                <p id="exit-product-pending" class="text-xs text-orange-600 mt-1 hidden">
+                                    En attente de validation: <span id="exit-product-pending-count">0</span>
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -2405,7 +2409,10 @@
             const exitProductSelect = document.getElementById('exit-product-select');
             const exitProductInfo = document.getElementById('exit-product-info');
             const exitProductName = document.getElementById('exit-product-name');
+            const exitProductTotal = document.getElementById('exit-product-total');
             const exitProductStock = document.getElementById('exit-product-stock');
+            const exitProductPending = document.getElementById('exit-product-pending');
+            const exitProductPendingCount = document.getElementById('exit-product-pending-count');
             const exitProductSelectRow = document.getElementById('exit-product-select-row');
             const exitCustomerNameInput = document.getElementById('exit-customer-name');
             const exitCustomerEmailInput = document.getElementById('exit-customer-email');
@@ -5048,18 +5055,33 @@
             }
 
             function updateExitProductInfo(product) {
-                if (!exitProductInfo || !exitProductName || !exitProductStock) return;
+                if (!exitProductInfo || !exitProductName || !exitProductStock || !exitProductTotal) return;
                 if (!product) {
                     exitProductInfo.classList.add('hidden');
                     exitProductName.textContent = '—';
+                    exitProductTotal.textContent = '—';
                     exitProductStock.textContent = '—';
+                    if (exitProductPending) exitProductPending.classList.add('hidden');
+                    if (exitProductPendingCount) exitProductPendingCount.textContent = '0';
                     return;
                 }
-                const pendingQty = getPendingExitQuantity(product.id);
-                const available = Math.max((product.quantityInStore || 0) - pendingQty, 0);
+                const productKey = product.id || product.key || product.productId || '';
+                const pendingQty = productKey ? getPendingExitQuantity(productKey) : 0;
+                const totalStock = Number(product.quantityInStore) || 0;
+                const available = Math.max(totalStock - pendingQty, 0);
                 exitProductInfo.classList.remove('hidden');
                 exitProductName.textContent = product.name || '—';
+                exitProductTotal.textContent = `${totalStock}`;
                 exitProductStock.textContent = `${available}`;
+                if (exitProductPending && exitProductPendingCount) {
+                    if (pendingQty > 0) {
+                        exitProductPendingCount.textContent = `${pendingQty}`;
+                        exitProductPending.classList.remove('hidden');
+                    } else {
+                        exitProductPending.classList.add('hidden');
+                        exitProductPendingCount.textContent = '0';
+                    }
+                }
             }
 
             function openEntryModalForProduct(productId = null) {
