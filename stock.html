@@ -1005,6 +1005,9 @@
                                             Commentaire</th>
                                         <th scope="col"
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Utilisateur</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Date</th>
                                         <th scope="col"
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -5194,6 +5197,49 @@
                 }
             }
 
+            async function deleteStoreProduct(productId) {
+                if (!productId || !dbBasePath) return;
+                if (!hasPermission('Supprimer Stock Magasin')) {
+                    alert('Vous n\'avez pas la permission de supprimer des produits du Stock Magasin.');
+                    return;
+                }
+                const product = appData.storeProducts?.[productId];
+                if (!product) {
+                    showSuccessToast('Produit introuvable.');
+                    return;
+                }
+                if (!confirm('Supprimer ce produit du magasin définitivement ?')) return;
+
+                try {
+                    const now = new Date().toISOString();
+                    const qty = Number(product.quantityInStore) || 0;
+                    const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
+                    const updates = {};
+
+                    updates[`${dbBasePath}/storeProducts/${productId}`] = null;
+                    updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
+                        id: moveKey,
+                        productId,
+                        productName: product.name || 'Produit',
+                        type: "Suppression",
+                        quantityChange: qty,
+                        oldStock: qty,
+                        newStock: 0,
+                        comment: "Suppression produit",
+                        date: now,
+                        status: EXIT_STATUS_APPROVED,
+                        userEmail: currentUser?.email || '',
+                        userName: currentUserData?.fullName || currentUser?.email || ''
+                    };
+
+                    await update(ref(db), updates);
+                    showSuccessToast('Produit supprimé du magasin');
+                } catch (err) {
+                    console.error(err);
+                    alert('Erreur lors de la suppression');
+                }
+            }
+
             function formatMovementDate(value) {
                 const date = new Date(value);
                 if (Number.isNaN(date.getTime())) return '-';
@@ -5215,6 +5261,9 @@
                 if (move?.type === 'Sortie') {
                     return { label: 'Sortie', classes: 'bg-orange-100 text-orange-700' };
                 }
+                if (move?.type === 'Suppression') {
+                    return { label: 'Suppression', classes: 'bg-red-100 text-red-700' };
+                }
                 return { label: move?.type || '—', classes: 'bg-gray-100 text-gray-600' };
             }
 
@@ -5226,11 +5275,7 @@
 
             function renderStoreMovementsPage() {
                 if (!storeMovementsPlaceholder || !storeMovementsTableContainer || !storeMovementsTbody) return;
-                const movements = Object.values(appData.storeMovements || {}).filter(move => {
-                    const comment = (move?.comment || '').toString().trim().toLowerCase();
-                    if (move?.type === 'Sortie directe') return true;
-                    return !comment.startsWith('vente');
-                });
+                const movements = Object.values(appData.storeMovements || {});
                 const pendingRequests = Object.values(appData.storeExitRequests || {}).filter(request => {
                     if (request.status !== EXIT_STATUS_PENDING) return false;
                     if (!request.storeMovementId) return true;
@@ -5259,6 +5304,7 @@
                         const changeValue = -Math.abs(qty);
                         const statusBadge = getStatusBadge(request.status);
                         const comment = request.comment ? request.comment : 'Sortie en attente';
+                        const requestedBy = request.requestedByName || request.requestedBy || request.requestedByEmail || '-';
                         const customerLine = request.customerName ? `<p class="text-xs text-gray-500 mt-1">Client: ${request.customerName}</p>` : '';
                         const actionHtml = `<span class="text-xs text-gray-400 italic">En attente de validation</span>`;
                         return `
@@ -5273,6 +5319,7 @@
                                     <p>${comment}</p>
                                     ${customerLine}
                                 </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${requestedBy}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatMovementDate(item.date)}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
                                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${statusBadge.classes}">${statusBadge.label}</span>
@@ -5290,6 +5337,7 @@
                     const typeBadge = getMovementTypeBadge(move);
                     const statusBadge = getStatusBadge(move.status || EXIT_STATUS_APPROVED);
                     const comment = move.comment ? move.comment : '-';
+                    const userLabel = move.userName || move.userFullName || move.userEmail || move.userId || '-';
                     return `
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${move.productName || '-'}</td>
@@ -5299,6 +5347,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">${Math.abs(qty)}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${changeValue >= 0 ? 'text-emerald-600' : 'text-red-600'}">${changeValue >= 0 ? '+' : ''}${changeValue}</td>
                             <td class="px-6 py-4 text-sm text-gray-600">${comment}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${userLabel}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatMovementDate(item.date)}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm">
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${statusBadge.classes}">${statusBadge.label}</span>
@@ -5410,6 +5459,7 @@
                             date: now,
                             approvedFromRequest: sale.storeRequestId || sale.approvedFromRequest || null,
                             userEmail: currentUser.email || '',
+                            userName: currentUserData?.fullName || currentUser.email || '',
                             status: EXIT_STATUS_APPROVED
                         };
                     } else if (movementId) {
@@ -5493,7 +5543,8 @@
                             comment: request.comment ? `Sortie validée - ${request.comment}` : "Sortie validée",
                             date: now,
                             approvedFromRequest: requestId,
-                            userEmail: request.requestedByEmail || '',
+                            userEmail: currentUser.email || '',
+                            userName: currentUserData?.fullName || currentUser.email || '',
                             status: EXIT_STATUS_APPROVED
                         };
                     } else if (resolvedMovementId) {
@@ -5575,7 +5626,8 @@
                             comment: request.comment ? `Annulation sortie - ${request.comment}` : "Annulation sortie",
                             date: now,
                             status: EXIT_STATUS_APPROVED,
-                            userEmail: currentUser.email || ''
+                            userEmail: currentUser.email || '',
+                            userName: currentUserData?.fullName || currentUser.email || ''
                         };
                     }
                     if (request.storeMovementId) {
@@ -6798,6 +6850,7 @@
                         comment: movementComment,
                         date: now,
                         userEmail: currentUser.email || '',
+                        userName: currentUserData?.fullName || currentUser.email || '',
                         status: EXIT_STATUS_APPROVED
                     };
                 } else {
@@ -7176,12 +7229,8 @@
 
                     const btn = e.target.closest('button.delete-icon');
                     if (btn && btn.dataset.productId) {
-                        if (confirm('Supprimer ce produit du magasin définitivement ?')) {
-                            try {
-                                await remove(ref(db, `${dbBasePath}/storeProducts/${btn.dataset.productId}`));
-                                showSuccessToast('Produit supprimé du magasin');
-                            } catch (err) { console.error(err); }
-                        }
+                        e.storeDeleteHandled = true;
+                        await deleteStoreProduct(btn.dataset.productId);
                     }
                 });
             }
@@ -7663,7 +7712,7 @@
                         const now = new Date().toISOString();
                         updates[`${dbBasePath}/storeProducts/${existingProduct.id}/quantityInStore`] = newStock;
                         const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
-                        updates[`${dbBasePath}/storeMovements/${moveKey}`] = { id: moveKey, productId: existingProduct.id, productName: name, type: "Entrée", quantityChange: qty, oldStock: existingProduct.quantityInStore, newStock: newStock, comment: "Ajout automatique (même prix)", date: now };
+                        updates[`${dbBasePath}/storeMovements/${moveKey}`] = { id: moveKey, productId: existingProduct.id, productName: name, type: "Entrée", quantityChange: qty, oldStock: existingProduct.quantityInStore, newStock: newStock, comment: "Ajout automatique (même prix)", date: now, userEmail: currentUser.email || '', userName: currentUserData?.fullName || currentUser.email || '' };
                         await update(ref(db), updates);
                         showSuccessToast("Stock mis à jour pour le produit existant");
                     } else {
@@ -7671,7 +7720,7 @@
                         const newProd = { id: newRef.key, name: name.trim(), description: desc, purchaseCost: cost, currency, quantityInStore: qty, createdAt: new Date().toISOString() };
                         await set(newRef, newProd);
                         const moveRef = push(ref(db, `${dbBasePath}/storeMovements`));
-                        await set(moveRef, { id: moveRef.key, productId: newProd.id, productName: name, type: "Entrée", quantityChange: qty, oldStock: 0, newStock: qty, comment: "Création", date: new Date().toISOString() });
+                        await set(moveRef, { id: moveRef.key, productId: newProd.id, productName: name, type: "Entrée", quantityChange: qty, oldStock: 0, newStock: qty, comment: "Création", date: new Date().toISOString(), userEmail: currentUser.email || '', userName: currentUserData?.fullName || currentUser.email || '' });
                         showSuccessToast("Produit ajouté!");
                     }
 
@@ -7699,7 +7748,7 @@
                     const updates = {};
                     updates[`${dbBasePath}/storeProducts/${pid}/quantityInStore`] = newStock;
                     const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
-                    updates[`${dbBasePath}/storeMovements/${moveKey}`] = { id: moveKey, productId: pid, productName: prod.name, type: "Entrée", quantityChange: qty, oldStock: prod.quantityInStore, newStock, comment, date: new Date().toISOString() };
+                    updates[`${dbBasePath}/storeMovements/${moveKey}`] = { id: moveKey, productId: pid, productName: prod.name, type: "Entrée", quantityChange: qty, oldStock: prod.quantityInStore, newStock, comment, date: new Date().toISOString(), userEmail: currentUser.email || '', userName: currentUserData?.fullName || currentUser.email || '' };
                     await update(ref(db), updates);
                     showSuccessToast("Entrée de stock réussie !");
                     entryForm.reset();
@@ -7765,7 +7814,8 @@
                         comment: comment ? `Sortie en attente - ${comment}` : "Sortie en attente",
                         date: now,
                         status: EXIT_STATUS_PENDING,
-                        userEmail: currentUser.email || ''
+                        userEmail: currentUser.email || '',
+                        userName: currentUserData?.fullName || currentUser.email || ''
                     };
 
                     updates[`${dbBasePath}/storeExitRequests/${requestRef.key}`] = {
@@ -7853,7 +7903,7 @@
 
                     updates[`${dbBasePath}/storeProducts/${sourceId}/quantityInStore`] = storeNew;
                     const smKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
-                    updates[`${dbBasePath}/storeMovements/${smKey}`] = { id: smKey, productId: sourceId, productName: sourceProd.name, type: "Sortie", quantityChange: qty, oldStock: sourceProd.quantityInStore, newStock: storeNew, comment: "Transfert Boutique", date: now };
+                    updates[`${dbBasePath}/storeMovements/${smKey}`] = { id: smKey, productId: sourceId, productName: sourceProd.name, type: "Sortie", quantityChange: qty, oldStock: sourceProd.quantityInStore, newStock: storeNew, comment: "Transfert Boutique", date: now, userEmail: currentUser.email || '', userName: currentUserData?.fullName || currentUser.email || '' };
 
                     const shopId = existingItem ? existingItem.id : push(ref(db, `${dbBasePath}/shopStock`)).key;
                     updates[`${dbBasePath}/shopStock/${shopId}`] = { id: shopId, sourceProductId: sourceId, name: sourceProd.name, purchaseCost: sourceProd.purchaseCost, sellingPrice: price, quantityInShop: shopNew, alertThreshold: alertT, createdAt: existingItem ? existingItem.createdAt : now, updatedAt: now };
@@ -7894,7 +7944,7 @@
 
                     updates[`${dbBasePath}/storeProducts/${sourceProd.id}/quantityInStore`] = storeNew;
                     const smKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
-                    updates[`${dbBasePath}/storeMovements/${smKey}`] = { id: smKey, productId: sourceProd.id, productName: sourceProd.name, type: "Sortie", quantityChange: qty, oldStock: sourceProd.quantityInStore, newStock: storeNew, comment: "Réappro Boutique", date: now };
+                    updates[`${dbBasePath}/storeMovements/${smKey}`] = { id: smKey, productId: sourceProd.id, productName: sourceProd.name, type: "Sortie", quantityChange: qty, oldStock: sourceProd.quantityInStore, newStock: storeNew, comment: "Réappro Boutique", date: now, userEmail: currentUser.email || '', userName: currentUserData?.fullName || currentUser.email || '' };
 
                     updates[`${dbBasePath}/shopStock/${sid}/quantityInShop`] = shopNew;
                     updates[`${dbBasePath}/shopStock/${sid}/updatedAt`] = now;
@@ -7934,23 +7984,11 @@
             // Delete event listeners with permission checks
             if (storeProductsTbody) {
                 storeProductsTbody.addEventListener('click', async (e) => {
+                    if (e.storeDeleteHandled) return;
                     const btn = e.target.closest('button.delete-icon');
                     if (btn && btn.dataset.productId) {
-                        // Check permission
-                        if (!hasPermission('Supprimer Stock Magasin')) {
-                            alert('Vous n\'avez pas la permission de supprimer des produits du Stock Magasin.');
-                            return;
-                        }
-
-                        if (confirm('Supprimer ce produit du magasin définitivement ?')) {
-                            try {
-                                await remove(ref(db, `${dbBasePath}/storeProducts/${btn.dataset.productId}`));
-                                showSuccessToast('Produit supprimé du magasin');
-                            } catch (err) {
-                                console.error(err);
-                                alert('Erreur lors de la suppression');
-                            }
-                        }
+                        e.storeDeleteHandled = true;
+                        await deleteStoreProduct(btn.dataset.productId);
                     }
                 });
             }
