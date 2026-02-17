@@ -1812,7 +1812,7 @@
                                 <p class="text-sm font-semibold text-gray-900">Informations produit</p>
                                 <p id="exit-product-name" class="text-sm text-gray-800 mt-1">—</p>
                                 <p class="text-xs text-orange-700 mt-1">Stock total: <span id="exit-product-total">—</span></p>
-                                <p class="text-xs text-orange-700 mt-1">Disponible (hors validation): <span id="exit-product-stock">—</span></p>
+                                <p class="text-xs text-orange-700 mt-1">Stock disponible: <span id="exit-product-stock">—</span></p>
                                 <p id="exit-product-pending" class="text-xs text-orange-600 mt-1 hidden">
                                     En attente de validation: <span id="exit-product-pending-count">0</span>
                                 </p>
@@ -2626,11 +2626,16 @@
 
             function isStoreValidationPending(sale) {
                 if (!sale) return false;
+                if (sale.validationStatus === 'rejected' || sale.paymentStatus === 'rejected') return false;
                 return sale.validationStatus === 'pending' || sale.paymentStatus === 'store_validation';
             }
 
             function getCountableSalesEntries() {
-                return Object.values(appData.salesHistory || {}).filter(sale => !isStoreValidationPending(sale));
+                return Object.values(appData.salesHistory || {}).filter(sale => {
+                    if (isStoreValidationPending(sale)) return false;
+                    if (sale.validationStatus === 'rejected' || sale.paymentStatus === 'rejected') return false;
+                    return true;
+                });
             }
 
             function buildCustomerOptionLabel(customer) {
@@ -5068,7 +5073,7 @@
                 const productKey = product.id || product.key || product.productId || '';
                 const pendingQty = productKey ? getPendingExitQuantity(productKey) : 0;
                 const totalStock = Number(product.quantityInStore) || 0;
-                const available = Math.max(totalStock - pendingQty, 0);
+                const available = Math.max(totalStock, 0);
                 exitProductInfo.classList.remove('hidden');
                 exitProductName.textContent = product.name || '—';
                 exitProductTotal.textContent = `${totalStock}`;
@@ -5226,7 +5231,11 @@
                     if (move?.type === 'Sortie directe') return true;
                     return !comment.startsWith('vente');
                 });
-                const pendingRequests = Object.values(appData.storeExitRequests || {}).filter(request => request.status === EXIT_STATUS_PENDING);
+                const pendingRequests = Object.values(appData.storeExitRequests || {}).filter(request => {
+                    if (request.status !== EXIT_STATUS_PENDING) return false;
+                    if (!request.storeMovementId) return true;
+                    return !appData.storeMovements?.[request.storeMovementId];
+                });
                 const combined = [
                     ...movements.map(move => ({ kind: 'movement', data: move, date: move.date })),
                     ...pendingRequests.map(request => ({ kind: 'request', data: request, date: request.requestedAt || request.date }))
@@ -5366,7 +5375,9 @@
                 }
                 const quantity = parseInt(sale.quantity, 10) || 0;
                 if (quantity <= 0) return;
-                if (quantity > (product.quantityInStore || 0)) {
+                const movementId = sale.storeMovementId || sale.storeMovementKey || null;
+                const stockReserved = sale.stockReserved === true || !!movementId;
+                if (!stockReserved && quantity > (product.quantityInStore || 0)) {
                     showSuccessToast("Stock insuffisant pour valider cette sortie.");
                     return;
                 }
@@ -5378,39 +5389,49 @@
 
                 try {
                     const now = new Date().toISOString();
-                    const newStock = (product.quantityInStore || 0) - quantity;
                     const updates = {};
+                    let resolvedMovementId = movementId;
 
-                    updates[`${dbBasePath}/storeProducts/${product.id}/quantityInStore`] = newStock;
+                    if (!stockReserved) {
+                        const newStock = (product.quantityInStore || 0) - quantity;
+                        updates[`${dbBasePath}/storeProducts/${product.id}/quantityInStore`] = newStock;
 
-                    const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
-                    updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
-                        id: moveKey,
-                        productId: product.id,
-                        productName: product.name,
-                        type: "Sortie directe",
-                        quantityChange: quantity,
-                        oldStock: product.quantityInStore,
-                        newStock,
-                        comment: sale.comment ? `Sortie directe: ${sale.comment}` : "Sortie directe magasin",
-                        date: now,
-                        approvedFromRequest: sale.storeRequestId || sale.approvedFromRequest || null,
-                        userEmail: currentUser.email || '',
-                        status: EXIT_STATUS_APPROVED
-                    };
+                        const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
+                        resolvedMovementId = moveKey;
+                        updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
+                            id: moveKey,
+                            productId: product.id,
+                            productName: product.name,
+                            type: "Sortie directe",
+                            quantityChange: quantity,
+                            oldStock: product.quantityInStore,
+                            newStock,
+                            comment: sale.comment ? `Sortie directe: ${sale.comment}` : "Sortie directe magasin",
+                            date: now,
+                            approvedFromRequest: sale.storeRequestId || sale.approvedFromRequest || null,
+                            userEmail: currentUser.email || '',
+                            status: EXIT_STATUS_APPROVED
+                        };
+                    } else if (movementId) {
+                        updates[`${dbBasePath}/storeMovements/${movementId}/status`] = EXIT_STATUS_APPROVED;
+                        updates[`${dbBasePath}/storeMovements/${movementId}/approvedAt`] = now;
+                    }
 
                     updates[`${dbBasePath}/salesHistory/${saleId}/paymentStatus`] = paymentStatus;
                     updates[`${dbBasePath}/salesHistory/${saleId}/payLater`] = payLater;
                     updates[`${dbBasePath}/salesHistory/${saleId}/validationStatus`] = 'validated';
                     updates[`${dbBasePath}/salesHistory/${saleId}/validatedAt`] = now;
                     updates[`${dbBasePath}/salesHistory/${saleId}/validatedBy`] = currentUser.email || currentUserData?.email || '';
-                    updates[`${dbBasePath}/salesHistory/${saleId}/storeMovementId`] = moveKey;
+                    if (resolvedMovementId) updates[`${dbBasePath}/salesHistory/${saleId}/storeMovementId`] = resolvedMovementId;
 
                     const requestId = sale.storeRequestId || sale.approvedFromRequest || sale.requestId;
                     if (requestId) {
                         updates[`${dbBasePath}/storeExitRequests/${requestId}/status`] = EXIT_STATUS_APPROVED;
                         updates[`${dbBasePath}/storeExitRequests/${requestId}/validatedAt`] = now;
                         updates[`${dbBasePath}/storeExitRequests/${requestId}/validatedBy`] = currentUser.email || currentUserData?.email || '';
+                        if (resolvedMovementId) {
+                            updates[`${dbBasePath}/storeExitRequests/${requestId}/storeMovementId`] = resolvedMovementId;
+                        }
                     }
 
                     await update(ref(db), updates);
@@ -5445,7 +5466,8 @@
                 }
                 const quantity = parseInt(request.quantity, 10) || 0;
                 if (quantity <= 0) return;
-                if (quantity > product.quantityInStore) {
+                const stockReserved = request.stockReserved === true || !!request.storeMovementId;
+                if (!stockReserved && quantity > product.quantityInStore) {
                     showSuccessToast("Stock insuffisant pour valider cette sortie.");
                     return;
                 }
@@ -5453,23 +5475,31 @@
                 try {
                     const now = new Date().toISOString();
                     const sellerName = currentUserData?.fullName || currentUser.email || '';
-                    const newStock = product.quantityInStore - quantity;
                     const updates = {};
-                    updates[`${dbBasePath}/storeProducts/${product.id}/quantityInStore`] = newStock;
-                    const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
-                    updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
-                        id: moveKey,
-                        productId: product.id,
-                        productName: product.name,
-                        type: "Sortie directe",
-                        quantityChange: quantity,
-                        oldStock: product.quantityInStore,
-                        newStock,
-                        comment: request.comment ? `Sortie validée - ${request.comment}` : "Sortie validée",
-                        date: now,
-                        approvedFromRequest: requestId,
-                        userEmail: request.requestedByEmail || ''
-                    };
+                    let resolvedMovementId = request.storeMovementId || null;
+                    if (!stockReserved) {
+                        const newStock = product.quantityInStore - quantity;
+                        updates[`${dbBasePath}/storeProducts/${product.id}/quantityInStore`] = newStock;
+                        const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
+                        resolvedMovementId = moveKey;
+                        updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
+                            id: moveKey,
+                            productId: product.id,
+                            productName: product.name,
+                            type: "Sortie directe",
+                            quantityChange: quantity,
+                            oldStock: product.quantityInStore,
+                            newStock,
+                            comment: request.comment ? `Sortie validée - ${request.comment}` : "Sortie validée",
+                            date: now,
+                            approvedFromRequest: requestId,
+                            userEmail: request.requestedByEmail || '',
+                            status: EXIT_STATUS_APPROVED
+                        };
+                    } else if (resolvedMovementId) {
+                        updates[`${dbBasePath}/storeMovements/${resolvedMovementId}/status`] = EXIT_STATUS_APPROVED;
+                        updates[`${dbBasePath}/storeMovements/${resolvedMovementId}/approvedAt`] = now;
+                    }
                     const saleKey = push(ref(db, `${dbBasePath}/salesHistory`)).key;
                     const sellingPrice = Number(product.purchaseCost ?? 0);
                     const totalAmount = sellingPrice * quantity;
@@ -5491,11 +5521,14 @@
                         date: now,
                         saleSource: SALE_SOURCE_STORE,
                         currency: product.currency || 'CFA',
-                        approvedFromRequest: requestId
+                        approvedFromRequest: requestId,
+                        storeMovementId: resolvedMovementId,
+                        stockReserved: stockReserved
                     };
                     updates[`${dbBasePath}/storeExitRequests/${requestId}/status`] = EXIT_STATUS_APPROVED;
                     updates[`${dbBasePath}/storeExitRequests/${requestId}/validatedAt`] = now;
                     updates[`${dbBasePath}/storeExitRequests/${requestId}/validatedBy`] = currentUser.email || currentUserData?.email || '';
+                    if (resolvedMovementId) updates[`${dbBasePath}/storeExitRequests/${requestId}/storeMovementId`] = resolvedMovementId;
                     await update(ref(db), updates);
                     showSuccessToast("Sortie validée avec succès.");
                 } catch (error) {
@@ -5517,6 +5550,38 @@
                     updates[`${dbBasePath}/storeExitRequests/${requestId}/status`] = EXIT_STATUS_REJECTED;
                     updates[`${dbBasePath}/storeExitRequests/${requestId}/validatedAt`] = now;
                     updates[`${dbBasePath}/storeExitRequests/${requestId}/validatedBy`] = currentUser.email || currentUserData?.email || '';
+                    if (request.saleHistoryId) {
+                        updates[`${dbBasePath}/salesHistory/${request.saleHistoryId}/validationStatus`] = 'rejected';
+                        updates[`${dbBasePath}/salesHistory/${request.saleHistoryId}/paymentStatus`] = 'rejected';
+                        updates[`${dbBasePath}/salesHistory/${request.saleHistoryId}/rejectedAt`] = now;
+                        updates[`${dbBasePath}/salesHistory/${request.saleHistoryId}/rejectedBy`] = currentUser.email || currentUserData?.email || '';
+                    }
+
+                    const shouldRestore = request.stockReserved === true || !!request.storeMovementId;
+                    const product = appData.storeProducts?.[request.productId];
+                    const quantity = parseInt(request.quantity, 10) || 0;
+                    if (shouldRestore && product && quantity > 0) {
+                        const newStock = (product.quantityInStore || 0) + quantity;
+                        updates[`${dbBasePath}/storeProducts/${product.id}/quantityInStore`] = newStock;
+                        const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
+                        updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
+                            id: moveKey,
+                            productId: product.id,
+                            productName: product.name,
+                            type: "Entrée",
+                            quantityChange: quantity,
+                            oldStock: product.quantityInStore,
+                            newStock,
+                            comment: request.comment ? `Annulation sortie - ${request.comment}` : "Annulation sortie",
+                            date: now,
+                            status: EXIT_STATUS_APPROVED,
+                            userEmail: currentUser.email || ''
+                        };
+                    }
+                    if (request.storeMovementId) {
+                        updates[`${dbBasePath}/storeMovements/${request.storeMovementId}/status`] = EXIT_STATUS_REJECTED;
+                        updates[`${dbBasePath}/storeMovements/${request.storeMovementId}/rejectedAt`] = now;
+                    }
                     await update(ref(db), updates);
                     showSuccessToast("Sortie refusée.");
                 } catch (error) {
@@ -7665,8 +7730,7 @@
                     }
                     return;
                 }
-                const pendingQty = getPendingExitQuantity(pid);
-                const available = prod.quantityInStore - pendingQty;
+                const available = prod.quantityInStore || 0;
                 if (qty > available) {
                     if (exitError) {
                         exitError.textContent = `Stock insuffisant. Disponible: ${Math.max(available, 0)}.`;
@@ -7681,11 +7745,28 @@
                     if (exitSubmitButton) exitSubmitButton.disabled = true;
                     const requestRef = push(ref(db, `${dbBasePath}/storeExitRequests`));
                     const saleRef = push(ref(db, `${dbBasePath}/salesHistory`));
+                    const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
                     const now = new Date().toISOString();
                     const sellerName = currentUserData?.fullName || currentUser.email || '';
                     const sellingPrice = Number(prod.purchaseCost ?? 0);
                     const totalAmount = sellingPrice * qty;
                     const updates = {};
+                    const newStock = (prod.quantityInStore || 0) - qty;
+
+                    updates[`${dbBasePath}/storeProducts/${pid}/quantityInStore`] = newStock;
+                    updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
+                        id: moveKey,
+                        productId: pid,
+                        productName: prod.name,
+                        type: "Sortie directe",
+                        quantityChange: qty,
+                        oldStock: prod.quantityInStore,
+                        newStock,
+                        comment: comment ? `Sortie en attente - ${comment}` : "Sortie en attente",
+                        date: now,
+                        status: EXIT_STATUS_PENDING,
+                        userEmail: currentUser.email || ''
+                    };
 
                     updates[`${dbBasePath}/storeExitRequests/${requestRef.key}`] = {
                         id: requestRef.key,
@@ -7702,7 +7783,10 @@
                         requestedByEmail: currentUser.email || '',
                         requestedById: currentUser.uid || '',
                         stockBefore: prod.quantityInStore,
-                        saleHistoryId: saleRef.key
+                        stockAfter: newStock,
+                        saleHistoryId: saleRef.key,
+                        storeMovementId: moveKey,
+                        stockReserved: true
                     };
 
                     updates[`${dbBasePath}/salesHistory/${saleRef.key}`] = {
@@ -7725,7 +7809,9 @@
                         date: now,
                         saleSource: SALE_SOURCE_STORE,
                         currency: prod.currency || 'CFA',
-                        storeRequestId: requestRef.key
+                        storeRequestId: requestRef.key,
+                        storeMovementId: moveKey,
+                        stockReserved: true
                     };
 
                     await update(ref(db), updates);
