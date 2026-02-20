@@ -3301,9 +3301,62 @@
                 };
             }
 
+            function parseDateForFilter(dateValue) {
+                if (!dateValue) return null;
+                if (dateValue instanceof Date) return dateValue;
+                if (typeof dateValue === 'number') return new Date(dateValue);
+                if (typeof dateValue === 'object' && typeof dateValue.seconds === 'number') {
+                    return new Date(dateValue.seconds * 1000);
+                }
+                const raw = String(dateValue).trim();
+                if (!raw) return null;
+
+                if (/^\d{4}-\d{2}-\d{2}/.test(raw)) {
+                    const parsed = new Date(raw);
+                    return Number.isNaN(parsed.getTime()) ? null : parsed;
+                }
+                if (/^\d{2}\/\d{2}\/\d{4}/.test(raw)) {
+                    const [day, month, year] = raw.split(/[\/\s]/).map(Number);
+                    return new Date(year, month - 1, day);
+                }
+                if (/^\d{2}-\d{2}-\d{4}/.test(raw)) {
+                    const [day, month, year] = raw.split(/[-\s]/).map(Number);
+                    return new Date(year, month - 1, day);
+                }
+
+                const frenchMonths = {
+                    janv: 0, janvier: 0,
+                    fevr: 1, févr: 1, fevrier: 1, février: 1,
+                    mars: 2,
+                    avr: 3, avril: 3,
+                    mai: 4,
+                    juin: 5,
+                    juil: 6, juillet: 6,
+                    aout: 7, août: 7,
+                    sept: 8, septembre: 8,
+                    oct: 9, octobre: 9,
+                    nov: 10, novembre: 10,
+                    dec: 11, déc: 11, decembre: 11, décembre: 11
+                };
+                const match = raw.toLowerCase().match(/^(\d{1,2})\s+([a-zéû\.]+)\s+(\d{4})(?:,?\s*(\d{1,2}):(\d{2}))?/i);
+                if (match) {
+                    const day = Number(match[1]);
+                    const monthKey = match[2].replace('.', '');
+                    const month = frenchMonths[monthKey];
+                    const year = Number(match[3]);
+                    const hour = Number(match[4] || 0);
+                    const minute = Number(match[5] || 0);
+                    if (month !== undefined) return new Date(year, month, day, hour, minute);
+                }
+
+                const parsed = new Date(raw);
+                return Number.isNaN(parsed.getTime()) ? null : parsed;
+            }
+
             function isDateInFilter(dateValue, filterKey) {
                 if (!filterKey || filterKey === 'all') return true;
-                const date = new Date(dateValue);
+                const date = parseDateForFilter(dateValue);
+                if (!date || Number.isNaN(date.getTime())) return false;
                 const now = new Date();
                 const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
                 if (filterKey === 'today') return date >= startOfToday;
@@ -3530,6 +3583,10 @@
 
             function renderSalesHistory() {
                 if (!salesHistoryList || !salesHistoryEmpty) return;
+
+                if (salesHistoryDateFilter) {
+                    salesHistoryDateFilterValue = salesHistoryDateFilter.value || 'all';
+                }
 
                 const groups = buildSalesHistoryGroups();
                 const pendingSales = getPendingSalesList();
