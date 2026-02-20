@@ -719,6 +719,16 @@
                             </span>
                             <span id="sales-history-paylater-count" class="px-2 py-0.5 rounded-full text-xs bg-gray-200">0</span>
                         </button>
+                        <button id="sales-history-tab-reminders"
+                            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200">
+                            <span class="inline-flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 01-6 0v-1m6 0H9" />
+                                </svg>
+                                Rappels factures
+                            </span>
+                            <span id="sales-history-reminders-count" class="px-2 py-0.5 rounded-full text-xs bg-gray-200">0</span>
+                        </button>
                         <button id="sales-history-tab-store-validation"
                             class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200">
                             <span class="inline-flex items-center gap-2">
@@ -824,6 +834,57 @@
                                     </thead>
                                     <tbody id="customer-history-invoices-tbody" class="divide-y divide-gray-200">
                                         <!-- Factures client insérées par JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="sales-history-reminders-section" class="hidden space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                            <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                                <p class="text-xs uppercase text-gray-400">J-3</p>
+                                <p id="sales-history-reminders-j3" class="text-2xl font-semibold text-gray-900">0</p>
+                            </div>
+                            <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                                <p class="text-xs uppercase text-gray-400">J-2</p>
+                                <p id="sales-history-reminders-j2" class="text-2xl font-semibold text-gray-900">0</p>
+                            </div>
+                            <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                                <p class="text-xs uppercase text-gray-400">J-1</p>
+                                <p id="sales-history-reminders-j1" class="text-2xl font-semibold text-gray-900">0</p>
+                            </div>
+                            <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                                <p class="text-xs uppercase text-gray-400">Aujourd'hui</p>
+                                <p id="sales-history-reminders-j0" class="text-2xl font-semibold text-gray-900">0</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-sm font-semibold text-gray-800">Factures à rappeler</h3>
+                                <span id="sales-history-reminders-total" class="text-xs font-semibold text-gray-500">0</span>
+                            </div>
+                            <div id="sales-history-reminders-empty"
+                                class="mt-4 flex flex-col items-center justify-center text-center text-gray-400 h-28 border border-dashed border-gray-200 rounded-xl">
+                                Aucun rappel à afficher.
+                            </div>
+                            <div id="sales-history-reminders-table-container"
+                                class="hidden mt-4 overflow-x-auto rounded-xl border border-gray-200">
+                                <table class="min-w-full bg-white divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Alerte</th>
+                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Facture</th>
+                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
+                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Échéance</th>
+                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                                            <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="sales-history-reminders-tbody" class="divide-y divide-gray-200">
+                                        <!-- Rappels insérés par JS -->
                                     </tbody>
                                 </table>
                             </div>
@@ -2518,11 +2579,13 @@
             const salesHistoryTabCompleted = document.getElementById('sales-history-tab-completed');
             const salesHistoryTabPending = document.getElementById('sales-history-tab-pending');
             const salesHistoryTabPayLater = document.getElementById('sales-history-tab-paylater');
+            const salesHistoryTabReminders = document.getElementById('sales-history-tab-reminders');
             const salesHistoryTabStoreValidation = document.getElementById('sales-history-tab-store-validation');
             const salesHistoryTabCustomers = document.getElementById('sales-history-tab-customers');
             const salesHistoryCompletedCount = document.getElementById('sales-history-completed-count');
             const salesHistoryPendingCount = document.getElementById('sales-history-pending-count');
             const salesHistoryPayLaterCount = document.getElementById('sales-history-paylater-count');
+            const salesHistoryRemindersCount = document.getElementById('sales-history-reminders-count');
             const salesHistoryStoreValidationCount = document.getElementById('sales-history-store-validation-count');
             const salesHistoryCustomersCount = document.getElementById('sales-history-customers-count');
             const salesHistoryStatCompleted = document.getElementById('sales-history-stat-completed');
@@ -2530,6 +2593,15 @@
             const salesHistoryStatTotal = document.getElementById('sales-history-stat-total');
             const salesHistoryStatPayLater = document.getElementById('sales-history-stat-paylater');
             const salesHistoryCustomersSection = document.getElementById('sales-history-customers-section');
+            const salesHistoryRemindersSection = document.getElementById('sales-history-reminders-section');
+            const salesHistoryRemindersJ3 = document.getElementById('sales-history-reminders-j3');
+            const salesHistoryRemindersJ2 = document.getElementById('sales-history-reminders-j2');
+            const salesHistoryRemindersJ1 = document.getElementById('sales-history-reminders-j1');
+            const salesHistoryRemindersJ0 = document.getElementById('sales-history-reminders-j0');
+            const salesHistoryRemindersTotal = document.getElementById('sales-history-reminders-total');
+            const salesHistoryRemindersEmpty = document.getElementById('sales-history-reminders-empty');
+            const salesHistoryRemindersTableContainer = document.getElementById('sales-history-reminders-table-container');
+            const salesHistoryRemindersTbody = document.getElementById('sales-history-reminders-tbody');
             const customerHistoryList = document.getElementById('customer-history-list');
             const customerHistoryListEmpty = document.getElementById('customer-history-list-empty');
             const customerHistorySelect = document.getElementById('customer-history-select');
@@ -3358,6 +3430,35 @@
                 return true;
             }
 
+            function getDaysUntil(dateValue) {
+                const date = parseDateForFilter(dateValue);
+                if (!date || Number.isNaN(date.getTime())) return null;
+                const startOfToday = new Date();
+                startOfToday.setHours(0, 0, 0, 0);
+                const target = new Date(date);
+                target.setHours(0, 0, 0, 0);
+                const diff = target.getTime() - startOfToday.getTime();
+                return Math.floor(diff / (24 * 60 * 60 * 1000));
+            }
+
+            function formatReminderBadge(daysLeft) {
+                if (daysLeft === 0) return { label: "Aujourd'hui", classes: 'bg-red-50 text-red-700 border-red-200' };
+                if (daysLeft === 1) return { label: 'J-1', classes: 'bg-amber-50 text-amber-700 border-amber-200' };
+                if (daysLeft === 2) return { label: 'J-2', classes: 'bg-orange-50 text-orange-700 border-orange-200' };
+                return { label: 'J-3', classes: 'bg-yellow-50 text-yellow-700 border-yellow-200' };
+            }
+
+            function buildPayLaterReminders(groups = []) {
+                return groups
+                    .filter(group => (group.paymentStatus === 'pay_later' || group.payLater) && group.paymentDueDate)
+                    .map(group => ({
+                        group,
+                        daysLeft: getDaysUntil(group.paymentDueDate)
+                    }))
+                    .filter(item => item.daysLeft !== null && item.daysLeft >= 0 && item.daysLeft <= 3)
+                    .sort((a, b) => a.daysLeft - b.daysLeft || new Date(a.group.paymentDueDate) - new Date(b.group.paymentDueDate));
+            }
+
             function matchesHistorySearch(query, values) {
                 if (!query) return true;
                 const needle = normalizeString(query);
@@ -3569,6 +3670,68 @@
                 }
             }
 
+            function renderRemindersTab(reminders = []) {
+                if (salesHistoryRemindersJ3) salesHistoryRemindersJ3.textContent = '0';
+                if (salesHistoryRemindersJ2) salesHistoryRemindersJ2.textContent = '0';
+                if (salesHistoryRemindersJ1) salesHistoryRemindersJ1.textContent = '0';
+                if (salesHistoryRemindersJ0) salesHistoryRemindersJ0.textContent = '0';
+
+                const counts = { 0: 0, 1: 0, 2: 0, 3: 0 };
+                reminders.forEach(item => {
+                    if (counts[item.daysLeft] !== undefined) counts[item.daysLeft] += 1;
+                });
+                if (salesHistoryRemindersJ3) salesHistoryRemindersJ3.textContent = `${counts[3]}`;
+                if (salesHistoryRemindersJ2) salesHistoryRemindersJ2.textContent = `${counts[2]}`;
+                if (salesHistoryRemindersJ1) salesHistoryRemindersJ1.textContent = `${counts[1]}`;
+                if (salesHistoryRemindersJ0) salesHistoryRemindersJ0.textContent = `${counts[0]}`;
+                if (salesHistoryRemindersTotal) salesHistoryRemindersTotal.textContent = `${reminders.length}`;
+
+                if (!reminders.length) {
+                    if (salesHistoryRemindersEmpty) salesHistoryRemindersEmpty.classList.remove('hidden');
+                    if (salesHistoryRemindersTableContainer) salesHistoryRemindersTableContainer.classList.add('hidden');
+                    if (salesHistoryRemindersTbody) salesHistoryRemindersTbody.innerHTML = '';
+                    return;
+                }
+
+                if (salesHistoryRemindersEmpty) salesHistoryRemindersEmpty.classList.add('hidden');
+                if (salesHistoryRemindersTableContainer) salesHistoryRemindersTableContainer.classList.remove('hidden');
+                if (salesHistoryRemindersTbody) {
+                    salesHistoryRemindersTbody.innerHTML = reminders.map(item => {
+                        const group = item.group;
+                        const customerLabel = group.customerName || (group.customerId && appData.customers?.[group.customerId]?.fullName) || 'Client';
+                        const contactParts = [];
+                        if (group.customerEmail) contactParts.push(group.customerEmail);
+                        if (group.customerPhone) contactParts.push(group.customerPhone);
+                        const contactLabel = contactParts.length ? contactParts.join(' · ') : '-';
+                        const summary = calculateItemsSummary(group.items.map(row => ({
+                            sellingPrice: row.price,
+                            quantity: row.quantity,
+                            currency: group.currency
+                        })));
+                        const badge = formatReminderBadge(item.daysLeft);
+                        const dueLabel = formatDateOnly(group.paymentDueDate);
+                        return `
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 whitespace-nowrap text-sm">
+                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold border ${badge.classes}">${badge.label}</span>
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-900">${customerLabel}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">INV-${group.id.slice(-6).toUpperCase()}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-amber-700">${formatCurrency(summary.total, summary.currency)}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">${dueLabel}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${contactLabel}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-right">
+                                    <button type="button" data-reminder-id="${group.id}"
+                                        class="inline-flex items-center justify-center px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50">
+                                        Détails
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            }
+
             function renderSalesHistory() {
                 if (!salesHistoryList || !salesHistoryEmpty) return;
 
@@ -3720,6 +3883,22 @@
                 const customersData = buildCustomerHistoryDataset(filteredGroups);
                 if (salesHistoryCustomersCount) salesHistoryCustomersCount.textContent = customersData.length;
 
+                const remindersBase = buildPayLaterReminders(groups);
+                const filteredReminders = remindersBase.filter(item => {
+                    if (!isDateInFilter(item.group.paymentDueDate, salesHistoryDateFilterValue)) return false;
+                    if (!salesHistorySearch) return true;
+                    const customerLabel = item.group.customerName || (item.group.customerId && appData.customers?.[item.group.customerId]?.fullName) || 'Client';
+                    const values = [
+                        `INV-${item.group.id.slice(-6).toUpperCase()}`,
+                        item.group.id,
+                        customerLabel,
+                        item.group.customerEmail,
+                        item.group.customerPhone
+                    ];
+                    return matchesHistorySearch(salesHistorySearch, values);
+                });
+                if (salesHistoryRemindersCount) salesHistoryRemindersCount.textContent = filteredReminders.length;
+
                 if (salesHistoryTabCustomers) {
                     const isActive = salesHistoryTab === 'customers';
                     salesHistoryTabCustomers.classList.toggle('bg-teal-600', isActive);
@@ -3735,17 +3914,42 @@
                     }
                 }
 
+                if (salesHistoryTabReminders) {
+                    const isActive = salesHistoryTab === 'reminders';
+                    salesHistoryTabReminders.classList.toggle('bg-red-500', isActive);
+                    salesHistoryTabReminders.classList.toggle('text-white', isActive);
+                    salesHistoryTabReminders.classList.toggle('shadow', isActive);
+                    salesHistoryTabReminders.classList.toggle('bg-gray-100', !isActive);
+                    salesHistoryTabReminders.classList.toggle('text-gray-600', !isActive);
+                    if (salesHistoryRemindersCount) {
+                        salesHistoryRemindersCount.classList.toggle('bg-white/20', isActive);
+                        salesHistoryRemindersCount.classList.toggle('bg-gray-200', !isActive);
+                        salesHistoryRemindersCount.classList.toggle('text-white', isActive);
+                        salesHistoryRemindersCount.classList.toggle('text-gray-600', !isActive);
+                    }
+                }
+
                 const isCustomerTab = salesHistoryTab === 'customers';
+                const isReminderTab = salesHistoryTab === 'reminders';
                 if (salesHistorySearchInput) {
-                    salesHistorySearchInput.placeholder = isCustomerTab
-                        ? 'Rechercher un client...'
-                        : 'Rechercher par N° facture, client...';
+                    if (isCustomerTab) {
+                        salesHistorySearchInput.placeholder = 'Rechercher un client...';
+                    } else if (isReminderTab) {
+                        salesHistorySearchInput.placeholder = 'Rechercher un client ou facture...';
+                    } else {
+                        salesHistorySearchInput.placeholder = 'Rechercher par N° facture, client...';
+                    }
                 }
                 if (salesHistoryCustomersSection) salesHistoryCustomersSection.classList.toggle('hidden', !isCustomerTab);
-                if (salesHistoryListWrapper) salesHistoryListWrapper.classList.toggle('hidden', isCustomerTab);
+                if (salesHistoryRemindersSection) salesHistoryRemindersSection.classList.toggle('hidden', !isReminderTab);
+                if (salesHistoryListWrapper) salesHistoryListWrapper.classList.toggle('hidden', isCustomerTab || isReminderTab);
 
                 if (isCustomerTab) {
                     renderCustomerHistoryTab(customersData);
+                    return;
+                }
+                if (isReminderTab) {
+                    renderRemindersTab(filteredReminders);
                     return;
                 }
 
@@ -8176,6 +8380,12 @@
                     renderSalesHistory();
                 });
             }
+            if (salesHistoryTabReminders) {
+                salesHistoryTabReminders.addEventListener('click', () => {
+                    salesHistoryTab = 'reminders';
+                    renderSalesHistory();
+                });
+            }
             if (salesHistorySearchInput) {
                 salesHistorySearchInput.addEventListener('input', (event) => {
                     salesHistorySearch = event.target.value;
@@ -8273,6 +8483,14 @@
                     if (cancelButton) {
                         cancelPendingSale(cancelButton.dataset.pendingCancel);
                     }
+                });
+            }
+            if (salesHistoryRemindersTbody) {
+                salesHistoryRemindersTbody.addEventListener('click', (event) => {
+                    const button = event.target.closest('[data-reminder-id]');
+                    if (!button) return;
+                    const groupId = button.dataset.reminderId;
+                    if (groupId) openSalesDetailModal(groupId);
                 });
             }
 
