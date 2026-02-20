@@ -3407,6 +3407,27 @@
                 }
                 if (salesHistoryListWrapper) salesHistoryListWrapper.classList.add('hidden');
 
+                if (customerHistoryListEmpty) customerHistoryListEmpty.classList.toggle('hidden', filteredCustomers.length > 0);
+                customerHistoryList.innerHTML = filteredCustomers.map(entry => {
+                    const isSelected = entry.id === selectedCustomerHistoryKey;
+                    const contactParts = [];
+                    if (entry.email) contactParts.push(entry.email);
+                    if (entry.phone) contactParts.push(entry.phone);
+                    const contactLabel = contactParts.length ? contactParts.join(' · ') : 'Coordonnées non renseignées';
+                    return `
+                        <button type="button" data-customer-history-id="${entry.id}"
+                            class="w-full text-left p-3 rounded-xl border ${isSelected ? 'border-cyan-300 bg-cyan-50/40' : 'border-gray-200 hover:border-cyan-200 hover:bg-cyan-50/20'} transition">
+                            <div class="flex items-center justify-between gap-3">
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-900">${entry.name}</p>
+                                    <p class="text-xs text-gray-500 mt-1">${contactLabel}</p>
+                                </div>
+                                <span class="text-xs font-semibold text-gray-500">${entry.invoices.length} facture${entry.invoices.length > 1 ? 's' : ''}</span>
+                            </div>
+                        </button>
+                    `;
+                }).join('');
+
                 const availableForSelect = filteredCustomers.length ? filteredCustomers : customersData;
                 if (!availableForSelect.length) {
                     customerHistorySelect.innerHTML = '<option value="">Aucun client</option>';
@@ -3428,27 +3449,6 @@
                 if (!selectedCustomerHistoryKey || !availableForSelect.some(entry => entry.id === selectedCustomerHistoryKey)) {
                     selectedCustomerHistoryKey = availableForSelect[0].id;
                 }
-
-                if (customerHistoryListEmpty) customerHistoryListEmpty.classList.toggle('hidden', filteredCustomers.length > 0);
-                customerHistoryList.innerHTML = filteredCustomers.map(entry => {
-                    const isSelected = entry.id === selectedCustomerHistoryKey;
-                    const contactParts = [];
-                    if (entry.email) contactParts.push(entry.email);
-                    if (entry.phone) contactParts.push(entry.phone);
-                    const contactLabel = contactParts.length ? contactParts.join(' · ') : 'Coordonnées non renseignées';
-                    return `
-                        <button type="button" data-customer-history-id="${entry.id}"
-                            class="w-full text-left p-3 rounded-xl border ${isSelected ? 'border-cyan-300 bg-cyan-50/40' : 'border-gray-200 hover:border-cyan-200 hover:bg-cyan-50/20'} transition">
-                            <div class="flex items-center justify-between gap-3">
-                                <div>
-                                    <p class="text-sm font-semibold text-gray-900">${entry.name}</p>
-                                    <p class="text-xs text-gray-500 mt-1">${contactLabel}</p>
-                                </div>
-                                <span class="text-xs font-semibold text-gray-500">${entry.invoices.length} facture${entry.invoices.length > 1 ? 's' : ''}</span>
-                            </div>
-                        </button>
-                    `;
-                }).join('');
 
                 customerHistorySelect.innerHTML = availableForSelect.map(entry => `
                     <option value="${entry.id}">${entry.name}</option>
