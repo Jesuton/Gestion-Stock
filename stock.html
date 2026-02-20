@@ -741,6 +741,17 @@
                             </span>
                             <span id="sales-history-store-validation-count" class="px-2 py-0.5 rounded-full text-xs bg-gray-200">0</span>
                         </button>
+                        <button id="sales-history-tab-customers"
+                            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200">
+                            <span class="inline-flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 014-4h1M15 7a4 4 0 11-8 0 4 4 0 018 0zM19 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                Historique clients
+                            </span>
+                            <span id="sales-history-customers-count" class="px-2 py-0.5 rounded-full text-xs bg-gray-200">0</span>
+                        </button>
                     </div>
 
                     <div class="flex flex-col lg:flex-row gap-4">
@@ -764,7 +775,73 @@
                         </select>
                     </div>
 
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+                    <div id="sales-history-customers-section" class="hidden space-y-4">
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+                            <div class="flex flex-col lg:flex-row gap-4">
+                                <div class="flex-1">
+                                    <p class="text-sm font-semibold text-gray-800">Clients</p>
+                                    <p class="text-xs text-gray-400 mt-1">Utilisez la recherche pour filtrer les clients.</p>
+                                    <div id="customer-history-list" class="mt-4 space-y-2 max-h-64 overflow-y-auto pr-1"></div>
+                                    <div id="customer-history-list-empty" class="mt-4 text-sm text-gray-400 hidden">Aucun client trouvé.</div>
+                                </div>
+                                <div class="lg:w-80">
+                                    <label class="text-xs font-semibold text-gray-500">Client sélectionné</label>
+                                    <select id="customer-history-select"
+                                        class="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:ring-cyan-500 focus:border-cyan-500">
+                                    </select>
+                                    <div class="mt-3 rounded-xl bg-gray-50 border border-gray-100 p-3">
+                                        <p id="customer-history-contact" class="text-xs text-gray-500">—</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                                <p class="text-xs uppercase text-gray-400">Total facturé</p>
+                                <p id="customer-history-total-sales" class="text-2xl font-semibold text-gray-900">0 FCFA</p>
+                            </div>
+                            <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                                <p class="text-xs uppercase text-gray-400">Total dû</p>
+                                <p id="customer-history-total-due" class="text-2xl font-semibold text-amber-600">0 FCFA</p>
+                            </div>
+                            <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                                <p class="text-xs uppercase text-gray-400">Dernier paiement</p>
+                                <p id="customer-history-last-payment" class="text-sm font-semibold text-gray-900">-</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-sm font-semibold text-gray-800">Factures du client</h3>
+                                <span id="customer-history-total-invoices" class="text-xs font-semibold text-gray-500">0</span>
+                            </div>
+                            <div id="customer-history-invoices-empty"
+                                class="mt-4 flex flex-col items-center justify-center text-center text-gray-400 h-28 border border-dashed border-gray-200 rounded-xl">
+                                Aucune facture pour ce client.
+                            </div>
+                            <div id="customer-history-invoices-table-container"
+                                class="hidden mt-4 overflow-x-auto rounded-xl border border-gray-200">
+                                <table class="min-w-full bg-white divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Facture</th>
+                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
+                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paiement</th>
+                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Échéance / Payé</th>
+                                            <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="customer-history-invoices-tbody" class="divide-y divide-gray-200">
+                                        <!-- Factures client insérées par JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="sales-history-list-wrapper" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
                         <div id="sales-history-empty" class="flex flex-col items-center justify-center text-center text-gray-500 h-32">
                             <p>Aucune vente enregistrée</p>
                         </div>
@@ -2375,6 +2452,7 @@
             let salesHistoryDateFilterValue = 'all';
             let isTaxEnabled = true;
             let activeSalesDetailId = null;
+            let selectedCustomerHistoryKey = null;
 
             // Cart state
             let cartItems = [];
@@ -2445,21 +2523,36 @@
             const salesError = document.getElementById('sales-error');
             const salesHistoryEmpty = document.getElementById('sales-history-empty');
             const salesHistoryList = document.getElementById('sales-history-list');
+            const salesHistoryListWrapper = document.getElementById('sales-history-list-wrapper');
             const salesHistorySearchInput = document.getElementById('sales-history-search');
             const salesHistoryDateFilter = document.getElementById('sales-history-date-filter');
             const salesHistoryTabCompleted = document.getElementById('sales-history-tab-completed');
             const salesHistoryTabPending = document.getElementById('sales-history-tab-pending');
             const salesHistoryTabPayLater = document.getElementById('sales-history-tab-paylater');
             const salesHistoryTabStoreValidation = document.getElementById('sales-history-tab-store-validation');
+            const salesHistoryTabCustomers = document.getElementById('sales-history-tab-customers');
             const salesHistoryCompletedCount = document.getElementById('sales-history-completed-count');
             const salesHistoryPendingCount = document.getElementById('sales-history-pending-count');
             const salesHistoryPayLaterCount = document.getElementById('sales-history-paylater-count');
             const salesHistoryStoreValidationCount = document.getElementById('sales-history-store-validation-count');
+            const salesHistoryCustomersCount = document.getElementById('sales-history-customers-count');
             const salesHistoryStatCompleted = document.getElementById('sales-history-stat-completed');
             const salesHistoryStatPending = document.getElementById('sales-history-stat-pending');
             const salesHistoryStatToday = document.getElementById('sales-history-stat-today');
             const salesHistoryStatTotal = document.getElementById('sales-history-stat-total');
             const salesHistoryStatPayLater = document.getElementById('sales-history-stat-paylater');
+            const salesHistoryCustomersSection = document.getElementById('sales-history-customers-section');
+            const customerHistoryList = document.getElementById('customer-history-list');
+            const customerHistoryListEmpty = document.getElementById('customer-history-list-empty');
+            const customerHistorySelect = document.getElementById('customer-history-select');
+            const customerHistoryContact = document.getElementById('customer-history-contact');
+            const customerHistoryTotalSales = document.getElementById('customer-history-total-sales');
+            const customerHistoryTotalDue = document.getElementById('customer-history-total-due');
+            const customerHistoryLastPayment = document.getElementById('customer-history-last-payment');
+            const customerHistoryTotalInvoices = document.getElementById('customer-history-total-invoices');
+            const customerHistoryInvoicesEmpty = document.getElementById('customer-history-invoices-empty');
+            const customerHistoryInvoicesTableContainer = document.getElementById('customer-history-invoices-table-container');
+            const customerHistoryInvoicesTbody = document.getElementById('customer-history-invoices-tbody');
             const salesProductSearch = document.getElementById('sales-product-search');
             const salesCategoryFilters = document.getElementById('sales-category-filters');
             const salesProductsContainer = document.getElementById('sales-products-container');
@@ -3230,6 +3323,211 @@
                 return values.some(value => normalizeString(value).includes(needle));
             }
 
+            function buildCustomerHistoryDataset(groups = []) {
+                const map = {};
+
+                Object.values(appData.customers || {}).forEach(customer => {
+                    const key = customer.id || normalizeString(customer.email || customer.fullName || customer.name);
+                    if (!key) return;
+                    map[key] = {
+                        id: key,
+                        customerId: customer.id || null,
+                        name: customer.fullName || customer.name || 'Client',
+                        email: customer.email || '',
+                        phone: customer.phone || '',
+                        invoices: [],
+                        totalSales: 0,
+                        totalDue: 0,
+                        lastPaymentAt: '',
+                        currency: ''
+                    };
+                });
+
+                groups.forEach(group => {
+                    const customerRecord = group.customerId ? appData.customers?.[group.customerId] : null;
+                    const name = group.customerName || customerRecord?.fullName || customerRecord?.name || '';
+                    const email = group.customerEmail || customerRecord?.email || '';
+                    const phone = group.customerPhone || customerRecord?.phone || '';
+                    const key = group.customerId || ((name || email || phone) ? `anon:${normalizeString(name)}|${normalizeString(email)}|${normalizePhone(phone)}` : '');
+                    if (!key) return;
+                    if (!map[key]) {
+                        map[key] = {
+                            id: key,
+                            customerId: group.customerId || null,
+                            name: name || 'Client',
+                            email,
+                            phone,
+                            invoices: [],
+                            totalSales: 0,
+                            totalDue: 0,
+                            lastPaymentAt: '',
+                            currency: group.currency || ''
+                        };
+                    }
+                    const entry = map[key];
+                    if (!entry.name && name) entry.name = name;
+                    if (!entry.email && email) entry.email = email;
+                    if (!entry.phone && phone) entry.phone = phone;
+                    if (!entry.currency && group.currency) entry.currency = group.currency;
+                    entry.invoices.push(group);
+
+                    const summary = calculateItemsSummary(group.items.map(item => ({
+                        sellingPrice: item.price,
+                        quantity: item.quantity,
+                        currency: group.currency
+                    })));
+                    entry.totalSales += summary.total;
+
+                    const isPayLater = group.paymentStatus === 'pay_later' || group.payLater;
+                    if (isPayLater) entry.totalDue += summary.total;
+
+                    const paidAt = group.paymentPaidAt || (!isPayLater && group.paymentStatus !== 'pending' ? group.date : '');
+                    if (paidAt && (!entry.lastPaymentAt || new Date(paidAt) > new Date(entry.lastPaymentAt))) {
+                        entry.lastPaymentAt = paidAt;
+                    }
+                });
+
+                return Object.values(map).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            }
+
+            function renderCustomerHistoryTab(customersData) {
+                if (!salesHistoryCustomersSection) return;
+                if (!customerHistoryList || !customerHistorySelect) return;
+
+                const filteredCustomers = customersData.filter(entry => matchesHistorySearch(salesHistorySearch, [
+                    entry.name,
+                    entry.email,
+                    entry.phone
+                ]));
+
+                if (salesHistoryEmpty) salesHistoryEmpty.classList.add('hidden');
+                if (salesHistoryList) {
+                    salesHistoryList.classList.add('hidden');
+                    salesHistoryList.innerHTML = '';
+                }
+                if (salesHistoryListWrapper) salesHistoryListWrapper.classList.add('hidden');
+
+                const availableForSelect = filteredCustomers.length ? filteredCustomers : customersData;
+                if (!availableForSelect.length) {
+                    customerHistorySelect.innerHTML = '<option value="">Aucun client</option>';
+                    if (customerHistoryContact) customerHistoryContact.textContent = '—';
+                    if (customerHistoryTotalSales) customerHistoryTotalSales.textContent = formatCurrency(0);
+                    if (customerHistoryTotalDue) customerHistoryTotalDue.textContent = formatCurrency(0);
+                    if (customerHistoryLastPayment) customerHistoryLastPayment.textContent = '-';
+                    if (customerHistoryTotalInvoices) customerHistoryTotalInvoices.textContent = '0';
+                    if (customerHistoryInvoicesEmpty) customerHistoryInvoicesEmpty.classList.remove('hidden');
+                    if (customerHistoryInvoicesTableContainer) customerHistoryInvoicesTableContainer.classList.add('hidden');
+                    if (customerHistoryInvoicesTbody) customerHistoryInvoicesTbody.innerHTML = '';
+                    return;
+                }
+
+                if (!selectedCustomerHistoryKey && selectedCustomer?.id) {
+                    const match = customersData.find(entry => entry.customerId === selectedCustomer.id);
+                    if (match) selectedCustomerHistoryKey = match.id;
+                }
+                if (!selectedCustomerHistoryKey || !availableForSelect.some(entry => entry.id === selectedCustomerHistoryKey)) {
+                    selectedCustomerHistoryKey = availableForSelect[0].id;
+                }
+
+                if (customerHistoryListEmpty) customerHistoryListEmpty.classList.toggle('hidden', filteredCustomers.length > 0);
+                customerHistoryList.innerHTML = filteredCustomers.map(entry => {
+                    const isSelected = entry.id === selectedCustomerHistoryKey;
+                    const contactParts = [];
+                    if (entry.email) contactParts.push(entry.email);
+                    if (entry.phone) contactParts.push(entry.phone);
+                    const contactLabel = contactParts.length ? contactParts.join(' · ') : 'Coordonnées non renseignées';
+                    return `
+                        <button type="button" data-customer-history-id="${entry.id}"
+                            class="w-full text-left p-3 rounded-xl border ${isSelected ? 'border-cyan-300 bg-cyan-50/40' : 'border-gray-200 hover:border-cyan-200 hover:bg-cyan-50/20'} transition">
+                            <div class="flex items-center justify-between gap-3">
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-900">${entry.name}</p>
+                                    <p class="text-xs text-gray-500 mt-1">${contactLabel}</p>
+                                </div>
+                                <span class="text-xs font-semibold text-gray-500">${entry.invoices.length} facture${entry.invoices.length > 1 ? 's' : ''}</span>
+                            </div>
+                        </button>
+                    `;
+                }).join('');
+
+                customerHistorySelect.innerHTML = availableForSelect.map(entry => `
+                    <option value="${entry.id}">${entry.name}</option>
+                `).join('');
+                customerHistorySelect.value = selectedCustomerHistoryKey || availableForSelect[0].id;
+
+                const selected = customersData.find(entry => entry.id === selectedCustomerHistoryKey) || availableForSelect[0];
+                if (!selected) return;
+
+                const contactParts = [];
+                if (selected.email) contactParts.push(selected.email);
+                if (selected.phone) contactParts.push(selected.phone);
+                if (customerHistoryContact) customerHistoryContact.textContent = contactParts.length ? contactParts.join(' · ') : 'Coordonnées non renseignées';
+
+                if (customerHistoryTotalSales) {
+                    const currency = selected.currency || selected.invoices[0]?.currency || 'CFA';
+                    customerHistoryTotalSales.textContent = formatCurrency(selected.totalSales, currency);
+                }
+                if (customerHistoryTotalDue) {
+                    const currency = selected.currency || selected.invoices[0]?.currency || 'CFA';
+                    customerHistoryTotalDue.textContent = formatCurrency(selected.totalDue, currency);
+                }
+                if (customerHistoryLastPayment) {
+                    customerHistoryLastPayment.textContent = selected.lastPaymentAt ? formatDateForDisplay(selected.lastPaymentAt) : '-';
+                }
+
+                const invoices = selected.invoices
+                    .filter(group => isDateInFilter(group.date, salesHistoryDateFilterValue))
+                    .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                if (customerHistoryTotalInvoices) customerHistoryTotalInvoices.textContent = `${invoices.length}`;
+
+                if (!invoices.length) {
+                    if (customerHistoryInvoicesEmpty) customerHistoryInvoicesEmpty.classList.remove('hidden');
+                    if (customerHistoryInvoicesTableContainer) customerHistoryInvoicesTableContainer.classList.add('hidden');
+                    if (customerHistoryInvoicesTbody) customerHistoryInvoicesTbody.innerHTML = '';
+                    return;
+                }
+
+                if (customerHistoryInvoicesEmpty) customerHistoryInvoicesEmpty.classList.add('hidden');
+                if (customerHistoryInvoicesTableContainer) customerHistoryInvoicesTableContainer.classList.remove('hidden');
+                if (customerHistoryInvoicesTbody) {
+                    customerHistoryInvoicesTbody.innerHTML = invoices.map(group => {
+                        const summary = calculateItemsSummary(group.items.map(item => ({
+                            sellingPrice: item.price,
+                            quantity: item.quantity,
+                            currency: group.currency
+                        })));
+                        const paymentStatus = group.paymentStatus || (group.payLater ? 'pay_later' : 'paid');
+                        const badge = formatPaymentStatusBadge(paymentStatus, group.payLater);
+                        const isPayLater = paymentStatus === 'pay_later' || group.payLater;
+                        let metaLabel = '-';
+                        if (group.paymentPaidAt || (!isPayLater && paymentStatus !== 'pending')) {
+                            const paidAt = group.paymentPaidAt || group.date;
+                            metaLabel = `Payé le ${formatDateOnly(paidAt)}`;
+                        } else if (isPayLater) {
+                            metaLabel = group.paymentDueDate ? `Échéance ${formatDateOnly(group.paymentDueDate)}` : 'Échéance non définie';
+                        }
+                        return `
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(group.date)}</td>
+                                <td class="px-4 py-3 text-sm font-semibold text-gray-900">INV-${group.id.slice(-6).toUpperCase()}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-900">${formatCurrency(summary.total, summary.currency)}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm">
+                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold border ${badge.classes}">${badge.label}</span>
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${metaLabel}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-right">
+                                    <button type="button" data-customer-invoice="${group.id}"
+                                        class="inline-flex items-center justify-center px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50">
+                                        Détails
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            }
+
             function renderSalesHistory() {
                 if (!salesHistoryList || !salesHistoryEmpty) return;
 
@@ -3316,6 +3614,38 @@
                         salesHistoryStoreValidationCount.classList.toggle('text-white', isActive);
                         salesHistoryStoreValidationCount.classList.toggle('text-gray-600', !isActive);
                     }
+                }
+
+                const customersData = buildCustomerHistoryDataset(groups);
+                if (salesHistoryCustomersCount) salesHistoryCustomersCount.textContent = customersData.length;
+
+                if (salesHistoryTabCustomers) {
+                    const isActive = salesHistoryTab === 'customers';
+                    salesHistoryTabCustomers.classList.toggle('bg-teal-600', isActive);
+                    salesHistoryTabCustomers.classList.toggle('text-white', isActive);
+                    salesHistoryTabCustomers.classList.toggle('shadow', isActive);
+                    salesHistoryTabCustomers.classList.toggle('bg-gray-100', !isActive);
+                    salesHistoryTabCustomers.classList.toggle('text-gray-600', !isActive);
+                    if (salesHistoryCustomersCount) {
+                        salesHistoryCustomersCount.classList.toggle('bg-white/20', isActive);
+                        salesHistoryCustomersCount.classList.toggle('bg-gray-200', !isActive);
+                        salesHistoryCustomersCount.classList.toggle('text-white', isActive);
+                        salesHistoryCustomersCount.classList.toggle('text-gray-600', !isActive);
+                    }
+                }
+
+                const isCustomerTab = salesHistoryTab === 'customers';
+                if (salesHistorySearchInput) {
+                    salesHistorySearchInput.placeholder = isCustomerTab
+                        ? 'Rechercher un client...'
+                        : 'Rechercher par N° facture, client...';
+                }
+                if (salesHistoryCustomersSection) salesHistoryCustomersSection.classList.toggle('hidden', !isCustomerTab);
+                if (salesHistoryListWrapper) salesHistoryListWrapper.classList.toggle('hidden', isCustomerTab);
+
+                if (isCustomerTab) {
+                    renderCustomerHistoryTab(customersData);
+                    return;
                 }
 
                 const filteredGroups = groups.filter(group => {
@@ -7793,6 +8123,12 @@
                     renderSalesHistory();
                 });
             }
+            if (salesHistoryTabCustomers) {
+                salesHistoryTabCustomers.addEventListener('click', () => {
+                    salesHistoryTab = 'customers';
+                    renderSalesHistory();
+                });
+            }
             if (salesHistorySearchInput) {
                 salesHistorySearchInput.addEventListener('input', (event) => {
                     salesHistorySearch = event.target.value;
@@ -7803,6 +8139,31 @@
                 salesHistoryDateFilter.addEventListener('change', (event) => {
                     salesHistoryDateFilterValue = event.target.value || 'all';
                     renderSalesHistory();
+                });
+            }
+            if (customerHistorySelect) {
+                customerHistorySelect.addEventListener('change', (event) => {
+                    selectedCustomerHistoryKey = event.target.value || null;
+                    renderSalesHistory();
+                });
+            }
+            if (customerHistoryList) {
+                customerHistoryList.addEventListener('click', (event) => {
+                    const button = event.target.closest('[data-customer-history-id]');
+                    if (!button) return;
+                    selectedCustomerHistoryKey = button.dataset.customerHistoryId || null;
+                    if (customerHistorySelect && selectedCustomerHistoryKey) {
+                        customerHistorySelect.value = selectedCustomerHistoryKey;
+                    }
+                    renderSalesHistory();
+                });
+            }
+            if (customerHistoryInvoicesTbody) {
+                customerHistoryInvoicesTbody.addEventListener('click', (event) => {
+                    const button = event.target.closest('[data-customer-invoice]');
+                    if (!button) return;
+                    const groupId = button.dataset.customerInvoice;
+                    if (groupId) openSalesDetailModal(groupId);
                 });
             }
             if (salesHistoryList) {
