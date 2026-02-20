@@ -1055,6 +1055,13 @@
                         <p class="text-gray-500 mt-1">Gestion du stock principal</p>
                     </div>
                     <div class="flex items-center gap-2 flex-wrap">
+                        <div class="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white shadow-sm">
+                            <span class="text-xs font-semibold text-gray-500">Magasin</span>
+                            <select id="store-selector"
+                                class="bg-transparent text-sm font-semibold text-gray-700 focus:outline-none">
+                                <option value="">Chargement...</option>
+                            </select>
+                        </div>
                         <button id="open-transfer-modal-button"
                             class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-400 text-white font-semibold shadow-md hover:bg-cyan-500 transition-colors">
                             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -1145,13 +1152,22 @@
 
             <!-- Page: Mouvements Magasin -->
             <div id="page-Mouvements-Magasin" class="page-content p-4 md:p-8 hidden">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center">
-                        <div data-icon="clock" class="w-5 h-5"></div>
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center">
+                            <div data-icon="clock" class="w-5 h-5"></div>
+                        </div>
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900">Historique des mouvements</h1>
+                            <p class="text-sm text-gray-500">Suivi des entrées, sorties et transferts du magasin.</p>
+                        </div>
                     </div>
-                    <div>
-                        <h1 class="text-2xl font-bold text-gray-900">Historique des mouvements</h1>
-                        <p class="text-sm text-gray-500">Suivi des entrées, sorties et transferts du magasin.</p>
+                    <div class="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white shadow-sm w-fit">
+                        <span class="text-xs font-semibold text-gray-500">Magasin</span>
+                        <select id="store-selector-movements"
+                            class="bg-transparent text-sm font-semibold text-gray-700 focus:outline-none">
+                            <option value="">Chargement...</option>
+                        </select>
                     </div>
                 </div>
 
@@ -1478,6 +1494,25 @@
                                         class="mt-2 w-full rounded-lg border-gray-200 focus:ring-cyan-400 focus:border-cyan-400"
                                         placeholder="+225 xx xx xx xx">
                                 </div>
+                            </div>
+                            <div id="settings-stores-section" class="rounded-2xl border border-gray-200 p-5 space-y-4">
+                                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-gray-900">Magasins</h3>
+                                        <p class="text-sm text-gray-500">Gérez jusqu'à 10 magasins par entreprise.</p>
+                                    </div>
+                                    <span id="stores-count-badge"
+                                        class="px-3 py-1 rounded-full text-xs font-semibold bg-cyan-50 text-cyan-700 border border-cyan-100">0/10</span>
+                                </div>
+                                <div id="stores-list" class="grid gap-3 md:grid-cols-2"></div>
+                                <form id="add-store-form" class="flex flex-col md:flex-row gap-3">
+                                    <input type="text" id="add-store-name" placeholder="Nom du magasin"
+                                        class="flex-1 rounded-xl border-gray-200 focus:ring-cyan-400 focus:border-cyan-400" required>
+                                    <button type="submit" id="add-store-button"
+                                        class="px-4 py-2.5 rounded-xl bg-cyan-500 text-white text-sm font-semibold hover:bg-cyan-600">Ajouter
+                                        un magasin</button>
+                                </form>
+                                <p id="add-store-error" class="text-sm text-red-500 hidden"></p>
                             </div>
                             <div class="flex flex-wrap gap-3">
                                 <button
@@ -2463,11 +2498,14 @@
             let currentUserData = null;
             let dbBasePath = '';
 
-            const appData = { storeProducts: {}, storeMovements: {}, shopStock: {}, shopMovements: {}, salesHistory: {}, customers: {}, storeExitRequests: {}, pendingSales: {} };
+            const appData = { stores: {}, storeProducts: {}, storeMovements: {}, shopStock: {}, shopMovements: {}, salesHistory: {}, customers: {}, storeExitRequests: {}, pendingSales: {} };
             let isSidebarOpen = false;
             let isSidebarCollapsed = false;
             let isCodeLoginMode = false;
             let isCodeSession = false;
+
+            const MAX_STORES = 10;
+            const DEFAULT_STORE_NAME = 'Magasin principal';
 
             const EXIT_STATUS_PENDING = 'en attente de validation';
             const EXIT_STATUS_APPROVED = 'validée';
@@ -2477,8 +2515,8 @@
             const SALE_SOURCE_MIXED = 'mixed';
 
 
-            let storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, salesHistoryListener, companyMembersListener, companyCustomersListener, storeExitRequestsListener, pendingSalesListener;
-            let storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, salesHistoryRef, companyMembersRef, companyCustomersRef, storeExitRequestsRef, pendingSalesRef;
+            let storesListener, storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, salesHistoryListener, companyMembersListener, companyCustomersListener, storeExitRequestsListener, pendingSalesListener;
+            let storesRef, storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, salesHistoryRef, companyMembersRef, companyCustomersRef, storeExitRequestsRef, pendingSalesRef;
 
             const accessModules = [
                 'Tableau de bord',
@@ -2503,6 +2541,8 @@
             let isTaxEnabled = true;
             let activeSalesDetailId = null;
             let selectedCustomerHistoryKey = null;
+            let activeStoreId = null;
+            let defaultStoreId = null;
 
             // Cart state
             let cartItems = [];
@@ -2543,6 +2583,14 @@
 
             const storeSearchInput = document.getElementById('store-search-input');
             const shopSearchInput = document.getElementById('shop-search-input');
+            const storeSelector = document.getElementById('store-selector');
+            const storeSelectorMovements = document.getElementById('store-selector-movements');
+            const settingsStoresSection = document.getElementById('settings-stores-section');
+            const storesCountBadge = document.getElementById('stores-count-badge');
+            const storesList = document.getElementById('stores-list');
+            const addStoreForm = document.getElementById('add-store-form');
+            const addStoreNameInput = document.getElementById('add-store-name');
+            const addStoreError = document.getElementById('add-store-error');
 
             const storeProductsPlaceholder = document.getElementById('store-products-placeholder');
             const storeProductsTableContainer = document.getElementById('store-products-table-container');
@@ -2871,10 +2919,176 @@
                 return { label: 'En attente', classes: 'bg-yellow-50 text-yellow-700 border-yellow-200' };
             }
 
+            function getStoreStorageKey() {
+                const companyId = currentUserData?.companyId || currentUser?.uid || 'local';
+                return `stockpilot:store:${companyId}`;
+            }
+
+            function getStoresSorted() {
+                return Object.values(appData.stores || {}).sort((a, b) => {
+                    const dateA = new Date(a.createdAt || 0).getTime();
+                    const dateB = new Date(b.createdAt || 0).getTime();
+                    if (dateA === dateB) return (a.name || '').localeCompare(b.name || '');
+                    return dateA - dateB;
+                });
+            }
+
+            function resolveStoreId(storeId) {
+                return storeId || defaultStoreId || null;
+            }
+
+            function getActiveStoreId() {
+                return activeStoreId || defaultStoreId || null;
+            }
+
+            function getStoreName(storeId) {
+                if (!storeId) return '';
+                return appData.stores?.[storeId]?.name || '';
+            }
+
+            function getActiveStoreProducts() {
+                const storeId = getActiveStoreId();
+                if (!storeId) return [];
+                return Object.values(appData.storeProducts || {}).filter(product => resolveStoreId(product.storeId) === storeId);
+            }
+
+            function getActiveStoreMovements() {
+                const storeId = getActiveStoreId();
+                if (!storeId) return [];
+                return Object.values(appData.storeMovements || {}).filter(move => resolveStoreId(move.storeId) === storeId);
+            }
+
+            function getActiveStoreExitRequests() {
+                const storeId = getActiveStoreId();
+                if (!storeId) return [];
+                return Object.values(appData.storeExitRequests || {}).filter(request => resolveStoreId(request.storeId) === storeId);
+            }
+
+            function getActiveStoreProductById(productId) {
+                const product = appData.storeProducts?.[productId];
+                if (!product) return null;
+                const storeId = getActiveStoreId();
+                if (!storeId) return null;
+                return resolveStoreId(product.storeId) === storeId ? product : null;
+            }
+
+            function renderStoreSelectors() {
+                const stores = getStoresSorted();
+                const activeId = getActiveStoreId();
+                const selects = [storeSelector, storeSelectorMovements];
+                selects.forEach(select => {
+                    if (!select) return;
+                    select.innerHTML = '';
+                    if (!stores.length) {
+                        const option = document.createElement('option');
+                        option.value = '';
+                        option.textContent = 'Aucun magasin';
+                        select.appendChild(option);
+                        select.disabled = true;
+                        return;
+                    }
+                    select.disabled = false;
+                    stores.forEach(store => {
+                        const option = document.createElement('option');
+                        option.value = store.id;
+                        option.textContent = store.name || DEFAULT_STORE_NAME;
+                        select.appendChild(option);
+                    });
+                    if (activeId) select.value = activeId;
+                });
+            }
+
+            function renderStoresList() {
+                if (!storesList) return;
+                const stores = getStoresSorted();
+                if (storesCountBadge) storesCountBadge.textContent = `${stores.length}/${MAX_STORES}`;
+                if (!stores.length) {
+                    storesList.innerHTML = '<p class="text-sm text-gray-400">Aucun magasin enregistré.</p>';
+                    return;
+                }
+                storesList.innerHTML = stores.map(store => {
+                    const isActive = getActiveStoreId() === store.id;
+                    const badge = isActive
+                        ? '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-600 border border-emerald-100">Actif</span>'
+                        : '';
+                    return `
+                        <div class="flex items-center justify-between gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50/40">
+                            <div>
+                                <p class="text-sm font-semibold text-gray-900">${store.name || DEFAULT_STORE_NAME}</p>
+                                <p class="text-xs text-gray-400">Créé le ${formatDateOnly(store.createdAt || '')}</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                ${badge}
+                                <button type="button" data-store-rename="${store.id}"
+                                    class="px-2.5 py-1 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-100">Renommer</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            function setActiveStore(storeId, persist = true) {
+                if (storeId) {
+                    activeStoreId = storeId;
+                } else {
+                    activeStoreId = defaultStoreId;
+                }
+                if (persist && activeStoreId) {
+                    try {
+                        localStorage.setItem(getStoreStorageKey(), activeStoreId);
+                    } catch (error) {
+                        console.warn('Impossible de sauvegarder le magasin actif', error);
+                    }
+                }
+                renderStoreSelectors();
+                populateStoreProductSelects();
+                renderStoreProducts(storeSearchInput ? storeSearchInput.value : '');
+                renderStoreMovementsPage();
+            }
+
+            function updateStoreManagementState() {
+                const isAdmin = getCurrentUserRole() === 'admin';
+                if (settingsStoresSection) settingsStoresSection.classList.toggle('hidden', !isAdmin);
+                const stores = getStoresSorted();
+                const limitReached = stores.length >= MAX_STORES;
+                if (addStoreNameInput) addStoreNameInput.disabled = limitReached || !isAdmin;
+                const addButton = document.getElementById('add-store-button');
+                if (addButton) addButton.disabled = limitReached || !isAdmin;
+                if (addStoreError && limitReached) {
+                    addStoreError.textContent = `Limite atteinte (${MAX_STORES} magasins).`;
+                    addStoreError.classList.remove('hidden');
+                } else if (addStoreError) {
+                    addStoreError.classList.add('hidden');
+                }
+            }
+
+            async function ensureStoresSetup() {
+                if (!dbBasePath || !currentUser) return;
+                const storesSnap = await get(ref(db, `${dbBasePath}/stores`));
+                const storesData = storesSnap.val() || {};
+                if (Object.keys(storesData).length) return;
+                const now = new Date().toISOString();
+                const storeRef = push(ref(db, `${dbBasePath}/stores`));
+                const storeId = storeRef.key;
+                if (!storeId) return;
+                const updates = {};
+                updates[`${dbBasePath}/stores/${storeId}`] = {
+                    id: storeId,
+                    name: DEFAULT_STORE_NAME,
+                    createdAt: now,
+                    createdBy: currentUser.uid || '',
+                    active: true,
+                    isDefault: true
+                };
+                await update(ref(db), updates);
+            }
+
             function getPendingExitQuantity(productId) {
+                const storeId = getActiveStoreId();
                 const requests = Object.values(appData.storeExitRequests || {});
                 return requests
                     .filter(request => request.productId === productId && request.status === EXIT_STATUS_PENDING)
+                    .filter(request => !storeId || resolveStoreId(request.storeId) === storeId)
                     .reduce((sum, request) => sum + (parseInt(request.quantity, 10) || 0), 0);
             }
 
@@ -4620,6 +4834,7 @@
                 if (settingsRestrictedState) settingsRestrictedState.classList.toggle('hidden', canAccessSettings);
                 if (settingsTabsWrapper) settingsTabsWrapper.classList.toggle('hidden', !canAccessSettings);
                 if (settingsAdminBadge) settingsAdminBadge.textContent = `Rôle : ${canAccessSettings ? 'Admin' : 'Accès limité'}`;
+                updateStoreManagementState();
             }
 
             function hasPermission(permission) {
@@ -5683,6 +5898,7 @@
                     if (match.member.status !== 'actif') {
                         await update(ref(db, `${dbBasePath}/members/${match.memberId}`), { status: 'actif' });
                     }
+                    await ensureStoresSetup();
                     setupFirebaseListeners();
                     updateSettingsAccess();
                     updateUI();
@@ -5802,6 +6018,90 @@
                 });
             }
 
+            if (storeSelector) {
+                storeSelector.addEventListener('change', () => {
+                    setActiveStore(storeSelector.value);
+                });
+            }
+
+            if (storeSelectorMovements) {
+                storeSelectorMovements.addEventListener('change', () => {
+                    setActiveStore(storeSelectorMovements.value);
+                });
+            }
+
+            if (addStoreForm) {
+                addStoreForm.addEventListener('submit', async (event) => {
+                    event.preventDefault();
+                    if (!dbBasePath || !currentUser) return;
+                    if (getCurrentUserRole() !== 'admin') {
+                        showSuccessToast("Accès réservé aux administrateurs.");
+                        return;
+                    }
+                    const storeName = addStoreNameInput?.value.trim();
+                    if (!storeName) return;
+                    const stores = getStoresSorted();
+                    if (stores.length >= MAX_STORES) {
+                        if (addStoreError) {
+                            addStoreError.textContent = `Limite atteinte (${MAX_STORES} magasins).`;
+                            addStoreError.classList.remove('hidden');
+                        }
+                        return;
+                    }
+                    if (stores.some(store => (store.name || '').toLowerCase() === storeName.toLowerCase())) {
+                        if (addStoreError) {
+                            addStoreError.textContent = 'Un magasin porte déjà ce nom.';
+                            addStoreError.classList.remove('hidden');
+                        }
+                        return;
+                    }
+                    try {
+                        const now = new Date().toISOString();
+                        const newStoreRef = push(ref(db, `${dbBasePath}/stores`));
+                        await set(newStoreRef, {
+                            id: newStoreRef.key,
+                            name: storeName,
+                            createdAt: now,
+                            createdBy: currentUser.uid || '',
+                            active: true
+                        });
+                        addStoreForm.reset();
+                        if (addStoreError) addStoreError.classList.add('hidden');
+                        showSuccessToast('Magasin ajouté.');
+                        if (newStoreRef.key) setActiveStore(newStoreRef.key);
+                    } catch (error) {
+                        console.error(error);
+                        if (addStoreError) {
+                            addStoreError.textContent = "Impossible d'ajouter ce magasin.";
+                            addStoreError.classList.remove('hidden');
+                        }
+                    }
+                });
+            }
+
+            if (storesList) {
+                storesList.addEventListener('click', async (event) => {
+                    const renameButton = event.target.closest('button[data-store-rename]');
+                    if (!renameButton) return;
+                    if (!dbBasePath || getCurrentUserRole() !== 'admin') {
+                        showSuccessToast("Accès réservé aux administrateurs.");
+                        return;
+                    }
+                    const storeId = renameButton.dataset.storeRename;
+                    const store = appData.stores?.[storeId];
+                    if (!store) return;
+                    const newName = prompt('Nouveau nom du magasin', store.name || DEFAULT_STORE_NAME);
+                    if (!newName || !newName.trim()) return;
+                    try {
+                        await update(ref(db, `${dbBasePath}/stores/${storeId}`), { name: newName.trim(), updatedAt: new Date().toISOString() });
+                        showSuccessToast('Magasin renommé.');
+                    } catch (error) {
+                        console.error(error);
+                        showSuccessToast("Impossible de renommer ce magasin.");
+                    }
+                });
+            }
+
             if (pendingExitTableContainer) {
                 pendingExitTableContainer.addEventListener('click', (event) => {
                     const approveButton = event.target.closest('button[data-approve-exit]');
@@ -5823,27 +6123,26 @@
             }
 
             function populateStoreProductSelects() {
-                const products = appData.storeProducts;
+                const products = getActiveStoreProducts();
                 const selects = [entryProductSelect, exitProductSelect, transferProductSelect];
                 selects.forEach(select => {
                     if (!select) return;
                     const firstOption = select.options[0];
                     select.innerHTML = '';
                     select.appendChild(firstOption.cloneNode(true));
-                    if (products) {
-                        Object.values(products).forEach(product => {
-                            const option = document.createElement('option');
-                            option.value = product.id;
-                            option.textContent = `${product.name} (Actuellement : ${product.quantityInStore})`;
-                            select.appendChild(option);
-                        });
-                    }
+                    if (!products.length) return;
+                    products.forEach(product => {
+                        const option = document.createElement('option');
+                        option.value = product.id;
+                        option.textContent = `${product.name} (Actuellement : ${product.quantityInStore})`;
+                        select.appendChild(option);
+                    });
                 });
                 if (entryProductSelect && entryProductSelect.value) {
-                    updateEntryProductInfo(appData.storeProducts?.[entryProductSelect.value]);
+                    updateEntryProductInfo(getActiveStoreProductById(entryProductSelect.value));
                 }
                 if (exitProductSelect && exitProductSelect.value) {
-                    updateExitProductInfo(appData.storeProducts?.[exitProductSelect.value]);
+                    updateExitProductInfo(getActiveStoreProductById(exitProductSelect.value));
                 }
             }
 
@@ -5892,21 +6191,29 @@
 
             function openEntryModalForProduct(productId = null) {
                 if (!entryModal || !entryForm) return;
+                if (!getActiveStoreId()) {
+                    showSuccessToast('Veuillez créer ou sélectionner un magasin.');
+                    return;
+                }
                 entryForm.reset();
                 if (entryError) entryError.classList.add('hidden');
                 if (entryProductSelectRow) entryProductSelectRow.classList.toggle('hidden', !!productId);
                 if (entryProductSelect) entryProductSelect.value = productId || '';
-                updateEntryProductInfo(productId ? appData.storeProducts[productId] : null);
+                updateEntryProductInfo(productId ? getActiveStoreProductById(productId) : null);
                 entryModal.classList.remove('hidden');
             }
 
             function openExitModalForProduct(productId = null) {
                 if (!exitModal || !exitForm) return;
+                if (!getActiveStoreId()) {
+                    showSuccessToast('Veuillez créer ou sélectionner un magasin.');
+                    return;
+                }
                 exitForm.reset();
                 if (exitError) exitError.classList.add('hidden');
                 if (exitProductSelectRow) exitProductSelectRow.classList.toggle('hidden', !!productId);
                 if (exitProductSelect) exitProductSelect.value = productId || '';
-                updateExitProductInfo(productId ? appData.storeProducts[productId] : null);
+                updateExitProductInfo(productId ? getActiveStoreProductById(productId) : null);
                 exitModal.classList.remove('hidden');
             }
 
@@ -5930,9 +6237,16 @@
             }
 
             function renderStoreProducts(searchTerm = '') {
-                const products = appData.storeProducts;
+                const activeStore = getActiveStoreId();
+                if (!activeStore) {
+                    if (storeProductsTableContainer) storeProductsTableContainer.classList.add('hidden');
+                    if (storeProductsPlaceholder) storeProductsPlaceholder.classList.remove('hidden');
+                    if (storeProductsTbody) storeProductsTbody.innerHTML = '';
+                    return;
+                }
+                const products = getActiveStoreProducts();
                 const normalizedSearch = searchTerm.toLowerCase();
-                const filteredProducts = Object.values(products).filter(product =>
+                const filteredProducts = products.filter(product =>
                     product.name?.toLowerCase().includes(normalizedSearch) || product.description?.toLowerCase().includes(normalizedSearch)
                 );
 
@@ -6002,6 +6316,11 @@
                     return;
                 }
                 const product = appData.storeProducts?.[productId];
+                const storeId = getActiveStoreId();
+                if (product && storeId && resolveStoreId(product.storeId) !== storeId) {
+                    showSuccessToast('Produit introuvable pour ce magasin.');
+                    return;
+                }
                 if (!product) {
                     showSuccessToast('Produit introuvable.');
                     return;
@@ -6019,6 +6338,7 @@
                         id: moveKey,
                         productId,
                         productName: product.name || 'Produit',
+                        storeId: resolveStoreId(product.storeId) || storeId,
                         type: "Suppression",
                         quantityChange: qty,
                         oldStock: qty,
@@ -6116,8 +6436,15 @@
 
             function renderStoreMovementsPage() {
                 if (!storeMovementsPlaceholder || !storeMovementsTableContainer || !storeMovementsTbody) return;
-                const movements = Object.values(appData.storeMovements || {});
-                const pendingRequests = Object.values(appData.storeExitRequests || {}).filter(request => {
+                const activeStore = getActiveStoreId();
+                if (!activeStore) {
+                    storeMovementsPlaceholder.classList.remove('hidden');
+                    storeMovementsTableContainer.classList.add('hidden');
+                    storeMovementsTbody.innerHTML = '';
+                    return;
+                }
+                const movements = getActiveStoreMovements();
+                const pendingRequests = getActiveStoreExitRequests().filter(request => {
                     if (request.status !== EXIT_STATUS_PENDING) return false;
                     if (!request.storeMovementId) return true;
                     return !appData.storeMovements?.[request.storeMovementId];
@@ -6261,11 +6588,13 @@
                     const requestedBy = request.requestedByName || request.requestedBy || request.requestedByEmail || '-';
                     const comment = request.comment ? request.comment : '-';
                     const date = request.requestedAt || request.date || new Date().toISOString();
+                    const storeName = getStoreName(resolveStoreId(request.storeId));
+                    const productLabel = storeName ? `${request.productName || '-'} <span class="text-xs text-gray-400">(${storeName})</span>` : (request.productName || '-');
                     const actionsHtml = `<span class="text-xs text-gray-400">À valider dans Historique des ventes</span>`;
                     return `
                         <tr class="hover:bg-gray-50">
                             <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(date)}</td>
-                            <td class="px-4 py-3 text-sm font-medium text-gray-900">${request.productName || '-'}</td>
+                            <td class="px-4 py-3 text-sm font-medium text-gray-900">${productLabel}</td>
                             <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-700">${request.quantity}</td>
                             <td class="px-4 py-3 text-sm text-gray-500">${requestedBy}</td>
                             <td class="px-4 py-3 text-sm text-gray-500">${comment}</td>
@@ -6326,6 +6655,7 @@
                             id: moveKey,
                             productId: product.id,
                             productName: product.name,
+                            storeId: resolveStoreId(sale.storeId) || resolveStoreId(product.storeId) || getActiveStoreId(),
                             type: "Sortie directe",
                             quantityChange: quantity,
                             oldStock: product.quantityInStore,
@@ -6416,6 +6746,7 @@
                             id: moveKey,
                             productId: product.id,
                             productName: product.name,
+                            storeId: resolveStoreId(request.storeId) || resolveStoreId(product.storeId) || getActiveStoreId(),
                             type: "Sortie directe",
                             quantityChange: quantity,
                             oldStock: product.quantityInStore,
@@ -6438,6 +6769,7 @@
                         id: saleKey,
                         storeProductId: product.id,
                         productName: product.name,
+                        storeId: resolveStoreId(request.storeId) || resolveStoreId(product.storeId) || getActiveStoreId(),
                         quantity,
                         sellingPrice,
                         totalAmount,
@@ -6501,6 +6833,7 @@
                             id: moveKey,
                             productId: product.id,
                             productName: product.name,
+                            storeId: resolveStoreId(request.storeId) || resolveStoreId(product.storeId) || getActiveStoreId(),
                             type: "Entrée",
                             quantityChange: quantity,
                             oldStock: product.quantityInStore,
@@ -6527,6 +6860,30 @@
             function onStoreExitRequestsValue(snapshot) {
                 appData.storeExitRequests = snapshot.val() || {};
                 renderPendingExitRequests();
+                renderStoreMovementsPage();
+            }
+
+            function onStoresValue(snapshot) {
+                appData.stores = snapshot.val() || {};
+                const stores = getStoresSorted();
+                defaultStoreId = stores.find(store => store.isDefault)?.id || (stores[0] ? stores[0].id : null);
+                const savedStoreId = (() => {
+                    try {
+                        return localStorage.getItem(getStoreStorageKey());
+                    } catch (error) {
+                        return null;
+                    }
+                })();
+                if (savedStoreId && appData.stores?.[savedStoreId]) {
+                    activeStoreId = savedStoreId;
+                } else if (!activeStoreId || !appData.stores?.[activeStoreId]) {
+                    activeStoreId = defaultStoreId;
+                }
+                renderStoreSelectors();
+                renderStoresList();
+                updateStoreManagementState();
+                populateStoreProductSelects();
+                renderStoreProducts(storeSearchInput ? storeSearchInput.value : '');
                 renderStoreMovementsPage();
             }
 
@@ -6688,6 +7045,9 @@
                 cleanupFirebaseListeners();
                 if (!dbBasePath) return;
 
+                storesRef = ref(db, `${dbBasePath}/stores`);
+                storesListener = onValue(storesRef, onStoresValue);
+
                 storeProductsRef = ref(db, `${dbBasePath}/storeProducts`);
                 storeProductsListener = onValue(storeProductsRef, onStoreProductsValue);
 
@@ -6719,6 +7079,7 @@
             }
 
             function cleanupFirebaseListeners() {
+                if (storesListener && storesRef) off(storesRef, storesListener);
                 if (storeProductsListener && storeProductsRef) off(storeProductsRef, storeProductsListener);
                 if (storeMovementsListener && storeMovementsRef) off(storeMovementsRef, storeMovementsListener);
                 if (storeExitRequestsListener && storeExitRequestsRef) off(storeExitRequestsRef, storeExitRequestsListener);
@@ -6729,11 +7090,13 @@
                 if (companyMembersListener && companyMembersRef) off(companyMembersRef, companyMembersListener);
                 if (companyCustomersListener && companyCustomersRef) off(companyCustomersRef, companyCustomersListener);
 
-                storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; salesHistoryListener = null; pendingSalesListener = null; companyMembersListener = null; companyCustomersListener = null;
-                appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.shopMovements = {}; appData.salesHistory = {}; appData.customers = {}; appData.storeExitRequests = {}; appData.pendingSales = {};
+                storesListener = null; storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; salesHistoryListener = null; pendingSalesListener = null; companyMembersListener = null; companyCustomersListener = null;
+                appData.stores = {}; appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.shopMovements = {}; appData.salesHistory = {}; appData.customers = {}; appData.storeExitRequests = {}; appData.pendingSales = {};
                 selectedCustomer = null;
                 customerOptionLookup = {};
                 isCustomerHistoryOpen = false;
+                activeStoreId = null;
+                defaultStoreId = null;
             }
 
             function updateUI() {
@@ -7795,6 +8158,7 @@
                         id: moveKey,
                         productId: storeProduct.id,
                         productName: storeProduct.name || 'Produit',
+                        storeId: resolveStoreId(sale.storeId) || resolveStoreId(storeProduct.storeId) || getActiveStoreId(),
                         type: "Entrée",
                         quantityChange: quantity,
                         oldStock: storeProduct.quantityInStore,
@@ -8615,7 +8979,19 @@
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     const user = userCredential.user;
                     const companyId = push(ref(db, 'companies')).key;
-                    await set(ref(db, `companies/${companyId}`), { name: companyName, createdAt: new Date().toISOString(), createdBy: user.uid });
+                    const now = new Date().toISOString();
+                    await set(ref(db, `companies/${companyId}`), { name: companyName, createdAt: now, createdBy: user.uid });
+                    const storeRef = push(ref(db, `companies/${companyId}/stores`));
+                    if (storeRef.key) {
+                        await set(ref(db, `companies/${companyId}/stores/${storeRef.key}`), {
+                            id: storeRef.key,
+                            name: DEFAULT_STORE_NAME,
+                            createdAt: now,
+                            createdBy: user.uid,
+                            active: true,
+                            isDefault: true
+                        });
+                    }
                     const userData = { uid: user.uid, email, fullName, companyName, companyId, role: 'admin' };
                     await set(ref(db, `users/${user.uid}`), userData);
                     await set(ref(db, `companies/${companyId}/members/${user.uid}`), { fullName, email, role: 'admin', status: 'actif', permissions: [...accessModules] });
@@ -8697,6 +9073,11 @@
             if (newProductForm) newProductForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 if (!currentUser || !dbBasePath) return;
+                const storeId = getActiveStoreId();
+                if (!storeId) {
+                    showSuccessToast('Veuillez créer ou sélectionner un magasin.');
+                    return;
+                }
                 const name = newProductForm['product-name'].value;
                 const desc = newProductForm['product-description'].value;
                 const cost = parseFloat(newProductForm['product-cost'].value);
@@ -8709,6 +9090,7 @@
 
                     // LOGIQUE D'AGRÉGATION AUTO (MAGASIN)
                     const existingProduct = Object.values(appData.storeProducts).find(p =>
+                        resolveStoreId(p.storeId) === storeId &&
                         p.name.toLowerCase() === name.trim().toLowerCase() && p.purchaseCost === cost
                     );
 
@@ -8718,15 +9100,15 @@
                         const now = new Date().toISOString();
                         updates[`${dbBasePath}/storeProducts/${existingProduct.id}/quantityInStore`] = newStock;
                         const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
-                        updates[`${dbBasePath}/storeMovements/${moveKey}`] = { id: moveKey, productId: existingProduct.id, productName: name, type: "Entrée", quantityChange: qty, oldStock: existingProduct.quantityInStore, newStock: newStock, comment: "Ajout automatique (même prix)", date: now, userEmail: currentUser.email || '', userName: currentUserData?.fullName || currentUser.email || '' };
+                        updates[`${dbBasePath}/storeMovements/${moveKey}`] = { id: moveKey, productId: existingProduct.id, productName: name, storeId, type: "Entrée", quantityChange: qty, oldStock: existingProduct.quantityInStore, newStock: newStock, comment: "Ajout automatique (même prix)", date: now, userEmail: currentUser.email || '', userName: currentUserData?.fullName || currentUser.email || '' };
                         await update(ref(db), updates);
                         showSuccessToast("Stock mis à jour pour le produit existant");
                     } else {
                         const newRef = push(ref(db, `${dbBasePath}/storeProducts`));
-                        const newProd = { id: newRef.key, name: name.trim(), description: desc, purchaseCost: cost, currency, quantityInStore: qty, createdAt: new Date().toISOString() };
+                        const newProd = { id: newRef.key, name: name.trim(), description: desc, purchaseCost: cost, currency, quantityInStore: qty, createdAt: new Date().toISOString(), storeId };
                         await set(newRef, newProd);
                         const moveRef = push(ref(db, `${dbBasePath}/storeMovements`));
-                        await set(moveRef, { id: moveRef.key, productId: newProd.id, productName: name, type: "Entrée", quantityChange: qty, oldStock: 0, newStock: qty, comment: "Création", date: new Date().toISOString(), userEmail: currentUser.email || '', userName: currentUserData?.fullName || currentUser.email || '' });
+                        await set(moveRef, { id: moveRef.key, productId: newProd.id, productName: name, storeId, type: "Entrée", quantityChange: qty, oldStock: 0, newStock: qty, comment: "Création", date: new Date().toISOString(), userEmail: currentUser.email || '', userName: currentUserData?.fullName || currentUser.email || '' });
                         showSuccessToast("Produit ajouté!");
                     }
 
@@ -8742,10 +9124,15 @@
             if (entryForm) entryForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 if (!currentUser || !dbBasePath) return;
+                const storeId = getActiveStoreId();
+                if (!storeId) {
+                    showSuccessToast('Veuillez créer ou sélectionner un magasin.');
+                    return;
+                }
                 const pid = entryProductSelect.value;
                 const qty = parseInt(entryForm['entry-quantity'].value, 10);
                 const comment = entryForm['entry-comment'].value;
-                const prod = appData.storeProducts[pid];
+                const prod = getActiveStoreProductById(pid);
                 if (!prod || qty <= 0) return;
 
                 try {
@@ -8754,7 +9141,7 @@
                     const updates = {};
                     updates[`${dbBasePath}/storeProducts/${pid}/quantityInStore`] = newStock;
                     const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
-                    updates[`${dbBasePath}/storeMovements/${moveKey}`] = { id: moveKey, productId: pid, productName: prod.name, type: "Entrée", quantityChange: qty, oldStock: prod.quantityInStore, newStock, comment, date: new Date().toISOString(), userEmail: currentUser.email || '', userName: currentUserData?.fullName || currentUser.email || '' };
+                    updates[`${dbBasePath}/storeMovements/${moveKey}`] = { id: moveKey, productId: pid, productName: prod.name, storeId, type: "Entrée", quantityChange: qty, oldStock: prod.quantityInStore, newStock, comment, date: new Date().toISOString(), userEmail: currentUser.email || '', userName: currentUserData?.fullName || currentUser.email || '' };
                     await update(ref(db), updates);
                     showSuccessToast("Entrée de stock réussie !");
                     entryForm.reset();
@@ -8769,6 +9156,11 @@
             if (exitForm) exitForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 if (!currentUser || !dbBasePath) return;
+                const storeId = getActiveStoreId();
+                if (!storeId) {
+                    showSuccessToast('Veuillez créer ou sélectionner un magasin.');
+                    return;
+                }
                 if (exitError) exitError.classList.add('hidden');
                 const pid = exitProductSelect.value;
                 const qty = parseInt(exitForm['exit-quantity'].value, 10);
@@ -8776,7 +9168,7 @@
                 const customerName = exitCustomerNameInput ? exitCustomerNameInput.value.trim() : '';
                 const customerEmail = exitCustomerEmailInput ? exitCustomerEmailInput.value.trim() : '';
                 const customerPhone = exitCustomerPhoneInput ? exitCustomerPhoneInput.value.trim() : '';
-                const prod = appData.storeProducts[pid];
+                const prod = getActiveStoreProductById(pid);
                 if (!prod || qty <= 0) return;
                 if (!customerName || !customerEmail || !customerPhone) {
                     if (exitError) {
@@ -8813,6 +9205,7 @@
                         id: moveKey,
                         productId: pid,
                         productName: prod.name,
+                        storeId,
                         type: "Sortie directe",
                         quantityChange: qty,
                         oldStock: prod.quantityInStore,
@@ -8828,6 +9221,7 @@
                         id: requestRef.key,
                         productId: pid,
                         productName: prod.name,
+                        storeId,
                         quantity: qty,
                         comment,
                         customerName,
@@ -8850,6 +9244,7 @@
                         saleGroupId: saleRef.key,
                         storeProductId: pid,
                         productName: prod.name,
+                        storeId,
                         quantity: qty,
                         sellingPrice,
                         totalAmount,
@@ -8884,11 +9279,16 @@
             if (transferForm) transferForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 if (!currentUser || !dbBasePath) return;
+                const storeId = getActiveStoreId();
+                if (!storeId) {
+                    showSuccessToast('Veuillez créer ou sélectionner un magasin.');
+                    return;
+                }
                 const sourceId = transferProductSelect.value;
                 const qty = parseInt(transferForm['transfer-quantity'].value, 10);
                 const price = parseFloat(transferForm['transfer-selling-price'].value);
                 const alertT = parseInt(transferForm['transfer-alert-threshold'].value, 10) || 5;
-                const sourceProd = appData.storeProducts[sourceId];
+                const sourceProd = getActiveStoreProductById(sourceId);
                 if (!sourceProd || qty > sourceProd.quantityInStore) {
                     alert("Stock magasin insuffisant.");
                     return;
@@ -8899,6 +9299,7 @@
 
                     // LOGIQUE D'AGRÉGATION AUTO (BOUTIQUE) par NOM + PRIX
                     let existingItem = Object.values(appData.shopStock).find(i =>
+                        resolveStoreId(i.sourceStoreId) === storeId &&
                         i.name.toLowerCase() === sourceProd.name.toLowerCase() && i.sellingPrice === price
                     );
 
@@ -8909,13 +9310,13 @@
 
                     updates[`${dbBasePath}/storeProducts/${sourceId}/quantityInStore`] = storeNew;
                     const smKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
-                    updates[`${dbBasePath}/storeMovements/${smKey}`] = { id: smKey, productId: sourceId, productName: sourceProd.name, type: "Sortie", quantityChange: qty, oldStock: sourceProd.quantityInStore, newStock: storeNew, comment: "Transfert Boutique", date: now, userEmail: currentUser.email || '', userName: currentUserData?.fullName || currentUser.email || '' };
+                    updates[`${dbBasePath}/storeMovements/${smKey}`] = { id: smKey, productId: sourceId, productName: sourceProd.name, storeId, type: "Sortie", quantityChange: qty, oldStock: sourceProd.quantityInStore, newStock: storeNew, comment: "Transfert Boutique", date: now, userEmail: currentUser.email || '', userName: currentUserData?.fullName || currentUser.email || '' };
 
                     const shopId = existingItem ? existingItem.id : push(ref(db, `${dbBasePath}/shopStock`)).key;
-                    updates[`${dbBasePath}/shopStock/${shopId}`] = { id: shopId, sourceProductId: sourceId, name: sourceProd.name, purchaseCost: sourceProd.purchaseCost, sellingPrice: price, quantityInShop: shopNew, alertThreshold: alertT, createdAt: existingItem ? existingItem.createdAt : now, updatedAt: now };
+                    updates[`${dbBasePath}/shopStock/${shopId}`] = { id: shopId, sourceProductId: sourceId, sourceStoreId: storeId, name: sourceProd.name, purchaseCost: sourceProd.purchaseCost, sellingPrice: price, quantityInShop: shopNew, alertThreshold: alertT, createdAt: existingItem ? existingItem.createdAt : now, updatedAt: now };
 
                     const shmKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
-                    updates[`${dbBasePath}/shopMovements/${shmKey}`] = { id: shmKey, shopProductId: shopId, productName: sourceProd.name, type: "Entrée", quantityChange: qty, oldStock: shopOld, newStock: shopNew, comment: existingItem ? "Fusion stock (même prix)" : "Depuis magasin", date: now, userEmail: currentUser.email, userName: currentUserData?.fullName || currentUser.email || '', status: EXIT_STATUS_APPROVED };
+                    updates[`${dbBasePath}/shopMovements/${shmKey}`] = { id: shmKey, shopProductId: shopId, productName: sourceProd.name, storeId, type: "Entrée", quantityChange: qty, oldStock: shopOld, newStock: shopNew, comment: existingItem ? "Fusion stock (même prix)" : "Depuis magasin", date: now, userEmail: currentUser.email, userName: currentUserData?.fullName || currentUser.email || '', status: EXIT_STATUS_APPROVED };
 
                     await update(ref(db), updates);
                     showSuccessToast(existingItem ? "Stock fusionné en boutique !" : "Transfert boutique réussi !");
@@ -8936,9 +9337,14 @@
                 const comment = restockForm['restock-comment'].value || "Restock";
                 const shopProd = appData.shopStock[sid];
                 if (!shopProd) return;
+                const sourceStoreId = resolveStoreId(shopProd.sourceStoreId);
                 const sourceProd = appData.storeProducts[shopProd.sourceProductId];
                 if (!sourceProd || qty > sourceProd.quantityInStore) {
                     alert("Stock magasin insuffisant.");
+                    return;
+                }
+                if (sourceStoreId && resolveStoreId(sourceProd.storeId) !== sourceStoreId) {
+                    showSuccessToast("Produit source introuvable pour ce magasin.");
                     return;
                 }
 
@@ -8950,12 +9356,12 @@
 
                     updates[`${dbBasePath}/storeProducts/${sourceProd.id}/quantityInStore`] = storeNew;
                     const smKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
-                    updates[`${dbBasePath}/storeMovements/${smKey}`] = { id: smKey, productId: sourceProd.id, productName: sourceProd.name, type: "Sortie", quantityChange: qty, oldStock: sourceProd.quantityInStore, newStock: storeNew, comment: "Réappro Boutique", date: now, userEmail: currentUser.email || '', userName: currentUserData?.fullName || currentUser.email || '' };
+                    updates[`${dbBasePath}/storeMovements/${smKey}`] = { id: smKey, productId: sourceProd.id, productName: sourceProd.name, storeId: sourceStoreId, type: "Sortie", quantityChange: qty, oldStock: sourceProd.quantityInStore, newStock: storeNew, comment: "Réappro Boutique", date: now, userEmail: currentUser.email || '', userName: currentUserData?.fullName || currentUser.email || '' };
 
                     updates[`${dbBasePath}/shopStock/${sid}/quantityInShop`] = shopNew;
                     updates[`${dbBasePath}/shopStock/${sid}/updatedAt`] = now;
                     const shmKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
-                    updates[`${dbBasePath}/shopMovements/${shmKey}`] = { id: shmKey, shopProductId: sid, productName: shopProd.name, type: "Entrée", quantityChange: qty, oldStock: shopProd.quantityInShop, newStock: shopNew, comment: comment, date: now, userEmail: currentUser.email, userName: currentUserData?.fullName || currentUser.email || '', status: EXIT_STATUS_APPROVED };
+                    updates[`${dbBasePath}/shopMovements/${shmKey}`] = { id: shmKey, shopProductId: sid, productName: shopProd.name, storeId: sourceStoreId, type: "Entrée", quantityChange: qty, oldStock: shopProd.quantityInShop, newStock: shopNew, comment: comment, date: now, userEmail: currentUser.email, userName: currentUserData?.fullName || currentUser.email || '', status: EXIT_STATUS_APPROVED };
 
                     await update(ref(db), updates);
                     showSuccessToast("Réapprovisionnement réussi !");
@@ -9012,10 +9418,25 @@
 
 
             // Modals Open
-            if (openNewProductModalButton) openNewProductModalButton.addEventListener('click', () => { newProductModal.classList.remove('hidden'); newProductForm.reset(); });
+            if (openNewProductModalButton) openNewProductModalButton.addEventListener('click', () => {
+                if (!getActiveStoreId()) {
+                    showSuccessToast('Veuillez créer ou sélectionner un magasin.');
+                    return;
+                }
+                newProductModal.classList.remove('hidden');
+                newProductForm.reset();
+            });
             if (openEntryModalButton) openEntryModalButton.addEventListener('click', () => openEntryModalForProduct());
             if (openExitModalButton) openExitModalButton.addEventListener('click', () => openExitModalForProduct());
-            if (openTransferModalButton) openTransferModalButton.addEventListener('click', () => { transferModal.classList.remove('hidden'); transferForm.reset(); transferSourceInfo.classList.add('hidden'); });
+            if (openTransferModalButton) openTransferModalButton.addEventListener('click', () => {
+                if (!getActiveStoreId()) {
+                    showSuccessToast('Veuillez créer ou sélectionner un magasin.');
+                    return;
+                }
+                transferModal.classList.remove('hidden');
+                transferForm.reset();
+                transferSourceInfo.classList.add('hidden');
+            });
             if (openRestockModalButton) openRestockModalButton.addEventListener('click', () => { restockModal.classList.remove('hidden'); restockForm.reset(); restockSourceInfo.classList.add('hidden'); });
 
             // Modals Close
@@ -9029,12 +9450,12 @@
 
             if (entryProductSelect) {
                 entryProductSelect.addEventListener('change', () => {
-                    updateEntryProductInfo(appData.storeProducts?.[entryProductSelect.value]);
+                    updateEntryProductInfo(getActiveStoreProductById(entryProductSelect.value));
                 });
             }
             if (exitProductSelect) {
                 exitProductSelect.addEventListener('change', () => {
-                    updateExitProductInfo(appData.storeProducts?.[exitProductSelect.value]);
+                    updateExitProductInfo(getActiveStoreProductById(exitProductSelect.value));
                 });
             }
 
@@ -9045,7 +9466,7 @@
 
             // Select Interaction (Info display in modals)
             if (transferProductSelect) transferProductSelect.addEventListener('change', () => {
-                const p = appData.storeProducts[transferProductSelect.value];
+                const p = getActiveStoreProductById(transferProductSelect.value);
                 if (p) {
                     transferCostDisplay.textContent = formatCurrency(p.purchaseCost, p.currency);
                     transferSourceInfo.classList.remove('hidden');
@@ -9056,8 +9477,8 @@
 
             if (restockProductSelect) restockProductSelect.addEventListener('change', () => {
                 const si = appData.shopStock[restockProductSelect.value];
-                if (si && appData.storeProducts[si.sourceProductId]) {
-                    const sp = appData.storeProducts[si.sourceProductId];
+                const sp = si ? appData.storeProducts[si.sourceProductId] : null;
+                if (si && sp) {
                     restockSourceName.textContent = sp.name;
                     restockSourceStock.textContent = sp.quantityInStore;
                     restockSourceInfo.classList.remove('hidden');
@@ -9111,11 +9532,12 @@
                     isCodeSession = false;
                     isAuthenticated = true;
                     currentUser = user;
-                    get(ref(db, `users/${user.uid}`)).then((snapshot) => {
+                    get(ref(db, `users/${user.uid}`)).then(async (snapshot) => {
                         if (snapshot.exists()) {
                             currentUserData = snapshot.val();
                             currentUserData.role = currentUserData.role || 'admin';
                             dbBasePath = currentUserData.companyId ? `companies/${currentUserData.companyId}` : `users/${user.uid}`;
+                            await ensureStoresSetup();
                             setupFirebaseListeners();
                             ensureCurrentUserInTeam();
                             updateSettingsAccess();
