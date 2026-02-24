@@ -205,6 +205,11 @@
                     <div data-icon="box" class="w-5 h-5"></div>
                     <span class="sidebar-text">Mon Magasin</span>
                 </button>
+                <button data-page="Tableau des prix"
+                    class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
+                    <div data-icon="dollar" class="w-5 h-5"></div>
+                    <span class="sidebar-text">Tableau des prix</span>
+                </button>
                 <button data-page="Mouvements Magasin"
                     class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
                     <div data-icon="clock" class="w-5 h-5"></div>
@@ -1277,6 +1282,78 @@
                                 </thead>
                                 <tbody id="store-movements-tbody" class="divide-y divide-gray-200">
                                     <!-- Lignes de mouvements insérées par JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page: Tableau des prix -->
+            <div id="page-Tableau-des-prix" class="page-content p-4 md:p-8 hidden">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-800">Tableau des prix</h1>
+                        <p class="text-sm text-gray-500 mt-1">Définissez les coûts d'achat et les prix de vente magasin/boutique.</p>
+                    </div>
+                    <div class="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white shadow-sm w-fit">
+                        <span class="text-xs font-semibold text-gray-500">Magasin</span>
+                        <select id="price-table-store-filter"
+                            class="bg-transparent text-sm font-semibold text-gray-700 focus:outline-none">
+                            <option value="">Tous les magasins</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mt-6 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div class="relative flex-grow">
+                            <input type="text" id="price-table-search" placeholder="Rechercher un produit..."
+                                class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-cyan-500 focus:border-cyan-500" />
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-500 bg-gray-50 border border-gray-100 px-3 py-2 rounded-xl">
+                            Modifiez puis cliquez sur <span class="font-semibold text-gray-700">Enregistrer</span>.
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        <div id="price-table-empty" class="flex flex-col items-center justify-center text-center text-gray-500 h-32">
+                            <p>Aucun produit à afficher.</p>
+                        </div>
+                        <div id="price-table-table-container" class="hidden overflow-x-auto rounded-xl border border-gray-200">
+                            <table class="min-w-full bg-white divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Produit</th>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Magasin</th>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Coût d'achat</th>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Prix Magasin</th>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Prix Boutique</th>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Devise</th>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="price-table-tbody" class="divide-y divide-gray-200">
+                                    <!-- Lignes de prix insérées par JS -->
                                 </tbody>
                             </table>
                         </div>
@@ -2624,6 +2701,7 @@
                 'Historique des ventes',
                 'Stock Boutique',
                 'Mon Magasin',
+                'Tableau des prix',
                 'Mouvements Magasin',
                 'Statistiques',
                 'Paramètres',
@@ -2703,6 +2781,11 @@
             const addBoutiqueForm = document.getElementById('add-boutique-form');
             const addBoutiqueNameInput = document.getElementById('add-boutique-name');
             const addBoutiqueError = document.getElementById('add-boutique-error');
+            const priceTableSearchInput = document.getElementById('price-table-search');
+            const priceTableStoreFilter = document.getElementById('price-table-store-filter');
+            const priceTableTableContainer = document.getElementById('price-table-table-container');
+            const priceTableTbody = document.getElementById('price-table-tbody');
+            const priceTableEmpty = document.getElementById('price-table-empty');
 
             const storeProductsPlaceholder = document.getElementById('store-products-placeholder');
             const storeProductsTableContainer = document.getElementById('store-products-table-container');
@@ -2820,6 +2903,8 @@
             const newProductForm = document.getElementById('new-product-form');
             const newProductError = document.getElementById('new-product-error');
             const newProductSubmitButton = document.getElementById('new-product-submit-button');
+            const productCostInput = document.getElementById('product-cost');
+            const productCurrencyInput = document.getElementById('product-currency');
 
             const openEntryModalButton = document.getElementById('open-entry-modal-button');
             const entryModal = document.getElementById('entry-modal');
@@ -2864,6 +2949,7 @@
             const transferStockWarning = document.getElementById('transfer-stock-warning');
             const transferError = document.getElementById('transfer-error');
             const transferSubmitButton = document.getElementById('transfer-submit-button');
+            const transferSellingPriceInput = document.getElementById('transfer-selling-price');
 
             const openRestockModalButton = document.getElementById('open-restock-modal-button');
             const restockModal = document.getElementById('restock-modal');
@@ -5299,11 +5385,63 @@
                 updateBoutiqueManagementState();
             }
 
+            function updatePricingAccessState() {
+                const canEdit = canManagePricing();
+                const toggleInput = (input) => {
+                    if (!input) return;
+                    input.disabled = !canEdit;
+                    input.classList.toggle('bg-gray-100', !canEdit);
+                    input.classList.toggle('text-gray-500', !canEdit);
+                    input.classList.toggle('cursor-not-allowed', !canEdit);
+                    input.title = canEdit ? '' : 'Réservé aux managers';
+                };
+                toggleInput(productCostInput);
+                toggleInput(productCurrencyInput);
+                if (!canEdit) {
+                    if (productCostInput && !productCostInput.value) productCostInput.value = '0';
+                    if (productCurrencyInput && !productCurrencyInput.value) productCurrencyInput.value = 'CFA';
+                }
+                if (transferSellingPriceInput) {
+                    transferSellingPriceInput.disabled = !canEdit;
+                    transferSellingPriceInput.classList.toggle('bg-gray-100', !canEdit);
+                    transferSellingPriceInput.classList.toggle('text-gray-500', !canEdit);
+                    transferSellingPriceInput.classList.toggle('cursor-not-allowed', !canEdit);
+                    transferSellingPriceInput.title = canEdit ? '' : 'Prix défini dans le tableau des prix';
+                    if (!canEdit) {
+                        const sourceProd = getActiveStoreProductById(transferProductSelect?.value);
+                        const price = getBoutiqueSellingPrice(sourceProd);
+                        transferSellingPriceInput.value = Number.isFinite(price) ? price : '';
+                    }
+                }
+                if (transferSourceInfo && !canEdit) {
+                    transferSourceInfo.classList.add('hidden');
+                }
+            }
+
             function hasPermission(permission) {
                 if (!isAuthenticated || !currentUserData) return false;
                 if (getCurrentUserRole() === 'admin') return true;
                 if (!Array.isArray(currentUserData.permissions)) return false;
                 return currentUserData.permissions.includes(permission);
+            }
+
+            function canManagePricing() {
+                return hasPermission('Tableau des prix');
+            }
+
+            function getStoreSellingPrice(product) {
+                const price = Number(product?.storeSellingPrice);
+                if (Number.isFinite(price)) return price;
+                const fallback = Number(product?.purchaseCost);
+                return Number.isFinite(fallback) ? fallback : 0;
+            }
+
+            function getBoutiqueSellingPrice(product) {
+                const boutiquePrice = Number(product?.boutiqueSellingPrice);
+                if (Number.isFinite(boutiquePrice)) return boutiquePrice;
+                const storePrice = Number(product?.storeSellingPrice);
+                if (Number.isFinite(storePrice)) return storePrice;
+                return NaN;
             }
 
             // Mapping des pages aux permissions requises
@@ -5313,6 +5451,7 @@
                 'Historique des ventes': ['Historique des ventes', 'Ventes'],
                 'Stock Boutique': 'Stock Boutique',
                 'Mon Magasin': 'Mon Magasin',
+                'Tableau des prix': 'Tableau des prix',
                 'Mouvements Magasin': ['Mouvements Magasin', 'Mon Magasin'],
                 'Statistiques': 'Statistiques',
                 'Paramètres': 'Paramètres'
@@ -6218,7 +6357,7 @@
                 } else {
                     const rows = teamMembersState.map(member => {
                         const permissionButtons = accessModules.map(module => {
-                            const isActive = member.permissions?.includes(module);
+                            const isActive = member.role === 'admin' ? true : member.permissions?.includes(module);
                             const classes = `px-3 py-1 rounded-full border text-xs font-semibold mr-2 mb-2 inline-flex ${isActive ? 'bg-cyan-50 border-cyan-200 text-cyan-600' : 'bg-gray-100 border-gray-200 text-gray-500'}`;
                             return `<button type="button" data-member-id="${member.id}" data-permission="${module}" class="${classes}">${module}</button>`;
                         }).join('');
@@ -6583,7 +6722,7 @@
                     const basePermissions = role === 'consultation'
                         ? ['Tableau de bord', 'Statistiques']
                         : (role === 'manager'
-                            ? ['Tableau de bord', 'Ventes', 'Historique des ventes', 'Stock Boutique', 'Mon Magasin', 'Mouvements Magasin', 'Statistiques']
+                            ? ['Tableau de bord', 'Ventes', 'Historique des ventes', 'Stock Boutique', 'Mon Magasin', 'Tableau des prix', 'Mouvements Magasin', 'Statistiques']
                             : ['Tableau de bord', 'Ventes', 'Historique des ventes', 'Stock Boutique']);
 
                     try {
@@ -6996,6 +7135,7 @@
                     let html = '';
                     const sortedProducts = filteredProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                     const canDelete = hasPermission('Supprimer Stock Magasin');
+                    const canViewCosts = canManagePricing();
                     sortedProducts.forEach(product => {
                         const quantity = Number(product.quantityInStore ?? 0);
                         const quantityClass = quantity <= 10
@@ -7028,15 +7168,15 @@
                             <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${product.name}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.description || ''}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">
-                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${quantityClass}">${quantity}</span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatCurrency(product.purchaseCost, product.currency)}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    <div class="flex items-center gap-2">
-                                        ${entryButtonHtml}
-                                        ${exitButtonHtml}
-                                        ${deleteButtonHtml}
+                                  <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">
+                                      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${quantityClass}">${quantity}</span>
+                                  </td>
+                                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${canViewCosts ? formatCurrency(product.purchaseCost, product.currency) : '<span class="text-gray-400">Masqué</span>'}</td>
+                                  <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                      <div class="flex items-center gap-2">
+                                          ${entryButtonHtml}
+                                          ${exitButtonHtml}
+                                          ${deleteButtonHtml}
                                     </div>
                                 </td>
                             </tr>`;
@@ -7046,6 +7186,151 @@
                     storeProductsTableContainer.classList.add('hidden');
                     storeProductsPlaceholder.classList.remove('hidden');
                     storeProductsTbody.innerHTML = '';
+                }
+            }
+
+            function renderPriceTableStoreFilter() {
+                if (!priceTableStoreFilter) return;
+                const stores = getAccessibleStores();
+                const currentValue = priceTableStoreFilter.value || '';
+                priceTableStoreFilter.innerHTML = '';
+                const allOption = document.createElement('option');
+                allOption.value = '';
+                allOption.textContent = 'Tous les magasins';
+                priceTableStoreFilter.appendChild(allOption);
+                stores.forEach(store => {
+                    const option = document.createElement('option');
+                    option.value = store.id;
+                    option.textContent = store.name || DEFAULT_STORE_NAME;
+                    priceTableStoreFilter.appendChild(option);
+                });
+                if (currentValue && stores.some(store => store.id === currentValue)) {
+                    priceTableStoreFilter.value = currentValue;
+                }
+            }
+
+            function renderPriceTable() {
+                if (!priceTableTbody || !priceTableTableContainer || !priceTableEmpty) return;
+                const normalizedSearch = normalizeString(priceTableSearchInput?.value);
+                const storeFilter = priceTableStoreFilter?.value || '';
+                const allowedStoreIds = new Set(getAccessibleStoreIds());
+                const products = Object.values(appData.storeProducts || {}).filter(product => {
+                    const storeId = resolveStoreId(product.storeId);
+                    if (!storeId || !allowedStoreIds.has(storeId)) return false;
+                    if (storeFilter && storeId !== storeFilter) return false;
+                    const name = normalizeString(product.name || '');
+                    const desc = normalizeString(product.description || '');
+                    return !normalizedSearch || name.includes(normalizedSearch) || desc.includes(normalizedSearch);
+                }).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+                if (!products.length) {
+                    priceTableTableContainer.classList.add('hidden');
+                    priceTableEmpty.classList.remove('hidden');
+                    priceTableTbody.innerHTML = '';
+                    return;
+                }
+
+                priceTableEmpty.classList.add('hidden');
+                priceTableTableContainer.classList.remove('hidden');
+                priceTableTbody.innerHTML = products.map(product => {
+                    const storeId = resolveStoreId(product.storeId);
+                    const storeName = getStoreName(storeId) || DEFAULT_STORE_NAME;
+                    const purchaseCostValue = Number.isFinite(Number(product.purchaseCost)) ? Number(product.purchaseCost) : 0;
+                    const storeSellingValue = Number.isFinite(Number(product.storeSellingPrice))
+                        ? Number(product.storeSellingPrice)
+                        : purchaseCostValue;
+                    const boutiqueSellingValue = Number.isFinite(Number(product.boutiqueSellingPrice))
+                        ? Number(product.boutiqueSellingPrice)
+                        : storeSellingValue;
+                    const currencyValue = (product.currency || 'CFA').toUpperCase();
+                    return `
+                        <tr class="hover:bg-gray-50" data-price-row="${product.id}">
+                            <td class="px-4 py-3 text-sm font-semibold text-gray-900">${product.name || ''}</td>
+                            <td class="px-4 py-3 text-sm text-gray-500">${storeName}</td>
+                            <td class="px-4 py-3">
+                                <input type="number" min="0" step="0.01" value="${purchaseCostValue}"
+                                    data-price-field="purchaseCost"
+                                    class="w-28 rounded-lg border border-gray-200 px-2 py-1 text-sm focus:ring-cyan-500 focus:border-cyan-500" />
+                            </td>
+                            <td class="px-4 py-3">
+                                <input type="number" min="0" step="0.01" value="${storeSellingValue}"
+                                    data-price-field="storeSellingPrice"
+                                    class="w-28 rounded-lg border border-gray-200 px-2 py-1 text-sm focus:ring-cyan-500 focus:border-cyan-500" />
+                            </td>
+                            <td class="px-4 py-3">
+                                <input type="number" min="0" step="0.01" value="${boutiqueSellingValue}"
+                                    data-price-field="boutiqueSellingPrice"
+                                    class="w-28 rounded-lg border border-gray-200 px-2 py-1 text-sm focus:ring-cyan-500 focus:border-cyan-500" />
+                            </td>
+                            <td class="px-4 py-3">
+                                <input type="text" value="${currencyValue}" maxlength="6"
+                                    data-price-field="currency"
+                                    class="w-20 rounded-lg border border-gray-200 px-2 py-1 text-sm uppercase focus:ring-cyan-500 focus:border-cyan-500" />
+                            </td>
+                            <td class="px-4 py-3 text-right">
+                                <button type="button" data-price-save="${product.id}"
+                                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-cyan-500 text-white text-xs font-semibold hover:bg-cyan-600">
+                                    Enregistrer
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            async function savePriceTableRow(productId) {
+                if (!productId || !dbBasePath || !currentUser) return;
+                if (!canManagePricing()) {
+                    showSuccessToast("Accès refusé pour modifier les prix.");
+                    return;
+                }
+                const row = priceTableTbody?.querySelector(`[data-price-row="${productId}"]`);
+                if (!row) return;
+
+                const purchaseCost = Number(row.querySelector('[data-price-field="purchaseCost"]')?.value);
+                const storeSellingPrice = Number(row.querySelector('[data-price-field="storeSellingPrice"]')?.value);
+                const boutiqueSellingPrice = Number(row.querySelector('[data-price-field="boutiqueSellingPrice"]')?.value);
+                const currencyRaw = row.querySelector('[data-price-field="currency"]')?.value || '';
+                const currency = currencyRaw.trim().toUpperCase();
+
+                if (!Number.isFinite(purchaseCost) || purchaseCost < 0) {
+                    showSuccessToast("Coût d'achat invalide.");
+                    return;
+                }
+                if (!Number.isFinite(storeSellingPrice) || storeSellingPrice < 0) {
+                    showSuccessToast("Prix magasin invalide.");
+                    return;
+                }
+                if (!Number.isFinite(boutiqueSellingPrice) || boutiqueSellingPrice < 0) {
+                    showSuccessToast("Prix boutique invalide.");
+                    return;
+                }
+                if (!currency) {
+                    showSuccessToast("La devise est obligatoire.");
+                    return;
+                }
+
+                const now = new Date().toISOString();
+                const updates = {};
+                updates[`${dbBasePath}/storeProducts/${productId}/purchaseCost`] = purchaseCost;
+                updates[`${dbBasePath}/storeProducts/${productId}/storeSellingPrice`] = storeSellingPrice;
+                updates[`${dbBasePath}/storeProducts/${productId}/boutiqueSellingPrice`] = boutiqueSellingPrice;
+                updates[`${dbBasePath}/storeProducts/${productId}/currency`] = currency;
+                updates[`${dbBasePath}/storeProducts/${productId}/updatedAt`] = now;
+
+                const shopItems = Object.values(appData.shopStock || {}).filter(item => item.sourceProductId === productId);
+                shopItems.forEach(item => {
+                    updates[`${dbBasePath}/shopStock/${item.id}/sellingPrice`] = boutiqueSellingPrice;
+                    updates[`${dbBasePath}/shopStock/${item.id}/purchaseCost`] = purchaseCost;
+                    updates[`${dbBasePath}/shopStock/${item.id}/updatedAt`] = now;
+                });
+
+                try {
+                    await update(ref(db), updates);
+                    showSuccessToast("Prix mis à jour.");
+                } catch (error) {
+                    console.error(error);
+                    showSuccessToast("Impossible de mettre à jour les prix.");
                 }
             }
 
@@ -7508,7 +7793,7 @@
                         updates[`${dbBasePath}/storeMovements/${resolvedMovementId}/approvedAt`] = now;
                     }
                     const saleKey = push(ref(db, `${dbBasePath}/salesHistory`)).key;
-                    const sellingPrice = Number(product.purchaseCost ?? 0);
+                    const sellingPrice = getStoreSellingPrice(product);
                     const totalAmount = sellingPrice * quantity;
                     updates[`${dbBasePath}/salesHistory/${saleKey}`] = {
                         id: saleKey,
@@ -7626,6 +7911,8 @@
                 }
                 renderStoreSelectors();
                 renderStoresList();
+                renderPriceTableStoreFilter();
+                renderPriceTable();
                 updateStoreManagementState();
                 populateStoreProductSelects();
                 renderStoreProducts(storeSearchInput ? storeSearchInput.value : '');
@@ -7669,6 +7956,7 @@
                 appData.storeProducts = snapshot.val() || {};
                 populateStoreProductSelects();
                 renderStoreProducts(storeSearchInput ? storeSearchInput.value : '');
+                renderPriceTable();
                 updateDashboardStats();
                 updateAllStats();
             }
@@ -7690,7 +7978,13 @@
                     const canDelete = hasPermission('Supprimer Stock Boutique');
                     sortedStock.forEach(item => {
                         const isLowStock = item.quantityInShop <= item.alertThreshold;
-                        const currency = appData.storeProducts[item.sourceProductId]?.currency || 'CFA';
+                        const sourceProduct = appData.storeProducts[item.sourceProductId];
+                        const currency = sourceProduct?.currency || 'CFA';
+                        const sellingPrice = Number.isFinite(Number(item.sellingPrice))
+                            ? Number(item.sellingPrice)
+                            : getBoutiqueSellingPrice(sourceProduct);
+                        const hasPrice = Number.isFinite(sellingPrice);
+                        const priceDisplay = hasPrice ? formatCurrency(sellingPrice, currency) : '<span class="text-gray-400">—</span>';
                         const deleteButtonHtml = canDelete
                             ? `<button class="delete-icon text-gray-400 hover:text-red-500" data-type="shop" data-stock-id="${item.id}">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
@@ -7699,9 +7993,9 @@
                         html += `
                             <tr class="hover:bg-gray-50 ${isLowStock ? 'bg-red-50' : ''}">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${item.name}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${isLowStock ? 'text-red-600' : 'text-gray-700'}">${item.quantityInShop}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatCurrency(item.sellingPrice, currency)}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.alertThreshold}</td>
+                                  <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${isLowStock ? 'text-red-600' : 'text-gray-700'}">${item.quantityInShop}</td>
+                                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${priceDisplay}</td>
+                                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.alertThreshold}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
                                     ${deleteButtonHtml}
                                 </td>
@@ -7967,6 +8261,7 @@
                 });
 
                 updateSettingsAccess();
+                updatePricingAccessState();
 
                 // Mettre à jour les boutons d'actions rapides
                 if (isAuthenticated && typeof updateQuickActionButtons === 'function') {
@@ -8045,7 +8340,12 @@
                 salesProductsContainer.classList.remove('hidden');
 
                 salesProductsContainer.innerHTML = displayItems.map(item => {
-                    const currency = appData.storeProducts[item.sourceProductId]?.currency || 'CFA';
+                    const sourceProduct = appData.storeProducts[item.sourceProductId];
+                    const currency = sourceProduct?.currency || 'CFA';
+                    const sellingPrice = Number.isFinite(Number(item.sellingPrice))
+                        ? Number(item.sellingPrice)
+                        : getBoutiqueSellingPrice(sourceProduct);
+                    const hasPrice = Number.isFinite(sellingPrice);
                     const category = getShopItemCategory(item);
                     const isLowStock = item.quantityInShop <= (item.alertThreshold || 5);
                     const isOut = item.quantityInShop <= 0;
@@ -8055,9 +8355,11 @@
                         : isLowStock
                             ? 'bg-yellow-100 text-yellow-700'
                             : 'bg-green-100 text-green-700';
-                    const actionHtml = isOut
-                        ? `<span class="text-xs font-semibold text-gray-400">Indisponible</span>`
-                        : `<button type="button" data-add-product="${item.id}" class="mt-4 w-full px-3 py-2 text-xs font-semibold rounded-lg bg-cyan-500 text-white hover:bg-cyan-600">Ajouter</button>`;
+                    const actionHtml = !hasPrice
+                        ? `<span class="text-xs font-semibold text-gray-400">Prix non défini</span>`
+                        : isOut
+                            ? `<span class="text-xs font-semibold text-gray-400">Indisponible</span>`
+                            : `<button type="button" data-add-product="${item.id}" class="mt-4 w-full px-3 py-2 text-xs font-semibold rounded-lg bg-cyan-500 text-white hover:bg-cyan-600">Ajouter</button>`;
                     return `
                         <div class="border border-gray-200 rounded-2xl p-4 hover:shadow-md transition ${isOut ? 'opacity-60' : ''}">
                             <div class="flex items-center justify-between gap-2">
@@ -8065,7 +8367,7 @@
                                 <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${stockClass}">${stockLabel}</span>
                             </div>
                             <h3 class="mt-3 text-base font-semibold text-gray-900">${item.name}</h3>
-                            <p class="mt-2 text-lg font-bold text-cyan-600">${formatCurrency(item.sellingPrice, currency)}</p>
+                              <p class="mt-2 text-lg font-bold text-cyan-600">${hasPrice ? formatCurrency(sellingPrice, currency) : '—'}</p>
                             ${actionHtml}
                         </div>
                     `;
@@ -8123,12 +8425,20 @@
                     cartItems[existingItemIndex].quantity += quantityInput;
                 } else {
                     const currency = appData.storeProducts[shopProduct.sourceProductId]?.currency || 'CFA';
+                    const sourceProduct = appData.storeProducts[shopProduct.sourceProductId];
+                    const sellingPrice = Number.isFinite(Number(shopProduct.sellingPrice))
+                        ? Number(shopProduct.sellingPrice)
+                        : getBoutiqueSellingPrice(sourceProduct);
+                    if (!Number.isFinite(sellingPrice)) {
+                        showSalesErrorMessage("Prix non défini pour ce produit.");
+                        return;
+                    }
                     cartItems.push({
                         shopProductId,
                         boutiqueId: productBoutiqueId,
                         boutiqueName: getBoutiqueName(productBoutiqueId),
                         name: shopProduct.name,
-                        sellingPrice: shopProduct.sellingPrice,
+                        sellingPrice,
                         quantity: quantityInput,
                         currency
                     });
@@ -9623,6 +9933,24 @@
                     renderSalesHistory();
                 });
             }
+            if (priceTableSearchInput) {
+                priceTableSearchInput.addEventListener('input', () => {
+                    renderPriceTable();
+                });
+            }
+            if (priceTableStoreFilter) {
+                priceTableStoreFilter.addEventListener('change', () => {
+                    renderPriceTable();
+                });
+            }
+            if (priceTableTbody) {
+                priceTableTbody.addEventListener('click', (event) => {
+                    const button = event.target.closest('[data-price-save]');
+                    if (!button) return;
+                    const productId = button.dataset.priceSave;
+                    if (productId) savePriceTableRow(productId);
+                });
+            }
             if (customerHistorySelect) {
                 customerHistorySelect.addEventListener('change', (event) => {
                     selectedCustomerHistoryKey = event.target.value || null;
@@ -9952,10 +10280,12 @@
                 }
                 const name = newProductForm['product-name'].value;
                 const desc = newProductForm['product-description'].value;
-                const cost = parseFloat(newProductForm['product-cost'].value);
-                const currency = newProductForm['product-currency'].value;
+                const canEditPricing = canManagePricing();
+                const cost = canEditPricing ? parseFloat(newProductForm['product-cost'].value) : 0;
+                const currencyInput = newProductForm['product-currency'].value;
+                const currency = (canEditPricing ? currencyInput : (currencyInput || 'CFA')).trim().toUpperCase();
                 const qty = parseInt(newProductForm['product-quantity'].value, 10);
-                if (!name || isNaN(cost)) return;
+                if (!name || (canEditPricing && isNaN(cost))) return;
 
                 try {
                     if (newProductSubmitButton) newProductSubmitButton.disabled = true;
@@ -9963,7 +10293,8 @@
                     // LOGIQUE D'AGRÉGATION AUTO (MAGASIN)
                     const existingProduct = Object.values(appData.storeProducts).find(p =>
                         resolveStoreId(p.storeId) === storeId &&
-                        p.name.toLowerCase() === name.trim().toLowerCase() && p.purchaseCost === cost
+                        p.name.toLowerCase() === name.trim().toLowerCase() &&
+                        (!canEditPricing || p.purchaseCost === cost)
                     );
 
                     if (existingProduct) {
@@ -10067,7 +10398,7 @@
                     const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
                     const now = new Date().toISOString();
                     const sellerName = currentUserData?.fullName || currentUser.email || '';
-                    const sellingPrice = Number(prod.purchaseCost ?? 0);
+                    const sellingPrice = getStoreSellingPrice(prod);
                     const totalAmount = sellingPrice * qty;
                     const updates = {};
                     const newStock = (prod.quantityInStore || 0) - qty;
@@ -10159,9 +10490,9 @@
                 const sourceId = transferProductSelect.value;
                 const targetBoutiqueId = transferBoutiqueSelect?.value || getActiveBoutiqueId();
                 const qty = parseInt(transferForm['transfer-quantity'].value, 10);
-                const price = parseFloat(transferForm['transfer-selling-price'].value);
                 const alertT = parseInt(transferForm['transfer-alert-threshold'].value, 10) || 5;
                 const sourceProd = getActiveStoreProductById(sourceId);
+                const rawPrice = parseFloat(transferForm['transfer-selling-price'].value);
                 if (!targetBoutiqueId) {
                     showSuccessToast('Veuillez sélectionner une boutique.');
                     return;
@@ -10170,16 +10501,27 @@
                     alert("Stock magasin insuffisant.");
                     return;
                 }
+                const defaultBoutiquePrice = getBoutiqueSellingPrice(sourceProd);
+                let price = rawPrice;
+                if (!canManagePricing()) {
+                    if (!Number.isFinite(defaultBoutiquePrice)) {
+                        showSuccessToast("Prix boutique non défini. Contactez un manager.");
+                        return;
+                    }
+                    price = defaultBoutiquePrice;
+                } else if (!Number.isFinite(price) || price < 0) {
+                    showSuccessToast("Prix de vente invalide.");
+                    return;
+                }
 
                 try {
                     if (transferSubmitButton) transferSubmitButton.disabled = true;
                     const targetBoutiqueName = getBoutiqueName(targetBoutiqueId);
 
-                    // LOGIQUE D'AGRÉGATION AUTO (BOUTIQUE) par NOM + PRIX
                     let existingItem = Object.values(appData.shopStock).find(i =>
                         resolveStoreId(i.sourceStoreId) === storeId &&
                         resolveBoutiqueId(i.boutiqueId) === targetBoutiqueId &&
-                        i.name.toLowerCase() === sourceProd.name.toLowerCase() && i.sellingPrice === price
+                        i.sourceProductId === sourceId
                     );
 
                     const updates = {}; const now = new Date().toISOString();
@@ -10222,6 +10564,16 @@
                         updatedAt: now
                     };
 
+                    if (canManagePricing()) {
+                        updates[`${dbBasePath}/storeProducts/${sourceId}/boutiqueSellingPrice`] = price;
+                        updates[`${dbBasePath}/storeProducts/${sourceId}/updatedAt`] = now;
+                        Object.values(appData.shopStock || {}).forEach(item => {
+                            if (item.sourceProductId !== sourceId) return;
+                            updates[`${dbBasePath}/shopStock/${item.id}/sellingPrice`] = price;
+                            updates[`${dbBasePath}/shopStock/${item.id}/updatedAt`] = now;
+                        });
+                    }
+
                     const shmKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
                     updates[`${dbBasePath}/shopMovements/${shmKey}`] = {
                         id: shmKey,
@@ -10234,7 +10586,7 @@
                         quantityChange: qty,
                         oldStock: shopOld,
                         newStock: shopNew,
-                        comment: existingItem ? "Fusion stock (même prix)" : "Transfert magasin",
+                        comment: existingItem ? "Fusion stock" : "Transfert magasin",
                         date: now,
                         userEmail: currentUser.email,
                         userName: currentUserData?.fullName || currentUser.email || '',
@@ -10396,6 +10748,7 @@
                 }
                 newProductModal.classList.remove('hidden');
                 newProductForm.reset();
+                updatePricingAccessState();
             });
             if (openEntryModalButton) openEntryModalButton.addEventListener('click', () => openEntryModalForProduct());
             if (openExitModalButton) openExitModalButton.addEventListener('click', () => openExitModalForProduct());
@@ -10408,6 +10761,7 @@
                 transferForm.reset();
                 renderTransferBoutiqueSelect();
                 transferSourceInfo.classList.add('hidden');
+                updatePricingAccessState();
             });
             if (openRestockModalButton) openRestockModalButton.addEventListener('click', () => {
                 restockModal.classList.remove('hidden');
@@ -10446,11 +10800,21 @@
             if (transferProductSelect) transferProductSelect.addEventListener('change', () => {
                 const p = getActiveStoreProductById(transferProductSelect.value);
                 if (p) {
-                    transferCostDisplay.textContent = formatCurrency(p.purchaseCost, p.currency);
-                    transferSourceInfo.classList.remove('hidden');
+                    if (canManagePricing()) {
+                        transferCostDisplay.textContent = formatCurrency(p.purchaseCost, p.currency);
+                        transferSourceInfo.classList.remove('hidden');
+                    } else {
+                        transferSourceInfo.classList.add('hidden');
+                    }
+                    if (transferSellingPriceInput) {
+                        const price = getBoutiqueSellingPrice(p);
+                        transferSellingPriceInput.value = Number.isFinite(price) ? price : '';
+                    }
                 } else {
                     transferSourceInfo.classList.add('hidden');
+                    if (transferSellingPriceInput) transferSellingPriceInput.value = '';
                 }
+                updatePricingAccessState();
             });
 
             if (restockProductSelect) restockProductSelect.addEventListener('change', () => {
