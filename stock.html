@@ -7278,7 +7278,12 @@
                     const changeValue = isEntry ? Math.abs(qty) : -Math.abs(qty);
                     const typeBadge = getMovementTypeBadge(move);
                     const statusBadge = getStatusBadge(move.status || EXIT_STATUS_APPROVED);
-                    const comment = move.comment ? move.comment : '-';
+                    const boutiqueLabel = move.boutiqueName || (move.boutiqueId ? getBoutiqueName(resolveBoutiqueId(move.boutiqueId)) : '');
+                    const commentBase = move.comment ? move.comment : '-';
+                    const commentSuffix = boutiqueLabel ? `Vers la boutique ${boutiqueLabel}` : '';
+                    const comment = commentSuffix
+                        ? (commentBase === '-' ? commentSuffix : `${commentBase} · ${commentSuffix}`)
+                        : commentBase;
                     const userLabel = move.userName || move.userFullName || move.userEmail || move.userId || '-';
                     return `
                         <tr class="hover:bg-gray-50">
@@ -7794,7 +7799,14 @@
                     const productName = move.productName || appData.shopStock?.[move.shopProductId]?.name || '-';
                     const typeLabel = move.type || '-';
                     const userDisplay = move.userName || move.userFullName || move.userEmail || move.userId || 'N/A';
-                    const comment = move.comment || '-';
+                    const storeName = getStoreName(resolveStoreId(move.storeId || appData.shopStock?.[move.shopProductId]?.sourceStoreId));
+                    const commentBase = move.comment || '-';
+                    const commentSuffix = (storeName && !commentBase.toLowerCase().includes('depuis'))
+                        ? `Depuis le magasin ${storeName}`
+                        : '';
+                    const comment = commentSuffix
+                        ? (commentBase === '-' ? commentSuffix : `${commentBase} · ${commentSuffix}`)
+                        : commentBase;
                     const newStock = Number.isFinite(move.newStock) ? move.newStock : (move.newStock ?? '-');
                     return `
                             <tr class="hover:bg-gray-50">
@@ -10177,7 +10189,22 @@
 
                     updates[`${dbBasePath}/storeProducts/${sourceId}/quantityInStore`] = storeNew;
                     const smKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
-                    updates[`${dbBasePath}/storeMovements/${smKey}`] = { id: smKey, productId: sourceId, productName: sourceProd.name, storeId, type: "Sortie", quantityChange: qty, oldStock: sourceProd.quantityInStore, newStock: storeNew, comment: "Transfert Boutique", date: now, userEmail: currentUser.email || '', userName: currentUserData?.fullName || currentUser.email || '' };
+                    updates[`${dbBasePath}/storeMovements/${smKey}`] = {
+                        id: smKey,
+                        productId: sourceId,
+                        productName: sourceProd.name,
+                        storeId,
+                        boutiqueId: targetBoutiqueId,
+                        boutiqueName: targetBoutiqueName,
+                        type: "Sortie",
+                        quantityChange: qty,
+                        oldStock: sourceProd.quantityInStore,
+                        newStock: storeNew,
+                        comment: "Transfert Boutique",
+                        date: now,
+                        userEmail: currentUser.email || '',
+                        userName: currentUserData?.fullName || currentUser.email || ''
+                    };
 
                     const shopId = existingItem ? existingItem.id : push(ref(db, `${dbBasePath}/shopStock`)).key;
                     updates[`${dbBasePath}/shopStock/${shopId}`] = {
@@ -10207,7 +10234,7 @@
                         quantityChange: qty,
                         oldStock: shopOld,
                         newStock: shopNew,
-                        comment: existingItem ? "Fusion stock (même prix)" : "Depuis magasin",
+                        comment: existingItem ? "Fusion stock (même prix)" : "Transfert magasin",
                         date: now,
                         userEmail: currentUser.email,
                         userName: currentUserData?.fullName || currentUser.email || '',
@@ -10269,7 +10296,22 @@
 
                     updates[`${dbBasePath}/storeProducts/${sourceProd.id}/quantityInStore`] = storeNew;
                     const smKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
-                    updates[`${dbBasePath}/storeMovements/${smKey}`] = { id: smKey, productId: sourceProd.id, productName: sourceProd.name, storeId: sourceStoreId, type: "Sortie", quantityChange: qty, oldStock: sourceProd.quantityInStore, newStock: storeNew, comment: "Réappro Boutique", date: now, userEmail: currentUser.email || '', userName: currentUserData?.fullName || currentUser.email || '' };
+                    updates[`${dbBasePath}/storeMovements/${smKey}`] = {
+                        id: smKey,
+                        productId: sourceProd.id,
+                        productName: sourceProd.name,
+                        storeId: sourceStoreId,
+                        boutiqueId: targetBoutiqueId,
+                        boutiqueName: getBoutiqueName(targetBoutiqueId),
+                        type: "Sortie",
+                        quantityChange: qty,
+                        oldStock: sourceProd.quantityInStore,
+                        newStock: storeNew,
+                        comment: "Réappro Boutique",
+                        date: now,
+                        userEmail: currentUser.email || '',
+                        userName: currentUserData?.fullName || currentUser.email || ''
+                    };
 
                     updates[`${dbBasePath}/shopStock/${sid}/quantityInShop`] = shopNew;
                     updates[`${dbBasePath}/shopStock/${sid}/updatedAt`] = now;
