@@ -210,6 +210,11 @@
                     <div data-icon="dollar" class="w-5 h-5"></div>
                     <span class="sidebar-text">Tableau des prix</span>
                 </button>
+                <button data-page="Fournisseurs"
+                    class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
+                    <div data-icon="users" class="w-5 h-5"></div>
+                    <span class="sidebar-text">Fournisseurs</span>
+                </button>
                 <button data-page="Mouvements Magasin"
                     class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
                     <div data-icon="clock" class="w-5 h-5"></div>
@@ -1296,12 +1301,21 @@
                         <h1 class="text-3xl font-bold text-gray-800">Tableau des prix</h1>
                         <p class="text-sm text-gray-500 mt-1">Définissez les coûts d'achat et les prix de vente magasin/boutique.</p>
                     </div>
-                    <div class="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white shadow-sm w-fit">
-                        <span class="text-xs font-semibold text-gray-500">Magasin</span>
-                        <select id="price-table-store-filter"
-                            class="bg-transparent text-sm font-semibold text-gray-700 focus:outline-none">
-                            <option value="">Tous les magasins</option>
-                        </select>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <div class="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white shadow-sm w-fit">
+                            <span class="text-xs font-semibold text-gray-500">Magasin</span>
+                            <select id="price-table-store-filter"
+                                class="bg-transparent text-sm font-semibold text-gray-700 focus:outline-none">
+                                <option value="">Tous les magasins</option>
+                            </select>
+                        </div>
+                        <button id="open-price-product-modal-button"
+                            class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-500 text-white font-semibold shadow hover:bg-cyan-600">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Ajouter un produit
+                        </button>
                     </div>
                 </div>
 
@@ -1354,6 +1368,57 @@
                                 </thead>
                                 <tbody id="price-table-tbody" class="divide-y divide-gray-200">
                                     <!-- Lignes de prix insérées par JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page: Fournisseurs -->
+            <div id="page-Fournisseurs" class="page-content p-4 md:p-8 hidden">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-800">Fournisseurs</h1>
+                        <p class="text-sm text-gray-500 mt-1">Gérez vos fournisseurs et leurs coordonnées.</p>
+                    </div>
+                    <button id="open-supplier-modal-button"
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-500 text-white font-semibold shadow hover:bg-cyan-600">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Ajouter un fournisseur
+                    </button>
+                </div>
+
+                <div class="mt-6 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <div class="relative">
+                        <input type="text" id="supplier-search" placeholder="Rechercher un fournisseur..."
+                            class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-cyan-500 focus:border-cyan-500" />
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        <div id="suppliers-empty" class="flex flex-col items-center justify-center text-center text-gray-500 h-32">
+                            <p>Aucun fournisseur enregistré.</p>
+                        </div>
+                        <div id="suppliers-table-container" class="hidden overflow-x-auto rounded-xl border border-gray-200">
+                            <table class="min-w-full bg-white divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Téléphone</th>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Adresse</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="suppliers-tbody" class="divide-y divide-gray-200">
+                                    <!-- Fournisseurs insérés par JS -->
                                 </tbody>
                             </table>
                         </div>
@@ -2039,6 +2104,64 @@
         </div>
     </div>
 
+    <!-- Modal: Nouveau fournisseur -->
+    <div id="supplier-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 m-4">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800">Nouveau fournisseur</h2>
+                <button id="close-supplier-modal-button" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <form id="supplier-form" class="space-y-4">
+                <div>
+                    <label class="text-sm font-medium text-gray-600" for="supplier-name">Nom du fournisseur *</label>
+                    <input type="text" id="supplier-name" placeholder="Ex: ABC Import"
+                        class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition"
+                        required />
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-600" for="supplier-contact">Contact</label>
+                    <input type="text" id="supplier-contact" placeholder="Nom du contact"
+                        class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" />
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-600" for="supplier-phone">Téléphone</label>
+                    <input type="tel" id="supplier-phone" placeholder="+225 01 02 03 04 05"
+                        class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" />
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-600" for="supplier-email">Email</label>
+                    <input type="email" id="supplier-email" placeholder="contact@fournisseur.com"
+                        class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" />
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-600" for="supplier-address">Adresse</label>
+                    <input type="text" id="supplier-address" placeholder="Rue, ville, pays"
+                        class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition" />
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-600" for="supplier-notes">Notes</label>
+                    <textarea id="supplier-notes" rows="2" placeholder="Informations complémentaires"
+                        class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition"></textarea>
+                </div>
+                <p id="supplier-error" class="text-red-500 text-sm hidden"></p>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" id="supplier-cancel-button"
+                        class="w-1/2 px-4 py-3 rounded-xl border border-gray-200 bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-colors">
+                        Annuler
+                    </button>
+                    <button type="submit" id="supplier-submit-button"
+                        class="w-1/2 bg-cyan-500 text-white font-semibold py-3 px-4 rounded-xl hover:bg-cyan-600 transition-colors">
+                        Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- 
       MODAL "AJOUTER UN NOUVEAU PRODUIT"
     -->
@@ -2088,6 +2211,18 @@
                                 required>
                         </div>
                     </div>
+                    <div class="grid grid-cols-2 gap-4" id="product-selling-prices-row">
+                        <div>
+                            <label for="product-store-price" class="block text-sm font-medium text-gray-700">Prix Magasin *</label>
+                            <input type="number" id="product-store-price" placeholder="0" value="0" min="0"
+                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400">
+                        </div>
+                        <div>
+                            <label for="product-boutique-price" class="block text-sm font-medium text-gray-700">Prix Boutique *</label>
+                            <input type="number" id="product-boutique-price" placeholder="0" value="0" min="0"
+                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400">
+                        </div>
+                    </div>
                     <div>
                         <label for="product-quantity" class="block text-sm font-medium text-gray-700">Quantité Initiale
                             *</label>
@@ -2135,6 +2270,24 @@
                             <option value="">Sélectionnez un produit</option>
                             <!-- Options remplies par JS -->
                         </select>
+                    </div>
+                    <div>
+                        <label for="entry-description" class="block text-sm font-medium text-gray-700">Description</label>
+                        <textarea id="entry-description" placeholder="Description du produit" rows="2"
+                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400"></textarea>
+                    </div>
+                    <div>
+                        <label for="entry-supplier-select" class="block text-sm font-medium text-gray-700">Fournisseur</label>
+                        <div class="mt-1 flex items-center gap-2">
+                            <select id="entry-supplier-select"
+                                class="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400">
+                                <option value="">Sélectionnez un fournisseur</option>
+                            </select>
+                            <button type="button" id="entry-supplier-add"
+                                class="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50">
+                                Nouveau
+                            </button>
+                        </div>
                     </div>
                     <div>
                         <label for="entry-quantity" class="block text-sm font-medium text-gray-700">Quantité à ajouter *</label>
@@ -2674,7 +2827,7 @@
             let currentUserData = null;
             let dbBasePath = '';
 
-            const appData = { stores: {}, boutiques: {}, storeProducts: {}, storeMovements: {}, shopStock: {}, shopMovements: {}, salesHistory: {}, customers: {}, storeExitRequests: {}, pendingSales: {} };
+            const appData = { stores: {}, boutiques: {}, storeProducts: {}, storeMovements: {}, shopStock: {}, shopMovements: {}, salesHistory: {}, customers: {}, suppliers: {}, storeExitRequests: {}, pendingSales: {} };
             let isSidebarOpen = false;
             let isSidebarCollapsed = false;
             let isCodeLoginMode = false;
@@ -2692,8 +2845,8 @@
             const SALE_SOURCE_MIXED = 'mixed';
 
 
-            let storesListener, boutiquesListener, storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, salesHistoryListener, companyMembersListener, companyCustomersListener, storeExitRequestsListener, pendingSalesListener;
-            let storesRef, boutiquesRef, storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, salesHistoryRef, companyMembersRef, companyCustomersRef, storeExitRequestsRef, pendingSalesRef;
+            let storesListener, boutiquesListener, storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, salesHistoryListener, companyMembersListener, companyCustomersListener, storeExitRequestsListener, pendingSalesListener, suppliersListener;
+            let storesRef, boutiquesRef, storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, salesHistoryRef, companyMembersRef, companyCustomersRef, storeExitRequestsRef, pendingSalesRef, suppliersRef;
 
             const accessModules = [
                 'Tableau de bord',
@@ -2702,6 +2855,7 @@
                 'Stock Boutique',
                 'Mon Magasin',
                 'Tableau des prix',
+                'Fournisseurs',
                 'Mouvements Magasin',
                 'Statistiques',
                 'Paramètres',
@@ -2725,6 +2879,8 @@
             let defaultBoutiqueId = null;
             let boutiqueMigrationDone = false;
             let activeAccessScopeMemberId = null;
+            let newProductModalSource = 'store';
+            let pendingSupplierSelectTarget = null;
 
             // Cart state
             let cartItems = [];
@@ -2786,6 +2942,12 @@
             const priceTableTableContainer = document.getElementById('price-table-table-container');
             const priceTableTbody = document.getElementById('price-table-tbody');
             const priceTableEmpty = document.getElementById('price-table-empty');
+            const openPriceProductModalButton = document.getElementById('open-price-product-modal-button');
+            const supplierSearchInput = document.getElementById('supplier-search');
+            const suppliersTableContainer = document.getElementById('suppliers-table-container');
+            const suppliersTbody = document.getElementById('suppliers-tbody');
+            const suppliersEmpty = document.getElementById('suppliers-empty');
+            const openSupplierModalButton = document.getElementById('open-supplier-modal-button');
 
             const storeProductsPlaceholder = document.getElementById('store-products-placeholder');
             const storeProductsTableContainer = document.getElementById('store-products-table-container');
@@ -2905,6 +3067,8 @@
             const newProductSubmitButton = document.getElementById('new-product-submit-button');
             const productCostInput = document.getElementById('product-cost');
             const productCurrencyInput = document.getElementById('product-currency');
+            const productStorePriceInput = document.getElementById('product-store-price');
+            const productBoutiquePriceInput = document.getElementById('product-boutique-price');
 
             const openEntryModalButton = document.getElementById('open-entry-modal-button');
             const entryModal = document.getElementById('entry-modal');
@@ -2915,6 +3079,9 @@
             const entryProductName = document.getElementById('entry-product-name');
             const entryProductStock = document.getElementById('entry-product-stock');
             const entryProductSelectRow = document.getElementById('entry-product-select-row');
+            const entryDescriptionInput = document.getElementById('entry-description');
+            const entrySupplierSelect = document.getElementById('entry-supplier-select');
+            const entrySupplierAddButton = document.getElementById('entry-supplier-add');
             const entryError = document.getElementById('entry-error');
             const entrySubmitButton = document.getElementById('entry-submit-button');
             const entryCancelButton = document.getElementById('entry-cancel-button');
@@ -2981,6 +3148,18 @@
             const customerSelectPlaceholder = document.getElementById('customer-select-placeholder');
             const openNewCustomerModalButton = document.getElementById('open-new-customer-modal-button');
             const continueWithoutCustomerButton = document.getElementById('continue-without-customer-button');
+            const supplierModal = document.getElementById('supplier-modal');
+            const closeSupplierModalButton = document.getElementById('close-supplier-modal-button');
+            const supplierForm = document.getElementById('supplier-form');
+            const supplierNameInput = document.getElementById('supplier-name');
+            const supplierContactInput = document.getElementById('supplier-contact');
+            const supplierPhoneInput = document.getElementById('supplier-phone');
+            const supplierEmailInput = document.getElementById('supplier-email');
+            const supplierAddressInput = document.getElementById('supplier-address');
+            const supplierNotesInput = document.getElementById('supplier-notes');
+            const supplierError = document.getElementById('supplier-error');
+            const supplierSubmitButton = document.getElementById('supplier-submit-button');
+            const supplierCancelButton = document.getElementById('supplier-cancel-button');
 
             const successToast = document.getElementById('success-toast');
             const successToastMessage = document.getElementById('success-toast-message');
@@ -3038,6 +3217,18 @@
                     successToast.classList.add('show');
                     setTimeout(() => successToast.classList.remove('show'), 3000);
                 }
+            }
+
+            function openSupplierModal(target = null) {
+                pendingSupplierSelectTarget = target;
+                if (supplierError) supplierError.classList.add('hidden');
+                if (supplierForm) supplierForm.reset();
+                if (supplierModal) supplierModal.classList.remove('hidden');
+            }
+
+            function closeSupplierModal() {
+                if (supplierModal) supplierModal.classList.add('hidden');
+                pendingSupplierSelectTarget = null;
             }
 
             function formatCurrency(value, currency = 'XOF') {
@@ -5397,6 +5588,12 @@
                 };
                 toggleInput(productCostInput);
                 toggleInput(productCurrencyInput);
+                toggleInput(productStorePriceInput);
+                toggleInput(productBoutiquePriceInput);
+                const sellingRow = document.getElementById('product-selling-prices-row');
+                if (sellingRow) sellingRow.classList.toggle('hidden', !canEdit);
+                if (openNewProductModalButton) openNewProductModalButton.style.display = canEdit ? '' : 'none';
+                if (openPriceProductModalButton) openPriceProductModalButton.style.display = canEdit ? '' : 'none';
                 if (!canEdit) {
                     if (productCostInput && !productCostInput.value) productCostInput.value = '0';
                     if (productCurrencyInput && !productCurrencyInput.value) productCurrencyInput.value = 'CFA';
@@ -5452,6 +5649,7 @@
                 'Stock Boutique': 'Stock Boutique',
                 'Mon Magasin': 'Mon Magasin',
                 'Tableau des prix': 'Tableau des prix',
+                'Fournisseurs': 'Fournisseurs',
                 'Mouvements Magasin': ['Mouvements Magasin', 'Mon Magasin'],
                 'Statistiques': 'Statistiques',
                 'Paramètres': 'Paramètres'
@@ -6722,7 +6920,7 @@
                     const basePermissions = role === 'consultation'
                         ? ['Tableau de bord', 'Statistiques']
                         : (role === 'manager'
-                            ? ['Tableau de bord', 'Ventes', 'Historique des ventes', 'Stock Boutique', 'Mon Magasin', 'Tableau des prix', 'Mouvements Magasin', 'Statistiques']
+                            ? ['Tableau de bord', 'Ventes', 'Historique des ventes', 'Stock Boutique', 'Mon Magasin', 'Tableau des prix', 'Fournisseurs', 'Mouvements Magasin', 'Statistiques']
                             : ['Tableau de bord', 'Ventes', 'Historique des ventes', 'Stock Boutique']);
 
                     try {
@@ -7027,11 +7225,13 @@
                     entryProductInfo.classList.add('hidden');
                     entryProductName.textContent = '—';
                     entryProductStock.textContent = '—';
+                    if (entryDescriptionInput) entryDescriptionInput.value = '';
                     return;
                 }
                 entryProductInfo.classList.remove('hidden');
                 entryProductName.textContent = product.name || '—';
                 entryProductStock.textContent = `${product.quantityInStore ?? 0}`;
+                if (entryDescriptionInput) entryDescriptionInput.value = product.description || '';
             }
 
             function updateExitProductInfo(product) {
@@ -7071,6 +7271,7 @@
                     return;
                 }
                 entryForm.reset();
+                populateSupplierSelects();
                 if (entryError) entryError.classList.add('hidden');
                 if (entryProductSelectRow) entryProductSelectRow.classList.toggle('hidden', !!productId);
                 if (entryProductSelect) entryProductSelect.value = productId || '';
@@ -7332,6 +7533,60 @@
                     console.error(error);
                     showSuccessToast("Impossible de mettre à jour les prix.");
                 }
+            }
+
+            function populateSupplierSelects() {
+                if (!entrySupplierSelect) return;
+                const suppliers = Object.values(appData.suppliers || {}).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                const currentValue = entrySupplierSelect.value;
+                entrySupplierSelect.innerHTML = '';
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Sélectionnez un fournisseur';
+                entrySupplierSelect.appendChild(defaultOption);
+                suppliers.forEach(supplier => {
+                    const option = document.createElement('option');
+                    option.value = supplier.id;
+                    option.textContent = supplier.name || 'Fournisseur';
+                    entrySupplierSelect.appendChild(option);
+                });
+                if (currentValue && suppliers.some(s => s.id === currentValue)) {
+                    entrySupplierSelect.value = currentValue;
+                }
+            }
+
+            function renderSuppliersPage() {
+                if (!suppliersTableContainer || !suppliersTbody || !suppliersEmpty) return;
+                const search = normalizeString(supplierSearchInput?.value);
+                const suppliers = Object.values(appData.suppliers || {}).filter(supplier => {
+                    const fields = [
+                        supplier.name,
+                        supplier.contact,
+                        supplier.phone,
+                        supplier.email,
+                        supplier.address
+                    ].map(value => normalizeString(value || '')).join(' ');
+                    return !search || fields.includes(search);
+                }).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+                if (!suppliers.length) {
+                    suppliersTableContainer.classList.add('hidden');
+                    suppliersEmpty.classList.remove('hidden');
+                    suppliersTbody.innerHTML = '';
+                    return;
+                }
+
+                suppliersEmpty.classList.add('hidden');
+                suppliersTableContainer.classList.remove('hidden');
+                suppliersTbody.innerHTML = suppliers.map(supplier => `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 text-sm font-semibold text-gray-900">${supplier.name || '-'}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500">${supplier.contact || '-'}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500">${supplier.phone || '-'}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500">${supplier.email || '-'}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500">${supplier.address || '-'}</td>
+                    </tr>
+                `).join('');
             }
 
             async function deleteStoreProduct(productId) {
@@ -8148,6 +8403,12 @@
                 updateDashboardStats();
             }
 
+            function onSuppliersValue(snapshot) {
+                appData.suppliers = snapshot.val() || {};
+                populateSupplierSelects();
+                renderSuppliersPage();
+            }
+
             function setupFirebaseListeners() {
                 cleanupFirebaseListeners();
                 if (!dbBasePath) return;
@@ -8185,6 +8446,9 @@
                 companyCustomersRef = ref(db, `${dbBasePath}/customers`);
                 companyCustomersListener = onValue(companyCustomersRef, onCompanyCustomersValue);
 
+                suppliersRef = ref(db, `${dbBasePath}/suppliers`);
+                suppliersListener = onValue(suppliersRef, onSuppliersValue);
+
                 migrateLocalPendingSales();
             }
 
@@ -8200,9 +8464,10 @@
                 if (pendingSalesListener && pendingSalesRef) off(pendingSalesRef, pendingSalesListener);
                 if (companyMembersListener && companyMembersRef) off(companyMembersRef, companyMembersListener);
                 if (companyCustomersListener && companyCustomersRef) off(companyCustomersRef, companyCustomersListener);
+                if (suppliersListener && suppliersRef) off(suppliersRef, suppliersListener);
 
-                storesListener = null; boutiquesListener = null; storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; salesHistoryListener = null; pendingSalesListener = null; companyMembersListener = null; companyCustomersListener = null;
-                appData.stores = {}; appData.boutiques = {}; appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.shopMovements = {}; appData.salesHistory = {}; appData.customers = {}; appData.storeExitRequests = {}; appData.pendingSales = {};
+                storesListener = null; boutiquesListener = null; storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; salesHistoryListener = null; pendingSalesListener = null; companyMembersListener = null; companyCustomersListener = null; suppliersListener = null;
+                appData.stores = {}; appData.boutiques = {}; appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.shopMovements = {}; appData.salesHistory = {}; appData.customers = {}; appData.suppliers = {}; appData.storeExitRequests = {}; appData.pendingSales = {};
                 selectedCustomer = null;
                 customerOptionLookup = {};
                 isCustomerHistoryOpen = false;
@@ -9951,6 +10216,11 @@
                     if (productId) savePriceTableRow(productId);
                 });
             }
+            if (supplierSearchInput) {
+                supplierSearchInput.addEventListener('input', () => {
+                    renderSuppliersPage();
+                });
+            }
             if (customerHistorySelect) {
                 customerHistorySelect.addEventListener('change', (event) => {
                     selectedCustomerHistoryKey = event.target.value || null;
@@ -10270,12 +10540,81 @@
                 }
             });
 
+            if (supplierForm) supplierForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                if (!dbBasePath) return;
+                if (supplierError) supplierError.classList.add('hidden');
+                const name = supplierNameInput?.value.trim();
+                const contact = supplierContactInput?.value.trim() || '';
+                const phone = supplierPhoneInput?.value.trim() || '';
+                const email = supplierEmailInput?.value.trim() || '';
+                const address = supplierAddressInput?.value.trim() || '';
+                const notes = supplierNotesInput?.value.trim() || '';
+
+                if (!name) {
+                    if (supplierError) {
+                        supplierError.textContent = "Le nom du fournisseur est requis.";
+                        supplierError.classList.remove('hidden');
+                    }
+                    return;
+                }
+
+                const existing = Object.values(appData.suppliers || {}).find(supplier =>
+                    (supplier.name || '').toLowerCase() === name.toLowerCase()
+                );
+                if (existing) {
+                    populateSupplierSelects();
+                    if (pendingSupplierSelectTarget === 'entry' && entrySupplierSelect) {
+                        entrySupplierSelect.value = existing.id;
+                    }
+                    closeSupplierModal();
+                    showSuccessToast("Fournisseur déjà enregistré.");
+                    return;
+                }
+
+                try {
+                    if (supplierSubmitButton) supplierSubmitButton.disabled = true;
+                    const newRef = push(ref(db, `${dbBasePath}/suppliers`));
+                    const payload = {
+                        id: newRef.key,
+                        name,
+                        contact,
+                        phone,
+                        email,
+                        address,
+                        notes,
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
+                    };
+                    await set(newRef, payload);
+                    populateSupplierSelects();
+                    if (pendingSupplierSelectTarget === 'entry' && entrySupplierSelect) {
+                        entrySupplierSelect.value = payload.id;
+                    }
+                    closeSupplierModal();
+                    showSuccessToast("Fournisseur enregistré.");
+                } catch (error) {
+                    if (supplierError) {
+                        supplierError.textContent = "Impossible d'enregistrer ce fournisseur.";
+                        supplierError.classList.remove('hidden');
+                    }
+                } finally {
+                    if (supplierSubmitButton) supplierSubmitButton.disabled = false;
+                }
+            });
+
             if (newProductForm) newProductForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 if (!currentUser || !dbBasePath) return;
-                const storeId = getActiveStoreId();
+                const storeId = newProductModalSource === 'price-table'
+                    ? (priceTableStoreFilter?.value || getActiveStoreId())
+                    : getActiveStoreId();
                 if (!storeId) {
                     showSuccessToast('Veuillez créer ou sélectionner un magasin.');
+                    return;
+                }
+                if (!canManagePricing()) {
+                    showSuccessToast("Accès refusé pour ajouter un produit.");
                     return;
                 }
                 const name = newProductForm['product-name'].value;
@@ -10284,8 +10623,21 @@
                 const cost = canEditPricing ? parseFloat(newProductForm['product-cost'].value) : 0;
                 const currencyInput = newProductForm['product-currency'].value;
                 const currency = (canEditPricing ? currencyInput : (currencyInput || 'CFA')).trim().toUpperCase();
+                const storeSellingPrice = parseFloat(productStorePriceInput?.value);
+                const boutiqueSellingPrice = parseFloat(productBoutiquePriceInput?.value);
                 const qty = parseInt(newProductForm['product-quantity'].value, 10);
-                if (!name || (canEditPricing && isNaN(cost))) return;
+                if (!name) {
+                    showSuccessToast("Le nom du produit est requis.");
+                    return;
+                }
+                if (canEditPricing && (isNaN(cost) || isNaN(storeSellingPrice) || isNaN(boutiqueSellingPrice))) {
+                    showSuccessToast("Veuillez renseigner tous les prix.");
+                    return;
+                }
+                if (storeSellingPrice < 0 || boutiqueSellingPrice < 0 || cost < 0) {
+                    showSuccessToast("Les prix doivent être positifs.");
+                    return;
+                }
 
                 try {
                     if (newProductSubmitButton) newProductSubmitButton.disabled = true;
@@ -10293,8 +10645,7 @@
                     // LOGIQUE D'AGRÉGATION AUTO (MAGASIN)
                     const existingProduct = Object.values(appData.storeProducts).find(p =>
                         resolveStoreId(p.storeId) === storeId &&
-                        p.name.toLowerCase() === name.trim().toLowerCase() &&
-                        (!canEditPricing || p.purchaseCost === cost)
+                        p.name.toLowerCase() === name.trim().toLowerCase()
                     );
 
                     if (existingProduct) {
@@ -10302,13 +10653,32 @@
                         const updates = {};
                         const now = new Date().toISOString();
                         updates[`${dbBasePath}/storeProducts/${existingProduct.id}/quantityInStore`] = newStock;
+                        updates[`${dbBasePath}/storeProducts/${existingProduct.id}/purchaseCost`] = cost;
+                        updates[`${dbBasePath}/storeProducts/${existingProduct.id}/storeSellingPrice`] = storeSellingPrice;
+                        updates[`${dbBasePath}/storeProducts/${existingProduct.id}/boutiqueSellingPrice`] = boutiqueSellingPrice;
+                        updates[`${dbBasePath}/storeProducts/${existingProduct.id}/currency`] = currency;
+                        updates[`${dbBasePath}/storeProducts/${existingProduct.id}/updatedAt`] = now;
+                        if (desc && desc.trim()) {
+                            updates[`${dbBasePath}/storeProducts/${existingProduct.id}/description`] = desc.trim();
+                        }
                         const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
                         updates[`${dbBasePath}/storeMovements/${moveKey}`] = { id: moveKey, productId: existingProduct.id, productName: name, storeId, type: "Entrée", quantityChange: qty, oldStock: existingProduct.quantityInStore, newStock: newStock, comment: "Ajout automatique (même prix)", date: now, userEmail: currentUser.email || '', userName: currentUserData?.fullName || currentUser.email || '' };
                         await update(ref(db), updates);
                         showSuccessToast("Stock mis à jour pour le produit existant");
                     } else {
                         const newRef = push(ref(db, `${dbBasePath}/storeProducts`));
-                        const newProd = { id: newRef.key, name: name.trim(), description: desc, purchaseCost: cost, currency, quantityInStore: qty, createdAt: new Date().toISOString(), storeId };
+                        const newProd = {
+                            id: newRef.key,
+                            name: name.trim(),
+                            description: desc,
+                            purchaseCost: cost,
+                            storeSellingPrice,
+                            boutiqueSellingPrice,
+                            currency,
+                            quantityInStore: qty,
+                            createdAt: new Date().toISOString(),
+                            storeId
+                        };
                         await set(newRef, newProd);
                         const moveRef = push(ref(db, `${dbBasePath}/storeMovements`));
                         await set(moveRef, { id: moveRef.key, productId: newProd.id, productName: name, storeId, type: "Entrée", quantityChange: qty, oldStock: 0, newStock: qty, comment: "Création", date: new Date().toISOString(), userEmail: currentUser.email || '', userName: currentUserData?.fullName || currentUser.email || '' });
@@ -10335,6 +10705,9 @@
                 const pid = entryProductSelect.value;
                 const qty = parseInt(entryForm['entry-quantity'].value, 10);
                 const comment = entryForm['entry-comment'].value;
+                const description = entryDescriptionInput ? entryDescriptionInput.value.trim() : '';
+                const supplierId = entrySupplierSelect ? entrySupplierSelect.value : '';
+                const supplier = supplierId ? appData.suppliers?.[supplierId] : null;
                 const prod = getActiveStoreProductById(pid);
                 if (!prod || qty <= 0) return;
 
@@ -10343,8 +10716,27 @@
                     const newStock = prod.quantityInStore + qty;
                     const updates = {};
                     updates[`${dbBasePath}/storeProducts/${pid}/quantityInStore`] = newStock;
+                    if (description) {
+                        updates[`${dbBasePath}/storeProducts/${pid}/description`] = description;
+                        updates[`${dbBasePath}/storeProducts/${pid}/updatedAt`] = new Date().toISOString();
+                    }
                     const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
-                    updates[`${dbBasePath}/storeMovements/${moveKey}`] = { id: moveKey, productId: pid, productName: prod.name, storeId, type: "Entrée", quantityChange: qty, oldStock: prod.quantityInStore, newStock, comment, date: new Date().toISOString(), userEmail: currentUser.email || '', userName: currentUserData?.fullName || currentUser.email || '' };
+                    updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
+                        id: moveKey,
+                        productId: pid,
+                        productName: prod.name,
+                        storeId,
+                        type: "Entrée",
+                        quantityChange: qty,
+                        oldStock: prod.quantityInStore,
+                        newStock,
+                        comment,
+                        supplierId: supplier?.id || '',
+                        supplierName: supplier?.name || '',
+                        date: new Date().toISOString(),
+                        userEmail: currentUser.email || '',
+                        userName: currentUserData?.fullName || currentUser.email || ''
+                    };
                     await update(ref(db), updates);
                     showSuccessToast("Entrée de stock réussie !");
                     entryForm.reset();
@@ -10746,10 +11138,33 @@
                     showSuccessToast('Veuillez créer ou sélectionner un magasin.');
                     return;
                 }
+                newProductModalSource = 'store';
                 newProductModal.classList.remove('hidden');
                 newProductForm.reset();
                 updatePricingAccessState();
             });
+            if (openPriceProductModalButton) openPriceProductModalButton.addEventListener('click', () => {
+                if (!getActiveStoreId()) {
+                    showSuccessToast('Veuillez créer ou sélectionner un magasin.');
+                    return;
+                }
+                if (!canManagePricing()) {
+                    showSuccessToast("Accès refusé pour ajouter un produit.");
+                    return;
+                }
+                newProductModalSource = 'price-table';
+                if (priceTableStoreFilter && !priceTableStoreFilter.value) {
+                    const fallbackStore = getActiveStoreId();
+                    if (fallbackStore) {
+                        priceTableStoreFilter.value = fallbackStore;
+                        renderPriceTable();
+                    }
+                }
+                newProductModal.classList.remove('hidden');
+                newProductForm.reset();
+                updatePricingAccessState();
+            });
+            if (openSupplierModalButton) openSupplierModalButton.addEventListener('click', () => openSupplierModal('page'));
             if (openEntryModalButton) openEntryModalButton.addEventListener('click', () => openEntryModalForProduct());
             if (openExitModalButton) openExitModalButton.addEventListener('click', () => openExitModalForProduct());
             if (openTransferModalButton) openTransferModalButton.addEventListener('click', () => {
@@ -10763,6 +11178,7 @@
                 transferSourceInfo.classList.add('hidden');
                 updatePricingAccessState();
             });
+            if (entrySupplierAddButton) entrySupplierAddButton.addEventListener('click', () => openSupplierModal('entry'));
             if (openRestockModalButton) openRestockModalButton.addEventListener('click', () => {
                 restockModal.classList.remove('hidden');
                 restockForm.reset();
@@ -10779,6 +11195,8 @@
             if (exitCancelButton) exitCancelButton.addEventListener('click', () => exitModal.classList.add('hidden'));
             if (closeTransferModalButton) closeTransferModalButton.addEventListener('click', () => transferModal.classList.add('hidden'));
             if (closeRestockModalButton) closeRestockModalButton.addEventListener('click', () => restockModal.classList.add('hidden'));
+            if (closeSupplierModalButton) closeSupplierModalButton.addEventListener('click', closeSupplierModal);
+            if (supplierCancelButton) supplierCancelButton.addEventListener('click', closeSupplierModal);
 
             if (entryProductSelect) {
                 entryProductSelect.addEventListener('change', () => {
