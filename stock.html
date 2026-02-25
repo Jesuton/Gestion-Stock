@@ -1294,16 +1294,9 @@
                 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                     <div>
                         <h1 class="text-3xl font-bold text-gray-800">Tableau des prix</h1>
-                        <p class="text-sm text-gray-500 mt-1">Définissez simplement le prix des produits.</p>
+                        <p class="text-sm text-gray-500 mt-1">Définissez les prix de base des produits.</p>
                     </div>
                     <div class="flex flex-wrap items-center gap-2">
-                        <div class="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white shadow-sm w-fit">
-                            <span class="text-xs font-semibold text-gray-500">Magasin</span>
-                            <select id="price-table-store-filter"
-                                class="bg-transparent text-sm font-semibold text-gray-700 focus:outline-none">
-                                <option value="">Tous les magasins</option>
-                            </select>
-                        </div>
                         <button id="open-price-product-modal-button"
                             class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-500 text-white font-semibold shadow hover:bg-cyan-600">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1346,7 +1339,16 @@
                                             Magasin</th>
                                         <th scope="col"
                                             class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Prix</th>
+                                            Coût d'achat</th>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Prix magasin</th>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Prix boutique</th>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Devise</th>
                                         <th scope="col"
                                             class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Action</th>
@@ -2068,11 +2070,33 @@
                             class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
                             required>
                     </div>
-                    <div>
-                        <label for="product-price" class="block text-sm font-medium text-gray-700">Prix *</label>
-                        <input type="number" id="product-price" placeholder="0" value="0" min="0"
-                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
-                            required>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="product-purchase-cost" class="block text-sm font-medium text-gray-700">Coût d'achat *</label>
+                            <input type="number" id="product-purchase-cost" placeholder="0" value="0" min="0" step="0.01"
+                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                                required>
+                        </div>
+                        <div>
+                            <label for="product-store-price" class="block text-sm font-medium text-gray-700">Prix magasin *</label>
+                            <input type="number" id="product-store-price" placeholder="0" value="0" min="0" step="0.01"
+                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                                required>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="product-boutique-price" class="block text-sm font-medium text-gray-700">Prix boutique *</label>
+                            <input type="number" id="product-boutique-price" placeholder="0" value="0" min="0" step="0.01"
+                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                                required>
+                        </div>
+                        <div>
+                            <label for="product-currency" class="block text-sm font-medium text-gray-700">Devise *</label>
+                            <input type="text" id="product-currency" value="CFA" maxlength="6"
+                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 uppercase tracking-wider"
+                                required>
+                        </div>
                     </div>
                     <p id="new-product-error" class="text-red-500 text-sm mt-2 hidden"></p>
                     <button type="submit" id="new-product-submit-button"
@@ -2709,7 +2733,6 @@
             let defaultBoutiqueId = null;
             let boutiqueMigrationDone = false;
             let activeAccessScopeMemberId = null;
-            let newProductModalSource = 'store';
 
             // Cart state
             let cartItems = [];
@@ -2767,7 +2790,6 @@
             const addBoutiqueNameInput = document.getElementById('add-boutique-name');
             const addBoutiqueError = document.getElementById('add-boutique-error');
             const priceTableSearchInput = document.getElementById('price-table-search');
-            const priceTableStoreFilter = document.getElementById('price-table-store-filter');
             const priceTableTableContainer = document.getElementById('price-table-table-container');
             const priceTableTbody = document.getElementById('price-table-tbody');
             const priceTableEmpty = document.getElementById('price-table-empty');
@@ -2889,7 +2911,10 @@
             const newProductForm = document.getElementById('new-product-form');
             const newProductError = document.getElementById('new-product-error');
             const newProductSubmitButton = document.getElementById('new-product-submit-button');
-            const productPriceInput = document.getElementById('product-price');
+            const productPurchaseCostInput = document.getElementById('product-purchase-cost');
+            const productStorePriceInput = document.getElementById('product-store-price');
+            const productBoutiquePriceInput = document.getElementById('product-boutique-price');
+            const productCurrencyInput = document.getElementById('product-currency');
 
             const openEntryModalButton = document.getElementById('open-entry-modal-button');
             const entryModal = document.getElementById('entry-modal');
@@ -5381,11 +5406,17 @@
                     input.classList.toggle('cursor-not-allowed', !canEdit);
                     input.title = canEdit ? '' : 'Réservé aux managers';
                 };
-                toggleInput(productPriceInput);
+                toggleInput(productPurchaseCostInput);
+                toggleInput(productStorePriceInput);
+                toggleInput(productBoutiquePriceInput);
+                toggleInput(productCurrencyInput);
                 if (openNewProductModalButton) openNewProductModalButton.style.display = canEdit ? '' : 'none';
                 if (openPriceProductModalButton) openPriceProductModalButton.style.display = canEdit ? '' : 'none';
                 if (!canEdit) {
-                    if (productPriceInput && !productPriceInput.value) productPriceInput.value = '0';
+                    if (productPurchaseCostInput && !productPurchaseCostInput.value) productPurchaseCostInput.value = '0';
+                    if (productStorePriceInput && !productStorePriceInput.value) productStorePriceInput.value = '0';
+                    if (productBoutiquePriceInput && !productBoutiquePriceInput.value) productBoutiquePriceInput.value = '0';
+                    if (productCurrencyInput && !productCurrencyInput.value) productCurrencyInput.value = 'CFA';
                 }
                 if (transferSellingPriceInput) {
                     transferSellingPriceInput.disabled = !canEdit;
@@ -7177,35 +7208,13 @@
                 }
             }
 
-            function renderPriceTableStoreFilter() {
-                if (!priceTableStoreFilter) return;
-                const stores = getAccessibleStores();
-                const currentValue = priceTableStoreFilter.value || '';
-                priceTableStoreFilter.innerHTML = '';
-                const allOption = document.createElement('option');
-                allOption.value = '';
-                allOption.textContent = 'Tous les magasins';
-                priceTableStoreFilter.appendChild(allOption);
-                stores.forEach(store => {
-                    const option = document.createElement('option');
-                    option.value = store.id;
-                    option.textContent = store.name || DEFAULT_STORE_NAME;
-                    priceTableStoreFilter.appendChild(option);
-                });
-                if (currentValue && stores.some(store => store.id === currentValue)) {
-                    priceTableStoreFilter.value = currentValue;
-                }
-            }
-
             function renderPriceTable() {
                 if (!priceTableTbody || !priceTableTableContainer || !priceTableEmpty) return;
                 const normalizedSearch = normalizeString(priceTableSearchInput?.value);
-                const storeFilter = priceTableStoreFilter?.value || '';
                 const allowedStoreIds = new Set(getAccessibleStoreIds());
                 const products = Object.values(appData.storeProducts || {}).filter(product => {
                     const storeId = resolveStoreId(product.storeId);
                     if (!storeId || !allowedStoreIds.has(storeId)) return false;
-                    if (storeFilter && storeId !== storeFilter) return false;
                     const name = normalizeString(product.name || '');
                     const desc = normalizeString(product.description || '');
                     return !normalizedSearch || name.includes(normalizedSearch) || desc.includes(normalizedSearch);
@@ -7223,17 +7232,33 @@
                 priceTableTbody.innerHTML = products.map(product => {
                     const storeId = resolveStoreId(product.storeId);
                     const storeName = getStoreName(storeId) || DEFAULT_STORE_NAME;
-                    const priceValue = Number.isFinite(Number(product.storeSellingPrice))
-                        ? Number(product.storeSellingPrice)
-                        : (Number.isFinite(Number(product.purchaseCost)) ? Number(product.purchaseCost) : 0);
+                    const purchaseCost = Number.isFinite(Number(product.purchaseCost)) ? Number(product.purchaseCost) : '';
+                    const storePrice = Number.isFinite(Number(product.storeSellingPrice)) ? Number(product.storeSellingPrice) : '';
+                    const boutiquePrice = Number.isFinite(Number(product.boutiqueSellingPrice)) ? Number(product.boutiqueSellingPrice) : '';
+                    const currency = (product.currency || 'CFA').toString().toUpperCase();
                     return `
                         <tr class="hover:bg-gray-50" data-price-row="${product.id}">
                             <td class="px-4 py-3 text-sm font-semibold text-gray-900">${product.name || ''}</td>
                             <td class="px-4 py-3 text-sm text-gray-500">${storeName}</td>
                             <td class="px-4 py-3">
-                                <input type="number" min="0" step="0.01" value="${priceValue}"
-                                    data-price-field="price"
+                                <input type="number" min="0" step="0.01" value="${purchaseCost}"
+                                    data-price-field="purchaseCost"
                                     class="w-32 rounded-lg border border-gray-200 px-2 py-1 text-sm focus:ring-cyan-500 focus:border-cyan-500" />
+                            </td>
+                            <td class="px-4 py-3">
+                                <input type="number" min="0" step="0.01" value="${storePrice}"
+                                    data-price-field="storeSellingPrice"
+                                    class="w-32 rounded-lg border border-gray-200 px-2 py-1 text-sm focus:ring-cyan-500 focus:border-cyan-500" />
+                            </td>
+                            <td class="px-4 py-3">
+                                <input type="number" min="0" step="0.01" value="${boutiquePrice}"
+                                    data-price-field="boutiqueSellingPrice"
+                                    class="w-32 rounded-lg border border-gray-200 px-2 py-1 text-sm focus:ring-cyan-500 focus:border-cyan-500" />
+                            </td>
+                            <td class="px-4 py-3">
+                                <input type="text" value="${currency}" maxlength="6"
+                                    data-price-field="currency"
+                                    class="w-20 rounded-lg border border-gray-200 px-2 py-1 text-sm uppercase tracking-wider focus:ring-cyan-500 focus:border-cyan-500" />
                             </td>
                             <td class="px-4 py-3 text-right">
                                 <button type="button" data-price-save="${product.id}"
@@ -7255,24 +7280,41 @@
                 const row = priceTableTbody?.querySelector(`[data-price-row="${productId}"]`);
                 if (!row) return;
 
-                const price = Number(row.querySelector('[data-price-field="price"]')?.value);
-                if (!Number.isFinite(price) || price < 0) {
-                    showSuccessToast("Prix invalide.");
+                const purchaseCost = Number(row.querySelector('[data-price-field="purchaseCost"]')?.value);
+                const storePrice = Number(row.querySelector('[data-price-field="storeSellingPrice"]')?.value);
+                const boutiquePrice = Number(row.querySelector('[data-price-field="boutiqueSellingPrice"]')?.value);
+                const currencyInput = row.querySelector('[data-price-field="currency"]');
+                const currency = (currencyInput?.value || 'CFA').trim().toUpperCase();
+
+                if (!Number.isFinite(purchaseCost) || purchaseCost < 0) {
+                    showSuccessToast("Coût d'achat invalide.");
+                    return;
+                }
+                if (!Number.isFinite(storePrice) || storePrice < 0) {
+                    showSuccessToast("Prix magasin invalide.");
+                    return;
+                }
+                if (!Number.isFinite(boutiquePrice) || boutiquePrice < 0) {
+                    showSuccessToast("Prix boutique invalide.");
+                    return;
+                }
+                if (!currency) {
+                    showSuccessToast("Devise invalide.");
                     return;
                 }
 
                 const now = new Date().toISOString();
                 const updates = {};
-                updates[`${dbBasePath}/storeProducts/${productId}/purchaseCost`] = price;
-                updates[`${dbBasePath}/storeProducts/${productId}/storeSellingPrice`] = price;
-                updates[`${dbBasePath}/storeProducts/${productId}/boutiqueSellingPrice`] = price;
-                updates[`${dbBasePath}/storeProducts/${productId}/currency`] = (appData.storeProducts?.[productId]?.currency || 'CFA').toUpperCase();
+                updates[`${dbBasePath}/storeProducts/${productId}/purchaseCost`] = purchaseCost;
+                updates[`${dbBasePath}/storeProducts/${productId}/storeSellingPrice`] = storePrice;
+                updates[`${dbBasePath}/storeProducts/${productId}/boutiqueSellingPrice`] = boutiquePrice;
+                updates[`${dbBasePath}/storeProducts/${productId}/currency`] = currency;
                 updates[`${dbBasePath}/storeProducts/${productId}/updatedAt`] = now;
 
                 const shopItems = Object.values(appData.shopStock || {}).filter(item => item.sourceProductId === productId);
                 shopItems.forEach(item => {
-                    updates[`${dbBasePath}/shopStock/${item.id}/sellingPrice`] = price;
-                    updates[`${dbBasePath}/shopStock/${item.id}/purchaseCost`] = price;
+                    updates[`${dbBasePath}/shopStock/${item.id}/sellingPrice`] = boutiquePrice;
+                    updates[`${dbBasePath}/shopStock/${item.id}/purchaseCost`] = purchaseCost;
                     updates[`${dbBasePath}/shopStock/${item.id}/updatedAt`] = now;
                 });
 
@@ -7862,7 +7904,6 @@
                 }
                 renderStoreSelectors();
                 renderStoresList();
-                renderPriceTableStoreFilter();
                 renderPriceTable();
                 updateStoreManagementState();
                 populateStoreProductSelects();
@@ -9888,11 +9929,6 @@
                     renderPriceTable();
                 });
             }
-            if (priceTableStoreFilter) {
-                priceTableStoreFilter.addEventListener('change', () => {
-                    renderPriceTable();
-                });
-            }
             if (priceTableTbody) {
                 priceTableTbody.addEventListener('click', (event) => {
                     const button = event.target.closest('[data-price-save]');
@@ -10223,9 +10259,7 @@
             if (newProductForm) newProductForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 if (!currentUser || !dbBasePath) return;
-                const storeId = newProductModalSource === 'price-table'
-                    ? (priceTableStoreFilter?.value || getActiveStoreId())
-                    : getActiveStoreId();
+                const storeId = getActiveStoreId();
                 if (!storeId) {
                     showSuccessToast('Veuillez créer ou sélectionner un magasin.');
                     return;
@@ -10235,18 +10269,28 @@
                     return;
                 }
                 const name = newProductForm['product-name'].value;
-                const price = parseFloat(productPriceInput?.value);
-                const currency = 'CFA';
+                const purchaseCost = parseFloat(productPurchaseCostInput?.value);
+                const storePrice = parseFloat(productStorePriceInput?.value);
+                const boutiquePrice = parseFloat(productBoutiquePriceInput?.value);
+                const currency = (productCurrencyInput?.value || 'CFA').trim().toUpperCase();
                 if (!name) {
                     showSuccessToast("Le nom du produit est requis.");
                     return;
                 }
-                if (!Number.isFinite(price)) {
-                    showSuccessToast("Veuillez renseigner le prix.");
+                if (!Number.isFinite(purchaseCost) || purchaseCost < 0) {
+                    showSuccessToast("Veuillez renseigner un coût d'achat valide.");
                     return;
                 }
-                if (price < 0) {
-                    showSuccessToast("Les prix doivent être positifs.");
+                if (!Number.isFinite(storePrice) || storePrice < 0) {
+                    showSuccessToast("Veuillez renseigner un prix magasin valide.");
+                    return;
+                }
+                if (!Number.isFinite(boutiquePrice) || boutiquePrice < 0) {
+                    showSuccessToast("Veuillez renseigner un prix boutique valide.");
+                    return;
+                }
+                if (!currency) {
+                    showSuccessToast("Veuillez renseigner une devise.");
                     return;
                 }
 
@@ -10262,11 +10306,17 @@
                     if (existingProduct) {
                         const updates = {};
                         const now = new Date().toISOString();
-                        updates[`${dbBasePath}/storeProducts/${existingProduct.id}/purchaseCost`] = price;
-                        updates[`${dbBasePath}/storeProducts/${existingProduct.id}/storeSellingPrice`] = price;
-                        updates[`${dbBasePath}/storeProducts/${existingProduct.id}/boutiqueSellingPrice`] = price;
+                        updates[`${dbBasePath}/storeProducts/${existingProduct.id}/purchaseCost`] = purchaseCost;
+                        updates[`${dbBasePath}/storeProducts/${existingProduct.id}/storeSellingPrice`] = storePrice;
+                        updates[`${dbBasePath}/storeProducts/${existingProduct.id}/boutiqueSellingPrice`] = boutiquePrice;
                         updates[`${dbBasePath}/storeProducts/${existingProduct.id}/currency`] = currency;
                         updates[`${dbBasePath}/storeProducts/${existingProduct.id}/updatedAt`] = now;
+                        const shopItems = Object.values(appData.shopStock || {}).filter(item => item.sourceProductId === existingProduct.id);
+                        shopItems.forEach(item => {
+                            updates[`${dbBasePath}/shopStock/${item.id}/sellingPrice`] = boutiquePrice;
+                            updates[`${dbBasePath}/shopStock/${item.id}/purchaseCost`] = purchaseCost;
+                            updates[`${dbBasePath}/shopStock/${item.id}/updatedAt`] = now;
+                        });
                         await update(ref(db), updates);
                         showSuccessToast("Prix mis à jour pour le produit existant");
                     } else {
@@ -10275,9 +10325,9 @@
                             id: newRef.key,
                             name: name.trim(),
                             description: '',
-                            purchaseCost: price,
-                            storeSellingPrice: price,
-                            boutiqueSellingPrice: price,
+                            purchaseCost,
+                            storeSellingPrice: storePrice,
+                            boutiqueSellingPrice: boutiquePrice,
                             currency,
                             quantityInStore: 0,
                             createdAt: new Date().toISOString(),
@@ -10758,14 +10808,6 @@
                 if (!canManagePricing()) {
                     showSuccessToast("Accès refusé pour ajouter un produit.");
                     return;
-                }
-                newProductModalSource = 'price-table';
-                if (priceTableStoreFilter && !priceTableStoreFilter.value) {
-                    const fallbackStore = getActiveStoreId();
-                    if (fallbackStore) {
-                        priceTableStoreFilter.value = fallbackStore;
-                        renderPriceTable();
-                    }
                 }
                 newProductModal.classList.remove('hidden');
                 newProductForm.reset();
