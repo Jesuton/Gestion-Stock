@@ -1268,6 +1268,9 @@
                                             Changement</th>
                                         <th scope="col"
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Fournisseur</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Commentaire</th>
                                         <th scope="col"
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -8246,12 +8249,14 @@
                         ? (commentBase === '-' ? commentSuffix : `${commentBase} · ${commentSuffix}`)
                         : commentBase;
                     const newStock = Number.isFinite(move.newStock) ? move.newStock : (move.newStock ?? '-');
+                    const supplierLabel = move.supplierName || getSupplierName(move.supplierId) || '-';
                     return `
                             <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${productName}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${typeLabel}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${isEntry ? 'text-green-600' : 'text-red-600'}">${isEntry ? '+' : '-'}${Math.abs(qty)}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${newStock}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${supplierLabel}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${comment}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${userDisplay}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(move.date)}</td>
