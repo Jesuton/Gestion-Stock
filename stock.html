@@ -1163,9 +1163,6 @@
                                             Quantité</th>
                                         <th scope="col"
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Coût d'achat</th>
-                                        <th scope="col"
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Actions</th>
                                     </tr>
                                 </thead>
@@ -5576,9 +5573,7 @@
 
             function getStoreSellingPrice(product) {
                 const price = Number(product?.storeSellingPrice);
-                if (Number.isFinite(price)) return price;
-                const fallback = Number(product?.purchaseCost);
-                return Number.isFinite(fallback) ? fallback : 0;
+                return Number.isFinite(price) ? price : NaN;
             }
 
             function getBoutiqueSellingPrice(product) {
@@ -7298,7 +7293,6 @@
                     let html = '';
                     const sortedProducts = filteredProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                     const canDelete = hasPermission('Supprimer Stock Magasin');
-                    const canViewCosts = canManagePricing();
                     sortedProducts.forEach(product => {
                         const quantity = Number(product.quantityInStore ?? 0);
                         const quantityClass = quantity <= 10
@@ -7334,7 +7328,6 @@
                                   <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">
                                       <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${quantityClass}">${quantity}</span>
                                   </td>
-                                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${canViewCosts ? formatCurrency(product.purchaseCost, product.currency) : '<span class="text-gray-400">Masqué</span>'}</td>
                                   <td class="px-6 py-4 whitespace-nowrap text-sm">
                                       <div class="flex items-center gap-2">
                                           ${entryButtonHtml}
@@ -7942,6 +7935,10 @@
                     }
                     const saleKey = push(ref(db, `${dbBasePath}/salesHistory`)).key;
                     const sellingPrice = getStoreSellingPrice(product);
+                    if (!Number.isFinite(sellingPrice)) {
+                        showSuccessToast("Prix magasin non défini pour ce produit.");
+                        return;
+                    }
                     const totalAmount = sellingPrice * quantity;
                     updates[`${dbBasePath}/salesHistory/${saleKey}`] = {
                         id: saleKey,
@@ -10665,6 +10662,11 @@
                     }
                     return;
                 }
+                const sellingPrice = getStoreSellingPrice(prod);
+                if (!Number.isFinite(sellingPrice)) {
+                    showSuccessToast("Prix magasin non défini. Ajoutez-le dans le tableau des prix.");
+                    return;
+                }
 
                 try {
                     if (exitSubmitButton) exitSubmitButton.disabled = true;
@@ -10673,7 +10675,6 @@
                     const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
                     const now = new Date().toISOString();
                     const sellerName = currentUserData?.fullName || currentUser.email || '';
-                    const sellingPrice = getStoreSellingPrice(prod);
                     const totalAmount = sellingPrice * qty;
                     const updates = {};
                     const newStock = (prod.quantityInStore || 0) - qty;
