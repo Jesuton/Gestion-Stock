@@ -2691,6 +2691,7 @@
             const MAX_STORES = 10;
             const DEFAULT_STORE_NAME = 'Magasin principal';
             const DEFAULT_BOUTIQUE_NAME = 'Boutique principale';
+            const UNASSIGNED_STORE_ID = 'unassigned';
 
             const EXIT_STATUS_PENDING = 'en attente de validation';
             const EXIT_STATUS_APPROVED = 'validée';
@@ -3256,6 +3257,26 @@
                 const storeId = getActiveStoreId();
                 if (!storeId) return null;
                 return resolveStoreId(product.storeId) === storeId ? product : null;
+            }
+
+            function getEntrySelectableProducts() {
+                const storeId = getActiveStoreId();
+                if (!storeId) return [];
+                return Object.values(appData.storeProducts || {}).filter(product => {
+                    const rawStoreId = product.storeId;
+                    if (rawStoreId === UNASSIGNED_STORE_ID) return true;
+                    return resolveStoreId(rawStoreId) === storeId;
+                });
+            }
+
+            function getEntryProductById(productId) {
+                const product = appData.storeProducts?.[productId];
+                if (!product) return null;
+                const rawStoreId = product.storeId;
+                if (rawStoreId === UNASSIGNED_STORE_ID) return product;
+                const storeId = getActiveStoreId();
+                if (!storeId) return null;
+                return resolveStoreId(rawStoreId) === storeId ? product : null;
             }
 
             function renderStoreSelectors() {
@@ -7015,23 +7036,36 @@
             }
 
             function populateStoreProductSelects() {
-                const products = getActiveStoreProducts();
-                const selects = [entryProductSelect, exitProductSelect, transferProductSelect];
-                selects.forEach(select => {
+                const activeProducts = getActiveStoreProducts();
+                const entryProducts = getEntrySelectableProducts();
+
+                const fillSelect = (select, products, showAssignmentHint = false) => {
                     if (!select) return;
                     const firstOption = select.options[0];
                     select.innerHTML = '';
                     select.appendChild(firstOption.cloneNode(true));
                     if (!products.length) return;
                     products.forEach(product => {
+                        const rawStoreId = product.storeId;
+                        const isUnassigned = rawStoreId === UNASSIGNED_STORE_ID;
+                        const qty = Number(product.quantityInStore) || 0;
                         const option = document.createElement('option');
                         option.value = product.id;
-                        option.textContent = `${product.name} (Actuellement : ${product.quantityInStore})`;
+                        if (showAssignmentHint && isUnassigned) {
+                            option.textContent = `${product.name} (Non assigné)`;
+                        } else {
+                            option.textContent = `${product.name} (Actuellement : ${qty})`;
+                        }
                         select.appendChild(option);
                     });
-                });
+                };
+
+                fillSelect(entryProductSelect, entryProducts, true);
+                fillSelect(exitProductSelect, activeProducts);
+                fillSelect(transferProductSelect, activeProducts);
+
                 if (entryProductSelect && entryProductSelect.value) {
-                    updateEntryProductInfo(getActiveStoreProductById(entryProductSelect.value));
+                    updateEntryProductInfo(getEntryProductById(entryProductSelect.value));
                 }
                 if (exitProductSelect && exitProductSelect.value) {
                     updateExitProductInfo(getActiveStoreProductById(exitProductSelect.value));
@@ -7049,7 +7083,9 @@
                 }
                 entryProductInfo.classList.remove('hidden');
                 entryProductName.textContent = product.name || '—';
-                entryProductStock.textContent = `${product.quantityInStore ?? 0}`;
+                const isUnassigned = product.storeId === UNASSIGNED_STORE_ID;
+                const stockValue = Number(product.quantityInStore) || 0;
+                entryProductStock.textContent = isUnassigned ? `${stockValue} (Non assigné)` : `${stockValue}`;
                 if (entryDescriptionInput) entryDescriptionInput.value = product.description || '';
             }
 
@@ -7213,8 +7249,10 @@
                 const normalizedSearch = normalizeString(priceTableSearchInput?.value);
                 const allowedStoreIds = new Set(getAccessibleStoreIds());
                 const products = Object.values(appData.storeProducts || {}).filter(product => {
-                    const storeId = resolveStoreId(product.storeId);
-                    if (!storeId || !allowedStoreIds.has(storeId)) return false;
+                    const rawStoreId = product.storeId;
+                    const isUnassigned = rawStoreId === UNASSIGNED_STORE_ID;
+                    const storeId = isUnassigned ? null : resolveStoreId(rawStoreId);
+                    if (!isUnassigned && (!storeId || !allowedStoreIds.has(storeId))) return false;
                     const name = normalizeString(product.name || '');
                     const desc = normalizeString(product.description || '');
                     return !normalizedSearch || name.includes(normalizedSearch) || desc.includes(normalizedSearch);
@@ -7230,8 +7268,10 @@
                 priceTableEmpty.classList.add('hidden');
                 priceTableTableContainer.classList.remove('hidden');
                 priceTableTbody.innerHTML = products.map(product => {
-                    const storeId = resolveStoreId(product.storeId);
-                    const storeName = getStoreName(storeId) || DEFAULT_STORE_NAME;
+                    const rawStoreId = product.storeId;
+                    const isUnassigned = rawStoreId === UNASSIGNED_STORE_ID;
+                    const storeId = isUnassigned ? null : resolveStoreId(rawStoreId);
+                    const storeName = storeId ? (getStoreName(storeId) || DEFAULT_STORE_NAME) : 'Aucun magasin';
                     const purchaseCost = Number.isFinite(Number(product.purchaseCost)) ? Number(product.purchaseCost) : '';
                     const storePrice = Number.isFinite(Number(product.storeSellingPrice)) ? Number(product.storeSellingPrice) : '';
                     const boutiquePrice = Number.isFinite(Number(product.boutiqueSellingPrice)) ? Number(product.boutiqueSellingPrice) : '';
@@ -7300,6 +7340,10 @@
                 }
                 if (!currency) {
                     showSuccessToast("Devise invalide.");
+                    return;
+                }
+
+                if (!confirm("Confirmer la mise à jour des prix pour ce produit ?")) {
                     return;
                 }
 
@@ -10299,7 +10343,7 @@
 
                     // LOGIQUE D'AGRÉGATION AUTO (MAGASIN)
                     const existingProduct = Object.values(appData.storeProducts).find(p =>
-                        resolveStoreId(p.storeId) === storeId &&
+                        p.storeId === UNASSIGNED_STORE_ID &&
                         p.name.toLowerCase() === name.trim().toLowerCase()
                     );
 
@@ -10331,7 +10375,7 @@
                             currency,
                             quantityInStore: 0,
                             createdAt: new Date().toISOString(),
-                            storeId
+                            storeId: UNASSIGNED_STORE_ID
                         };
                         await set(newRef, newProd);
                         showSuccessToast("Produit ajouté dans le tableau des prix.");
@@ -10358,7 +10402,7 @@
                 const qty = parseInt(entryForm['entry-quantity'].value, 10);
                 const comment = entryForm['entry-comment'].value;
                 const description = entryDescriptionInput ? entryDescriptionInput.value.trim() : '';
-                const prod = getActiveStoreProductById(pid);
+                const prod = getEntryProductById(pid);
                 if (!prod || qty <= 0) return;
                 const purchaseCost = Number(prod?.purchaseCost);
                 const storePrice = Number(prod?.storeSellingPrice);
@@ -10370,9 +10414,16 @@
 
                 try {
                     if (entrySubmitButton) entrySubmitButton.disabled = true;
-                    const newStock = prod.quantityInStore + qty;
+                    const isUnassigned = prod.storeId === UNASSIGNED_STORE_ID;
+                    const currentStock = Number(prod.quantityInStore) || 0;
+                    const baseStock = isUnassigned ? 0 : currentStock;
+                    const newStock = baseStock + qty;
                     const updates = {};
                     updates[`${dbBasePath}/storeProducts/${pid}/quantityInStore`] = newStock;
+                    if (isUnassigned) {
+                        updates[`${dbBasePath}/storeProducts/${pid}/storeId`] = storeId;
+                        updates[`${dbBasePath}/storeProducts/${pid}/updatedAt`] = new Date().toISOString();
+                    }
                     if (description) {
                         updates[`${dbBasePath}/storeProducts/${pid}/description`] = description;
                         updates[`${dbBasePath}/storeProducts/${pid}/updatedAt`] = new Date().toISOString();
@@ -10385,7 +10436,7 @@
                         storeId,
                         type: "Entrée",
                         quantityChange: qty,
-                        oldStock: prod.quantityInStore,
+                        oldStock: baseStock,
                         newStock,
                         comment,
                         date: new Date().toISOString(),
@@ -10845,7 +10896,7 @@
 
             if (entryProductSelect) {
                 entryProductSelect.addEventListener('change', () => {
-                    updateEntryProductInfo(getActiveStoreProductById(entryProductSelect.value));
+                    updateEntryProductInfo(getEntryProductById(entryProductSelect.value));
                 });
             }
             if (exitProductSelect) {
