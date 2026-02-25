@@ -2376,13 +2376,9 @@
                         </p>
                     </div>
 
-                    <div>
-                        <label for="transfer-selling-price" class="block text-sm font-medium text-gray-700">Prix de
-                            Vente (pour la Boutique) *</label>
-                        <input type="number" id="transfer-selling-price" placeholder="110000" min="0"
-                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
-                            required>
-                    </div>
+                    <p class="text-xs text-gray-500">
+                        Le prix boutique est appliqué automatiquement depuis le tableau des prix.
+                    </p>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
@@ -3036,7 +3032,6 @@
             const transferStockWarning = document.getElementById('transfer-stock-warning');
             const transferError = document.getElementById('transfer-error');
             const transferSubmitButton = document.getElementById('transfer-submit-button');
-            const transferSellingPriceInput = document.getElementById('transfer-selling-price');
 
             const openRestockModalButton = document.getElementById('open-restock-modal-button');
             const restockModal = document.getElementById('restock-modal');
@@ -5542,18 +5537,6 @@
                     if (productStorePriceInput && !productStorePriceInput.value) productStorePriceInput.value = '0';
                     if (productBoutiquePriceInput && !productBoutiquePriceInput.value) productBoutiquePriceInput.value = '0';
                     if (productCurrencyInput && !productCurrencyInput.value) productCurrencyInput.value = 'CFA';
-                }
-                if (transferSellingPriceInput) {
-                    transferSellingPriceInput.disabled = !canEdit;
-                    transferSellingPriceInput.classList.toggle('bg-gray-100', !canEdit);
-                    transferSellingPriceInput.classList.toggle('text-gray-500', !canEdit);
-                    transferSellingPriceInput.classList.toggle('cursor-not-allowed', !canEdit);
-                    transferSellingPriceInput.title = canEdit ? '' : 'Prix défini dans le tableau des prix';
-                    if (!canEdit) {
-                        const sourceProd = getActiveStoreProductById(transferProductSelect?.value);
-                        const price = getBoutiqueSellingPrice(sourceProd);
-                        transferSellingPriceInput.value = Number.isFinite(price) ? price : '';
-                    }
                 }
                 if (transferSourceInfo && !canEdit) {
                     transferSourceInfo.classList.add('hidden');
@@ -10768,7 +10751,6 @@
                 const qty = parseInt(transferForm['transfer-quantity'].value, 10);
                 const alertT = parseInt(transferForm['transfer-alert-threshold'].value, 10) || 5;
                 const sourceProd = getActiveStoreProductById(sourceId);
-                const rawPrice = parseFloat(transferForm['transfer-selling-price'].value);
                 if (!targetBoutiqueId) {
                     showSuccessToast('Veuillez sélectionner une boutique.');
                     return;
@@ -10777,16 +10759,9 @@
                     alert("Stock magasin insuffisant.");
                     return;
                 }
-                const defaultBoutiquePrice = getBoutiqueSellingPrice(sourceProd);
-                let price = rawPrice;
-                if (!canManagePricing()) {
-                    if (!Number.isFinite(defaultBoutiquePrice)) {
-                        showSuccessToast("Prix boutique non défini. Contactez un manager.");
-                        return;
-                    }
-                    price = defaultBoutiquePrice;
-                } else if (!Number.isFinite(price) || price < 0) {
-                    showSuccessToast("Prix de vente invalide.");
+                const price = getBoutiqueSellingPrice(sourceProd);
+                if (!Number.isFinite(price) || price < 0) {
+                    showSuccessToast("Prix boutique non défini. Ajoutez-le dans le tableau des prix.");
                     return;
                 }
 
@@ -11102,13 +11077,8 @@
                     } else {
                         transferSourceInfo.classList.add('hidden');
                     }
-                    if (transferSellingPriceInput) {
-                        const price = getBoutiqueSellingPrice(p);
-                        transferSellingPriceInput.value = Number.isFinite(price) ? price : '';
-                    }
                 } else {
                     transferSourceInfo.classList.add('hidden');
-                    if (transferSellingPriceInput) transferSellingPriceInput.value = '';
                 }
                 updatePricingAccessState();
             });
