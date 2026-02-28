@@ -5500,7 +5500,7 @@
 
             function getCurrentUserRole() {
                 if (!isAuthenticated || !currentUserData) return 'invite';
-                return (currentUserData.role || 'consultation').toLowerCase();
+                return (currentUserData.role || 'consultation').trim().toLowerCase();
             }
 
             function normalizePermissions(list) {
@@ -6404,10 +6404,11 @@
 
             function ensureCurrentUserInTeam() {
                 if (!currentUser) return;
-                const normalizedEmail = (currentUserData?.email || currentUser?.email || '').toLowerCase();
+                const normalizedEmail = (currentUserData?.email || currentUser?.email || '').trim().toLowerCase();
                 let hasCurrentUser = false;
                 teamMembersState = teamMembersState.map(member => {
-                    const isCurrent = member.id === currentUser.uid || (normalizedEmail && member.email?.toLowerCase() === normalizedEmail);
+                    const memberEmail = (member.email || '').trim().toLowerCase();
+                    const isCurrent = member.id === currentUser.uid || (normalizedEmail && memberEmail === normalizedEmail);
                     if (isCurrent) hasCurrentUser = true;
                     return { ...member, isCurrentUser: isCurrent };
                 });
@@ -6434,18 +6435,18 @@
 
             function syncCurrentUserFromMembers(membersData) {
                 if (!currentUser || !currentUserData) return false;
-                const normalizedEmail = (currentUserData.email || currentUser.email || '').toLowerCase();
+                const normalizedEmail = (currentUserData.email || currentUser.email || '').trim().toLowerCase();
                 let member = null;
                 if (currentUser.uid && membersData[currentUser.uid]) {
                     member = membersData[currentUser.uid];
                 } else if (normalizedEmail) {
-                    const matchKey = Object.keys(membersData).find(key => (membersData[key].email || '').toLowerCase() === normalizedEmail);
+                    const matchKey = Object.keys(membersData).find(key => (membersData[key].email || '').trim().toLowerCase() === normalizedEmail);
                     if (matchKey) member = membersData[matchKey];
                 }
                 if (!member) return false;
 
                 let changed = false;
-                const nextRole = member.role || currentUserData.role || 'consultation';
+                const nextRole = (member.role || '').trim().toLowerCase() || 'consultation';
                 if (currentUserData.role !== nextRole) {
                     currentUserData.role = nextRole;
                     changed = true;
@@ -6781,10 +6782,10 @@
                 const permissionsChanged = syncCurrentUserFromMembers(membersData);
                 ensureCurrentUserInTeam();
                 if (permissionsChanged) {
-                    updateUI();
                     renderStoreProducts(storeSearchInput ? storeSearchInput.value : '');
                     renderShopStock(shopSearchInput ? shopSearchInput.value : '');
                 }
+                updateUI();
             }
 
             if (accessMembersTbody) {
@@ -8362,8 +8363,11 @@
 
                     // Vérifier si l'utilisateur peut accéder à la page actuelle
                     if (!canAccessPage(currentPage)) {
-                        const availablePage = Object.keys(pagePermissions).find(page => canAccessPage(page)) || '';
-                        currentPage = availablePage;
+                        const allowedPages = Object.keys(pagePermissions).filter(page => canAccessPage(page));
+                        const fallbackPage = allowedPages.includes('Tableau de bord')
+                            ? 'Tableau de bord'
+                            : (allowedPages[0] || '');
+                        currentPage = fallbackPage;
                         if (mobilePageTitle) mobilePageTitle.textContent = currentPage || '';
                     }
                 } else {
