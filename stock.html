@@ -5500,7 +5500,7 @@
 
             function getCurrentUserRole() {
                 if (!isAuthenticated || !currentUserData) return 'invite';
-                return (currentUserData.role || 'admin').toLowerCase();
+                return (currentUserData.role || 'consultation').toLowerCase();
             }
 
             function normalizePermissions(list) {
@@ -11146,7 +11146,8 @@
                     get(ref(db, `users/${user.uid}`)).then(async (snapshot) => {
                         if (snapshot.exists()) {
                             currentUserData = snapshot.val();
-                            currentUserData.role = currentUserData.role || 'admin';
+                            currentUserData.role = currentUserData.role || 'consultation';
+                            currentUserData.permissions = Array.isArray(currentUserData.permissions) ? currentUserData.permissions : [];
                             dbBasePath = currentUserData.companyId ? `companies/${currentUserData.companyId}` : `users/${user.uid}`;
                             await ensureStoresSetup();
                             await ensureBoutiquesSetup();
