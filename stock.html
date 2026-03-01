@@ -586,6 +586,24 @@
                                         </span>
                                     </label>
                                 </div>
+                                <div class="rounded-xl border border-gray-200 bg-white p-3">
+                                    <p class="text-xs font-semibold text-gray-500">Réduction</p>
+                                    <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        <label class="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2">
+                                            <span class="text-xs font-semibold text-gray-400">%</span>
+                                            <input id="discount-percent-input" type="number" min="0" max="100" step="0.1"
+                                                placeholder="0"
+                                                class="flex-1 bg-transparent text-sm text-gray-700 focus:outline-none" />
+                                        </label>
+                                        <label class="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2">
+                                            <span class="text-xs font-semibold text-gray-400">Montant</span>
+                                            <input id="discount-amount-input" type="number" min="0" step="1"
+                                                placeholder="0"
+                                                class="flex-1 bg-transparent text-sm text-gray-700 focus:outline-none" />
+                                        </label>
+                                    </div>
+                                    <p class="text-[11px] text-gray-400 mt-2">Renseignez un seul champ.</p>
+                                </div>
                                 <div class="flex items-center justify-between text-sm text-gray-600">
                                     <span>Sous-total</span>
                                     <span id="cart-subtotal">0 FCFA</span>
@@ -593,6 +611,10 @@
                                 <div id="cart-tax-row" class="flex items-center justify-between text-sm text-gray-400">
                                     <span>TVA (20%)</span>
                                     <span id="cart-tax">0 FCFA</span>
+                                </div>
+                                <div id="cart-discount-row" class="flex items-center justify-between text-sm text-gray-500 hidden">
+                                    <span>Réduction</span>
+                                    <span id="cart-discount">0 FCFA</span>
                                 </div>
                                 <div class="flex items-center justify-between text-base font-semibold text-gray-900 border-t border-gray-200 pt-3">
                                     <span>Total</span>
@@ -2644,20 +2666,24 @@
                     </div>
                 </div>
 
-                <div class="bg-blue-50 rounded-2xl p-4 space-y-2">
-                    <div class="flex items-center justify-between text-sm text-gray-600">
-                        <span>Sous-total</span>
-                        <span id="sales-detail-subtotal">0 FCFA</span>
+                    <div class="bg-blue-50 rounded-2xl p-4 space-y-2">
+                        <div class="flex items-center justify-between text-sm text-gray-600">
+                            <span>Sous-total</span>
+                            <span id="sales-detail-subtotal">0 FCFA</span>
+                        </div>
+                        <div id="sales-detail-tax-row" class="flex items-center justify-between text-sm text-gray-400">
+                            <span>TVA (20%)</span>
+                            <span id="sales-detail-tax">0 FCFA</span>
+                        </div>
+                        <div id="sales-detail-discount-row" class="flex items-center justify-between text-sm text-gray-400 hidden">
+                            <span>Réduction</span>
+                            <span id="sales-detail-discount">0 FCFA</span>
+                        </div>
+                        <div class="flex items-center justify-between text-base font-semibold text-gray-900 border-t border-blue-100 pt-3">
+                            <span>Total</span>
+                            <span id="sales-detail-total" class="text-blue-600">0 FCFA</span>
+                        </div>
                     </div>
-                    <div id="sales-detail-tax-row" class="flex items-center justify-between text-sm text-gray-400">
-                        <span>TVA (20%)</span>
-                        <span id="sales-detail-tax">0 FCFA</span>
-                    </div>
-                    <div class="flex items-center justify-between text-base font-semibold text-gray-900 border-t border-blue-100 pt-3">
-                        <span>Total</span>
-                        <span id="sales-detail-total" class="text-blue-600">0 FCFA</span>
-                    </div>
-                </div>
 
                 <div class="flex flex-col sm:flex-row gap-3">
                     <button id="sales-detail-print" type="button"
@@ -2836,6 +2862,8 @@
 
             // Cart state
             let cartItems = [];
+            let discountMode = null;
+            let discountValue = 0;
             const SALES_TAX_RATE = 0.2;
 
             // Références DOM
@@ -2992,6 +3020,10 @@
             const cartTax = document.getElementById('cart-tax');
             const cartTotal = document.getElementById('cart-total');
             const cartTaxRow = document.getElementById('cart-tax-row');
+            const cartDiscountRow = document.getElementById('cart-discount-row');
+            const cartDiscount = document.getElementById('cart-discount');
+            const discountPercentInput = document.getElementById('discount-percent-input');
+            const discountAmountInput = document.getElementById('discount-amount-input');
             const validateCartButton = document.getElementById('validate-cart-button');
             const generateInvoiceButton = document.getElementById('generate-invoice-button');
             const payLaterButton = document.getElementById('pay-later-button');
@@ -3122,6 +3154,8 @@
             const salesDetailSubtotal = document.getElementById('sales-detail-subtotal');
             const salesDetailTaxRow = document.getElementById('sales-detail-tax-row');
             const salesDetailTax = document.getElementById('sales-detail-tax');
+            const salesDetailDiscountRow = document.getElementById('sales-detail-discount-row');
+            const salesDetailDiscount = document.getElementById('sales-detail-discount');
             const salesDetailTotal = document.getElementById('sales-detail-total');
             const salesDetailPrint = document.getElementById('sales-detail-print');
             const salesDetailEmail = document.getElementById('sales-detail-email');
@@ -4103,7 +4137,10 @@
                             paymentPaidAt: sale.paymentPaidAt || '',
                             hasStoreSource: false,
                             hasShopSource: false,
-                            storeFlag: false
+                            storeFlag: false,
+                            discountMode: null,
+                            discountValue: 0,
+                            discountAmount: null
                         };
                     }
                     const group = groups[groupId];
@@ -4112,6 +4149,16 @@
                     if (!group.customerName && sale.customerName) group.customerName = sale.customerName;
                     if (!group.customerPhone && sale.customerPhone) group.customerPhone = sale.customerPhone;
                     if (!group.customerEmail && sale.customerEmail) group.customerEmail = sale.customerEmail;
+                    if (group.discountMode === null) {
+                        const discountState = getSaleDiscountState(sale);
+                        if (discountState?.mode) {
+                            group.discountMode = discountState.mode;
+                            group.discountValue = discountState.value;
+                        }
+                        if (sale.discountAmount !== undefined && sale.discountAmount !== null) {
+                            group.discountAmount = Number(sale.discountAmount) || 0;
+                        }
+                    }
                     if (!group.paymentDueDate && sale.paymentDueDate) group.paymentDueDate = sale.paymentDueDate;
                     if (sale.paymentPaidAt) {
                         if (!group.paymentPaidAt || new Date(sale.paymentPaidAt) > new Date(group.paymentPaidAt)) {
@@ -4226,6 +4273,9 @@
                             comment: pending.comment || '',
                             customer: pending.customer || {},
                             items: Array.isArray(pending.items) ? pending.items : [],
+                            discountMode: pending.discountMode || pending.discountType || null,
+                            discountValue: pending.discountValue ?? pending.discountPercent ?? pending.discountAmountValue ?? pending.discountAmount ?? 0,
+                            discountAmount: pending.discountAmount ?? null,
                             legacyId: pending.id || null,
                             createdBy: currentUser.email || '',
                             stockReserved: pending.stockReserved === true
@@ -4238,6 +4288,103 @@
                 }
             }
 
+            function parseNumericInput(value) {
+                if (value === null || value === undefined) return 0;
+                const normalized = String(value).replace(',', '.').replace(/[^0-9.\-]/g, '');
+                const parsed = Number(normalized);
+                return Number.isFinite(parsed) ? parsed : 0;
+            }
+
+            function normalizeDiscountState(raw = {}) {
+                const modeRaw = (raw.mode || raw.type || raw.discountMode || raw.discountType || '').toString().trim().toLowerCase();
+                const valueRaw = raw.value ?? raw.amount ?? raw.discountValue ?? raw.discountAmountValue ?? raw.percent ?? raw.discountPercent;
+                let value = parseNumericInput(valueRaw);
+                let mode = modeRaw;
+
+                if (!mode && value > 0) {
+                    if (raw.percent !== undefined || raw.discountPercent !== undefined) {
+                        mode = 'percent';
+                    } else {
+                        mode = 'amount';
+                    }
+                }
+
+                if (mode === 'percentage' || mode === '%') mode = 'percent';
+                if (mode !== 'percent' && mode !== 'amount') mode = null;
+
+                if (value < 0) value = 0;
+                if (mode === 'percent' && value > 100) value = 100;
+
+                return { mode, value };
+            }
+
+            function getDiscountStateFromInputs() {
+                return normalizeDiscountState({ mode: discountMode, value: discountValue });
+            }
+
+            function calculateSummaryTotals(subtotal, currency, discountState) {
+                const tax = subtotal * getTaxRate();
+                const totalBeforeDiscount = subtotal + tax;
+                const normalizedDiscount = normalizeDiscountState(discountState || {});
+                let discountAmount = 0;
+                if (normalizedDiscount.mode === 'percent') {
+                    discountAmount = totalBeforeDiscount * (normalizedDiscount.value / 100);
+                } else if (normalizedDiscount.mode === 'amount') {
+                    discountAmount = normalizedDiscount.value;
+                }
+                if (discountAmount < 0) discountAmount = 0;
+                if (discountAmount > totalBeforeDiscount) discountAmount = totalBeforeDiscount;
+                const discountOnSubtotal = Math.min(discountAmount, subtotal);
+                const total = Math.max(totalBeforeDiscount - discountAmount, 0);
+
+                return {
+                    subtotal,
+                    tax,
+                    totalBeforeDiscount,
+                    discountAmount,
+                    discountOnSubtotal,
+                    total,
+                    currency,
+                    discountMode: normalizedDiscount.mode,
+                    discountValue: normalizedDiscount.value
+                };
+            }
+
+            function getSaleDiscountState(sale) {
+                if (!sale) return null;
+                return normalizeDiscountState({
+                    mode: sale.discountMode || sale.discountType,
+                    value: sale.discountValue ?? sale.discountPercent ?? sale.discountAmountValue ?? sale.discountAmount
+                });
+            }
+
+            function getPendingDiscountState(pending) {
+                if (!pending) return null;
+                return normalizeDiscountState({
+                    mode: pending.discountMode || pending.discountType,
+                    value: pending.discountValue ?? pending.discountPercent ?? pending.discountAmountValue ?? pending.discountAmount
+                });
+            }
+
+            function getGroupDiscountState(group) {
+                if (!group) return null;
+                return normalizeDiscountState({
+                    mode: group.discountMode || group.discountType,
+                    value: group.discountValue ?? group.discountPercent ?? group.discountAmountValue ?? group.discountAmount
+                });
+            }
+
+            function calculateGroupSummary(group) {
+                if (!group) return calculateItemsSummary([]);
+                const discountState = getGroupDiscountState(group);
+                const items = group.items.map(item => ({
+                    sellingPrice: item.price,
+                    quantity: item.quantity,
+                    currency: group.currency
+                }));
+                return calculateItemsSummary(items, discountState);
+            }
+
             function calculateItemsTotal(items = []) {
                 return items.reduce((sum, item) => {
                     const price = Number(item.sellingPrice ?? item.price ?? 0);
@@ -4246,12 +4393,10 @@
                 }, 0);
             }
 
-            function calculateItemsSummary(items = []) {
+            function calculateItemsSummary(items = [], discountState = null) {
                 const subtotal = calculateItemsTotal(items);
-                const tax = subtotal * getTaxRate();
-                const total = subtotal + tax;
                 const currency = items[0]?.currency || 'CFA';
-                return { subtotal, tax, total, currency };
+                return calculateSummaryTotals(subtotal, currency, discountState);
             }
 
             function formatHistoryDateParts(dateValue) {
@@ -4414,11 +4559,7 @@
                     if (!entry.currency && group.currency) entry.currency = group.currency;
                     entry.invoices.push(group);
 
-                    const summary = calculateItemsSummary(group.items.map(item => ({
-                        sellingPrice: item.price,
-                        quantity: item.quantity,
-                        currency: group.currency
-                    })));
+                    const summary = calculateGroupSummary(group);
                     entry.totalSales += summary.total;
 
                     const isPayLater = group.paymentStatus === 'pay_later' || group.payLater;
@@ -4535,11 +4676,7 @@
                 if (customerHistoryInvoicesTableContainer) customerHistoryInvoicesTableContainer.classList.remove('hidden');
                 if (customerHistoryInvoicesTbody) {
                     customerHistoryInvoicesTbody.innerHTML = invoices.map(group => {
-                        const summary = calculateItemsSummary(group.items.map(item => ({
-                            sellingPrice: item.price,
-                            quantity: item.quantity,
-                            currency: group.currency
-                        })));
+                        const summary = calculateGroupSummary(group);
                         const paymentStatus = group.paymentStatus || (group.payLater ? 'pay_later' : 'paid');
                         const badge = formatPaymentStatusBadge(paymentStatus, group.payLater);
                         const isPayLater = paymentStatus === 'pay_later' || group.payLater;
@@ -4604,11 +4741,7 @@
                         if (group.customerEmail) contactParts.push(group.customerEmail);
                         if (group.customerPhone) contactParts.push(group.customerPhone);
                         const contactLabel = contactParts.length ? contactParts.join(' · ') : '-';
-                        const summary = calculateItemsSummary(group.items.map(row => ({
-                            sellingPrice: row.price,
-                            quantity: row.quantity,
-                            currency: group.currency
-                        })));
+                        const summary = calculateGroupSummary(group);
                         const badge = formatReminderBadge(item.daysLeft);
                         const dueLabel = formatDateOnly(group.paymentDueDate);
                         return `
@@ -4719,8 +4852,8 @@
                     || groups[0]?.currency
                     || 'CFA';
                 const revenueGroups = filteredGroups.filter(group => group.paymentStatus !== 'pending');
-                const totalRevenue = revenueGroups.reduce((sum, group) => sum + (group.total * getTaxMultiplier()), 0);
-                const payLaterTotal = payLaterGroups.reduce((sum, group) => sum + (group.total * getTaxMultiplier()), 0);
+                const totalRevenue = revenueGroups.reduce((sum, group) => sum + calculateGroupSummary(group).total, 0);
+                const payLaterTotal = payLaterGroups.reduce((sum, group) => sum + calculateGroupSummary(group).total, 0);
 
                 if (salesHistoryCompletedCount) salesHistoryCompletedCount.textContent = completedCount;
                 if (salesHistoryPendingCount) salesHistoryPendingCount.textContent = pendingCount;
@@ -4895,7 +5028,7 @@
                             sellingPrice: unitPrice,
                             quantity,
                             currency
-                        }]);
+                        }], getSaleDiscountState(sale));
                         const { dateLabel, timeLabel } = formatHistoryDateParts(sale.date || new Date().toISOString());
                         const customerLabel = sale.customerName || 'Client comptoir';
                         const customerEmail = sale.customerEmail || '';
@@ -5022,11 +5155,7 @@
                         const customerEmail = group.customerEmail || (group.customerId && appData.customers?.[group.customerId]?.email) || '';
                         const itemsCount = group.items.reduce((sum, item) => sum + item.quantity, 0);
                         const isPayLater = group.paymentStatus === 'pay_later' || group.payLater;
-                        const summary = calculateItemsSummary(group.items.map(item => ({
-                            sellingPrice: item.price,
-                            quantity: item.quantity,
-                            currency: group.currency
-                        })));
+                    const summary = calculateGroupSummary(group);
                         const { dateLabel, timeLabel } = formatHistoryDateParts(group.date);
                         const itemsHtml = group.items.map(item => {
                             const unitPrice = item.price || (item.total / Math.max(item.quantity, 1));
@@ -5171,11 +5300,7 @@
                     const customerLabel = group.customerName || (group.customerId && appData.customers?.[group.customerId]?.fullName) || 'Client comptoir';
                     const customerEmail = group.customerEmail || (group.customerId && appData.customers?.[group.customerId]?.email) || '';
                     const itemsCount = group.items.reduce((sum, item) => sum + item.quantity, 0);
-                    const summary = calculateItemsSummary(group.items.map(item => ({
-                        sellingPrice: item.price,
-                        quantity: item.quantity,
-                        currency: group.currency
-                    })));
+                    const summary = calculateGroupSummary(group);
                     const { dateLabel, timeLabel } = formatHistoryDateParts(group.date);
                     const itemsHtml = group.items.map(item => {
                         const unitPrice = item.price || (item.total / Math.max(item.quantity, 1));
@@ -5297,7 +5422,7 @@
                     const customer = pending.customer || {};
                     const items = pending.items || [];
                     const itemsCount = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
-                    const summary = calculateItemsSummary(items);
+                    const summary = calculateItemsSummary(items, getPendingDiscountState(pending));
                     const { dateLabel, timeLabel } = formatHistoryDateParts(pending.createdAt || pending.date || new Date().toISOString());
                     const pendingBoutiqueId = resolveBoutiqueId(pending.boutiqueId || items[0]?.boutiqueId);
                     const pendingBoutiqueLabel = pending.boutiqueName || (pendingBoutiqueId ? getBoutiqueName(pendingBoutiqueId) : '');
@@ -5437,7 +5562,10 @@
                         saleSource: getSaleSource(sale),
                         paymentStatus: sale.paymentStatus || (sale.payLater ? 'pay_later' : (isStoreValidationPending(sale) ? 'store_validation' : 'paid')),
                         paymentDueDate: sale.paymentDueDate || '',
-                        paymentPaidAt: sale.paymentPaidAt || ''
+                        paymentPaidAt: sale.paymentPaidAt || '',
+                        discountMode: sale.discountMode || sale.discountType || null,
+                        discountValue: sale.discountValue ?? sale.discountPercent ?? sale.discountAmountValue ?? sale.discountAmount ?? 0,
+                        discountAmount: sale.discountAmount ?? null
                     };
                 }
 
@@ -5445,11 +5573,7 @@
                 const customerName = group.customerName || (group.customerId && appData.customers?.[group.customerId]?.fullName) || 'Client comptoir';
                 const customerEmail = group.customerEmail || (group.customerId && appData.customers?.[group.customerId]?.email) || 'Email non renseigné';
                 const sellerName = group.sellerName || 'Non renseigné';
-                const summary = calculateItemsSummary(group.items.map(item => ({
-                    sellingPrice: item.price,
-                    quantity: item.quantity,
-                    currency: group.currency
-                })));
+                const summary = calculateGroupSummary(group);
                 const itemsHtml = group.items.map(item => {
                     const unitPrice = item.price || (item.total / Math.max(item.quantity, 1));
                     return `
@@ -5497,6 +5621,13 @@
                 if (salesDetailCommentSection) salesDetailCommentSection.classList.toggle('hidden', !commentText);
                 if (salesDetailSubtotal) salesDetailSubtotal.textContent = formatCurrency(summary.subtotal, summary.currency);
                 if (salesDetailTax) salesDetailTax.textContent = formatCurrency(summary.tax, summary.currency);
+                if (salesDetailDiscount) {
+                    const discountValue = summary.discountAmount || 0;
+                    salesDetailDiscount.textContent = discountValue > 0
+                        ? formatCurrency(-discountValue, summary.currency)
+                        : formatCurrency(0, summary.currency);
+                }
+                if (salesDetailDiscountRow) salesDetailDiscountRow.classList.toggle('hidden', !(summary.discountAmount > 0));
                 if (salesDetailTotal) salesDetailTotal.textContent = formatCurrency(summary.total, summary.currency);
                 if (salesDetailTaxRow) salesDetailTaxRow.classList.toggle('hidden', !isTaxEnabled);
 
@@ -5821,7 +5952,7 @@
                     date.setHours(0, 0, 0, 0);
                     const index = Math.floor((date.getTime() - startOfWeek.getTime()) / (24 * 60 * 60 * 1000));
                     if (index >= 0 && index < 7) {
-                        dailySales[index] += (group.total || 0) * getTaxMultiplier();
+                        dailySales[index] += calculateGroupSummary(group).total;
                         dailyOrders[index] += 1;
                     }
                 });
@@ -8699,12 +8830,67 @@
                 return cartItems.reduce((total, item) => total + (item.sellingPrice * item.quantity), 0);
             }
 
-            function calculateCartSummary() {
+            function calculateCartSummary(discountState = getDiscountStateFromInputs()) {
                 const subtotal = calculateCartTotal();
-                const tax = subtotal * getTaxRate();
-                const total = subtotal + tax;
                 const currency = cartItems[0]?.currency || 'CFA';
-                return { subtotal, tax, total, currency };
+                return calculateSummaryTotals(subtotal, currency, discountState);
+            }
+
+            function resetDiscountInputs() {
+                discountMode = null;
+                discountValue = 0;
+                if (discountPercentInput) discountPercentInput.value = '';
+                if (discountAmountInput) discountAmountInput.value = '';
+            }
+
+            function handleDiscountInputChange(mode, inputElement, otherInput) {
+                if (!inputElement) return;
+                const rawValue = parseNumericInput(inputElement.value);
+                if (rawValue > 0) {
+                    const normalized = normalizeDiscountState({ mode, value: rawValue });
+                    discountMode = normalized.mode;
+                    discountValue = normalized.value;
+                    inputElement.value = normalized.value ? String(normalized.value) : '';
+                    if (otherInput) otherInput.value = '';
+                } else if (discountMode === mode) {
+                    discountMode = null;
+                    discountValue = 0;
+                }
+                renderCart();
+            }
+
+            function roundAmount(value) {
+                return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
+            }
+
+            function distributeDiscountAcrossItems(items, discountOnSubtotal) {
+                const safeItems = Array.isArray(items) ? items : [];
+                const subtotal = safeItems.reduce((sum, item) => sum + ((Number(item.sellingPrice ?? item.price ?? 0) || 0) * (Number(item.quantity) || 0)), 0);
+                const safeDiscount = Math.max(0, Math.min(discountOnSubtotal || 0, subtotal));
+                if (!safeItems.length) return [];
+                if (!safeDiscount || subtotal <= 0) {
+                    return safeItems.map(item => {
+                        const lineSubtotal = (Number(item.sellingPrice ?? item.price ?? 0) || 0) * (Number(item.quantity) || 0);
+                        return { ...item, lineSubtotal, discountShare: 0, discountedTotal: lineSubtotal };
+                    });
+                }
+                let remaining = safeDiscount;
+                return safeItems.map((item, index) => {
+                    const lineSubtotal = (Number(item.sellingPrice ?? item.price ?? 0) || 0) * (Number(item.quantity) || 0);
+                    let share = 0;
+                    if (lineSubtotal > 0) {
+                        if (index === safeItems.length - 1) {
+                            share = remaining;
+                        } else {
+                            share = (lineSubtotal / subtotal) * safeDiscount;
+                            share = Math.min(share, lineSubtotal);
+                            share = roundAmount(share);
+                        }
+                        remaining = roundAmount(remaining - share);
+                    }
+                    const discountedTotal = roundAmount(lineSubtotal - share);
+                    return { ...item, lineSubtotal, discountShare: share, discountedTotal };
+                });
             }
 
             function renderCart() {
@@ -8728,6 +8914,8 @@
                     if (cartItemsList) cartItemsList.innerHTML = '';
                     if (cartSubtotal) cartSubtotal.textContent = formatCurrency(0);
                     if (cartTax) cartTax.textContent = formatCurrency(0);
+                    if (cartDiscount) cartDiscount.textContent = formatCurrency(0);
+                    if (cartDiscountRow) cartDiscountRow.classList.add('hidden');
                     if (cartTotal) cartTotal.textContent = formatCurrency(0);
                     if (validateCartButton) {
                         validateCartButton.disabled = true;
@@ -8802,6 +8990,13 @@
                 const summary = calculateCartSummary();
                 if (cartSubtotal) cartSubtotal.textContent = formatCurrency(summary.subtotal, summary.currency);
                 if (cartTax) cartTax.textContent = formatCurrency(summary.tax, summary.currency);
+                if (cartDiscount) {
+                    const discountValue = summary.discountAmount || 0;
+                    cartDiscount.textContent = discountValue > 0
+                        ? formatCurrency(-discountValue, summary.currency)
+                        : formatCurrency(0, summary.currency);
+                }
+                if (cartDiscountRow) cartDiscountRow.classList.toggle('hidden', !(summary.discountAmount > 0));
                 if (cartTotal) cartTotal.textContent = formatCurrency(summary.total, summary.currency);
             }
 
@@ -8825,6 +9020,7 @@
 
                 try {
                     const now = new Date().toISOString();
+                    const summary = calculateCartSummary();
                     const cartBoutiqueId = resolveBoutiqueId(cartItems[0]?.boutiqueId);
                     const cartBoutiqueName = cartItems[0]?.boutiqueName || (cartBoutiqueId ? getBoutiqueName(cartBoutiqueId) : '');
                     const heldSale = {
@@ -8832,6 +9028,9 @@
                         comment,
                         boutiqueId: cartBoutiqueId || null,
                         boutiqueName: cartBoutiqueName || '',
+                        discountMode: summary.discountMode,
+                        discountValue: summary.discountValue,
+                        discountAmount: summary.discountAmount,
                         customer: {
                             id: selectedCustomer.id,
                             name: selectedCustomer.fullName || selectedCustomer.name || 'Client',
@@ -8896,6 +9095,7 @@
 
                 cartItems = [];
                 if (holdCommentInput) holdCommentInput.value = '';
+                resetDiscountInputs();
                 renderCart();
                 renderSalesHistory();
                 showSuccessToast('Panier mis en attente');
@@ -8946,14 +9146,15 @@
                     const cartBoutiqueName = cartItems[0]?.boutiqueName || (cartBoutiqueId ? getBoutiqueName(cartBoutiqueId) : '');
                     const saleGroupId = push(ref(db, `${dbBasePath}/sales`)).key;
                     const summary = calculateCartSummary();
+                    const discountedItems = distributeDiscountAcrossItems(cartItems, summary.discountOnSubtotal);
                     const totalAmount = summary.total;
                     const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
                     const paymentStatus = payLater ? 'pay_later' : 'paid';
-                    const itemsSnapshot = cartItems.map(item => ({
+                    const itemsSnapshot = discountedItems.map(item => ({
                         name: item.name,
                         quantity: item.quantity,
                         price: item.sellingPrice,
-                        total: item.sellingPrice * item.quantity
+                        total: item.discountedTotal
                     }));
 
                     updates[`${dbBasePath}/sales/${saleGroupId}`] = {
@@ -8965,6 +9166,9 @@
                         customerEmail: customerContext.customerEmail || '',
                         sellerName,
                         total: totalAmount,
+                        discountMode: summary.discountMode,
+                        discountValue: summary.discountValue,
+                        discountAmount: summary.discountAmount,
                         itemsCount: totalItems,
                         status: 'validee',
                         comment,
@@ -8977,7 +9181,7 @@
                     };
 
                     // Traiter chaque article du panier
-                    for (const item of cartItems) {
+                    for (const item of discountedItems) {
                         const shopProduct = appData.shopStock[item.shopProductId];
                         const shopNewStock = shopProduct.quantityInShop - item.quantity;
 
@@ -9012,7 +9216,11 @@
                             productName: item.name,
                             quantity: item.quantity,
                             sellingPrice: item.sellingPrice,
-                            totalAmount: item.sellingPrice * item.quantity,
+                            totalAmount: item.discountedTotal,
+                            discountShare: item.discountShare || 0,
+                            discountMode: summary.discountMode,
+                            discountValue: summary.discountValue,
+                            discountAmount: summary.discountAmount,
                             sellerName,
                             customerId: customerContext.customerId,
                             customerName: customerContext.customerName || '',
@@ -9044,6 +9252,7 @@
                     cartItems = [];
                     if (holdCommentInput) holdCommentInput.value = '';
                     if (payLaterDueDateInput) payLaterDueDateInput.value = '';
+                    resetDiscountInputs();
                     renderSalesHistory();
                     if (generateInvoice) {
                         const invoiceData = {
@@ -9055,6 +9264,11 @@
                             date: now,
                             items: itemsSnapshot,
                             total: totalAmount,
+                            subtotal: summary.subtotal,
+                            taxAmount: summary.tax,
+                            discountAmount: summary.discountAmount,
+                            discountMode: summary.discountMode,
+                            discountValue: summary.discountValue,
                             currency: summary.currency,
                             comment
                         };
@@ -9206,7 +9420,8 @@
                     const pendingBoutiqueId = resolveBoutiqueId(pending.boutiqueId || items[0]?.boutiqueId);
                     const pendingBoutiqueName = pending.boutiqueName || (pendingBoutiqueId ? getBoutiqueName(pendingBoutiqueId) : '');
                     const saleGroupId = push(ref(db, `${dbBasePath}/sales`)).key;
-                    const summary = calculateItemsSummary(items);
+                    const summary = calculateItemsSummary(items, getPendingDiscountState(pending));
+                    const discountedItems = distributeDiscountAcrossItems(items, summary.discountOnSubtotal);
                     const totalAmount = summary.total;
                     const totalItems = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
 
@@ -9219,6 +9434,9 @@
                         customerEmail: customer.email || '',
                         sellerName,
                         total: totalAmount,
+                        discountMode: summary.discountMode,
+                        discountValue: summary.discountValue,
+                        discountAmount: summary.discountAmount,
                         itemsCount: totalItems,
                         status: 'validee',
                         comment,
@@ -9230,7 +9448,7 @@
                         paymentDueDate: ''
                     };
 
-                    for (const item of items) {
+                    for (const item of discountedItems) {
                         if (!isReserved) {
                             const shopProduct = appData.shopStock[item.shopProductId];
                             const shopNewStock = shopProduct.quantityInShop - item.quantity;
@@ -9264,7 +9482,11 @@
                             productName: item.name,
                             quantity: item.quantity,
                             sellingPrice: item.sellingPrice,
-                            totalAmount: item.sellingPrice * item.quantity,
+                            totalAmount: item.discountedTotal,
+                            discountShare: item.discountShare || 0,
+                            discountMode: summary.discountMode,
+                            discountValue: summary.discountValue,
+                            discountAmount: summary.discountAmount,
                             sellerName,
                             customerId: customer.id || null,
                             customerName: customer.name || '',
@@ -9299,13 +9521,18 @@
                         customerPhone: customer.phone || '',
                         customerEmail: customer.email || '',
                         date: now,
-                        items: items.map(item => ({
+                        items: discountedItems.map(item => ({
                             name: item.name,
                             quantity: item.quantity,
                             price: item.sellingPrice,
-                            total: item.sellingPrice * item.quantity
+                            total: item.discountedTotal
                         })),
                         total: totalAmount,
+                        subtotal: summary.subtotal,
+                        taxAmount: summary.tax,
+                        discountAmount: summary.discountAmount,
+                        discountMode: summary.discountMode,
+                        discountValue: summary.discountValue,
                         currency: summary.currency,
                         comment
                     };
@@ -9718,6 +9945,16 @@
 
                     yPos = doc.lastAutoTable.finalY + 10;
 
+                    const discountValue = Number(invoiceData.discountAmount || 0);
+                    if (discountValue > 0) {
+                        doc.setTextColor(...darkGray);
+                        doc.setFontSize(11);
+                        doc.setFont(undefined, 'normal');
+                        doc.text('Remise:', 135, yPos + 6);
+                        doc.text(`-${formatPDFCurrency(discountValue)} ${invoiceData.currency}`, 185, yPos + 6, { align: 'right' });
+                        yPos += 10;
+                    }
+
                     // === TOTAL ===
                     doc.setFillColor(...lightGray);
                     doc.rect(15, yPos, 180, 12, 'F');
@@ -9793,8 +10030,12 @@
                     alert('Vente introuvable');
                     return;
                 }
-                const subtotal = sale.totalAmount || (sale.sellingPrice || 0) * (sale.quantity || 0);
-                const totalWithTax = subtotal * getTaxMultiplier();
+                const currency = getSaleCurrency(sale) || 'CFA';
+                const summary = calculateItemsSummary([{
+                    sellingPrice: sale.sellingPrice || 0,
+                    quantity: sale.quantity || 0,
+                    currency
+                }], getSaleDiscountState(sale));
 
                 // Préparer les données de facture
                 const invoiceData = {
@@ -9808,10 +10049,15 @@
                         name: sale.productName,
                         quantity: sale.quantity,
                         price: sale.sellingPrice,
-                        total: sale.totalAmount
+                        total: sale.totalAmount || (sale.sellingPrice || 0) * (sale.quantity || 0)
                     }],
-                    total: totalWithTax,
-                    currency: getSaleCurrency(sale) || 'CFA',
+                    total: summary.total,
+                    subtotal: summary.subtotal,
+                    taxAmount: summary.tax,
+                    discountAmount: summary.discountAmount,
+                    discountMode: summary.discountMode,
+                    discountValue: summary.discountValue,
+                    currency,
                     comment: sale.comment || ''
                 };
 
@@ -9828,11 +10074,7 @@
                 const customerName = group.customerName || (group.customerId && appData.customers?.[group.customerId]?.fullName) || 'Client comptoir';
                 const customerPhone = group.customerPhone || (group.customerId && appData.customers?.[group.customerId]?.phone) || '';
                 const customerEmail = group.customerEmail || (group.customerId && appData.customers?.[group.customerId]?.email) || '';
-                const summary = calculateItemsSummary(group.items.map(item => ({
-                    sellingPrice: item.price,
-                    quantity: item.quantity,
-                    currency: group.currency
-                })));
+                const summary = calculateGroupSummary(group);
                 const invoiceData = {
                     companyName: currentUserData?.companyName || 'Mon Entreprise',
                     sellerName: group.sellerName || currentUser?.email || '',
@@ -9847,6 +10089,11 @@
                         total: item.total
                     })),
                     total: summary.total,
+                    subtotal: summary.subtotal,
+                    taxAmount: summary.tax,
+                    discountAmount: summary.discountAmount,
+                    discountMode: summary.discountMode,
+                    discountValue: summary.discountValue,
                     currency: summary.currency || group.currency || 'CFA',
                     comment: group.comments?.join(' | ') || ''
                 };
@@ -10226,6 +10473,16 @@
             if (taxToggleSales) {
                 taxToggleSales.addEventListener('change', (event) => {
                     setTaxEnabled(event.target.checked);
+                });
+            }
+            if (discountPercentInput) {
+                discountPercentInput.addEventListener('input', () => {
+                    handleDiscountInputChange('percent', discountPercentInput, discountAmountInput);
+                });
+            }
+            if (discountAmountInput) {
+                discountAmountInput.addEventListener('input', () => {
+                    handleDiscountInputChange('amount', discountAmountInput, discountPercentInput);
                 });
             }
             if (taxToggleHistory) {
