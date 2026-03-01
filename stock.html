@@ -587,15 +587,21 @@
                                     </label>
                                 </div>
                                 <div class="rounded-xl border border-gray-200 bg-white p-3">
-                                    <p class="text-xs font-semibold text-gray-500">Réduction</p>
+                                    <div class="flex items-center justify-between gap-2">
+                                        <p class="text-xs font-semibold text-gray-500">Réduction</p>
+                                        <button type="button" id="discount-approval-trigger"
+                                            class="hidden text-[11px] font-semibold text-amber-600 hover:text-amber-700">Valider</button>
+                                    </div>
+                                    <p id="discount-approval-hint" class="hidden mt-1 text-[11px] text-amber-600">Validation admin/manager requise.</p>
+                                    <p id="discount-approval-status" class="hidden mt-1 text-[11px] text-emerald-600"></p>
                                     <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                        <label class="relative flex items-center rounded-lg border border-gray-200 px-3 py-2">
+                                        <label data-discount-input-wrapper class="relative flex items-center rounded-lg border border-gray-200 px-3 py-2">
                                             <span class="absolute left-3 text-xs font-semibold text-gray-400">% </span>
                                             <input id="discount-percent-input" type="number" min="0" max="100" step="0.1"
                                                 placeholder="0"
                                                 class="w-full bg-transparent text-sm text-gray-700 focus:outline-none pl-5 text-right tabular-nums" />
                                         </label>
-                                        <label class="relative flex items-center rounded-lg border border-gray-200 px-3 py-2">
+                                        <label data-discount-input-wrapper class="relative flex items-center rounded-lg border border-gray-200 px-3 py-2">
                                             <span class="absolute left-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Montant</span>
                                             <input id="discount-amount-input" type="number" min="0" step="1"
                                                 placeholder="0"
@@ -2600,6 +2606,35 @@
         </div>
     </div>
 
+    <!-- Modal: Validation réduction -->
+    <div id="discount-approval-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 m-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Valider la réduction</h3>
+                    <p class="text-sm text-gray-500 mt-1">Un code admin ou manager est requis.</p>
+                </div>
+                <button id="discount-approval-close" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="mt-4">
+                <label class="text-sm font-medium text-gray-600" for="discount-approval-code">Code de validation</label>
+                <input type="text" id="discount-approval-code" placeholder="Ex: Z4T7-9Q3S"
+                    class="mt-2 w-full rounded-xl border border-gray-200 p-3 text-sm uppercase tracking-widest focus:ring-2 focus:ring-amber-400 focus:border-amber-400" />
+                <p id="discount-approval-error" class="text-xs text-red-500 mt-2 hidden"></p>
+            </div>
+            <div class="mt-5 flex gap-3">
+                <button id="discount-approval-cancel"
+                    class="flex-1 rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50">Annuler</button>
+                <button id="discount-approval-confirm"
+                    class="flex-1 rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-600">Valider</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 
       TOAST DE SUCCÈS GLOBAL
     -->
@@ -2864,6 +2899,9 @@
             let cartItems = [];
             let discountMode = null;
             let discountValue = 0;
+            let discountApproval = null;
+            let discountApprovalResolver = null;
+            let discountApprovalPromise = null;
             const SALES_TAX_RATE = 0.2;
 
             // Références DOM
@@ -3024,6 +3062,15 @@
             const cartDiscount = document.getElementById('cart-discount');
             const discountPercentInput = document.getElementById('discount-percent-input');
             const discountAmountInput = document.getElementById('discount-amount-input');
+            const discountApprovalTrigger = document.getElementById('discount-approval-trigger');
+            const discountApprovalHint = document.getElementById('discount-approval-hint');
+            const discountApprovalStatus = document.getElementById('discount-approval-status');
+            const discountApprovalModal = document.getElementById('discount-approval-modal');
+            const discountApprovalClose = document.getElementById('discount-approval-close');
+            const discountApprovalCancel = document.getElementById('discount-approval-cancel');
+            const discountApprovalConfirm = document.getElementById('discount-approval-confirm');
+            const discountApprovalCodeInput = document.getElementById('discount-approval-code');
+            const discountApprovalError = document.getElementById('discount-approval-error');
             const validateCartButton = document.getElementById('validate-cart-button');
             const generateInvoiceButton = document.getElementById('generate-invoice-button');
             const payLaterButton = document.getElementById('pay-later-button');
@@ -4276,6 +4323,7 @@
                             discountMode: pending.discountMode || pending.discountType || null,
                             discountValue: pending.discountValue ?? pending.discountPercent ?? pending.discountAmountValue ?? pending.discountAmount ?? 0,
                             discountAmount: pending.discountAmount ?? null,
+                            discountApproval: pending.discountApproval || null,
                             legacyId: pending.id || null,
                             createdBy: currentUser.email || '',
                             stockReserved: pending.stockReserved === true
@@ -4319,7 +4367,11 @@
             }
 
             function getDiscountStateFromInputs() {
-                return normalizeDiscountState({ mode: discountMode, value: discountValue });
+                const normalized = normalizeDiscountState({ mode: discountMode, value: discountValue });
+                if (!isDiscountApproverRole() && !discountApproval) {
+                    return { mode: null, value: 0 };
+                }
+                return normalized;
             }
 
             function calculateSummaryTotals(subtotal, currency, discountState) {
@@ -4364,6 +4416,147 @@
                     mode: pending.discountMode || pending.discountType,
                     value: pending.discountValue ?? pending.discountPercent ?? pending.discountAmountValue ?? pending.discountAmount
                 });
+            }
+
+            function isDiscountApproverRole(role = getCurrentUserRole()) {
+                return role === 'admin' || role === 'manager';
+            }
+
+            function buildDiscountApprovalFromMember(member) {
+                if (!member) return null;
+                const role = (member.role || '').trim().toLowerCase();
+                if (!role) return null;
+                return {
+                    byId: member.id || null,
+                    byName: member.fullName || member.name || member.email || 'Admin',
+                    byRole: role,
+                    approvedAt: new Date().toISOString()
+                };
+            }
+
+            function buildDiscountApprovalFromCurrentUser() {
+                if (!currentUserData || !currentUser) return null;
+                const role = getCurrentUserRole();
+                if (!isDiscountApproverRole(role)) return null;
+                return {
+                    byId: currentUser.uid || null,
+                    byName: currentUserData.fullName || currentUser.email || 'Admin',
+                    byRole: role,
+                    approvedAt: new Date().toISOString()
+                };
+            }
+
+            function getDiscountApprovalLabel(approval) {
+                if (!approval) return '';
+                const roleLabel = approval.byRole ? approval.byRole.charAt(0).toUpperCase() + approval.byRole.slice(1) : '';
+                const name = approval.byName || 'Admin';
+                return roleLabel ? `${name} · ${roleLabel}` : name;
+            }
+
+            function findDiscountApproverByCode(code) {
+                const normalized = (code || '').trim().toUpperCase();
+                if (!normalized) return null;
+                return teamMembersState.find(member => {
+                    const role = (member.role || '').trim().toLowerCase();
+                    if (!isDiscountApproverRole(role)) return false;
+                    const status = (member.status || '').trim().toLowerCase();
+                    if (status && status !== 'actif') return false;
+                    const memberCode = (member.accessCode || '').trim().toUpperCase();
+                    return memberCode && memberCode === normalized;
+                }) || null;
+            }
+
+            function setDiscountInputsLocked(locked) {
+                [discountPercentInput, discountAmountInput].forEach(input => {
+                    if (!input) return;
+                    input.disabled = locked;
+                    input.classList.toggle('cursor-not-allowed', locked);
+                    input.classList.toggle('text-gray-400', locked);
+                    input.classList.toggle('opacity-60', locked);
+                });
+                document.querySelectorAll('[data-discount-input-wrapper]').forEach(wrapper => {
+                    wrapper.classList.toggle('bg-gray-50', locked);
+                    wrapper.classList.toggle('border-gray-300', locked);
+                });
+            }
+
+            function clearDiscountApproval() {
+                discountApproval = null;
+                updateDiscountApprovalUI();
+            }
+
+            function updateDiscountApprovalUI() {
+                if (!discountPercentInput || !discountAmountInput) return;
+                if (!cartItems.length) {
+                    discountApproval = null;
+                }
+                const requiresApproval = !isDiscountApproverRole();
+                const isApproved = !!discountApproval;
+                const lockInputs = requiresApproval && !isApproved;
+
+                setDiscountInputsLocked(lockInputs);
+
+                if (discountApprovalTrigger) {
+                    const canShow = requiresApproval && cartItems.length > 0 && !isApproved;
+                    discountApprovalTrigger.classList.toggle('hidden', !canShow);
+                }
+                if (discountApprovalHint) {
+                    const showHint = requiresApproval && !isApproved && cartItems.length > 0;
+                    discountApprovalHint.classList.toggle('hidden', !showHint);
+                }
+                if (discountApprovalStatus) {
+                    if (requiresApproval && isApproved) {
+                        discountApprovalStatus.textContent = `Validée par ${getDiscountApprovalLabel(discountApproval)}`;
+                        discountApprovalStatus.classList.remove('hidden');
+                    } else {
+                        discountApprovalStatus.classList.add('hidden');
+                    }
+                }
+            }
+
+            function openDiscountApprovalModal() {
+                if (!discountApprovalModal) return Promise.resolve(null);
+                if (discountApprovalError) discountApprovalError.classList.add('hidden');
+                if (discountApprovalCodeInput) discountApprovalCodeInput.value = '';
+                discountApprovalModal.classList.remove('hidden');
+                discountApprovalPromise = new Promise(resolve => {
+                    discountApprovalResolver = resolve;
+                });
+                return discountApprovalPromise;
+            }
+
+            function closeDiscountApprovalModal(result = null) {
+                if (discountApprovalModal) discountApprovalModal.classList.add('hidden');
+                if (discountApprovalResolver) {
+                    discountApprovalResolver(result);
+                    discountApprovalResolver = null;
+                }
+                discountApprovalPromise = null;
+            }
+
+            async function requestDiscountApproval({ persist = true } = {}) {
+                if (discountApprovalPromise) {
+                    const pending = await discountApprovalPromise;
+                    return pending || null;
+                }
+                const approval = await openDiscountApprovalModal();
+                if (approval && persist) {
+                    discountApproval = approval;
+                    updateDiscountApprovalUI();
+                }
+                return approval || null;
+            }
+
+            async function ensureDiscountApprovalForSummary(summary, { existingApproval = null, persist = true } = {}) {
+                if (!summary || !(summary.discountAmount > 0)) return null;
+                if (existingApproval) return existingApproval;
+                if (isDiscountApproverRole()) return buildDiscountApprovalFromCurrentUser();
+                const approval = await requestDiscountApproval({ persist });
+                return approval || null;
+            }
+
+            function buildDiscountApprovalPayload(approval) {
+                return approval ? { discountApproval: approval } : {};
             }
 
             function getGroupDiscountState(group) {
@@ -8574,6 +8767,7 @@
 
                 updateSettingsAccess();
                 updatePricingAccessState();
+                updateDiscountApprovalUI();
 
                 // Mettre à jour les boutons d'actions rapides
                 if (isAuthenticated && typeof updateQuickActionButtons === 'function') {
@@ -8841,6 +9035,7 @@
                 discountValue = 0;
                 if (discountPercentInput) discountPercentInput.value = '';
                 if (discountAmountInput) discountAmountInput.value = '';
+                clearDiscountApproval();
             }
 
             function handleDiscountInputChange(mode, inputElement, otherInput) {
@@ -8857,6 +9052,7 @@
                     discountValue = 0;
                 }
                 renderCart();
+                updateDiscountApprovalUI();
             }
 
             function roundAmount(value) {
@@ -8911,6 +9107,7 @@
                 if (payLaterDueDateError) payLaterDueDateError.classList.add('hidden');
 
                 if (!hasItems) {
+                    resetDiscountInputs();
                     if (cartItemsList) cartItemsList.innerHTML = '';
                     if (cartSubtotal) cartSubtotal.textContent = formatCurrency(0);
                     if (cartTax) cartTax.textContent = formatCurrency(0);
@@ -8998,6 +9195,7 @@
                 }
                 if (cartDiscountRow) cartDiscountRow.classList.toggle('hidden', !(summary.discountAmount > 0));
                 if (cartTotal) cartTotal.textContent = formatCurrency(summary.total, summary.currency);
+                updateDiscountApprovalUI();
             }
 
             async function holdCart() {
@@ -9018,9 +9216,15 @@
                     return;
                 }
 
+                const summary = calculateCartSummary();
+                const approval = await ensureDiscountApprovalForSummary(summary, { existingApproval: discountApproval, persist: true });
+                if (summary.discountAmount > 0 && !approval) {
+                    showSalesErrorMessage("Un code admin/manager est requis pour appliquer une réduction.");
+                    return;
+                }
+
                 try {
                     const now = new Date().toISOString();
-                    const summary = calculateCartSummary();
                     const cartBoutiqueId = resolveBoutiqueId(cartItems[0]?.boutiqueId);
                     const cartBoutiqueName = cartItems[0]?.boutiqueName || (cartBoutiqueId ? getBoutiqueName(cartBoutiqueId) : '');
                     const heldSale = {
@@ -9031,6 +9235,7 @@
                         discountMode: summary.discountMode,
                         discountValue: summary.discountValue,
                         discountAmount: summary.discountAmount,
+                        ...buildDiscountApprovalPayload(approval),
                         customer: {
                             id: selectedCustomer.id,
                             name: selectedCustomer.fullName || selectedCustomer.name || 'Client',
@@ -9123,6 +9328,13 @@
                 }
                 if (payLaterDueDateError) payLaterDueDateError.classList.add('hidden');
 
+                const summary = calculateCartSummary();
+                const approval = await ensureDiscountApprovalForSummary(summary, { existingApproval: discountApproval, persist: true });
+                if (summary.discountAmount > 0 && !approval) {
+                    showSalesErrorMessage("Un code admin/manager est requis pour appliquer une réduction.");
+                    return;
+                }
+
                 // Vérifier le stock disponible pour chaque article
                 for (const item of cartItems) {
                     const shopProduct = appData.shopStock[item.shopProductId];
@@ -9145,7 +9357,6 @@
                     const cartBoutiqueId = resolveBoutiqueId(cartItems[0]?.boutiqueId);
                     const cartBoutiqueName = cartItems[0]?.boutiqueName || (cartBoutiqueId ? getBoutiqueName(cartBoutiqueId) : '');
                     const saleGroupId = push(ref(db, `${dbBasePath}/sales`)).key;
-                    const summary = calculateCartSummary();
                     const discountedItems = distributeDiscountAcrossItems(cartItems, summary.discountOnSubtotal);
                     const totalAmount = summary.total;
                     const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -9169,6 +9380,7 @@
                         discountMode: summary.discountMode,
                         discountValue: summary.discountValue,
                         discountAmount: summary.discountAmount,
+                        ...buildDiscountApprovalPayload(approval),
                         itemsCount: totalItems,
                         status: 'validee',
                         comment,
@@ -9221,6 +9433,7 @@
                             discountMode: summary.discountMode,
                             discountValue: summary.discountValue,
                             discountAmount: summary.discountAmount,
+                            ...buildDiscountApprovalPayload(approval),
                             sellerName,
                             customerId: customerContext.customerId,
                             customerName: customerContext.customerName || '',
@@ -9411,6 +9624,13 @@
                     }
                 }
 
+                const summary = calculateItemsSummary(items, getPendingDiscountState(pending));
+                const approval = await ensureDiscountApprovalForSummary(summary, { existingApproval: pending.discountApproval || null, persist: false });
+                if (summary.discountAmount > 0 && !approval) {
+                    showSalesErrorMessage("Un code admin/manager est requis pour appliquer une réduction.");
+                    return;
+                }
+
                 try {
                     const updates = {};
                     const now = new Date().toISOString();
@@ -9420,7 +9640,6 @@
                     const pendingBoutiqueId = resolveBoutiqueId(pending.boutiqueId || items[0]?.boutiqueId);
                     const pendingBoutiqueName = pending.boutiqueName || (pendingBoutiqueId ? getBoutiqueName(pendingBoutiqueId) : '');
                     const saleGroupId = push(ref(db, `${dbBasePath}/sales`)).key;
-                    const summary = calculateItemsSummary(items, getPendingDiscountState(pending));
                     const discountedItems = distributeDiscountAcrossItems(items, summary.discountOnSubtotal);
                     const totalAmount = summary.total;
                     const totalItems = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
@@ -9437,6 +9656,7 @@
                         discountMode: summary.discountMode,
                         discountValue: summary.discountValue,
                         discountAmount: summary.discountAmount,
+                        ...buildDiscountApprovalPayload(approval),
                         itemsCount: totalItems,
                         status: 'validee',
                         comment,
@@ -9487,6 +9707,7 @@
                             discountMode: summary.discountMode,
                             discountValue: summary.discountValue,
                             discountAmount: summary.discountAmount,
+                            ...buildDiscountApprovalPayload(approval),
                             sellerName,
                             customerId: customer.id || null,
                             customerName: customer.name || '',
@@ -10483,6 +10704,61 @@
             if (discountAmountInput) {
                 discountAmountInput.addEventListener('input', () => {
                     handleDiscountInputChange('amount', discountAmountInput, discountPercentInput);
+                });
+            }
+            if (discountApprovalTrigger) {
+                discountApprovalTrigger.addEventListener('click', async () => {
+                    if (!cartItems.length) {
+                        showSalesErrorMessage('Ajoutez un article pour appliquer une réduction.');
+                        return;
+                    }
+                    const approval = await requestDiscountApproval({ persist: true });
+                    if (approval) {
+                        showSuccessToast('Réduction déverrouillée.');
+                    }
+                });
+            }
+            if (discountApprovalConfirm) {
+                discountApprovalConfirm.addEventListener('click', () => {
+                    const code = (discountApprovalCodeInput?.value || '').trim();
+                    const approver = findDiscountApproverByCode(code);
+                    if (!approver) {
+                        if (discountApprovalError) {
+                            discountApprovalError.textContent = 'Code invalide ou non autorisé.';
+                            discountApprovalError.classList.remove('hidden');
+                        }
+                        return;
+                    }
+                    const approval = buildDiscountApprovalFromMember(approver);
+                    if (!approval) {
+                        if (discountApprovalError) {
+                            discountApprovalError.textContent = 'Validation impossible avec ce code.';
+                            discountApprovalError.classList.remove('hidden');
+                        }
+                        return;
+                    }
+                    closeDiscountApprovalModal(approval);
+                });
+            }
+            if (discountApprovalClose) {
+                discountApprovalClose.addEventListener('click', () => closeDiscountApprovalModal(null));
+            }
+            if (discountApprovalCancel) {
+                discountApprovalCancel.addEventListener('click', () => closeDiscountApprovalModal(null));
+            }
+            if (discountApprovalModal) {
+                discountApprovalModal.addEventListener('click', (event) => {
+                    if (event.target === discountApprovalModal) closeDiscountApprovalModal(null);
+                });
+            }
+            if (discountApprovalCodeInput) {
+                discountApprovalCodeInput.addEventListener('keydown', (event) => {
+                    if (event.key !== 'Enter') return;
+                    event.preventDefault();
+                    if (discountApprovalConfirm) discountApprovalConfirm.click();
+                });
+                discountApprovalCodeInput.addEventListener('input', () => {
+                    if (discountApprovalError) discountApprovalError.classList.add('hidden');
                 });
             }
             if (taxToggleHistory) {
