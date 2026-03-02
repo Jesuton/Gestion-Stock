@@ -594,6 +594,16 @@
                                     </div>
                                     <p id="discount-approval-hint" class="hidden mt-1 text-[11px] text-amber-600">Validation admin/manager requise.</p>
                                     <p id="discount-approval-status" class="hidden mt-1 text-[11px] text-emerald-600"></p>
+                                    <div id="discount-approval-inline" class="hidden mt-2 rounded-lg border border-amber-200 bg-amber-50/40 p-2">
+                                        <label class="text-[11px] font-semibold text-amber-700" for="discount-approval-inline-code">Code de validation</label>
+                                        <div class="mt-1 flex items-center gap-2">
+                                            <input type="text" id="discount-approval-inline-code" placeholder="Ex: Z4T7-9Q3S"
+                                                class="flex-1 rounded-lg border border-amber-200 bg-white px-3 py-2 text-xs uppercase tracking-widest focus:ring-2 focus:ring-amber-400 focus:border-amber-400" />
+                                            <button type="button" id="discount-approval-inline-confirm"
+                                                class="rounded-lg bg-amber-500 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-600">Valider</button>
+                                        </div>
+                                        <p id="discount-approval-inline-error" class="text-[11px] text-red-500 mt-1 hidden"></p>
+                                    </div>
                                     <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         <label data-discount-input-wrapper class="relative flex items-center rounded-lg border border-gray-200 px-3 py-2">
                                             <span class="absolute left-3 text-xs font-semibold text-gray-400">% </span>
@@ -1984,6 +1994,27 @@
                                 </form>
                             </div>
 
+                            <div id="discount-approval-settings" class="p-4 rounded-2xl border border-gray-200 space-y-4">
+                                <div>
+                                    <p class="font-semibold text-gray-800">Code de validation des réductions</p>
+                                    <p class="text-sm text-gray-500">Ce code remplace les codes d'accès pour autoriser une réduction.</p>
+                                </div>
+                                <form id="discount-approval-code-form" class="flex flex-col md:flex-row gap-3">
+                                    <input type="text" id="discount-approval-code-setting" placeholder="Ex: Z4T7-9Q3S"
+                                        class="flex-1 rounded-xl border-gray-200 uppercase tracking-widest focus:ring-cyan-400 focus:border-cyan-400" />
+                                    <button type="button" id="discount-approval-code-generate"
+                                        class="px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50">Générer</button>
+                                    <button type="submit" id="discount-approval-code-save"
+                                        class="px-4 py-2 rounded-xl bg-cyan-500 text-white text-sm font-semibold hover:bg-cyan-600">Enregistrer</button>
+                                </form>
+                                <div class="flex items-center justify-between text-xs">
+                                    <span id="discount-approval-code-status" class="text-gray-500">Aucun code défini.</span>
+                                    <button type="button" id="discount-approval-code-clear"
+                                        class="text-red-600 font-semibold hover:text-red-700">Supprimer</button>
+                                </div>
+                                <p id="discount-approval-code-error" class="text-sm text-red-500 hidden"></p>
+                            </div>
+
                             <div class="space-y-3">
                                 <div class="flex items-center justify-between">
                                     <p class="font-semibold text-gray-800">Collaborateurs actifs</p>
@@ -2842,7 +2873,7 @@
             let currentUserData = null;
             let dbBasePath = '';
 
-            const appData = { stores: {}, boutiques: {}, storeProducts: {}, storeMovements: {}, shopStock: {}, shopMovements: {}, salesHistory: {}, customers: {}, suppliers: {}, storeExitRequests: {}, pendingSales: {} };
+            const appData = { stores: {}, boutiques: {}, storeProducts: {}, storeMovements: {}, shopStock: {}, shopMovements: {}, salesHistory: {}, customers: {}, suppliers: {}, storeExitRequests: {}, pendingSales: {}, settings: {} };
             let isSidebarOpen = false;
             let isSidebarCollapsed = false;
             let isCodeLoginMode = false;
@@ -2861,8 +2892,8 @@
             const SALE_SOURCE_MIXED = 'mixed';
 
 
-            let storesListener, boutiquesListener, storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, salesHistoryListener, companyMembersListener, companyCustomersListener, suppliersListener, storeExitRequestsListener, pendingSalesListener;
-            let storesRef, boutiquesRef, storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, salesHistoryRef, companyMembersRef, companyCustomersRef, suppliersRef, storeExitRequestsRef, pendingSalesRef;
+            let storesListener, boutiquesListener, storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, salesHistoryListener, companyMembersListener, companyCustomersListener, suppliersListener, storeExitRequestsListener, pendingSalesListener, settingsListener;
+            let storesRef, boutiquesRef, storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, salesHistoryRef, companyMembersRef, companyCustomersRef, suppliersRef, storeExitRequestsRef, pendingSalesRef, settingsRef;
 
             const accessModules = [
                 'Tableau de bord',
@@ -2902,6 +2933,7 @@
             let discountApproval = null;
             let discountApprovalResolver = null;
             let discountApprovalPromise = null;
+            let lastDiscountApprovalCode = '';
             const SALES_TAX_RATE = 0.2;
 
             // Références DOM
@@ -2955,6 +2987,14 @@
             const addBoutiqueForm = document.getElementById('add-boutique-form');
             const addBoutiqueNameInput = document.getElementById('add-boutique-name');
             const addBoutiqueError = document.getElementById('add-boutique-error');
+            const discountApprovalSettingsSection = document.getElementById('discount-approval-settings');
+            const discountApprovalCodeForm = document.getElementById('discount-approval-code-form');
+            const discountApprovalCodeInputSetting = document.getElementById('discount-approval-code-setting');
+            const discountApprovalCodeGenerate = document.getElementById('discount-approval-code-generate');
+            const discountApprovalCodeSave = document.getElementById('discount-approval-code-save');
+            const discountApprovalCodeClear = document.getElementById('discount-approval-code-clear');
+            const discountApprovalCodeStatus = document.getElementById('discount-approval-code-status');
+            const discountApprovalCodeError = document.getElementById('discount-approval-code-error');
             const priceTableSearchInput = document.getElementById('price-table-search');
             const priceTableTableContainer = document.getElementById('price-table-table-container');
             const priceTableTbody = document.getElementById('price-table-tbody');
@@ -3071,6 +3111,10 @@
             const discountApprovalConfirm = document.getElementById('discount-approval-confirm');
             const discountApprovalCodeInput = document.getElementById('discount-approval-code');
             const discountApprovalError = document.getElementById('discount-approval-error');
+            const discountApprovalInline = document.getElementById('discount-approval-inline');
+            const discountApprovalInlineCode = document.getElementById('discount-approval-inline-code');
+            const discountApprovalInlineConfirm = document.getElementById('discount-approval-inline-confirm');
+            const discountApprovalInlineError = document.getElementById('discount-approval-inline-error');
             const validateCartButton = document.getElementById('validate-cart-button');
             const generateInvoiceButton = document.getElementById('generate-invoice-button');
             const payLaterButton = document.getElementById('pay-later-button');
@@ -4448,22 +4492,34 @@
 
             function getDiscountApprovalLabel(approval) {
                 if (!approval) return '';
+                if (approval.byRole === 'code') return approval.byName || 'Code entreprise';
                 const roleLabel = approval.byRole ? approval.byRole.charAt(0).toUpperCase() + approval.byRole.slice(1) : '';
                 const name = approval.byName || 'Admin';
                 return roleLabel ? `${name} · ${roleLabel}` : name;
             }
 
             function findDiscountApproverByCode(code) {
-                const normalized = (code || '').trim().toUpperCase();
+                const normalized = normalizeApprovalCode(code);
                 if (!normalized) return null;
-                return teamMembersState.find(member => {
+                const masterCode = getDiscountApprovalMasterCode();
+                if (masterCode) {
+                    if (normalized !== masterCode) return null;
+                    return {
+                        byId: null,
+                        byName: 'Code entreprise',
+                        byRole: 'code',
+                        approvedAt: new Date().toISOString()
+                    };
+                }
+                const approver = teamMembersState.find(member => {
                     const role = (member.role || '').trim().toLowerCase();
                     if (!isDiscountApproverRole(role)) return false;
                     const status = (member.status || '').trim().toLowerCase();
                     if (status && status !== 'actif') return false;
-                    const memberCode = (member.accessCode || '').trim().toUpperCase();
+                    const memberCode = normalizeApprovalCode(member.accessCode || '');
                     return memberCode && memberCode === normalized;
                 }) || null;
+                return approver ? buildDiscountApprovalFromMember(approver) : null;
             }
 
             function setDiscountInputsLocked(locked) {
@@ -4497,11 +4553,17 @@
                 setDiscountInputsLocked(lockInputs);
 
                 if (discountApprovalTrigger) {
-                    const canShow = requiresApproval && cartItems.length > 0 && !isApproved;
+                    const canShow = requiresApproval && cartItems.length > 0 && !isApproved && !discountApprovalInline;
                     discountApprovalTrigger.classList.toggle('hidden', !canShow);
                 }
                 if (discountApprovalHint) {
                     const showHint = requiresApproval && !isApproved && cartItems.length > 0;
+                    if (showHint) {
+                        const masterCode = getDiscountApprovalMasterCode();
+                        discountApprovalHint.textContent = masterCode
+                            ? 'Code de validation requis.'
+                            : 'Validation admin/manager requise.';
+                    }
                     discountApprovalHint.classList.toggle('hidden', !showHint);
                 }
                 if (discountApprovalStatus) {
@@ -4511,6 +4573,10 @@
                     } else {
                         discountApprovalStatus.classList.add('hidden');
                     }
+                }
+                if (discountApprovalInline) {
+                    const showInline = requiresApproval && cartItems.length > 0 && !isApproved;
+                    discountApprovalInline.classList.toggle('hidden', !showInline);
                 }
             }
 
@@ -5862,6 +5928,64 @@
                 return code;
             }
 
+            function normalizeApprovalCode(code) {
+                return (code || '').toString().toUpperCase().replace(/[^A-Z0-9]/g, '');
+            }
+
+            function formatApprovalCode(code) {
+                const normalized = normalizeApprovalCode(code);
+                if (normalized.length <= 4) return normalized;
+                return `${normalized.slice(0, 4)}-${normalized.slice(4)}`;
+            }
+
+            function getDiscountApprovalMasterCode() {
+                return normalizeApprovalCode(appData.settings?.discountApprovalCode || '');
+            }
+
+            function updateDiscountApprovalSettingsUI() {
+                if (!discountApprovalCodeInputSetting) return;
+                const code = getDiscountApprovalMasterCode();
+                const formatted = formatApprovalCode(code);
+                if (document.activeElement !== discountApprovalCodeInputSetting) {
+                    discountApprovalCodeInputSetting.value = formatted;
+                }
+                if (discountApprovalCodeStatus) {
+                    discountApprovalCodeStatus.textContent = code ? 'Code actif.' : 'Aucun code défini.';
+                }
+                if (discountApprovalCodeClear) {
+                    discountApprovalCodeClear.classList.toggle('hidden', !code);
+                }
+                if (discountApprovalCodeError) discountApprovalCodeError.classList.add('hidden');
+            }
+
+            async function persistDiscountApprovalCode(rawCode) {
+                if (!dbBasePath || getCurrentUserRole() !== 'admin') {
+                    showSuccessToast("Accès réservé aux administrateurs.");
+                    return false;
+                }
+                const normalized = normalizeApprovalCode(rawCode);
+                try {
+                    if (discountApprovalCodeSave) discountApprovalCodeSave.disabled = true;
+                    const updates = {
+                        discountApprovalCode: normalized || null,
+                        updatedAt: new Date().toISOString()
+                    };
+                    await update(ref(db, `${dbBasePath}/settings`), updates);
+                    if (discountApprovalCodeError) discountApprovalCodeError.classList.add('hidden');
+                    showSuccessToast(normalized ? 'Code de validation mis à jour.' : 'Code de validation supprimé.');
+                    return true;
+                } catch (error) {
+                    console.error(error);
+                    if (discountApprovalCodeError) {
+                        discountApprovalCodeError.textContent = "Impossible de mettre à jour le code.";
+                        discountApprovalCodeError.classList.remove('hidden');
+                    }
+                    return false;
+                } finally {
+                    if (discountApprovalCodeSave) discountApprovalCodeSave.disabled = false;
+                }
+            }
+
             function getCurrentUserRole() {
                 if (!isAuthenticated || !currentUserData) return 'invite';
                 return (currentUserData.role || 'consultation').trim().toLowerCase();
@@ -5874,9 +5998,11 @@
 
             function updateSettingsAccess() {
                 const canAccessSettings = hasPermission('Paramètres');
+                const isAdmin = getCurrentUserRole() === 'admin';
                 if (settingsRestrictedState) settingsRestrictedState.classList.toggle('hidden', canAccessSettings);
                 if (settingsTabsWrapper) settingsTabsWrapper.classList.toggle('hidden', !canAccessSettings);
                 if (settingsAdminBadge) settingsAdminBadge.textContent = `Rôle : ${canAccessSettings ? 'Admin' : 'Accès limité'}`;
+                if (discountApprovalSettingsSection) discountApprovalSettingsSection.classList.toggle('hidden', !isAdmin);
                 updateStoreManagementState();
                 updateBoutiqueManagementState();
             }
@@ -7413,6 +7539,33 @@
                 });
             }
 
+            if (discountApprovalCodeGenerate) {
+                discountApprovalCodeGenerate.addEventListener('click', () => {
+                    if (!discountApprovalCodeInputSetting) return;
+                    discountApprovalCodeInputSetting.value = formatApprovalCode(generateAccessCode());
+                    discountApprovalCodeInputSetting.focus();
+                });
+            }
+            if (discountApprovalCodeClear) {
+                discountApprovalCodeClear.addEventListener('click', async () => {
+                    if (!discountApprovalCodeInputSetting) return;
+                    discountApprovalCodeInputSetting.value = '';
+                    await persistDiscountApprovalCode('');
+                });
+            }
+            if (discountApprovalCodeForm) {
+                discountApprovalCodeForm.addEventListener('submit', async (event) => {
+                    event.preventDefault();
+                    if (!discountApprovalCodeInputSetting) return;
+                    await persistDiscountApprovalCode(discountApprovalCodeInputSetting.value);
+                });
+            }
+            if (discountApprovalCodeInputSetting) {
+                discountApprovalCodeInputSetting.addEventListener('input', () => {
+                    if (discountApprovalCodeError) discountApprovalCodeError.classList.add('hidden');
+                });
+            }
+
             if (boutiquesList) {
                 boutiquesList.addEventListener('click', async (event) => {
                     const renameButton = event.target.closest('button[data-boutique-rename]');
@@ -8626,6 +8779,17 @@
                 renderSalesHistory();
             }
 
+            function onSettingsValue(snapshot) {
+                appData.settings = snapshot.val() || {};
+                const currentCode = getDiscountApprovalMasterCode();
+                if (currentCode !== lastDiscountApprovalCode) {
+                    lastDiscountApprovalCode = currentCode;
+                    discountApproval = null;
+                }
+                updateDiscountApprovalSettingsUI();
+                updateDiscountApprovalUI();
+            }
+
             function onCompanyCustomersValue(snapshot) {
                 appData.customers = snapshot.val() || {};
                 renderCustomerOptions();
@@ -8678,6 +8842,9 @@
                 pendingSalesRef = ref(db, `${dbBasePath}/pendingSales`);
                 pendingSalesListener = onValue(pendingSalesRef, onPendingSalesValue);
 
+                settingsRef = ref(db, `${dbBasePath}/settings`);
+                settingsListener = onValue(settingsRef, onSettingsValue);
+
                 companyMembersRef = ref(db, `${dbBasePath}/members`);
                 companyMembersListener = onValue(companyMembersRef, onCompanyMembersValue);
 
@@ -8700,11 +8867,12 @@
                 if (shopMovementsListener && shopMovementsRef) off(shopMovementsRef, shopMovementsListener);
                 if (salesHistoryListener && salesHistoryRef) off(salesHistoryRef, salesHistoryListener);
                 if (pendingSalesListener && pendingSalesRef) off(pendingSalesRef, pendingSalesListener);
+                if (settingsListener && settingsRef) off(settingsRef, settingsListener);
                 if (companyMembersListener && companyMembersRef) off(companyMembersRef, companyMembersListener);
                 if (companyCustomersListener && companyCustomersRef) off(companyCustomersRef, companyCustomersListener);
                 if (suppliersListener && suppliersRef) off(suppliersRef, suppliersListener);
-                storesListener = null; boutiquesListener = null; storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; salesHistoryListener = null; pendingSalesListener = null; companyMembersListener = null; companyCustomersListener = null; suppliersListener = null;
-                appData.stores = {}; appData.boutiques = {}; appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.shopMovements = {}; appData.salesHistory = {}; appData.customers = {}; appData.suppliers = {}; appData.storeExitRequests = {}; appData.pendingSales = {};
+                storesListener = null; boutiquesListener = null; storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; salesHistoryListener = null; pendingSalesListener = null; settingsListener = null; companyMembersListener = null; companyCustomersListener = null; suppliersListener = null;
+                appData.stores = {}; appData.boutiques = {}; appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.shopMovements = {}; appData.salesHistory = {}; appData.customers = {}; appData.suppliers = {}; appData.storeExitRequests = {}; appData.pendingSales = {}; appData.settings = {};
                 selectedCustomer = null;
                 customerOptionLookup = {};
                 isCustomerHistoryOpen = false;
@@ -8712,6 +8880,7 @@
                 defaultStoreId = null;
                 activeBoutiqueId = null;
                 defaultBoutiqueId = null;
+                lastDiscountApprovalCode = '';
             }
 
             function updateUI() {
@@ -10718,21 +10887,31 @@
                     }
                 });
             }
-            if (discountApprovalConfirm) {
-                discountApprovalConfirm.addEventListener('click', () => {
-                    const code = (discountApprovalCodeInput?.value || '').trim();
-                    const approver = findDiscountApproverByCode(code);
-                    if (!approver) {
-                        if (discountApprovalError) {
-                            discountApprovalError.textContent = 'Code invalide ou non autorisé.';
-                            discountApprovalError.classList.remove('hidden');
+            if (discountApprovalInlineConfirm) {
+                discountApprovalInlineConfirm.addEventListener('click', () => {
+                    const code = (discountApprovalInlineCode?.value || '').trim();
+                    const approval = findDiscountApproverByCode(code);
+                    if (!approval) {
+                        if (discountApprovalInlineError) {
+                            discountApprovalInlineError.textContent = 'Code invalide ou non autorisé.';
+                            discountApprovalInlineError.classList.remove('hidden');
                         }
                         return;
                     }
-                    const approval = buildDiscountApprovalFromMember(approver);
+                    discountApproval = approval;
+                    if (discountApprovalInlineCode) discountApprovalInlineCode.value = '';
+                    if (discountApprovalInlineError) discountApprovalInlineError.classList.add('hidden');
+                    updateDiscountApprovalUI();
+                    showSuccessToast('Réduction déverrouillée.');
+                });
+            }
+            if (discountApprovalConfirm) {
+                discountApprovalConfirm.addEventListener('click', () => {
+                    const code = (discountApprovalCodeInput?.value || '').trim();
+                    const approval = findDiscountApproverByCode(code);
                     if (!approval) {
                         if (discountApprovalError) {
-                            discountApprovalError.textContent = 'Validation impossible avec ce code.';
+                            discountApprovalError.textContent = 'Code invalide ou non autorisé.';
                             discountApprovalError.classList.remove('hidden');
                         }
                         return;
@@ -10759,6 +10938,16 @@
                 });
                 discountApprovalCodeInput.addEventListener('input', () => {
                     if (discountApprovalError) discountApprovalError.classList.add('hidden');
+                });
+            }
+            if (discountApprovalInlineCode) {
+                discountApprovalInlineCode.addEventListener('keydown', (event) => {
+                    if (event.key !== 'Enter') return;
+                    event.preventDefault();
+                    if (discountApprovalInlineConfirm) discountApprovalInlineConfirm.click();
+                });
+                discountApprovalInlineCode.addEventListener('input', () => {
+                    if (discountApprovalInlineError) discountApprovalInlineError.classList.add('hidden');
                 });
             }
             if (taxToggleHistory) {
