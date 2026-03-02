@@ -1600,6 +1600,7 @@
                                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
                                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payé</th>
                                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody id="supplier-invoices-tbody" class="divide-y divide-gray-200"></tbody>
@@ -1623,7 +1624,7 @@
                                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Facture</th>
                                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
                                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mode</th>
-                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Signature</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Documents</th>
                                             </tr>
                                         </thead>
                                         <tbody id="supplier-payments-tbody" class="divide-y divide-gray-200"></tbody>
@@ -3188,6 +3189,7 @@
             const DEFAULT_STORE_NAME = 'Magasin principal';
             const DEFAULT_BOUTIQUE_NAME = 'Boutique principale';
             const DEFAULT_SUPPLIER_CURRENCY = 'CFA';
+            const FX_RATE_EUR_TO_CFA = 656;
             const UNASSIGNED_STORE_ID = 'unassigned';
 
             const EXIT_STATUS_PENDING = 'en attente de validation';
@@ -4008,6 +4010,13 @@
                 return rate;
             }
 
+            function getCurrencyToCfaRate(currency) {
+                const code = (currency || '').toUpperCase();
+                if (!code || code === DEFAULT_SUPPLIER_CURRENCY) return 1;
+                if (code === 'EUR') return FX_RATE_EUR_TO_CFA;
+                return 1;
+            }
+
             function getSupplierInvoices(supplierId) {
                 return Object.values(appData.supplierInvoices || {})
                     .filter(inv => inv.supplierId === supplierId)
@@ -4178,6 +4187,12 @@
                                 <td class="px-4 py-3">
                                     <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${badgeClass}">${statusLabel}</span>
                                 </td>
+                                <td class="px-4 py-3 text-right">
+                                    <div class="inline-flex items-center gap-2 text-xs">
+                                        <button type="button" data-invoice-view="${inv.id}" class="text-emerald-600 font-semibold hover:text-emerald-700">Voir</button>
+                                        <button type="button" data-invoice-print="${inv.id}" class="text-gray-600 font-semibold hover:text-gray-800">Imprimer</button>
+                                    </div>
+                                </td>
                             </tr>
                         `;
                     }).join('');
@@ -4191,7 +4206,6 @@
                         const invoice = appData.supplierInvoices?.[payment.invoiceId];
                         const invoiceLabel = invoice ? getSupplierInvoiceLabel(invoice) : '—';
                         const payCurrency = payment.currency || currency;
-                        const signatureLabel = payment.signatureDataUrl ? 'Voir' : '—';
                         return `
                             <tr>
                                 <td class="px-4 py-3 text-sm text-gray-500">${formatDateOnly(payment.date || payment.createdAt || '')}</td>
@@ -4199,7 +4213,11 @@
                                 <td class="px-4 py-3 text-sm text-gray-700">${formatCurrency(payment.amount || 0, payCurrency)}</td>
                                 <td class="px-4 py-3 text-sm text-gray-500">${payment.method || '—'}</td>
                                 <td class="px-4 py-3 text-sm">
-                                    ${payment.signatureDataUrl ? `<button type="button" data-signature="${payment.id}" class="text-emerald-600 font-semibold hover:text-emerald-700">Voir</button>` : signatureLabel}
+                                    <div class="flex flex-wrap items-center gap-2 text-xs">
+                                        <button type="button" data-payment-invoice-view="${payment.id}" class="text-emerald-600 font-semibold hover:text-emerald-700">Voir facture</button>
+                                        <button type="button" data-payment-invoice-print="${payment.id}" class="text-gray-600 font-semibold hover:text-gray-800">Imprimer</button>
+                                        ${payment.signatureDataUrl ? `<button type="button" data-signature="${payment.id}" class="text-amber-600 font-semibold hover:text-amber-700">Signature</button>` : '<span class="text-gray-400">Signature —</span>'}
+                                    </div>
                                 </td>
                             </tr>
                         `;
@@ -4326,6 +4344,89 @@
             function getSupplierPaymentSignatureData() {
                 if (!supplierPaymentSignature || !supplierSignatureHasInk) return '';
                 return supplierPaymentSignature.toDataURL('image/png');
+            }
+
+            function buildSupplierInvoicePdf(invoice) {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                const supplier = getSupplierById(invoice.supplierId) || {};
+                const companyName = currentUserData?.companyName || 'Mon Entreprise';
+                const invoiceLabel = getSupplierInvoiceLabel(invoice);
+                const invCurrency = (invoice.currency || DEFAULT_SUPPLIER_CURRENCY).toUpperCase();
+                const productCurrency = (invoice.productCurrency || DEFAULT_SUPPLIER_CURRENCY).toUpperCase();
+                const baseTotal = Number(invoice.baseTotal || 0);
+                const unitCost = Number(invoice.unitCost || 0);
+                const unitCostBase = Number(invoice.unitCostBase || 0);
+                const qty = Number(invoice.quantity || 0);
+                const totalProduct = roundAmount(unitCost * qty);
+
+                doc.setFontSize(16);
+                doc.setFont(undefined, 'bold');
+                doc.text('Facture Fournisseur', 14, 20);
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'normal');
+                doc.text(companyName, 14, 26);
+
+                doc.setFontSize(10);
+                doc.text(`N° ${invoiceLabel}`, 150, 20);
+                doc.text(`Date: ${formatDateOnly(invoice.date || invoice.createdAt || '')}`, 150, 26);
+
+                doc.setFontSize(11);
+                doc.setFont(undefined, 'bold');
+                doc.text('Fournisseur', 14, 36);
+                doc.setFont(undefined, 'normal');
+                doc.setFontSize(10);
+                doc.text(supplier.name || invoice.supplierName || '—', 14, 42);
+                if (supplier.email) doc.text(supplier.email, 14, 48);
+                if (supplier.phone) doc.text(supplier.phone, 14, 54);
+
+                const tableData = [[
+                    invoice.productName || '—',
+                    qty,
+                    `${formatPDFCurrency(unitCost)} ${productCurrency}`,
+                    `${formatPDFCurrency(totalProduct)} ${productCurrency}`
+                ]];
+
+                doc.autoTable({
+                    startY: 62,
+                    head: [['Produit', 'Qté', 'PU', 'Total']],
+                    body: tableData
+                });
+
+                let y = doc.lastAutoTable.finalY + 10;
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'bold');
+                doc.text('Résumé', 14, y);
+                doc.setFont(undefined, 'normal');
+                y += 6;
+                doc.text(`Total produit: ${formatPDFCurrency(totalProduct)} ${productCurrency}`, 14, y);
+                y += 6;
+                if (productCurrency !== DEFAULT_SUPPLIER_CURRENCY) {
+                    doc.text(`Équivalent CFA: ${formatPDFCurrency(baseTotal)} ${DEFAULT_SUPPLIER_CURRENCY}`, 14, y);
+                    y += 6;
+                }
+                doc.text(`Total fournisseur: ${formatPDFCurrency(invoice.total || 0)} ${invCurrency}`, 14, y);
+
+                return doc;
+            }
+
+            function openSupplierInvoiceDocument(invoiceId, shouldPrint = false) {
+                const invoice = appData.supplierInvoices?.[invoiceId];
+                if (!invoice) return;
+                const doc = buildSupplierInvoicePdf(invoice);
+                if (shouldPrint && doc.autoPrint) {
+                    doc.autoPrint();
+                }
+                const blob = doc.output('blob');
+                const url = URL.createObjectURL(blob);
+                const win = window.open(url);
+                if (win && shouldPrint) {
+                    win.onload = () => {
+                        win.focus();
+                        win.print();
+                    };
+                }
+                setTimeout(() => URL.revokeObjectURL(url), 10000);
             }
 
             function renderTransferBoutiqueSelect() {
@@ -12707,6 +12808,8 @@
                 const supplierName = getSupplierName(supplierId) || (appData.suppliers?.[supplierId]?.name || '');
                 const supplierCurrency = getSupplierCurrency(supplier);
                 const supplierRate = getSupplierConversionRate(supplier);
+                const productCurrency = (prod.currency || DEFAULT_SUPPLIER_CURRENCY).toUpperCase();
+                const fxRateToCfa = getCurrencyToCfaRate(productCurrency);
 
                 try {
                     if (entrySubmitButton) entrySubmitButton.disabled = true;
@@ -12726,7 +12829,8 @@
                     }
                     const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
                     const invoiceKey = push(ref(db, `${dbBasePath}/supplierInvoices`)).key;
-                    const baseTotal = roundAmount(purchaseCost * qty);
+                    const baseTotal = roundAmount(purchaseCost * qty * fxRateToCfa);
+                    const unitCostBase = roundAmount(purchaseCost * fxRateToCfa);
                     const invoiceTotal = supplierCurrency === DEFAULT_SUPPLIER_CURRENCY
                         ? baseTotal
                         : roundAmount(baseTotal / supplierRate);
@@ -12758,6 +12862,9 @@
                         productName: prod.name,
                         quantity: qty,
                         unitCost: purchaseCost,
+                        unitCostBase,
+                        productCurrency,
+                        fxRateToCfa,
                         baseTotal,
                         baseCurrency: DEFAULT_SUPPLIER_CURRENCY,
                         total: invoiceTotal,
@@ -13253,15 +13360,29 @@
             }
             if (supplierPaymentsTbody) {
                 supplierPaymentsTbody.addEventListener('click', (event) => {
-                    const btn = event.target.closest('[data-signature]');
-                    if (!btn) return;
-                    const paymentId = btn.dataset.signature;
-                    const payment = appData.supplierPayments?.[paymentId];
-                    if (payment?.signatureDataUrl) {
-                        const win = window.open();
-                        if (win) {
-                            win.document.write(`<img src="${payment.signatureDataUrl}" style="max-width:100%;height:auto;">`);
+                    const signatureBtn = event.target.closest('[data-signature]');
+                    if (signatureBtn) {
+                        const paymentId = signatureBtn.dataset.signature;
+                        const payment = appData.supplierPayments?.[paymentId];
+                        if (payment?.signatureDataUrl) {
+                            const win = window.open();
+                            if (win) {
+                                win.document.write(`<img src="${payment.signatureDataUrl}" style="max-width:100%;height:auto;">`);
+                            }
                         }
+                        return;
+                    }
+                    const viewBtn = event.target.closest('[data-payment-invoice-view]');
+                    if (viewBtn) {
+                        const payment = appData.supplierPayments?.[viewBtn.dataset.paymentInvoiceView];
+                        if (payment?.invoiceId) openSupplierInvoiceDocument(payment.invoiceId, false);
+                        return;
+                    }
+                    const printBtn = event.target.closest('[data-payment-invoice-print]');
+                    if (printBtn) {
+                        const payment = appData.supplierPayments?.[printBtn.dataset.paymentInvoicePrint];
+                        if (payment?.invoiceId) openSupplierInvoiceDocument(payment.invoiceId, true);
+                        return;
                     }
                 });
             }
@@ -13275,6 +13396,19 @@
                     if (!invoice || !supplierPaymentAmountInput) return;
                     const balance = getInvoiceBalance(invoice);
                     supplierPaymentAmountInput.value = balance > 0 ? balance : '';
+                });
+            }
+            if (supplierInvoicesTbody) {
+                supplierInvoicesTbody.addEventListener('click', (event) => {
+                    const viewBtn = event.target.closest('[data-invoice-view]');
+                    if (viewBtn) {
+                        openSupplierInvoiceDocument(viewBtn.dataset.invoiceView, false);
+                        return;
+                    }
+                    const printBtn = event.target.closest('[data-invoice-print]');
+                    if (printBtn) {
+                        openSupplierInvoiceDocument(printBtn.dataset.invoicePrint, true);
+                    }
                 });
             }
             attachSupplierSignatureEvents();
