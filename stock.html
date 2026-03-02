@@ -1624,7 +1624,7 @@
                                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Facture</th>
                                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
                                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mode</th>
-                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Documents</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody id="supplier-payments-tbody" class="divide-y divide-gray-200"></tbody>
@@ -3076,6 +3076,93 @@
         </div>
     </div>
 
+    <!-- Modal: Détails facture fournisseur -->
+    <div id="supplier-invoice-detail-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-xl p-6 m-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between">
+                <h2 id="supplier-invoice-detail-title" class="text-xl font-bold text-gray-900">Détails de la facture</h2>
+                <button id="close-supplier-invoice-detail-modal-button" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="mt-6 space-y-5">
+                <div class="bg-gray-50 rounded-2xl p-4">
+                    <p id="supplier-invoice-detail-supplier-name" class="text-sm font-semibold text-gray-900">Fournisseur</p>
+                    <p id="supplier-invoice-detail-supplier-contact" class="text-xs text-gray-500 mt-1">—</p>
+                    <p id="supplier-invoice-detail-supplier-meta" class="text-xs text-gray-500 mt-2">—</p>
+                </div>
+
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-900">Informations</h3>
+                    <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="rounded-2xl bg-gray-50 p-4">
+                            <p class="text-xs text-gray-500">Date</p>
+                            <p id="supplier-invoice-detail-date" class="text-sm font-semibold text-gray-900 mt-1">-</p>
+                        </div>
+                        <div class="rounded-2xl bg-gray-50 p-4">
+                            <p class="text-xs text-gray-500">Statut</p>
+                            <p id="supplier-invoice-detail-status" class="text-sm font-semibold text-gray-900 mt-1">-</p>
+                        </div>
+                        <div class="rounded-2xl bg-gray-50 p-4">
+                            <p class="text-xs text-gray-500">Payé</p>
+                            <p id="supplier-invoice-detail-paid" class="text-sm font-semibold text-gray-900 mt-1">-</p>
+                        </div>
+                        <div class="rounded-2xl bg-gray-50 p-4">
+                            <p class="text-xs text-gray-500">Reste</p>
+                            <p id="supplier-invoice-detail-balance" class="text-sm font-semibold text-gray-900 mt-1">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-900">Produit</h3>
+                    <div id="supplier-invoice-detail-products" class="mt-3 space-y-3"></div>
+                </div>
+
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-900">Paiement</h3>
+                    <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="rounded-2xl bg-gray-50 p-4">
+                            <p class="text-xs text-gray-500">Date paiement</p>
+                            <p id="supplier-invoice-detail-payment-date" class="text-sm font-semibold text-gray-900 mt-1">-</p>
+                        </div>
+                        <div class="rounded-2xl bg-gray-50 p-4">
+                            <p class="text-xs text-gray-500">Mode</p>
+                            <p id="supplier-invoice-detail-payment-method" class="text-sm font-semibold text-gray-900 mt-1">-</p>
+                        </div>
+                        <div class="rounded-2xl bg-gray-50 p-4 sm:col-span-2">
+                            <p class="text-xs text-gray-500">Note</p>
+                            <p id="supplier-invoice-detail-payment-note" class="text-sm font-semibold text-gray-900 mt-1">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-900">Signature</h3>
+                    <div class="mt-3 bg-gray-50 rounded-2xl p-4">
+                        <img id="supplier-invoice-detail-signature" class="w-full max-h-52 object-contain hidden" alt="Signature fournisseur" />
+                        <p id="supplier-invoice-detail-signature-empty" class="text-sm text-gray-400">Aucune signature disponible.</p>
+                    </div>
+                </div>
+
+                <div id="supplier-invoice-detail-summary" class="bg-emerald-50 rounded-2xl p-4 space-y-2"></div>
+
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button id="supplier-invoice-detail-print" type="button"
+                        class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9V4h12v5M6 18h12v2H6v-2zM6 14h12v4H6v-4z" />
+                        </svg>
+                        Imprimer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
 
     <!-- jsPDF Libraries for Invoice Generation -->
@@ -3236,6 +3323,7 @@
             let activeAccessScopeMemberId = null;
             let supplierSearchQuery = '';
             let activeSupplierId = null;
+            let activeSupplierPaymentDetailId = null;
 
             // Cart state
             let cartItems = [];
@@ -3619,6 +3707,24 @@
             const salesDetailTotal = document.getElementById('sales-detail-total');
             const salesDetailPrint = document.getElementById('sales-detail-print');
             const salesDetailEmail = document.getElementById('sales-detail-email');
+            const supplierInvoiceDetailModal = document.getElementById('supplier-invoice-detail-modal');
+            const closeSupplierInvoiceDetailModalButton = document.getElementById('close-supplier-invoice-detail-modal-button');
+            const supplierInvoiceDetailTitle = document.getElementById('supplier-invoice-detail-title');
+            const supplierInvoiceDetailSupplierName = document.getElementById('supplier-invoice-detail-supplier-name');
+            const supplierInvoiceDetailSupplierContact = document.getElementById('supplier-invoice-detail-supplier-contact');
+            const supplierInvoiceDetailSupplierMeta = document.getElementById('supplier-invoice-detail-supplier-meta');
+            const supplierInvoiceDetailDate = document.getElementById('supplier-invoice-detail-date');
+            const supplierInvoiceDetailStatus = document.getElementById('supplier-invoice-detail-status');
+            const supplierInvoiceDetailPaid = document.getElementById('supplier-invoice-detail-paid');
+            const supplierInvoiceDetailBalance = document.getElementById('supplier-invoice-detail-balance');
+            const supplierInvoiceDetailProducts = document.getElementById('supplier-invoice-detail-products');
+            const supplierInvoiceDetailPaymentDate = document.getElementById('supplier-invoice-detail-payment-date');
+            const supplierInvoiceDetailPaymentMethod = document.getElementById('supplier-invoice-detail-payment-method');
+            const supplierInvoiceDetailPaymentNote = document.getElementById('supplier-invoice-detail-payment-note');
+            const supplierInvoiceDetailSignature = document.getElementById('supplier-invoice-detail-signature');
+            const supplierInvoiceDetailSignatureEmpty = document.getElementById('supplier-invoice-detail-signature-empty');
+            const supplierInvoiceDetailSummary = document.getElementById('supplier-invoice-detail-summary');
+            const supplierInvoiceDetailPrint = document.getElementById('supplier-invoice-detail-print');
 
             // Paramètres & accès
             const settingsRestrictedState = document.getElementById('settings-restricted-state');
@@ -4206,6 +4312,9 @@
                         const invoice = appData.supplierInvoices?.[payment.invoiceId];
                         const invoiceLabel = invoice ? getSupplierInvoiceLabel(invoice) : '—';
                         const payCurrency = payment.currency || currency;
+                        const signatureStatus = payment.signatureDataUrl
+                            ? '<span class="text-emerald-600 font-semibold">Signature OK</span>'
+                            : '<span class="text-gray-400">Signature —</span>';
                         return `
                             <tr>
                                 <td class="px-4 py-3 text-sm text-gray-500">${formatDateOnly(payment.date || payment.createdAt || '')}</td>
@@ -4214,9 +4323,8 @@
                                 <td class="px-4 py-3 text-sm text-gray-500">${payment.method || '—'}</td>
                                 <td class="px-4 py-3 text-sm">
                                     <div class="flex flex-wrap items-center gap-2 text-xs">
-                                        <button type="button" data-payment-invoice-view="${payment.id}" class="text-emerald-600 font-semibold hover:text-emerald-700">Voir facture</button>
-                                        <button type="button" data-payment-invoice-print="${payment.id}" class="text-gray-600 font-semibold hover:text-gray-800">Imprimer</button>
-                                        ${payment.signatureDataUrl ? `<button type="button" data-signature="${payment.id}" class="text-amber-600 font-semibold hover:text-amber-700">Signature</button>` : '<span class="text-gray-400">Signature —</span>'}
+                                        <button type="button" data-payment-detail="${payment.id}" class="text-emerald-600 font-semibold hover:text-emerald-700">Détails</button>
+                                        ${signatureStatus}
                                     </div>
                                 </td>
                             </tr>
@@ -4346,7 +4454,7 @@
                 return supplierPaymentSignature.toDataURL('image/png');
             }
 
-            function buildSupplierInvoicePdf(invoice) {
+            function buildSupplierInvoicePdf(invoice, signatureDataUrl = '') {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
                 const supplier = getSupplierById(invoice.supplierId) || {};
@@ -4406,14 +4514,27 @@
                     y += 6;
                 }
                 doc.text(`Total fournisseur: ${formatPDFCurrency(invoice.total || 0)} ${invCurrency}`, 14, y);
+                if (signatureDataUrl) {
+                    y += 10;
+                    if (y > 260) {
+                        doc.addPage();
+                        y = 20;
+                    }
+                    doc.setFontSize(10);
+                    doc.setFont(undefined, 'bold');
+                    doc.text('Signature fournisseur', 14, y);
+                    doc.setFont(undefined, 'normal');
+                    y += 6;
+                    doc.addImage(signatureDataUrl, 'PNG', 14, y, 60, 24);
+                }
 
                 return doc;
             }
 
-            function openSupplierInvoiceDocument(invoiceId, shouldPrint = false) {
+            function openSupplierInvoiceDocument(invoiceId, shouldPrint = false, signatureDataUrl = '') {
                 const invoice = appData.supplierInvoices?.[invoiceId];
                 if (!invoice) return;
-                const doc = buildSupplierInvoicePdf(invoice);
+                const doc = buildSupplierInvoicePdf(invoice, signatureDataUrl);
                 if (shouldPrint && doc.autoPrint) {
                     doc.autoPrint();
                 }
@@ -6702,6 +6823,109 @@
                 if (!salesDetailModal) return;
                 salesDetailModal.classList.add('hidden');
                 activeSalesDetailId = null;
+            }
+
+            function openSupplierInvoiceDetailModal(paymentId) {
+                if (!supplierInvoiceDetailModal || !paymentId) return;
+                const payment = appData.supplierPayments?.[paymentId];
+                if (!payment) return;
+                const invoice = appData.supplierInvoices?.[payment.invoiceId];
+                if (!invoice) return;
+                const supplier = getSupplierById(payment.supplierId) || getSupplierById(invoice.supplierId) || {};
+                const supplierCurrency = (invoice.currency || getSupplierCurrency(supplier) || DEFAULT_SUPPLIER_CURRENCY).toUpperCase();
+                const productCurrency = (invoice.productCurrency || supplierCurrency || DEFAULT_SUPPLIER_CURRENCY).toUpperCase();
+                const invoiceLabel = getSupplierInvoiceLabel(invoice);
+                const status = invoice.status || 'open';
+                const statusLabel = status === 'paid' ? 'Payée' : status === 'partial' ? 'Partielle' : 'Ouverte';
+                const paidAmount = Number(invoice.paidAmount || 0);
+                const totalAmount = Number(invoice.total || 0);
+                const balance = getInvoiceBalance(invoice);
+                const qty = Number(invoice.quantity || 0);
+                const unitCost = Number(invoice.unitCost || 0);
+                const totalProduct = roundAmount(unitCost * qty);
+                const baseTotal = Number(invoice.baseTotal || 0);
+                const rawRate = Number(invoice.conversionRate || getSupplierConversionRate(supplier) || 1);
+                const conversionRate = Number.isFinite(rawRate) && rawRate > 0 ? rawRate : 1;
+                const paymentDateValue = payment.date || payment.createdAt || '';
+                const paymentDateLabel = paymentDateValue && !Number.isNaN(new Date(paymentDateValue).getTime())
+                    ? formatDateForDisplay(paymentDateValue)
+                    : '-';
+
+                activeSupplierPaymentDetailId = paymentId;
+
+                if (supplierInvoiceDetailTitle) supplierInvoiceDetailTitle.textContent = `Détails de la facture ${invoiceLabel}`;
+                if (supplierInvoiceDetailSupplierName) supplierInvoiceDetailSupplierName.textContent = supplier.name || invoice.supplierName || 'Fournisseur';
+                if (supplierInvoiceDetailSupplierContact) {
+                    const contactParts = [supplier.email, supplier.phone].filter(Boolean);
+                    supplierInvoiceDetailSupplierContact.textContent = contactParts.length ? contactParts.join(' · ') : '—';
+                }
+                if (supplierInvoiceDetailSupplierMeta) {
+                    const meta = supplierCurrency !== DEFAULT_SUPPLIER_CURRENCY
+                        ? `Devise: ${supplierCurrency} · Taux: 1 ${supplierCurrency} = ${conversionRate} ${DEFAULT_SUPPLIER_CURRENCY}`
+                        : `Devise: ${supplierCurrency}`;
+                    supplierInvoiceDetailSupplierMeta.textContent = meta;
+                }
+                if (supplierInvoiceDetailDate) supplierInvoiceDetailDate.textContent = formatDateOnly(invoice.date || invoice.createdAt || '');
+                if (supplierInvoiceDetailStatus) supplierInvoiceDetailStatus.textContent = statusLabel;
+                if (supplierInvoiceDetailPaid) supplierInvoiceDetailPaid.textContent = formatCurrency(paidAmount, supplierCurrency);
+                if (supplierInvoiceDetailBalance) supplierInvoiceDetailBalance.textContent = formatCurrency(balance, supplierCurrency);
+
+                if (supplierInvoiceDetailProducts) {
+                    supplierInvoiceDetailProducts.innerHTML = `
+                        <div class="flex items-center justify-between bg-gray-50 rounded-2xl px-4 py-3">
+                            <div>
+                                <p class="text-sm font-semibold text-gray-900">${invoice.productName || '—'}</p>
+                                <p class="text-xs text-gray-500">${qty}x ${formatCurrency(unitCost, productCurrency)}</p>
+                            </div>
+                            <p class="text-sm font-semibold text-gray-900">${formatCurrency(totalProduct, productCurrency)}</p>
+                        </div>
+                    `;
+                }
+
+                if (supplierInvoiceDetailPaymentDate) supplierInvoiceDetailPaymentDate.textContent = paymentDateLabel || '-';
+                if (supplierInvoiceDetailPaymentMethod) supplierInvoiceDetailPaymentMethod.textContent = payment.method || '—';
+                if (supplierInvoiceDetailPaymentNote) supplierInvoiceDetailPaymentNote.textContent = payment.note ? payment.note : '—';
+
+                if (supplierInvoiceDetailSignature && supplierInvoiceDetailSignatureEmpty) {
+                    if (payment.signatureDataUrl) {
+                        supplierInvoiceDetailSignature.src = payment.signatureDataUrl;
+                        supplierInvoiceDetailSignature.classList.remove('hidden');
+                        supplierInvoiceDetailSignatureEmpty.classList.add('hidden');
+                    } else {
+                        supplierInvoiceDetailSignature.src = '';
+                        supplierInvoiceDetailSignature.classList.add('hidden');
+                        supplierInvoiceDetailSignatureEmpty.classList.remove('hidden');
+                    }
+                }
+
+                if (supplierInvoiceDetailSummary) {
+                    const showBaseTotal = supplierCurrency !== DEFAULT_SUPPLIER_CURRENCY || productCurrency !== DEFAULT_SUPPLIER_CURRENCY;
+                    const summaryRows = [
+                        `<div class="flex items-center justify-between text-sm text-gray-600"><span>Total produit</span><span>${formatCurrency(totalProduct, productCurrency)}</span></div>`
+                    ];
+                    if (showBaseTotal) {
+                        summaryRows.push(`<div class="flex items-center justify-between text-sm text-gray-600"><span>Équivalent ${DEFAULT_SUPPLIER_CURRENCY}</span><span>${formatCurrency(baseTotal, DEFAULT_SUPPLIER_CURRENCY)}</span></div>`);
+                    }
+                    summaryRows.push(`<div class="flex items-center justify-between text-sm text-gray-600"><span>Total facture</span><span>${formatCurrency(totalAmount, supplierCurrency)}</span></div>`);
+                    summaryRows.push(`<div class="flex items-center justify-between text-sm text-gray-600"><span>Payé</span><span>${formatCurrency(paidAmount, supplierCurrency)}</span></div>`);
+                    summaryRows.push(`<div class="flex items-center justify-between text-base font-semibold text-gray-900 border-t border-emerald-100 pt-3"><span>Reste</span><span class="text-emerald-700">${formatCurrency(balance, supplierCurrency)}</span></div>`);
+                    supplierInvoiceDetailSummary.innerHTML = summaryRows.join('');
+                }
+
+                if (supplierInvoiceDetailPrint) {
+                    supplierInvoiceDetailPrint.dataset.paymentId = paymentId;
+                    supplierInvoiceDetailPrint.dataset.invoiceId = invoice.id || '';
+                    supplierInvoiceDetailPrint.disabled = !invoice.id;
+                    supplierInvoiceDetailPrint.classList.toggle('opacity-60', !invoice.id);
+                }
+
+                supplierInvoiceDetailModal.classList.remove('hidden');
+            }
+
+            function closeSupplierInvoiceDetailModal() {
+                if (!supplierInvoiceDetailModal) return;
+                supplierInvoiceDetailModal.classList.add('hidden');
+                activeSupplierPaymentDetailId = null;
             }
 
             function openCustomerSelectModal() {
@@ -9884,12 +10108,18 @@
                 appData.supplierInvoices = snapshot.val() || {};
                 renderSuppliersList();
                 renderSupplierDetail();
+                if (activeSupplierPaymentDetailId) {
+                    openSupplierInvoiceDetailModal(activeSupplierPaymentDetailId);
+                }
             }
 
             function onSupplierPaymentsValue(snapshot) {
                 appData.supplierPayments = snapshot.val() || {};
                 renderSuppliersList();
                 renderSupplierDetail();
+                if (activeSupplierPaymentDetailId) {
+                    openSupplierInvoiceDetailModal(activeSupplierPaymentDetailId);
+                }
             }
 
             function setupFirebaseListeners() {
@@ -9979,6 +10209,7 @@
                 defaultBoutiqueId = null;
                 lastDiscountApprovalCode = '';
                 activeSupplierId = null;
+                activeSupplierPaymentDetailId = null;
                 supplierSearchQuery = '';
             }
 
@@ -12318,6 +12549,23 @@
                     showSuccessToast('Email envoyé (simulation).');
                 });
             }
+            if (closeSupplierInvoiceDetailModalButton) {
+                closeSupplierInvoiceDetailModalButton.addEventListener('click', closeSupplierInvoiceDetailModal);
+            }
+            if (supplierInvoiceDetailModal) {
+                supplierInvoiceDetailModal.addEventListener('click', (event) => {
+                    if (event.target === supplierInvoiceDetailModal) closeSupplierInvoiceDetailModal();
+                });
+            }
+            if (supplierInvoiceDetailPrint) {
+                supplierInvoiceDetailPrint.addEventListener('click', () => {
+                    const paymentId = supplierInvoiceDetailPrint.dataset.paymentId;
+                    const payment = appData.supplierPayments?.[paymentId];
+                    if (payment?.invoiceId) {
+                        openSupplierInvoiceDocument(payment.invoiceId, true, payment.signatureDataUrl || '');
+                    }
+                });
+            }
 
             // Quick Actions buttons
             const quickActionButtons = document.querySelectorAll('[data-quick-action]');
@@ -13360,29 +13608,9 @@
             }
             if (supplierPaymentsTbody) {
                 supplierPaymentsTbody.addEventListener('click', (event) => {
-                    const signatureBtn = event.target.closest('[data-signature]');
-                    if (signatureBtn) {
-                        const paymentId = signatureBtn.dataset.signature;
-                        const payment = appData.supplierPayments?.[paymentId];
-                        if (payment?.signatureDataUrl) {
-                            const win = window.open();
-                            if (win) {
-                                win.document.write(`<img src="${payment.signatureDataUrl}" style="max-width:100%;height:auto;">`);
-                            }
-                        }
-                        return;
-                    }
-                    const viewBtn = event.target.closest('[data-payment-invoice-view]');
-                    if (viewBtn) {
-                        const payment = appData.supplierPayments?.[viewBtn.dataset.paymentInvoiceView];
-                        if (payment?.invoiceId) openSupplierInvoiceDocument(payment.invoiceId, false);
-                        return;
-                    }
-                    const printBtn = event.target.closest('[data-payment-invoice-print]');
-                    if (printBtn) {
-                        const payment = appData.supplierPayments?.[printBtn.dataset.paymentInvoicePrint];
-                        if (payment?.invoiceId) openSupplierInvoiceDocument(payment.invoiceId, true);
-                        return;
+                    const detailBtn = event.target.closest('[data-payment-detail]');
+                    if (detailBtn) {
+                        openSupplierInvoiceDetailModal(detailBtn.dataset.paymentDetail);
                     }
                 });
             }
