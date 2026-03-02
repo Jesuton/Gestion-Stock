@@ -1420,10 +1420,30 @@
                     </div>
                 </div>
 
+                <div id="category-management-card" class="mt-6 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                            <h2 class="text-lg font-semibold text-gray-900">Catégories produits</h2>
+                            <p class="text-sm text-gray-500 mt-1">Classez vos produits par catégories (facultatif).</p>
+                        </div>
+                        <span id="category-count-badge"
+                            class="px-3 py-1 rounded-full text-xs font-semibold bg-cyan-50 text-cyan-700 border border-cyan-100">0</span>
+                    </div>
+                    <form id="category-form" class="mt-4 flex flex-col sm:flex-row gap-3">
+                        <input type="text" id="category-name-input" placeholder="Ex: Téléphones, Ordinateurs..."
+                            class="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-cyan-500 focus:border-cyan-500" />
+                        <button type="submit" id="category-submit-button"
+                            class="px-4 py-2 rounded-xl bg-cyan-500 text-white text-sm font-semibold hover:bg-cyan-600">Ajouter</button>
+                    </form>
+                    <p id="category-error" class="text-sm text-red-500 mt-2 hidden"></p>
+                    <div id="category-empty" class="mt-4 text-sm text-gray-400 hidden">Aucune catégorie définie.</div>
+                    <div id="category-list" class="mt-4 grid gap-3 md:grid-cols-2"></div>
+                </div>
+
                 <div class="mt-6 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div class="relative flex-grow">
-                            <input type="text" id="price-table-search" placeholder="Rechercher un produit..."
+                            <input type="text" id="price-table-search" placeholder="Rechercher un produit ou une catégorie..."
                                 class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-cyan-500 focus:border-cyan-500" />
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -1450,6 +1470,9 @@
                                         <th scope="col"
                                             class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Magasin</th>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Catégorie</th>
                                         <th scope="col"
                                             class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Coût d'achat</th>
@@ -2204,6 +2227,13 @@
                             class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
                             required>
                     </div>
+                    <div>
+                        <label for="product-category" class="block text-sm font-medium text-gray-700">Catégorie (optionnel)</label>
+                        <select id="product-category"
+                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400">
+                            <option value="">Sans catégorie</option>
+                        </select>
+                    </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label for="product-purchase-cost" class="block text-sm font-medium text-gray-700">Coût d'achat *</label>
@@ -2905,7 +2935,7 @@
             let currentUserData = null;
             let dbBasePath = '';
 
-            const appData = { stores: {}, boutiques: {}, storeProducts: {}, storeMovements: {}, shopStock: {}, shopMovements: {}, shopTransferRequests: {}, salesHistory: {}, customers: {}, suppliers: {}, storeExitRequests: {}, pendingSales: {}, settings: {} };
+            const appData = { stores: {}, boutiques: {}, categories: {}, storeProducts: {}, storeMovements: {}, shopStock: {}, shopMovements: {}, shopTransferRequests: {}, salesHistory: {}, customers: {}, suppliers: {}, storeExitRequests: {}, pendingSales: {}, settings: {} };
             let isSidebarOpen = false;
             let isSidebarCollapsed = false;
             let isCodeLoginMode = false;
@@ -2924,8 +2954,8 @@
             const SALE_SOURCE_MIXED = 'mixed';
 
 
-            let storesListener, boutiquesListener, storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, shopTransferRequestsListener, salesHistoryListener, companyMembersListener, companyCustomersListener, suppliersListener, storeExitRequestsListener, pendingSalesListener, settingsListener;
-            let storesRef, boutiquesRef, storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, shopTransferRequestsRef, salesHistoryRef, companyMembersRef, companyCustomersRef, suppliersRef, storeExitRequestsRef, pendingSalesRef, settingsRef;
+            let storesListener, boutiquesListener, categoriesListener, storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, shopTransferRequestsListener, salesHistoryListener, companyMembersListener, companyCustomersListener, suppliersListener, storeExitRequestsListener, pendingSalesListener, settingsListener;
+            let storesRef, boutiquesRef, categoriesRef, storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, shopTransferRequestsRef, salesHistoryRef, companyMembersRef, companyCustomersRef, suppliersRef, storeExitRequestsRef, pendingSalesRef, settingsRef;
 
             const accessModules = [
                 'Tableau de bord',
@@ -3036,6 +3066,15 @@
             const priceTableTbody = document.getElementById('price-table-tbody');
             const priceTableEmpty = document.getElementById('price-table-empty');
             const openPriceProductModalButton = document.getElementById('open-price-product-modal-button');
+            const categoryManagementCard = document.getElementById('category-management-card');
+            const categoryForm = document.getElementById('category-form');
+            const categoryNameInput = document.getElementById('category-name-input');
+            const categorySubmitButton = document.getElementById('category-submit-button');
+            const categoryCountBadge = document.getElementById('category-count-badge');
+            const categoryList = document.getElementById('category-list');
+            const categoryEmpty = document.getElementById('category-empty');
+            const categoryError = document.getElementById('category-error');
+            const productCategorySelect = document.getElementById('product-category');
 
             const storeProductsPlaceholder = document.getElementById('store-products-placeholder');
             const storeProductsTableContainer = document.getElementById('store-products-table-container');
@@ -6046,18 +6085,19 @@
 
             function updatePricingAccessState() {
                 const canEdit = canManagePricing();
-                const toggleInput = (input) => {
+                const toggleInput = (input, enabled = canEdit) => {
                     if (!input) return;
-                    input.disabled = !canEdit;
-                    input.classList.toggle('bg-gray-100', !canEdit);
-                    input.classList.toggle('text-gray-500', !canEdit);
-                    input.classList.toggle('cursor-not-allowed', !canEdit);
-                    input.title = canEdit ? '' : 'Réservé aux managers';
+                    input.disabled = !enabled;
+                    input.classList.toggle('bg-gray-100', !enabled);
+                    input.classList.toggle('text-gray-500', !enabled);
+                    input.classList.toggle('cursor-not-allowed', !enabled);
+                    input.title = enabled ? '' : 'Réservé aux managers';
                 };
                 toggleInput(productPurchaseCostInput);
                 toggleInput(productStorePriceInput);
                 toggleInput(productBoutiquePriceInput);
                 toggleInput(productCurrencyInput);
+                toggleInput(productCategorySelect, canManageCategories());
                 if (openPriceProductModalButton) openPriceProductModalButton.style.display = canEdit ? '' : 'none';
                 if (!canEdit) {
                     if (productPurchaseCostInput && !productPurchaseCostInput.value) productPurchaseCostInput.value = '0';
@@ -6068,6 +6108,7 @@
                 if (transferSourceInfo && !canEdit) {
                     transferSourceInfo.classList.add('hidden');
                 }
+                renderCategoryManagement();
             }
 
             function hasPermission(permission) {
@@ -6590,7 +6631,7 @@
                 const totals = {};
                 sales.forEach(sale => {
                     const shopItem = appData.shopStock?.[sale.shopProductId];
-                    const category = shopItem ? getShopItemCategory(shopItem) : 'Autres';
+                    const category = shopItem ? getShopItemCategory(shopItem) : formatCategoryLabel('');
                     totals[category] = (totals[category] || 0) + (sale.totalAmount || 0);
                 });
 
@@ -7894,7 +7935,8 @@
                     if (!isUnassigned && (!storeId || !allowedStoreIds.has(storeId))) return false;
                     const name = normalizeString(product.name || '');
                     const desc = normalizeString(product.description || '');
-                    return !normalizedSearch || name.includes(normalizedSearch) || desc.includes(normalizedSearch);
+                    const categoryName = normalizeString(getCategoryNameById(product.categoryId) || product.categoryName || product.category || product.type || '');
+                    return !normalizedSearch || name.includes(normalizedSearch) || desc.includes(normalizedSearch) || categoryName.includes(normalizedSearch);
                 }).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
                 if (!products.length) {
@@ -7915,10 +7957,22 @@
                     const storePrice = Number.isFinite(Number(product.storeSellingPrice)) ? Number(product.storeSellingPrice) : '';
                     const boutiquePrice = Number.isFinite(Number(product.boutiqueSellingPrice)) ? Number(product.boutiqueSellingPrice) : '';
                     const currency = (product.currency || 'CFA').toString().toUpperCase();
+                    const canEditCategory = canManageCategories();
+                    const categoryOptions = getCategoryOptionsHtml(product.categoryId || '');
+                    const categoryDisabled = canEditCategory ? '' : 'disabled';
+                    const categoryClasses = canEditCategory
+                        ? 'w-40 rounded-lg border border-gray-200 px-2 py-1 text-sm focus:ring-cyan-500 focus:border-cyan-500'
+                        : 'w-40 rounded-lg border border-gray-200 px-2 py-1 text-sm bg-gray-100 text-gray-400 cursor-not-allowed';
                     return `
                         <tr class="hover:bg-gray-50" data-price-row="${product.id}">
                             <td class="px-4 py-3 text-sm font-semibold text-gray-900">${product.name || ''}</td>
                             <td class="px-4 py-3 text-sm text-gray-500">${storeName}</td>
+                            <td class="px-4 py-3">
+                                <select data-price-field="categoryId" ${categoryDisabled}
+                                    class="${categoryClasses}">
+                                    ${categoryOptions}
+                                </select>
+                            </td>
                             <td class="px-4 py-3">
                                 <input type="number" min="0" step="0.01" value="${purchaseCost}"
                                     data-price-field="purchaseCost"
@@ -7964,6 +8018,8 @@
                 const boutiquePrice = Number(row.querySelector('[data-price-field="boutiqueSellingPrice"]')?.value);
                 const currencyInput = row.querySelector('[data-price-field="currency"]');
                 const currency = (currencyInput?.value || 'CFA').trim().toUpperCase();
+                const rawCategoryId = row.querySelector('[data-price-field="categoryId"]')?.value || '';
+                const categoryId = canManageCategories() ? rawCategoryId : (appData.storeProducts?.[productId]?.categoryId || '');
 
                 if (!Number.isFinite(purchaseCost) || purchaseCost < 0) {
                     showSuccessToast("Coût d'achat invalide.");
@@ -7992,12 +8048,14 @@
                 updates[`${dbBasePath}/storeProducts/${productId}/storeSellingPrice`] = storePrice;
                 updates[`${dbBasePath}/storeProducts/${productId}/boutiqueSellingPrice`] = boutiquePrice;
                 updates[`${dbBasePath}/storeProducts/${productId}/currency`] = currency;
+                updates[`${dbBasePath}/storeProducts/${productId}/categoryId`] = categoryId || null;
                 updates[`${dbBasePath}/storeProducts/${productId}/updatedAt`] = now;
 
                 const shopItems = Object.values(appData.shopStock || {}).filter(item => item.sourceProductId === productId);
                 shopItems.forEach(item => {
                     updates[`${dbBasePath}/shopStock/${item.id}/sellingPrice`] = boutiquePrice;
                     updates[`${dbBasePath}/shopStock/${item.id}/purchaseCost`] = purchaseCost;
+                    updates[`${dbBasePath}/shopStock/${item.id}/categoryId`] = categoryId || null;
                     updates[`${dbBasePath}/shopStock/${item.id}/updatedAt`] = now;
                 });
 
@@ -8636,6 +8694,15 @@
                 updateAllStats();
             }
 
+            function onCategoriesValue(snapshot) {
+                appData.categories = snapshot.val() || {};
+                renderCategoryManagement();
+                renderPriceTable();
+                renderSalesCategoryFilters();
+                renderSalesProducts(salesProductSearch ? salesProductSearch.value : '');
+                updateDashboardStats();
+            }
+
             function onStoreProductsValue(snapshot) {
                 appData.storeProducts = snapshot.val() || {};
                 populateStoreProductSelects();
@@ -8918,6 +8985,7 @@
                         boutiqueId,
                         boutiqueName,
                         name: request.productName || sourceProd.name,
+                        categoryId: request.categoryId || sourceProd.categoryId || null,
                         purchaseCost: purchaseCost,
                         sellingPrice,
                         quantityInShop: shopNew,
@@ -9090,6 +9158,9 @@
                 boutiquesRef = ref(db, `${dbBasePath}/boutiques`);
                 boutiquesListener = onValue(boutiquesRef, onBoutiquesValue);
 
+                categoriesRef = ref(db, `${dbBasePath}/categories`);
+                categoriesListener = onValue(categoriesRef, onCategoriesValue);
+
                 storeProductsRef = ref(db, `${dbBasePath}/storeProducts`);
                 storeProductsListener = onValue(storeProductsRef, onStoreProductsValue);
 
@@ -9132,6 +9203,7 @@
             function cleanupFirebaseListeners() {
                 if (storesListener && storesRef) off(storesRef, storesListener);
                 if (boutiquesListener && boutiquesRef) off(boutiquesRef, boutiquesListener);
+                if (categoriesListener && categoriesRef) off(categoriesRef, categoriesListener);
                 if (storeProductsListener && storeProductsRef) off(storeProductsRef, storeProductsListener);
                 if (storeMovementsListener && storeMovementsRef) off(storeMovementsRef, storeMovementsListener);
                 if (storeExitRequestsListener && storeExitRequestsRef) off(storeExitRequestsRef, storeExitRequestsListener);
@@ -9144,8 +9216,8 @@
                 if (companyMembersListener && companyMembersRef) off(companyMembersRef, companyMembersListener);
                 if (companyCustomersListener && companyCustomersRef) off(companyCustomersRef, companyCustomersListener);
                 if (suppliersListener && suppliersRef) off(suppliersRef, suppliersListener);
-                storesListener = null; boutiquesListener = null; storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; shopTransferRequestsListener = null; salesHistoryListener = null; pendingSalesListener = null; settingsListener = null; companyMembersListener = null; companyCustomersListener = null; suppliersListener = null;
-                appData.stores = {}; appData.boutiques = {}; appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.shopMovements = {}; appData.shopTransferRequests = {}; appData.salesHistory = {}; appData.customers = {}; appData.suppliers = {}; appData.storeExitRequests = {}; appData.pendingSales = {}; appData.settings = {};
+                storesListener = null; boutiquesListener = null; categoriesListener = null; storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; shopTransferRequestsListener = null; salesHistoryListener = null; pendingSalesListener = null; settingsListener = null; companyMembersListener = null; companyCustomersListener = null; suppliersListener = null;
+                appData.stores = {}; appData.boutiques = {}; appData.categories = {}; appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.shopMovements = {}; appData.shopTransferRequests = {}; appData.salesHistory = {}; appData.customers = {}; appData.suppliers = {}; appData.storeExitRequests = {}; appData.pendingSales = {}; appData.settings = {};
                 selectedCustomer = null;
                 customerOptionLookup = {};
                 isCustomerHistoryOpen = false;
@@ -9232,16 +9304,200 @@
                 }
             }
 
+            function canManageCategories() {
+                const role = getCurrentUserRole();
+                return role === 'admin' || role === 'manager';
+            }
+
+            function getCategoriesSorted() {
+                return Object.values(appData.categories || {}).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            }
+
+            function getCategoryNameById(categoryId) {
+                if (!categoryId) return '';
+                return appData.categories?.[categoryId]?.name || '';
+            }
+
             function formatCategoryLabel(value) {
                 const trimmed = (value || '').toString().trim();
-                if (!trimmed) return 'Autres';
+                if (!trimmed) return 'Sans catégorie';
                 return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
             }
 
+            function getCategoryOptionsHtml(selectedId = '') {
+                const categories = getCategoriesSorted();
+                const options = [`<option value="">Sans catégorie</option>`];
+                categories.forEach(category => {
+                    const selected = category.id === selectedId ? 'selected' : '';
+                    options.push(`<option value="${category.id}" ${selected}>${category.name}</option>`);
+                });
+                return options.join('');
+            }
+
+            function renderProductCategorySelect(selectedId = '') {
+                if (!productCategorySelect) return;
+                productCategorySelect.innerHTML = getCategoryOptionsHtml(selectedId);
+            }
+
+            function renderCategoryManagement() {
+                if (!categoryList || !categoryEmpty) return;
+                const categories = getCategoriesSorted();
+                if (categoryCountBadge) categoryCountBadge.textContent = categories.length;
+
+                if (!categories.length) {
+                    categoryEmpty.classList.remove('hidden');
+                    categoryList.innerHTML = '';
+                } else {
+                    categoryEmpty.classList.add('hidden');
+                    const canEdit = canManageCategories();
+                    categoryList.innerHTML = categories.map(category => {
+                        const actions = canEdit
+                            ? `
+                                <button type="button" data-category-edit="${category.id}"
+                                    class="text-xs font-semibold text-cyan-600 hover:text-cyan-700">Renommer</button>
+                                <button type="button" data-category-delete="${category.id}"
+                                    class="text-xs font-semibold text-red-600 hover:text-red-700">Supprimer</button>
+                            `
+                            : `<span class="text-xs text-gray-400">Lecture seule</span>`;
+                        return `
+                            <div class="flex items-center justify-between gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50/60">
+                                <span class="text-sm font-semibold text-gray-900">${category.name}</span>
+                                <div class="flex items-center gap-3">${actions}</div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+                if (categoryForm) categoryForm.classList.toggle('hidden', !canManageCategories());
+                renderProductCategorySelect(productCategorySelect?.value || '');
+            }
+
+            function clearCategoryError() {
+                if (categoryError) categoryError.classList.add('hidden');
+            }
+
+            function showCategoryError(message) {
+                if (!categoryError) return;
+                categoryError.textContent = message;
+                categoryError.classList.remove('hidden');
+            }
+
+            function findCategoryByName(name, excludeId = null) {
+                const normalized = normalizeString(name);
+                if (!normalized) return null;
+                return getCategoriesSorted().find(category => normalizeString(category.name) === normalized && category.id !== excludeId) || null;
+            }
+
+            async function createCategory(name) {
+                if (!dbBasePath || !currentUser) return;
+                if (!canManageCategories()) {
+                    showCategoryError("Accès refusé pour créer une catégorie.");
+                    return;
+                }
+                const trimmed = (name || '').toString().trim();
+                if (!trimmed) {
+                    showCategoryError("Le nom de la catégorie est requis.");
+                    return;
+                }
+                if (findCategoryByName(trimmed)) {
+                    showCategoryError("Cette catégorie existe déjà.");
+                    return;
+                }
+                const now = new Date().toISOString();
+                try {
+                    const newRef = push(ref(db, `${dbBasePath}/categories`));
+                    const payload = {
+                        id: newRef.key,
+                        name: trimmed,
+                        createdAt: now,
+                        updatedAt: now,
+                        createdBy: currentUser.uid || ''
+                    };
+                    await set(newRef, payload);
+                    clearCategoryError();
+                    showSuccessToast("Catégorie ajoutée.");
+                } catch (error) {
+                    console.error(error);
+                    showCategoryError("Impossible d'ajouter la catégorie.");
+                }
+            }
+
+            async function renameCategory(categoryId) {
+                if (!dbBasePath || !currentUser) return;
+                if (!canManageCategories()) {
+                    showCategoryError("Accès refusé pour modifier une catégorie.");
+                    return;
+                }
+                const category = appData.categories?.[categoryId];
+                if (!category) return;
+                const proposed = prompt("Nouveau nom de la catégorie :", category.name || '');
+                if (proposed === null) return;
+                const trimmed = proposed.trim();
+                if (!trimmed) {
+                    showCategoryError("Le nom de la catégorie est requis.");
+                    return;
+                }
+                if (findCategoryByName(trimmed, categoryId)) {
+                    showCategoryError("Une catégorie avec ce nom existe déjà.");
+                    return;
+                }
+                try {
+                    const updates = {};
+                    updates[`${dbBasePath}/categories/${categoryId}/name`] = trimmed;
+                    updates[`${dbBasePath}/categories/${categoryId}/updatedAt`] = new Date().toISOString();
+                    await update(ref(db), updates);
+                    clearCategoryError();
+                    showSuccessToast("Catégorie mise à jour.");
+                } catch (error) {
+                    console.error(error);
+                    showCategoryError("Impossible de modifier la catégorie.");
+                }
+            }
+
+            async function deleteCategory(categoryId) {
+                if (!dbBasePath || !currentUser) return;
+                if (!canManageCategories()) {
+                    showCategoryError("Accès refusé pour supprimer une catégorie.");
+                    return;
+                }
+                const category = appData.categories?.[categoryId];
+                if (!category) return;
+                if (!confirm(`Supprimer la catégorie "${category.name}" ?`)) return;
+                try {
+                    const updates = {};
+                    updates[`${dbBasePath}/categories/${categoryId}`] = null;
+                    Object.values(appData.storeProducts || {}).forEach(product => {
+                        if (product.categoryId === categoryId && product.id) {
+                            updates[`${dbBasePath}/storeProducts/${product.id}/categoryId`] = null;
+                        }
+                    });
+                    Object.values(appData.shopStock || {}).forEach(item => {
+                        if (item.categoryId === categoryId && item.id) {
+                            updates[`${dbBasePath}/shopStock/${item.id}/categoryId`] = null;
+                        }
+                    });
+                    await update(ref(db), updates);
+                    clearCategoryError();
+                    showSuccessToast("Catégorie supprimée.");
+                } catch (error) {
+                    console.error(error);
+                    showCategoryError("Impossible de supprimer la catégorie.");
+                }
+            }
+
             function getShopItemCategory(item) {
+                if (!item) return formatCategoryLabel('');
                 const source = appData.storeProducts?.[item.sourceProductId];
-                const raw = item.category || item.categoryName || item.type || source?.category || source?.categoryName || source?.type || '';
-                return formatCategoryLabel(raw || 'Autres');
+                const categoryId = item.categoryId || source?.categoryId || '';
+                const rawName = getCategoryNameById(categoryId)
+                    || item.categoryName
+                    || source?.categoryName
+                    || item.category
+                    || source?.category
+                    || item.type
+                    || source?.type
+                    || '';
+                return formatCategoryLabel(rawName);
             }
 
             function renderSalesCategoryFilters() {
@@ -11050,6 +11306,35 @@
                     if (productId) savePriceTableRow(productId);
                 });
             }
+            if (categoryForm) {
+                categoryForm.addEventListener('submit', async (event) => {
+                    event.preventDefault();
+                    clearCategoryError();
+                    const name = categoryNameInput?.value || '';
+                    await createCategory(name);
+                    if (categoryNameInput) categoryNameInput.value = '';
+                });
+            }
+            if (categoryNameInput) {
+                categoryNameInput.addEventListener('input', () => {
+                    clearCategoryError();
+                });
+            }
+            if (categoryList) {
+                categoryList.addEventListener('click', (event) => {
+                    const editButton = event.target.closest('[data-category-edit]');
+                    if (editButton?.dataset?.categoryEdit) {
+                        clearCategoryError();
+                        renameCategory(editButton.dataset.categoryEdit);
+                        return;
+                    }
+                    const deleteButton = event.target.closest('[data-category-delete]');
+                    if (deleteButton?.dataset?.categoryDelete) {
+                        clearCategoryError();
+                        deleteCategory(deleteButton.dataset.categoryDelete);
+                    }
+                });
+            }
             if (customerHistorySelect) {
                 customerHistorySelect.addEventListener('change', (event) => {
                     selectedCustomerHistoryKey = event.target.value || null;
@@ -11471,6 +11756,8 @@
                 const storePrice = parseFloat(productStorePriceInput?.value);
                 const boutiquePrice = parseFloat(productBoutiquePriceInput?.value);
                 const currency = (productCurrencyInput?.value || 'CFA').trim().toUpperCase();
+                const rawCategoryId = productCategorySelect?.value || '';
+                const categoryId = canManageCategories() ? rawCategoryId : '';
                 if (!name) {
                     showSuccessToast("Le nom du produit est requis.");
                     return;
@@ -11508,11 +11795,13 @@
                         updates[`${dbBasePath}/storeProducts/${existingProduct.id}/storeSellingPrice`] = storePrice;
                         updates[`${dbBasePath}/storeProducts/${existingProduct.id}/boutiqueSellingPrice`] = boutiquePrice;
                         updates[`${dbBasePath}/storeProducts/${existingProduct.id}/currency`] = currency;
+                        updates[`${dbBasePath}/storeProducts/${existingProduct.id}/categoryId`] = categoryId || null;
                         updates[`${dbBasePath}/storeProducts/${existingProduct.id}/updatedAt`] = now;
                         const shopItems = Object.values(appData.shopStock || {}).filter(item => item.sourceProductId === existingProduct.id);
                         shopItems.forEach(item => {
                             updates[`${dbBasePath}/shopStock/${item.id}/sellingPrice`] = boutiquePrice;
                             updates[`${dbBasePath}/shopStock/${item.id}/purchaseCost`] = purchaseCost;
+                            updates[`${dbBasePath}/shopStock/${item.id}/categoryId`] = categoryId || null;
                             updates[`${dbBasePath}/shopStock/${item.id}/updatedAt`] = now;
                         });
                         await update(ref(db), updates);
@@ -11527,6 +11816,7 @@
                             storeSellingPrice: storePrice,
                             boutiqueSellingPrice: boutiquePrice,
                             currency,
+                            categoryId: categoryId || null,
                             quantityInStore: 0,
                             createdAt: new Date().toISOString(),
                             storeId: UNASSIGNED_STORE_ID
@@ -11866,6 +12156,7 @@
                             boutiqueName: targetBoutiqueName,
                             sourceProductId: sourceId,
                             productName: sourceProd.name,
+                            categoryId: sourceProd.categoryId || null,
                             purchaseCost: sourceProd.purchaseCost,
                             sellingPrice: price,
                             quantity: qty,
@@ -11958,6 +12249,7 @@
                             boutiqueName: getBoutiqueName(targetBoutiqueId),
                             sourceProductId: sourceProd.id,
                             productName: shopProd.name,
+                            categoryId: sourceProd.categoryId || shopProd.categoryId || null,
                             purchaseCost: sourceProd.purchaseCost,
                             sellingPrice: Number.isFinite(Number(shopProd.sellingPrice))
                                 ? Number(shopProd.sellingPrice)
@@ -12051,6 +12343,7 @@
                 }
                 newProductModal.classList.remove('hidden');
                 newProductForm.reset();
+                renderProductCategorySelect('');
                 updatePricingAccessState();
             });
             if (openEntryModalButton) openEntryModalButton.addEventListener('click', () => openEntryModalForProduct());
