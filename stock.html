@@ -250,6 +250,11 @@
                     <div data-icon="dollar" class="w-5 h-5"></div>
                     <span class="sidebar-text">Tableau des prix</span>
                 </button>
+                <button data-page="Fournisseurs"
+                    class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
+                    <div data-icon="truck" class="w-5 h-5"></div>
+                    <span class="sidebar-text">Fournisseurs</span>
+                </button>
                 <button data-page="Mouvements Magasin"
                     class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
                     <div data-icon="clock" class="w-5 h-5"></div>
@@ -1501,6 +1506,157 @@
                 </div>
             </div>
 
+            <!-- Page: Fournisseurs -->
+            <div id="page-Fournisseurs" class="page-content p-4 md:p-8 hidden">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-800">Fournisseurs</h1>
+                        <p class="text-sm text-gray-500 mt-1">Suivi des dettes, factures d'entrée et paiements.</p>
+                    </div>
+                    <button id="open-supplier-modal-from-page"
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 text-white font-semibold shadow hover:bg-emerald-700">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Ajouter un fournisseur
+                    </button>
+                </div>
+
+                <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                        <p class="text-xs uppercase text-gray-400">Dette totale</p>
+                        <p id="suppliers-total-debt" class="text-2xl font-semibold text-gray-900">0 CFA</p>
+                    </div>
+                    <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                        <p class="text-xs uppercase text-gray-400">Factures ouvertes</p>
+                        <p id="suppliers-open-invoices" class="text-2xl font-semibold text-gray-900">0</p>
+                    </div>
+                    <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                        <p class="text-xs uppercase text-gray-400">Dernier paiement</p>
+                        <p id="suppliers-last-payment" class="text-sm font-semibold text-gray-900">—</p>
+                    </div>
+                </div>
+
+                <div class="mt-6 grid grid-cols-1 xl:grid-cols-[360px_1fr] gap-6">
+                    <div class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-lg font-semibold text-gray-900">Liste fournisseurs</h2>
+                            <span id="suppliers-count" class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">0</span>
+                        </div>
+                        <div class="mt-4">
+                            <input type="text" id="suppliers-search-input" placeholder="Rechercher un fournisseur..."
+                                class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-emerald-400 focus:border-emerald-400" />
+                        </div>
+                        <div id="suppliers-empty" class="mt-6 text-sm text-gray-400 hidden">Aucun fournisseur.</div>
+                        <div id="suppliers-list" class="mt-4 space-y-2 max-h-[520px] overflow-y-auto pr-1"></div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+                        <div id="supplier-detail-empty" class="flex flex-col items-center justify-center text-center text-gray-400 h-64">
+                            <p>Sélectionnez un fournisseur pour voir le détail.</p>
+                        </div>
+                        <div id="supplier-detail" class="hidden space-y-6">
+                            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                                <div>
+                                    <h2 id="supplier-detail-title" class="text-2xl font-bold text-gray-900">—</h2>
+                                    <p id="supplier-detail-meta" class="text-sm text-gray-500 mt-1">—</p>
+                                </div>
+                                <button id="open-supplier-payment-modal"
+                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700">
+                                    Enregistrer un paiement
+                                </button>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                                    <p class="text-xs uppercase text-gray-400">Dette fournisseur</p>
+                                    <p id="supplier-detail-debt" class="text-2xl font-semibold text-gray-900">0 CFA</p>
+                                </div>
+                                <div class="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                                    <p class="text-xs uppercase text-gray-400">Devise</p>
+                                    <p id="supplier-detail-currency" class="text-sm font-semibold text-gray-900">CFA</p>
+                                </div>
+                                <div class="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                                    <p class="text-xs uppercase text-gray-400">Factures ouvertes</p>
+                                    <p id="supplier-detail-open" class="text-2xl font-semibold text-gray-900">0</p>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-sm font-semibold text-gray-800">Factures d'entrée</h3>
+                                    <span id="supplier-invoices-count" class="text-xs font-semibold text-gray-500">0</span>
+                                </div>
+                                <div id="supplier-invoices-empty"
+                                    class="mt-3 text-sm text-gray-400 border border-dashed border-gray-200 rounded-xl p-4 hidden">Aucune facture.</div>
+                                <div id="supplier-invoices-table"
+                                    class="mt-3 overflow-x-auto rounded-xl border border-gray-200 hidden">
+                                    <table class="min-w-full bg-white divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qté</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payé</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="supplier-invoices-tbody" class="divide-y divide-gray-200"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-sm font-semibold text-gray-800">Paiements</h3>
+                                    <span id="supplier-payments-count" class="text-xs font-semibold text-gray-500">0</span>
+                                </div>
+                                <div id="supplier-payments-empty"
+                                    class="mt-3 text-sm text-gray-400 border border-dashed border-gray-200 rounded-xl p-4 hidden">Aucun paiement.</div>
+                                <div id="supplier-payments-table"
+                                    class="mt-3 overflow-x-auto rounded-xl border border-gray-200 hidden">
+                                    <table class="min-w-full bg-white divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Facture</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mode</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Signature</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="supplier-payments-tbody" class="divide-y divide-gray-200"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-sm font-semibold text-gray-800">Produits liés</h3>
+                                    <span id="supplier-products-count" class="text-xs font-semibold text-gray-500">0</span>
+                                </div>
+                                <div id="supplier-products-empty"
+                                    class="mt-3 text-sm text-gray-400 border border-dashed border-gray-200 rounded-xl p-4 hidden">Aucun produit lié.</div>
+                                <div id="supplier-products-table"
+                                    class="mt-3 overflow-x-auto rounded-xl border border-gray-200 hidden">
+                                    <table class="min-w-full bg-white divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock magasin</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dernière entrée</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="supplier-products-tbody" class="divide-y divide-gray-200"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
 
             <!-- Page: Statistiques -->
             <div id="page-Statistiques" class="page-content p-4 md:p-8 hidden">
@@ -2381,6 +2537,19 @@
                         <input type="email" id="supplier-email" placeholder="contact@fournisseur.com"
                             class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400">
                     </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="supplier-currency" class="block text-sm font-medium text-gray-700">Devise *</label>
+                            <input type="text" id="supplier-currency" value="CFA" maxlength="6"
+                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg uppercase tracking-wider focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400">
+                        </div>
+                        <div>
+                            <label for="supplier-currency-rate" class="block text-sm font-medium text-gray-700">Taux de conversion</label>
+                            <input type="number" id="supplier-currency-rate" value="1" min="0" step="0.0001"
+                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400">
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500">1 devise fournisseur = X CFA. Laissez 1 si CFA.</p>
                     <p id="supplier-error" class="text-red-500 text-sm mt-2 hidden"></p>
                     <div class="pt-4 border-t border-gray-100 flex items-center gap-3">
                         <button type="button" id="supplier-cancel-button"
@@ -2392,6 +2561,77 @@
                             Enregistrer
                         </button>
                     </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Paiement fournisseur -->
+    <div id="supplier-payment-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 m-4">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800">Enregistrer un paiement fournisseur</h2>
+                <button id="close-supplier-payment-modal-button" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form id="supplier-payment-form" class="space-y-4">
+                <div>
+                    <label class="text-sm font-medium text-gray-600" for="supplier-payment-invoice">Facture *</label>
+                    <select id="supplier-payment-invoice"
+                        class="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-emerald-400 focus:border-emerald-400"
+                        required>
+                        <option value="">Sélectionnez une facture</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-sm font-medium text-gray-600" for="supplier-payment-amount">Montant *</label>
+                        <input type="number" id="supplier-payment-amount" min="0" step="0.01"
+                            class="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-emerald-400 focus:border-emerald-400"
+                            required />
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-600" for="supplier-payment-date">Date *</label>
+                        <input type="date" id="supplier-payment-date"
+                            class="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-emerald-400 focus:border-emerald-400"
+                            required />
+                    </div>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-600" for="supplier-payment-method">Mode de paiement</label>
+                    <select id="supplier-payment-method"
+                        class="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-emerald-400 focus:border-emerald-400">
+                        <option value="Virement">Virement</option>
+                        <option value="Cash">Cash</option>
+                        <option value="Chèque">Chèque</option>
+                        <option value="Mobile Money">Mobile Money</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-600" for="supplier-payment-note">Note</label>
+                    <textarea id="supplier-payment-note" rows="2"
+                        class="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-emerald-400 focus:border-emerald-400"></textarea>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-600">Signature fournisseur *</label>
+                    <div class="mt-2 rounded-xl border border-gray-200 bg-gray-50 p-3">
+                        <canvas id="supplier-payment-signature" class="w-full h-40 bg-white rounded-lg" style="touch-action: none;"></canvas>
+                        <div class="mt-2 flex items-center justify-between text-xs text-gray-500">
+                            <span>Signez dans la zone ci-dessus.</span>
+                            <button type="button" id="supplier-payment-clear-signature"
+                                class="text-emerald-600 font-semibold hover:text-emerald-700">Effacer</button>
+                        </div>
+                    </div>
+                </div>
+                <p id="supplier-payment-error" class="text-sm text-red-500 hidden"></p>
+                <div class="pt-2 flex items-center gap-3">
+                    <button type="button" id="supplier-payment-cancel-button"
+                        class="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200">Annuler</button>
+                    <button type="submit" id="supplier-payment-submit-button"
+                        class="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700">Enregistrer</button>
                 </div>
             </form>
         </div>
@@ -2875,6 +3115,7 @@
                 box: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>`,
                 stats: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>`,
                 dollar: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v18m0-14c-2.209 0-4 1.343-4 3s1.791 3 4 3 4 1.343 4 3-1.791 3-4 3" /></svg>`,
+                truck: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 104 0M1 17a2 2 0 104 0m4-7V3H1v11h2m6 0H5m10-4h4l3 3v4h-2m-5 0h-4" /></svg>`,
                 settings: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>`,
                 logout: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>`,
                 chartBar: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-4m3 4v-2m3 2v-6m3 2V7" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 20h14" /></svg>`,
@@ -2937,7 +3178,7 @@
             let currentUserData = null;
             let dbBasePath = '';
 
-            const appData = { stores: {}, boutiques: {}, categories: {}, storeProducts: {}, storeMovements: {}, shopStock: {}, shopMovements: {}, shopTransferRequests: {}, salesHistory: {}, customers: {}, suppliers: {}, storeExitRequests: {}, pendingSales: {}, settings: {} };
+            const appData = { stores: {}, boutiques: {}, categories: {}, storeProducts: {}, storeMovements: {}, shopStock: {}, shopMovements: {}, shopTransferRequests: {}, salesHistory: {}, customers: {}, suppliers: {}, supplierInvoices: {}, supplierPayments: {}, storeExitRequests: {}, pendingSales: {}, settings: {} };
             let isSidebarOpen = false;
             let isSidebarCollapsed = false;
             let isCodeLoginMode = false;
@@ -2946,6 +3187,7 @@
             const MAX_STORES = 10;
             const DEFAULT_STORE_NAME = 'Magasin principal';
             const DEFAULT_BOUTIQUE_NAME = 'Boutique principale';
+            const DEFAULT_SUPPLIER_CURRENCY = 'CFA';
             const UNASSIGNED_STORE_ID = 'unassigned';
 
             const EXIT_STATUS_PENDING = 'en attente de validation';
@@ -2956,8 +3198,8 @@
             const SALE_SOURCE_MIXED = 'mixed';
 
 
-            let storesListener, boutiquesListener, categoriesListener, storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, shopTransferRequestsListener, salesHistoryListener, companyMembersListener, companyCustomersListener, suppliersListener, storeExitRequestsListener, pendingSalesListener, settingsListener;
-            let storesRef, boutiquesRef, categoriesRef, storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, shopTransferRequestsRef, salesHistoryRef, companyMembersRef, companyCustomersRef, suppliersRef, storeExitRequestsRef, pendingSalesRef, settingsRef;
+            let storesListener, boutiquesListener, categoriesListener, storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, shopTransferRequestsListener, salesHistoryListener, companyMembersListener, companyCustomersListener, suppliersListener, supplierInvoicesListener, supplierPaymentsListener, storeExitRequestsListener, pendingSalesListener, settingsListener;
+            let storesRef, boutiquesRef, categoriesRef, storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, shopTransferRequestsRef, salesHistoryRef, companyMembersRef, companyCustomersRef, suppliersRef, supplierInvoicesRef, supplierPaymentsRef, storeExitRequestsRef, pendingSalesRef, settingsRef;
 
             const accessModules = [
                 'Tableau de bord',
@@ -2967,6 +3209,7 @@
                 'Mon Magasin',
                 'Tableau des prix',
                 'Mouvements Magasin',
+                'Fournisseurs',
                 'Statistiques',
                 'Paramètres',
                 'Supprimer Stock Boutique',
@@ -2989,6 +3232,8 @@
             let defaultBoutiqueId = null;
             let boutiqueMigrationDone = false;
             let activeAccessScopeMemberId = null;
+            let supplierSearchQuery = '';
+            let activeSupplierId = null;
 
             // Cart state
             let cartItems = [];
@@ -3239,10 +3484,53 @@
             const supplierNameInput = document.getElementById('supplier-name');
             const supplierPhoneInput = document.getElementById('supplier-phone');
             const supplierEmailInput = document.getElementById('supplier-email');
+            const supplierCurrencyInput = document.getElementById('supplier-currency');
+            const supplierCurrencyRateInput = document.getElementById('supplier-currency-rate');
             const supplierError = document.getElementById('supplier-error');
             const supplierSubmitButton = document.getElementById('supplier-submit-button');
             const supplierCancelButton = document.getElementById('supplier-cancel-button');
             const closeSupplierModalButton = document.getElementById('close-supplier-modal-button');
+            const openSupplierModalFromPage = document.getElementById('open-supplier-modal-from-page');
+            const suppliersSearchInput = document.getElementById('suppliers-search-input');
+            const suppliersList = document.getElementById('suppliers-list');
+            const suppliersEmpty = document.getElementById('suppliers-empty');
+            const suppliersCount = document.getElementById('suppliers-count');
+            const suppliersTotalDebt = document.getElementById('suppliers-total-debt');
+            const suppliersOpenInvoices = document.getElementById('suppliers-open-invoices');
+            const suppliersLastPayment = document.getElementById('suppliers-last-payment');
+            const supplierDetailEmpty = document.getElementById('supplier-detail-empty');
+            const supplierDetail = document.getElementById('supplier-detail');
+            const supplierDetailTitle = document.getElementById('supplier-detail-title');
+            const supplierDetailMeta = document.getElementById('supplier-detail-meta');
+            const supplierDetailDebt = document.getElementById('supplier-detail-debt');
+            const supplierDetailCurrency = document.getElementById('supplier-detail-currency');
+            const supplierDetailOpen = document.getElementById('supplier-detail-open');
+            const supplierInvoicesCount = document.getElementById('supplier-invoices-count');
+            const supplierInvoicesEmpty = document.getElementById('supplier-invoices-empty');
+            const supplierInvoicesTable = document.getElementById('supplier-invoices-table');
+            const supplierInvoicesTbody = document.getElementById('supplier-invoices-tbody');
+            const supplierPaymentsCount = document.getElementById('supplier-payments-count');
+            const supplierPaymentsEmpty = document.getElementById('supplier-payments-empty');
+            const supplierPaymentsTable = document.getElementById('supplier-payments-table');
+            const supplierPaymentsTbody = document.getElementById('supplier-payments-tbody');
+            const supplierProductsCount = document.getElementById('supplier-products-count');
+            const supplierProductsEmpty = document.getElementById('supplier-products-empty');
+            const supplierProductsTable = document.getElementById('supplier-products-table');
+            const supplierProductsTbody = document.getElementById('supplier-products-tbody');
+            const openSupplierPaymentModal = document.getElementById('open-supplier-payment-modal');
+            const supplierPaymentModal = document.getElementById('supplier-payment-modal');
+            const closeSupplierPaymentModalButton = document.getElementById('close-supplier-payment-modal-button');
+            const supplierPaymentForm = document.getElementById('supplier-payment-form');
+            const supplierPaymentInvoiceSelect = document.getElementById('supplier-payment-invoice');
+            const supplierPaymentAmountInput = document.getElementById('supplier-payment-amount');
+            const supplierPaymentDateInput = document.getElementById('supplier-payment-date');
+            const supplierPaymentMethodSelect = document.getElementById('supplier-payment-method');
+            const supplierPaymentNoteInput = document.getElementById('supplier-payment-note');
+            const supplierPaymentSignature = document.getElementById('supplier-payment-signature');
+            const supplierPaymentClearSignature = document.getElementById('supplier-payment-clear-signature');
+            const supplierPaymentError = document.getElementById('supplier-payment-error');
+            const supplierPaymentCancelButton = document.getElementById('supplier-payment-cancel-button');
+            const supplierPaymentSubmitButton = document.getElementById('supplier-payment-submit-button');
 
             const openExitModalButton = document.getElementById('open-exit-modal-button');
             const exitModal = document.getElementById('exit-modal');
@@ -3702,6 +3990,342 @@
                 if (currentValue && suppliers.some(supplier => supplier.id === currentValue)) {
                     entrySupplierSelect.value = currentValue;
                 }
+            }
+
+            function getSupplierById(supplierId) {
+                if (!supplierId) return null;
+                return appData.suppliers?.[supplierId] || null;
+            }
+
+            function getSupplierCurrency(supplier) {
+                const code = supplier?.currency || DEFAULT_SUPPLIER_CURRENCY;
+                return code.toUpperCase();
+            }
+
+            function getSupplierConversionRate(supplier) {
+                const rate = Number(supplier?.conversionRate);
+                if (!Number.isFinite(rate) || rate <= 0) return 1;
+                return rate;
+            }
+
+            function getSupplierInvoices(supplierId) {
+                return Object.values(appData.supplierInvoices || {})
+                    .filter(inv => inv.supplierId === supplierId)
+                    .sort((a, b) => new Date(b.date || b.createdAt || 0) - new Date(a.date || a.createdAt || 0));
+            }
+
+            function getSupplierPayments(supplierId) {
+                return Object.values(appData.supplierPayments || {})
+                    .filter(payment => payment.supplierId === supplierId)
+                    .sort((a, b) => new Date(b.date || b.createdAt || 0) - new Date(a.date || a.createdAt || 0));
+            }
+
+            function getSupplierInvoiceLabel(invoice) {
+                if (!invoice?.id) return 'Facture';
+                return `FAC-${invoice.id.slice(-6).toUpperCase()}`;
+            }
+
+            function getInvoiceBalance(invoice) {
+                const total = Number(invoice?.total || 0);
+                const paid = Number(invoice?.paidAmount || 0);
+                return roundAmount(Math.max(total - paid, 0));
+            }
+
+            function calculateSupplierDebt(supplierId) {
+                const invoices = getSupplierInvoices(supplierId);
+                const payments = getSupplierPayments(supplierId);
+                const totalInvoices = invoices.reduce((sum, inv) => sum + Number(inv.total || 0), 0);
+                const totalPayments = payments.reduce((sum, pay) => sum + Number(pay.amount || 0), 0);
+                return roundAmount(Math.max(totalInvoices - totalPayments, 0));
+            }
+
+            function calculateSupplierDebtBase(supplierId) {
+                const supplier = getSupplierById(supplierId);
+                const rate = getSupplierConversionRate(supplier);
+                const currency = getSupplierCurrency(supplier);
+                const debt = calculateSupplierDebt(supplierId);
+                if (currency === DEFAULT_SUPPLIER_CURRENCY) return debt;
+                return roundAmount(debt * rate);
+            }
+
+            function getSupplierOpenInvoiceCount(supplierId) {
+                return getSupplierInvoices(supplierId).filter(inv => (inv.status || 'open') !== 'paid').length;
+            }
+
+            function renderSuppliersList() {
+                if (!suppliersList) return;
+                const suppliers = getSuppliersSorted();
+                const filtered = suppliers.filter(supplier => {
+                    if (!supplierSearchQuery) return true;
+                    const term = supplierSearchQuery.toLowerCase();
+                    return (supplier.name || '').toLowerCase().includes(term)
+                        || (supplier.email || '').toLowerCase().includes(term)
+                        || (supplier.phone || '').toLowerCase().includes(term);
+                });
+
+                if (suppliersCount) suppliersCount.textContent = `${suppliers.length}`;
+                if (suppliersEmpty) suppliersEmpty.classList.toggle('hidden', filtered.length > 0);
+                if (!filtered.length) {
+                    suppliersList.innerHTML = '';
+                    activeSupplierId = null;
+                    renderSupplierDetail();
+                } else {
+                    suppliersList.innerHTML = filtered.map(supplier => {
+                        const debt = calculateSupplierDebt(supplier.id);
+                        const currency = getSupplierCurrency(supplier);
+                        const openCount = getSupplierOpenInvoiceCount(supplier.id);
+                        const isActive = activeSupplierId === supplier.id;
+                        return `
+                            <button type="button" data-supplier-id="${supplier.id}"
+                                class="w-full text-left p-3 rounded-xl border ${isActive ? 'border-emerald-300 bg-emerald-50/40' : 'border-gray-200 hover:bg-gray-50'} transition">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p class="text-sm font-semibold text-gray-900">${supplier.name || 'Fournisseur'}</p>
+                                        <p class="text-xs text-gray-400">${supplier.email || supplier.phone || '—'}</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-xs text-gray-500">Dette</p>
+                                        <p class="text-sm font-semibold text-gray-900">${formatCurrency(debt, currency)}</p>
+                                        <p class="text-[11px] text-gray-400 mt-1">${openCount} facture(s)</p>
+                                    </div>
+                                </div>
+                            </button>
+                        `;
+                    }).join('');
+                }
+
+                if (!activeSupplierId && filtered.length) {
+                    activeSupplierId = filtered[0].id;
+                    renderSupplierDetail();
+                }
+
+                const totalDebtBase = suppliers.reduce((sum, supplier) => sum + calculateSupplierDebtBase(supplier.id), 0);
+                const openInvoices = suppliers.reduce((sum, supplier) => sum + getSupplierOpenInvoiceCount(supplier.id), 0);
+                const lastPayment = Object.values(appData.supplierPayments || {})
+                    .sort((a, b) => new Date(b.date || b.createdAt || 0) - new Date(a.date || a.createdAt || 0))[0];
+
+                if (suppliersTotalDebt) suppliersTotalDebt.textContent = formatCurrency(totalDebtBase, DEFAULT_SUPPLIER_CURRENCY);
+                if (suppliersOpenInvoices) suppliersOpenInvoices.textContent = `${openInvoices}`;
+                if (suppliersLastPayment) {
+                    if (!lastPayment) {
+                        suppliersLastPayment.textContent = '—';
+                    } else {
+                        const supplier = getSupplierById(lastPayment.supplierId);
+                        const dateLabel = formatDateOnly(lastPayment.date || lastPayment.createdAt || '');
+                        suppliersLastPayment.textContent = `${dateLabel} · ${supplier?.name || 'Fournisseur'}`;
+                    }
+                }
+            }
+
+            function renderSupplierDetail() {
+                if (!supplierDetail || !supplierDetailEmpty) return;
+                const supplier = getSupplierById(activeSupplierId);
+                if (!supplier) {
+                    supplierDetail.classList.add('hidden');
+                    supplierDetailEmpty.classList.remove('hidden');
+                    return;
+                }
+
+                supplierDetail.classList.remove('hidden');
+                supplierDetailEmpty.classList.add('hidden');
+
+                const currency = getSupplierCurrency(supplier);
+                const invoices = getSupplierInvoices(supplier.id);
+                const payments = getSupplierPayments(supplier.id);
+                const debt = calculateSupplierDebt(supplier.id);
+                const openCount = invoices.filter(inv => (inv.status || 'open') !== 'paid').length;
+
+                if (supplierDetailTitle) supplierDetailTitle.textContent = supplier.name || 'Fournisseur';
+                if (supplierDetailMeta) {
+                    const parts = [supplier.email, supplier.phone].filter(Boolean);
+                    const rate = getSupplierConversionRate(supplier);
+                    const currencyInfo = getSupplierCurrency(supplier) !== DEFAULT_SUPPLIER_CURRENCY
+                        ? `Taux: 1 ${getSupplierCurrency(supplier)} = ${rate} ${DEFAULT_SUPPLIER_CURRENCY}`
+                        : `Devise: ${getSupplierCurrency(supplier)}`;
+                    if (parts.length) parts.push(currencyInfo);
+                    supplierDetailMeta.textContent = parts.length ? parts.join(' · ') : currencyInfo;
+                }
+                if (supplierDetailDebt) supplierDetailDebt.textContent = formatCurrency(debt, currency);
+                if (supplierDetailCurrency) supplierDetailCurrency.textContent = currency;
+                if (supplierDetailOpen) supplierDetailOpen.textContent = `${openCount}`;
+                if (openSupplierPaymentModal) {
+                    const canPay = openCount > 0;
+                    openSupplierPaymentModal.disabled = !canPay;
+                    openSupplierPaymentModal.classList.toggle('opacity-60', !canPay);
+                    openSupplierPaymentModal.classList.toggle('cursor-not-allowed', !canPay);
+                }
+
+                if (supplierInvoicesCount) supplierInvoicesCount.textContent = `${invoices.length}`;
+                if (supplierInvoicesEmpty) supplierInvoicesEmpty.classList.toggle('hidden', invoices.length > 0);
+                if (supplierInvoicesTable) supplierInvoicesTable.classList.toggle('hidden', invoices.length === 0);
+                if (supplierInvoicesTbody) {
+                    supplierInvoicesTbody.innerHTML = invoices.map(inv => {
+                        const invCurrency = inv.currency || currency;
+                        const status = inv.status || 'open';
+                        const statusLabel = status === 'paid' ? 'Payée' : status === 'partial' ? 'Partielle' : 'Ouverte';
+                        const badgeClass = status === 'paid'
+                            ? 'bg-emerald-50 text-emerald-600'
+                            : status === 'partial'
+                                ? 'bg-amber-50 text-amber-600'
+                                : 'bg-gray-100 text-gray-600';
+                        return `
+                            <tr>
+                                <td class="px-4 py-3 text-sm text-gray-500">${formatDateOnly(inv.date || inv.createdAt || '')}</td>
+                                <td class="px-4 py-3 text-sm text-gray-700">${inv.productName || '—'}</td>
+                                <td class="px-4 py-3 text-sm text-gray-700">${Number(inv.quantity || 0)}</td>
+                                <td class="px-4 py-3 text-sm text-gray-700">${formatCurrency(inv.total || 0, invCurrency)}</td>
+                                <td class="px-4 py-3 text-sm text-gray-700">${formatCurrency(inv.paidAmount || 0, invCurrency)}</td>
+                                <td class="px-4 py-3">
+                                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${badgeClass}">${statusLabel}</span>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+
+                if (supplierPaymentsCount) supplierPaymentsCount.textContent = `${payments.length}`;
+                if (supplierPaymentsEmpty) supplierPaymentsEmpty.classList.toggle('hidden', payments.length > 0);
+                if (supplierPaymentsTable) supplierPaymentsTable.classList.toggle('hidden', payments.length === 0);
+                if (supplierPaymentsTbody) {
+                    supplierPaymentsTbody.innerHTML = payments.map(payment => {
+                        const invoice = appData.supplierInvoices?.[payment.invoiceId];
+                        const invoiceLabel = invoice ? getSupplierInvoiceLabel(invoice) : '—';
+                        const payCurrency = payment.currency || currency;
+                        const signatureLabel = payment.signatureDataUrl ? 'Voir' : '—';
+                        return `
+                            <tr>
+                                <td class="px-4 py-3 text-sm text-gray-500">${formatDateOnly(payment.date || payment.createdAt || '')}</td>
+                                <td class="px-4 py-3 text-sm text-gray-700">${invoiceLabel}</td>
+                                <td class="px-4 py-3 text-sm text-gray-700">${formatCurrency(payment.amount || 0, payCurrency)}</td>
+                                <td class="px-4 py-3 text-sm text-gray-500">${payment.method || '—'}</td>
+                                <td class="px-4 py-3 text-sm">
+                                    ${payment.signatureDataUrl ? `<button type="button" data-signature="${payment.id}" class="text-emerald-600 font-semibold hover:text-emerald-700">Voir</button>` : signatureLabel}
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+
+                const products = Object.values(appData.storeProducts || {}).filter(prod => prod.supplierId === supplier.id);
+                if (supplierProductsCount) supplierProductsCount.textContent = `${products.length}`;
+                if (supplierProductsEmpty) supplierProductsEmpty.classList.toggle('hidden', products.length > 0);
+                if (supplierProductsTable) supplierProductsTable.classList.toggle('hidden', products.length === 0);
+                if (supplierProductsTbody) {
+                    supplierProductsTbody.innerHTML = products.map(prod => {
+                        const lastMove = Object.values(appData.storeMovements || {})
+                            .filter(move => move.productId === prod.id && move.type === 'Entrée')
+                            .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0))[0];
+                        return `
+                            <tr>
+                                <td class="px-4 py-3 text-sm text-gray-700">${prod.name || '—'}</td>
+                                <td class="px-4 py-3 text-sm text-gray-700">${Number(prod.quantityInStore || 0)}</td>
+                                <td class="px-4 py-3 text-sm text-gray-500">${lastMove ? formatDateOnly(lastMove.date || '') : '—'}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            }
+
+            let supplierSignatureCtx = null;
+            let supplierSignatureDrawing = false;
+            let supplierSignatureHasInk = false;
+
+            function setupSupplierSignatureCanvas() {
+                if (!supplierPaymentSignature) return;
+                const rect = supplierPaymentSignature.getBoundingClientRect();
+                const ratio = window.devicePixelRatio || 1;
+                supplierPaymentSignature.width = rect.width * ratio;
+                supplierPaymentSignature.height = rect.height * ratio;
+                supplierSignatureCtx = supplierPaymentSignature.getContext('2d');
+                supplierSignatureCtx.setTransform(1, 0, 0, 1, 0, 0);
+                supplierSignatureCtx.scale(ratio, ratio);
+                supplierSignatureCtx.lineWidth = 2;
+                supplierSignatureCtx.lineCap = 'round';
+                supplierSignatureCtx.strokeStyle = '#111827';
+                supplierSignatureHasInk = false;
+            }
+
+            function clearSupplierSignature() {
+                if (!supplierSignatureCtx || !supplierPaymentSignature) return;
+                supplierSignatureCtx.clearRect(0, 0, supplierPaymentSignature.width, supplierPaymentSignature.height);
+                supplierSignatureHasInk = false;
+            }
+
+            function attachSupplierSignatureEvents() {
+                if (!supplierPaymentSignature) return;
+                const getPoint = (event) => {
+                    const rect = supplierPaymentSignature.getBoundingClientRect();
+                    return {
+                        x: event.clientX - rect.left,
+                        y: event.clientY - rect.top
+                    };
+                };
+                supplierPaymentSignature.addEventListener('pointerdown', (event) => {
+                    if (!supplierSignatureCtx) setupSupplierSignatureCanvas();
+                    supplierSignatureDrawing = true;
+                    const point = getPoint(event);
+                    supplierSignatureCtx.beginPath();
+                    supplierSignatureCtx.moveTo(point.x, point.y);
+                });
+                supplierPaymentSignature.addEventListener('pointermove', (event) => {
+                    if (!supplierSignatureDrawing) return;
+                    const point = getPoint(event);
+                    supplierSignatureCtx.lineTo(point.x, point.y);
+                    supplierSignatureCtx.stroke();
+                    supplierSignatureHasInk = true;
+                });
+                ['pointerup', 'pointerleave', 'pointercancel'].forEach(evt => {
+                    supplierPaymentSignature.addEventListener(evt, () => {
+                        supplierSignatureDrawing = false;
+                    });
+                });
+            }
+
+            function openSupplierPaymentModalForSupplier() {
+                if (!supplierPaymentModal || !supplierPaymentForm) return;
+                const supplier = getSupplierById(activeSupplierId);
+                if (!supplier) return;
+                const invoices = getSupplierInvoices(supplier.id).filter(inv => (inv.status || 'open') !== 'paid');
+                if (!invoices.length) {
+                    showSuccessToast("Aucune facture ouverte pour ce fournisseur.");
+                    return;
+                }
+                if (supplierPaymentInvoiceSelect) {
+                    supplierPaymentInvoiceSelect.innerHTML = '<option value="">Sélectionnez une facture</option>';
+                    invoices.forEach(inv => {
+                        const balance = getInvoiceBalance(inv);
+                        const option = document.createElement('option');
+                        option.value = inv.id;
+                        option.textContent = `${getSupplierInvoiceLabel(inv)} · ${formatCurrency(balance, getSupplierCurrency(supplier))}`;
+                        supplierPaymentInvoiceSelect.appendChild(option);
+                    });
+                    if (invoices[0]) {
+                        supplierPaymentInvoiceSelect.value = invoices[0].id;
+                        if (supplierPaymentAmountInput) {
+                            supplierPaymentAmountInput.value = getInvoiceBalance(invoices[0]);
+                        }
+                    }
+                }
+                if (supplierPaymentAmountInput && !supplierPaymentAmountInput.value) {
+                    supplierPaymentAmountInput.value = '';
+                }
+                if (supplierPaymentDateInput) supplierPaymentDateInput.value = new Date().toISOString().slice(0, 10);
+                if (supplierPaymentNoteInput) supplierPaymentNoteInput.value = '';
+                if (supplierPaymentError) supplierPaymentError.classList.add('hidden');
+                supplierPaymentModal.classList.remove('hidden');
+                setupSupplierSignatureCanvas();
+                clearSupplierSignature();
+            }
+
+            function closeSupplierPaymentModal() {
+                if (!supplierPaymentModal) return;
+                clearSupplierSignature();
+                supplierPaymentModal.classList.add('hidden');
+            }
+
+            function getSupplierPaymentSignatureData() {
+                if (!supplierPaymentSignature || !supplierSignatureHasInk) return '';
+                return supplierPaymentSignature.toDataURL('image/png');
             }
 
             function renderTransferBoutiqueSelect() {
@@ -6148,6 +6772,7 @@
                 'Mon Magasin': 'Mon Magasin',
                 'Tableau des prix': 'Tableau des prix',
                 'Mouvements Magasin': ['Mouvements Magasin', 'Mon Magasin'],
+                'Fournisseurs': 'Fournisseurs',
                 'Statistiques': 'Statistiques',
                 'Paramètres': 'Paramètres'
             };
@@ -7418,7 +8043,7 @@
                     const basePermissions = role === 'consultation'
                         ? ['Tableau de bord', 'Statistiques']
                         : (role === 'manager'
-                            ? ['Tableau de bord', 'Ventes', 'Historique des ventes', 'Stock Boutique', 'Mon Magasin', 'Tableau des prix', 'Mouvements Magasin', 'Statistiques']
+                            ? ['Tableau de bord', 'Ventes', 'Historique des ventes', 'Stock Boutique', 'Mon Magasin', 'Tableau des prix', 'Mouvements Magasin', 'Fournisseurs', 'Statistiques']
                             : ['Tableau de bord', 'Ventes', 'Historique des ventes', 'Stock Boutique']);
 
                     try {
@@ -9150,6 +9775,20 @@
             function onSuppliersValue(snapshot) {
                 appData.suppliers = snapshot.val() || {};
                 renderSupplierSelect();
+                renderSuppliersList();
+                renderSupplierDetail();
+            }
+
+            function onSupplierInvoicesValue(snapshot) {
+                appData.supplierInvoices = snapshot.val() || {};
+                renderSuppliersList();
+                renderSupplierDetail();
+            }
+
+            function onSupplierPaymentsValue(snapshot) {
+                appData.supplierPayments = snapshot.val() || {};
+                renderSuppliersList();
+                renderSupplierDetail();
             }
 
             function setupFirebaseListeners() {
@@ -9201,6 +9840,12 @@
                 suppliersRef = ref(db, `${dbBasePath}/suppliers`);
                 suppliersListener = onValue(suppliersRef, onSuppliersValue);
 
+                supplierInvoicesRef = ref(db, `${dbBasePath}/supplierInvoices`);
+                supplierInvoicesListener = onValue(supplierInvoicesRef, onSupplierInvoicesValue);
+
+                supplierPaymentsRef = ref(db, `${dbBasePath}/supplierPayments`);
+                supplierPaymentsListener = onValue(supplierPaymentsRef, onSupplierPaymentsValue);
+
                 migrateLocalPendingSales();
             }
 
@@ -9220,8 +9865,10 @@
                 if (companyMembersListener && companyMembersRef) off(companyMembersRef, companyMembersListener);
                 if (companyCustomersListener && companyCustomersRef) off(companyCustomersRef, companyCustomersListener);
                 if (suppliersListener && suppliersRef) off(suppliersRef, suppliersListener);
-                storesListener = null; boutiquesListener = null; categoriesListener = null; storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; shopTransferRequestsListener = null; salesHistoryListener = null; pendingSalesListener = null; settingsListener = null; companyMembersListener = null; companyCustomersListener = null; suppliersListener = null;
-                appData.stores = {}; appData.boutiques = {}; appData.categories = {}; appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.shopMovements = {}; appData.shopTransferRequests = {}; appData.salesHistory = {}; appData.customers = {}; appData.suppliers = {}; appData.storeExitRequests = {}; appData.pendingSales = {}; appData.settings = {};
+                if (supplierInvoicesListener && supplierInvoicesRef) off(supplierInvoicesRef, supplierInvoicesListener);
+                if (supplierPaymentsListener && supplierPaymentsRef) off(supplierPaymentsRef, supplierPaymentsListener);
+                storesListener = null; boutiquesListener = null; categoriesListener = null; storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; shopTransferRequestsListener = null; salesHistoryListener = null; pendingSalesListener = null; settingsListener = null; companyMembersListener = null; companyCustomersListener = null; suppliersListener = null; supplierInvoicesListener = null; supplierPaymentsListener = null;
+                appData.stores = {}; appData.boutiques = {}; appData.categories = {}; appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.shopMovements = {}; appData.shopTransferRequests = {}; appData.salesHistory = {}; appData.customers = {}; appData.suppliers = {}; appData.supplierInvoices = {}; appData.supplierPayments = {}; appData.storeExitRequests = {}; appData.pendingSales = {}; appData.settings = {};
                 selectedCustomer = null;
                 customerOptionLookup = {};
                 isCustomerHistoryOpen = false;
@@ -9230,6 +9877,8 @@
                 activeBoutiqueId = null;
                 defaultBoutiqueId = null;
                 lastDiscountApprovalCode = '';
+                activeSupplierId = null;
+                supplierSearchQuery = '';
             }
 
             function updateUI() {
@@ -11865,9 +12514,26 @@
                 const name = supplierNameInput?.value.trim();
                 const phone = supplierPhoneInput?.value.trim() || '';
                 const email = supplierEmailInput?.value.trim() || '';
+                const currencyRaw = supplierCurrencyInput?.value.trim() || DEFAULT_SUPPLIER_CURRENCY;
+                const currency = currencyRaw.toUpperCase();
+                const conversionRate = Number(supplierCurrencyRateInput?.value || 1);
                 if (!name) {
                     if (supplierError) {
                         supplierError.textContent = "Le nom du fournisseur est requis.";
+                        supplierError.classList.remove('hidden');
+                    }
+                    return;
+                }
+                if (!currency) {
+                    if (supplierError) {
+                        supplierError.textContent = "Veuillez renseigner une devise.";
+                        supplierError.classList.remove('hidden');
+                    }
+                    return;
+                }
+                if (!Number.isFinite(conversionRate) || conversionRate <= 0) {
+                    if (supplierError) {
+                        supplierError.textContent = "Le taux de conversion est invalide.";
                         supplierError.classList.remove('hidden');
                     }
                     return;
@@ -11880,12 +12546,16 @@
                         name,
                         phone,
                         email,
+                        currency,
+                        conversionRate,
                         createdAt: new Date().toISOString(),
                         updatedAt: new Date().toISOString()
                     };
                     await set(newRef, payload);
                     showSuccessToast("Fournisseur ajouté.");
                     supplierForm.reset();
+                    if (supplierCurrencyInput) supplierCurrencyInput.value = DEFAULT_SUPPLIER_CURRENCY;
+                    if (supplierCurrencyRateInput) supplierCurrencyRateInput.value = '1';
                     if (supplierModal) supplierModal.classList.add('hidden');
                     renderSupplierSelect();
                     if (entrySupplierSelect && payload.id) {
@@ -11899,6 +12569,108 @@
                     }
                 } finally {
                     if (supplierSubmitButton) supplierSubmitButton.disabled = false;
+                }
+            });
+
+            if (supplierPaymentForm) supplierPaymentForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!currentUser || !dbBasePath) return;
+                if (supplierPaymentError) supplierPaymentError.classList.add('hidden');
+                const supplier = getSupplierById(activeSupplierId);
+                if (!supplier) return;
+                const invoiceId = supplierPaymentInvoiceSelect?.value || '';
+                const amount = Number(supplierPaymentAmountInput?.value || 0);
+                const date = supplierPaymentDateInput?.value || '';
+                const method = supplierPaymentMethodSelect?.value || 'Virement';
+                const note = supplierPaymentNoteInput?.value || '';
+                const signatureDataUrl = getSupplierPaymentSignatureData();
+
+                if (!invoiceId) {
+                    if (supplierPaymentError) {
+                        supplierPaymentError.textContent = 'Sélectionnez une facture.';
+                        supplierPaymentError.classList.remove('hidden');
+                    }
+                    return;
+                }
+                if (!date) {
+                    if (supplierPaymentError) {
+                        supplierPaymentError.textContent = 'Veuillez renseigner la date.';
+                        supplierPaymentError.classList.remove('hidden');
+                    }
+                    return;
+                }
+                if (!Number.isFinite(amount) || amount <= 0) {
+                    if (supplierPaymentError) {
+                        supplierPaymentError.textContent = 'Le montant est invalide.';
+                        supplierPaymentError.classList.remove('hidden');
+                    }
+                    return;
+                }
+                if (!signatureDataUrl) {
+                    if (supplierPaymentError) {
+                        supplierPaymentError.textContent = 'La signature du fournisseur est requise.';
+                        supplierPaymentError.classList.remove('hidden');
+                    }
+                    return;
+                }
+
+                const invoice = appData.supplierInvoices?.[invoiceId];
+                if (!invoice || invoice.supplierId !== supplier.id) {
+                    if (supplierPaymentError) {
+                        supplierPaymentError.textContent = 'Facture invalide.';
+                        supplierPaymentError.classList.remove('hidden');
+                    }
+                    return;
+                }
+
+                const balance = getInvoiceBalance(invoice);
+                if (amount > balance) {
+                    if (supplierPaymentError) {
+                        supplierPaymentError.textContent = `Montant supérieur au solde (${formatCurrency(balance, getSupplierCurrency(supplier))}).`;
+                        supplierPaymentError.classList.remove('hidden');
+                    }
+                    return;
+                }
+
+                try {
+                    if (supplierPaymentSubmitButton) supplierPaymentSubmitButton.disabled = true;
+                    const paymentRef = push(ref(db, `${dbBasePath}/supplierPayments`));
+                    const now = new Date().toISOString();
+                    const newPaidAmount = roundAmount((invoice.paidAmount || 0) + amount);
+                    const newStatus = newPaidAmount >= (invoice.total || 0) ? 'paid' : 'partial';
+                    const updates = {};
+                    updates[`${dbBasePath}/supplierPayments/${paymentRef.key}`] = {
+                        id: paymentRef.key,
+                        supplierId: supplier.id,
+                        supplierName: supplier.name || '',
+                        invoiceId,
+                        amount,
+                        currency: getSupplierCurrency(supplier),
+                        date,
+                        method,
+                        note,
+                        signatureDataUrl,
+                        createdAt: now,
+                        userEmail: currentUser.email || '',
+                        userName: currentUserData?.fullName || currentUser.email || ''
+                    };
+                    updates[`${dbBasePath}/supplierInvoices/${invoiceId}/paidAmount`] = newPaidAmount;
+                    updates[`${dbBasePath}/supplierInvoices/${invoiceId}/status`] = newStatus;
+                    updates[`${dbBasePath}/supplierInvoices/${invoiceId}/updatedAt`] = now;
+                    updates[`${dbBasePath}/suppliers/${supplier.id}/updatedAt`] = now;
+                    await update(ref(db), updates);
+
+                    supplierPaymentForm.reset();
+                    closeSupplierPaymentModal();
+                    showSuccessToast('Paiement enregistré.');
+                } catch (error) {
+                    console.error(error);
+                    if (supplierPaymentError) {
+                        supplierPaymentError.textContent = 'Impossible d’enregistrer le paiement.';
+                        supplierPaymentError.classList.remove('hidden');
+                    }
+                } finally {
+                    if (supplierPaymentSubmitButton) supplierPaymentSubmitButton.disabled = false;
                 }
             });
 
@@ -11931,7 +12703,10 @@
                     showSuccessToast("Veuillez définir les prix dans le tableau des prix avant d'ajouter du stock.");
                     return;
                 }
+                const supplier = getSupplierById(supplierId);
                 const supplierName = getSupplierName(supplierId) || (appData.suppliers?.[supplierId]?.name || '');
+                const supplierCurrency = getSupplierCurrency(supplier);
+                const supplierRate = getSupplierConversionRate(supplier);
 
                 try {
                     if (entrySubmitButton) entrySubmitButton.disabled = true;
@@ -11950,6 +12725,11 @@
                         updates[`${dbBasePath}/storeProducts/${pid}/updatedAt`] = new Date().toISOString();
                     }
                     const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
+                    const invoiceKey = push(ref(db, `${dbBasePath}/supplierInvoices`)).key;
+                    const baseTotal = roundAmount(purchaseCost * qty);
+                    const invoiceTotal = supplierCurrency === DEFAULT_SUPPLIER_CURRENCY
+                        ? baseTotal
+                        : roundAmount(baseTotal / supplierRate);
                     updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
                         id: moveKey,
                         productId: pid,
@@ -11965,6 +12745,29 @@
                         date: new Date().toISOString(),
                         userEmail: currentUser.email || '',
                         userName: currentUserData?.fullName || currentUser.email || ''
+                    };
+                    updates[`${dbBasePath}/storeProducts/${pid}/supplierId`] = supplierId;
+                    updates[`${dbBasePath}/storeProducts/${pid}/supplierName`] = supplierName;
+                    updates[`${dbBasePath}/storeProducts/${pid}/updatedAt`] = new Date().toISOString();
+                    updates[`${dbBasePath}/supplierInvoices/${invoiceKey}`] = {
+                        id: invoiceKey,
+                        supplierId,
+                        supplierName,
+                        storeId,
+                        productId: pid,
+                        productName: prod.name,
+                        quantity: qty,
+                        unitCost: purchaseCost,
+                        baseTotal,
+                        baseCurrency: DEFAULT_SUPPLIER_CURRENCY,
+                        total: invoiceTotal,
+                        currency: supplierCurrency,
+                        conversionRate: supplierRate,
+                        status: 'open',
+                        paidAmount: 0,
+                        date: new Date().toISOString(),
+                        createdAt: new Date().toISOString(),
+                        storeMovementId: moveKey
                     };
                     await update(ref(db), updates);
                     showSuccessToast("Entrée de stock réussie !");
@@ -12376,7 +13179,20 @@
                 if (!supplierModal || !supplierForm) return;
                 supplierForm.reset();
                 if (supplierError) supplierError.classList.add('hidden');
+                if (supplierCurrencyInput) supplierCurrencyInput.value = DEFAULT_SUPPLIER_CURRENCY;
+                if (supplierCurrencyRateInput) supplierCurrencyRateInput.value = '1';
                 supplierModal.classList.remove('hidden');
+            });
+            if (openSupplierModalFromPage) openSupplierModalFromPage.addEventListener('click', () => {
+                if (!supplierModal || !supplierForm) return;
+                supplierForm.reset();
+                if (supplierError) supplierError.classList.add('hidden');
+                if (supplierCurrencyInput) supplierCurrencyInput.value = DEFAULT_SUPPLIER_CURRENCY;
+                if (supplierCurrencyRateInput) supplierCurrencyRateInput.value = '1';
+                supplierModal.classList.remove('hidden');
+            });
+            if (openSupplierPaymentModal) openSupplierPaymentModal.addEventListener('click', () => {
+                openSupplierPaymentModalForSupplier();
             });
             if (openTransferModalButton) openTransferModalButton.addEventListener('click', () => {
                 if (!getActiveStoreId()) {
@@ -12405,6 +13221,8 @@
             if (exitCancelButton) exitCancelButton.addEventListener('click', () => exitModal.classList.add('hidden'));
             if (closeSupplierModalButton) closeSupplierModalButton.addEventListener('click', () => supplierModal.classList.add('hidden'));
             if (supplierCancelButton) supplierCancelButton.addEventListener('click', () => supplierModal.classList.add('hidden'));
+            if (closeSupplierPaymentModalButton) closeSupplierPaymentModalButton.addEventListener('click', closeSupplierPaymentModal);
+            if (supplierPaymentCancelButton) supplierPaymentCancelButton.addEventListener('click', closeSupplierPaymentModal);
             if (closeTransferModalButton) closeTransferModalButton.addEventListener('click', () => transferModal.classList.add('hidden'));
             if (closeRestockModalButton) closeRestockModalButton.addEventListener('click', () => restockModal.classList.add('hidden'));
 
@@ -12418,9 +13236,51 @@
                     updateExitProductInfo(getActiveStoreProductById(exitProductSelect.value));
                 });
             }
+            if (suppliersSearchInput) {
+                suppliersSearchInput.addEventListener('input', (event) => {
+                    supplierSearchQuery = event.target.value.trim();
+                    renderSuppliersList();
+                });
+            }
+            if (suppliersList) {
+                suppliersList.addEventListener('click', (event) => {
+                    const button = event.target.closest('[data-supplier-id]');
+                    if (!button) return;
+                    activeSupplierId = button.dataset.supplierId;
+                    renderSuppliersList();
+                    renderSupplierDetail();
+                });
+            }
+            if (supplierPaymentsTbody) {
+                supplierPaymentsTbody.addEventListener('click', (event) => {
+                    const btn = event.target.closest('[data-signature]');
+                    if (!btn) return;
+                    const paymentId = btn.dataset.signature;
+                    const payment = appData.supplierPayments?.[paymentId];
+                    if (payment?.signatureDataUrl) {
+                        const win = window.open();
+                        if (win) {
+                            win.document.write(`<img src="${payment.signatureDataUrl}" style="max-width:100%;height:auto;">`);
+                        }
+                    }
+                });
+            }
+            if (supplierPaymentClearSignature) {
+                supplierPaymentClearSignature.addEventListener('click', clearSupplierSignature);
+            }
+            if (supplierPaymentInvoiceSelect) {
+                supplierPaymentInvoiceSelect.addEventListener('change', () => {
+                    const invoiceId = supplierPaymentInvoiceSelect.value;
+                    const invoice = appData.supplierInvoices?.[invoiceId];
+                    if (!invoice || !supplierPaymentAmountInput) return;
+                    const balance = getInvoiceBalance(invoice);
+                    supplierPaymentAmountInput.value = balance > 0 ? balance : '';
+                });
+            }
+            attachSupplierSignatureEvents();
 
             // Background Modal Close
-            [newProductModal, entryModal, exitModal, transferModal, restockModal, accessScopeModal].forEach(m => {
+            [newProductModal, entryModal, exitModal, transferModal, restockModal, accessScopeModal, supplierPaymentModal].forEach(m => {
                 if (m) m.addEventListener('click', e => { if (e.target === m) m.classList.add('hidden'); });
             });
 
