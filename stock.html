@@ -106,7 +106,7 @@
                     </div>
                     <h1 class="text-2xl font-bold text-gray-800">StockPilot</h1>
                     <p class="text-gray-500 mt-1">
-                        Connectez-vous à votre compte ou créez-en un pour continuer.
+                        Connectez-vous à votre compte ou demandez un accès commerçant.
                     </p>
                 </div>
 
@@ -117,7 +117,7 @@
                     </button>
                     <button id="auth-toggle-signup"
                         class="w-1/2 p-2 rounded-md text-sm font-semibold transition-colors text-gray-500 hover:bg-gray-200">
-                        S'inscrire
+                        Demande d'accès
                     </button>
                 </div>
 
@@ -158,42 +158,54 @@
                     </div>
                 </form>
 
-                <!-- Formulaire d'inscription (initialement caché) -->
-                <form id="signup-form" class="hidden">
+                <!-- Formulaire de demande d'accès commerçant (initialement caché) -->
+                <form id="access-request-form" class="hidden">
                     <div class="space-y-4">
                         <div>
-                            <label class="text-sm font-medium text-gray-600" for="fullName">Nom complet</label>
-                            <input type="text" id="fullName" name="fullName" placeholder="Jean Dupont"
+                            <label class="text-sm font-medium text-gray-600" for="access-business-name">Nom du commerce</label>
+                            <input type="text" id="access-business-name" name="access-business-name" placeholder="Ma Boutique"
                                 class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition"
                                 required />
                         </div>
                         <div>
-                            <label class="text-sm font-medium text-gray-600" for="companyName">Nom de
-                                l'entreprise</label>
-                            <input type="text" id="companyName" name="companyName" placeholder="Ma Société"
-                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition"
-                                required />
-                            <p class="text-xs text-gray-500 mt-1">Si le nom correspond à une entreprise existante, vous
-                                la rejoindrez.</p>
-                        </div>
-                        <div>
-                            <label class="text-sm font-medium text-gray-600" for="signup-email">Email</label>
-                            <input type="email" id="signup-email" name="signup-email" placeholder="votre@email.com"
+                            <label class="text-sm font-medium text-gray-600" for="access-employees-count">Nombre d'employés</label>
+                            <input type="number" id="access-employees-count" name="access-employees-count" min="1" placeholder="10"
                                 class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition"
                                 required />
                         </div>
                         <div>
-                            <label class="text-sm font-medium text-gray-600" for="signup-password">Mot de passe</label>
-                            <input type="password" id="signup-password" name="signup-password" placeholder="********"
+                            <label class="text-sm font-medium text-gray-600" for="access-address">Adresse</label>
+                            <input type="text" id="access-address" name="access-address" placeholder="Rue, ville, pays"
                                 class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition"
                                 required />
                         </div>
-                        <div id="signup-error-container" class="hidden p-3 bg-red-50 border border-red-200 rounded-lg">
-                            <p id="signup-error" class="text-red-500 text-sm"></p>
+                        <div>
+                            <label class="text-sm font-medium text-gray-600" for="access-whatsapp-phone">Numéro WhatsApp</label>
+                            <input type="tel" id="access-whatsapp-phone" name="access-whatsapp-phone" placeholder="+225 01 02 03 04 05"
+                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition"
+                                required />
                         </div>
-                        <button type="submit" id="signup-submit-button"
+                        <div>
+                            <label class="text-sm font-medium text-gray-600" for="access-request-email">Email</label>
+                            <input type="email" id="access-request-email" name="access-request-email" placeholder="contact@commerce.com"
+                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition"
+                                required />
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-600" for="access-role-company">Rôle dans la société</label>
+                            <input type="text" id="access-role-company" name="access-role-company" placeholder="Gérant, Directeur..."
+                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition"
+                                required />
+                        </div>
+                        <div id="access-request-success" class="hidden p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                            <p class="text-emerald-700 text-sm">Votre demande a été envoyée. Nous vous contacterons rapidement.</p>
+                        </div>
+                        <div id="access-request-error-container" class="hidden p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <p id="access-request-error" class="text-red-500 text-sm"></p>
+                        </div>
+                        <button type="submit" id="access-request-submit-button"
                             class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
-                            Créer mon compte
+                            Envoyer la demande
                         </button>
                     </div>
                 </form>
@@ -269,6 +281,11 @@
                     class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
                     <div data-icon="settings" class="w-5 h-5"></div>
                     <span class="sidebar-text">Paramètres</span>
+                </button>
+                <button data-page="Demandes d'accès"
+                    class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
+                    <div data-icon="userPlus" class="w-5 h-5"></div>
+                    <span class="sidebar-text">Demandes d'accès</span>
                 </button>
             </nav>
             <div class="p-4 border-t border-gray-200">
@@ -2264,6 +2281,56 @@
                 </div>
             </div>
 
+            <!-- Page: Demandes d'accès -->
+            <div id="page-Demandes-d'accès" class="page-content p-4 md:p-8 hidden">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900">Demandes d'accès</h1>
+                        <p class="text-gray-500 mt-1">Validez les demandes de commerçants et créez leurs accès.</p>
+                    </div>
+                    <div class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs text-gray-500">
+                        <span id="access-requests-count-badge" class="font-semibold text-gray-900">0</span>
+                        demandes totales
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+                    <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                        <p class="text-xs uppercase text-gray-400">En attente</p>
+                        <p id="access-requests-count-pending" class="text-2xl font-semibold text-amber-600">0</p>
+                    </div>
+                    <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                        <p class="text-xs uppercase text-gray-400">Approuvées</p>
+                        <p id="access-requests-count-approved" class="text-2xl font-semibold text-emerald-600">0</p>
+                    </div>
+                    <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                        <p class="text-xs uppercase text-gray-400">Rejetées</p>
+                        <p id="access-requests-count-rejected" class="text-2xl font-semibold text-red-600">0</p>
+                    </div>
+                </div>
+
+                <div class="mt-6 bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+                    <div id="access-requests-empty"
+                        class="flex items-center justify-center text-sm text-gray-400 h-28 border border-dashed border-gray-200 rounded-xl">
+                        Aucune demande enregistrée.
+                    </div>
+                    <div id="access-requests-table-container" class="hidden overflow-x-auto rounded-xl border border-gray-200">
+                        <table class="min-w-full bg-white divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Commerce</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="access-requests-tbody" class="divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
 
@@ -3163,6 +3230,62 @@
         </div>
     </div>
 
+    <!-- Modal: Détails demande d'accès -->
+    <div id="access-request-detail-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 m-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-bold text-gray-900">Détails de la demande</h2>
+                <button id="close-access-request-detail-modal-button" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="mt-6 space-y-4">
+                <div class="rounded-2xl bg-gray-50 p-4 space-y-2">
+                    <p class="text-sm font-semibold text-gray-900" id="access-request-detail-business">—</p>
+                    <p class="text-xs text-gray-500" id="access-request-detail-email">—</p>
+                    <p class="text-xs text-gray-500" id="access-request-detail-whatsapp">—</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="rounded-2xl bg-gray-50 p-4">
+                        <p class="text-xs text-gray-500">Nombre d'employés</p>
+                        <p id="access-request-detail-employees" class="text-sm font-semibold text-gray-900 mt-1">—</p>
+                    </div>
+                    <div class="rounded-2xl bg-gray-50 p-4">
+                        <p class="text-xs text-gray-500">Rôle dans la société</p>
+                        <p id="access-request-detail-role" class="text-sm font-semibold text-gray-900 mt-1">—</p>
+                    </div>
+                    <div class="rounded-2xl bg-gray-50 p-4 sm:col-span-2">
+                        <p class="text-xs text-gray-500">Adresse</p>
+                        <p id="access-request-detail-address" class="text-sm font-semibold text-gray-900 mt-1">—</p>
+                    </div>
+                    <div class="rounded-2xl bg-gray-50 p-4">
+                        <p class="text-xs text-gray-500">Date</p>
+                        <p id="access-request-detail-date" class="text-sm font-semibold text-gray-900 mt-1">—</p>
+                    </div>
+                    <div class="rounded-2xl bg-gray-50 p-4">
+                        <p class="text-xs text-gray-500">Statut</p>
+                        <p id="access-request-detail-status" class="text-sm font-semibold text-gray-900 mt-1">—</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button id="access-request-approve-button" type="button"
+                        class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700">
+                        Approuver
+                    </button>
+                    <button id="access-request-reject-button" type="button"
+                        class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600">
+                        Rejeter
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
 
     <!-- jsPDF Libraries for Invoice Generation -->
@@ -3174,7 +3297,6 @@
         import { initializeApp } from "firebase/app";
         import {
             getAuth,
-            createUserWithEmailAndPassword,
             signInWithEmailAndPassword,
             signOut,
             onAuthStateChanged
@@ -3266,7 +3388,7 @@
             let currentUserData = null;
             let dbBasePath = '';
 
-            const appData = { stores: {}, boutiques: {}, categories: {}, storeProducts: {}, storeMovements: {}, shopStock: {}, shopMovements: {}, shopTransferRequests: {}, salesHistory: {}, customers: {}, suppliers: {}, supplierInvoices: {}, supplierPayments: {}, storeExitRequests: {}, pendingSales: {}, settings: {} };
+            const appData = { stores: {}, boutiques: {}, categories: {}, storeProducts: {}, storeMovements: {}, shopStock: {}, shopMovements: {}, shopTransferRequests: {}, salesHistory: {}, customers: {}, suppliers: {}, supplierInvoices: {}, supplierPayments: {}, storeExitRequests: {}, pendingSales: {}, settings: {}, accessRequests: {} };
             let isSidebarOpen = false;
             let isSidebarCollapsed = false;
             let isCodeLoginMode = false;
@@ -3287,8 +3409,8 @@
             const SALE_SOURCE_MIXED = 'mixed';
 
 
-            let storesListener, boutiquesListener, categoriesListener, storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, shopTransferRequestsListener, salesHistoryListener, companyMembersListener, companyCustomersListener, suppliersListener, supplierInvoicesListener, supplierPaymentsListener, storeExitRequestsListener, pendingSalesListener, settingsListener;
-            let storesRef, boutiquesRef, categoriesRef, storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, shopTransferRequestsRef, salesHistoryRef, companyMembersRef, companyCustomersRef, suppliersRef, supplierInvoicesRef, supplierPaymentsRef, storeExitRequestsRef, pendingSalesRef, settingsRef;
+            let storesListener, boutiquesListener, categoriesListener, storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, shopTransferRequestsListener, salesHistoryListener, companyMembersListener, companyCustomersListener, suppliersListener, supplierInvoicesListener, supplierPaymentsListener, storeExitRequestsListener, pendingSalesListener, settingsListener, accessRequestsListener;
+            let storesRef, boutiquesRef, categoriesRef, storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, shopTransferRequestsRef, salesHistoryRef, companyMembersRef, companyCustomersRef, suppliersRef, supplierInvoicesRef, supplierPaymentsRef, storeExitRequestsRef, pendingSalesRef, settingsRef, accessRequestsRef;
 
             const accessModules = [
                 'Tableau de bord',
@@ -3324,6 +3446,7 @@
             let supplierSearchQuery = '';
             let activeSupplierId = null;
             let activeSupplierPaymentDetailId = null;
+            let activeAccessRequestId = null;
 
             // Cart state
             let cartItems = [];
@@ -3346,21 +3469,28 @@
             const authToggleLogin = document.getElementById('auth-toggle-login');
             const authToggleSignup = document.getElementById('auth-toggle-signup');
             const loginForm = document.getElementById('login-form');
-            const signupForm = document.getElementById('signup-form');
+            const accessRequestForm = document.getElementById('access-request-form');
             const userEmailDisplay = document.getElementById('user-email-display');
             const userNameDisplay = document.getElementById('user-name-display');
             const userCompanyDisplay = document.getElementById('user-company-display');
             const loginError = document.getElementById('login-error');
-            const signupError = document.getElementById('signup-error');
-            const signupErrorContainer = document.getElementById('signup-error-container');
+            const accessRequestError = document.getElementById('access-request-error');
+            const accessRequestErrorContainer = document.getElementById('access-request-error-container');
+            const accessRequestSuccess = document.getElementById('access-request-success');
             const loginSubmitButton = document.getElementById('login-submit-button');
-            const signupSubmitButton = document.getElementById('signup-submit-button');
+            const accessRequestSubmitButton = document.getElementById('access-request-submit-button');
             const loginPasswordInput = document.getElementById('password');
             const loginAccessCodeInput = document.getElementById('access-code');
             const loginPasswordField = document.getElementById('login-password-field');
             const loginAccessCodeField = document.getElementById('login-access-code-field');
             const loginModeAdminButton = document.getElementById('login-mode-admin');
             const loginModeCodeButton = document.getElementById('login-mode-code');
+            const accessBusinessNameInput = document.getElementById('access-business-name');
+            const accessEmployeesCountInput = document.getElementById('access-employees-count');
+            const accessAddressInput = document.getElementById('access-address');
+            const accessWhatsappPhoneInput = document.getElementById('access-whatsapp-phone');
+            const accessRequestEmailInput = document.getElementById('access-request-email');
+            const accessRoleCompanyInput = document.getElementById('access-role-company');
 
             const sidebar = document.getElementById('sidebar');
             const mainContent = document.querySelector('main');
@@ -3725,6 +3855,25 @@
             const supplierInvoiceDetailSignatureEmpty = document.getElementById('supplier-invoice-detail-signature-empty');
             const supplierInvoiceDetailSummary = document.getElementById('supplier-invoice-detail-summary');
             const supplierInvoiceDetailPrint = document.getElementById('supplier-invoice-detail-print');
+            const accessRequestsCountBadge = document.getElementById('access-requests-count-badge');
+            const accessRequestsCountPending = document.getElementById('access-requests-count-pending');
+            const accessRequestsCountApproved = document.getElementById('access-requests-count-approved');
+            const accessRequestsCountRejected = document.getElementById('access-requests-count-rejected');
+            const accessRequestsEmpty = document.getElementById('access-requests-empty');
+            const accessRequestsTableContainer = document.getElementById('access-requests-table-container');
+            const accessRequestsTbody = document.getElementById('access-requests-tbody');
+            const accessRequestDetailModal = document.getElementById('access-request-detail-modal');
+            const closeAccessRequestDetailModalButton = document.getElementById('close-access-request-detail-modal-button');
+            const accessRequestDetailBusiness = document.getElementById('access-request-detail-business');
+            const accessRequestDetailEmail = document.getElementById('access-request-detail-email');
+            const accessRequestDetailWhatsapp = document.getElementById('access-request-detail-whatsapp');
+            const accessRequestDetailEmployees = document.getElementById('access-request-detail-employees');
+            const accessRequestDetailRole = document.getElementById('access-request-detail-role');
+            const accessRequestDetailAddress = document.getElementById('access-request-detail-address');
+            const accessRequestDetailDate = document.getElementById('access-request-detail-date');
+            const accessRequestDetailStatus = document.getElementById('access-request-detail-status');
+            const accessRequestApproveButton = document.getElementById('access-request-approve-button');
+            const accessRequestRejectButton = document.getElementById('access-request-reject-button');
 
             // Paramètres & accès
             const settingsRestrictedState = document.getElementById('settings-restricted-state');
@@ -4455,6 +4604,9 @@
             }
 
             function buildSupplierInvoicePdf(invoice, signatureDataUrl = '') {
+                if (!window.jspdf || !window.jspdf.jsPDF) {
+                    throw new Error('jsPDF indisponible');
+                }
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
                 const supplier = getSupplierById(invoice.supplierId) || {};
@@ -4525,19 +4677,48 @@
                     doc.text('Signature fournisseur', 14, y);
                     doc.setFont(undefined, 'normal');
                     y += 6;
-                    doc.addImage(signatureDataUrl, 'PNG', 14, y, 60, 24);
+                    try {
+                        doc.addImage(signatureDataUrl, 'PNG', 14, y, 60, 24);
+                    } catch (error) {
+                        console.warn('Impossible d\'ajouter la signature au PDF:', error);
+                    }
                 }
 
                 return doc;
             }
 
+            function downloadPdfDocument(doc, filename) {
+                try {
+                    doc.save(filename);
+                } catch (error) {
+                    console.warn('Téléchargement direct échoué, fallback blob:', error);
+                    const blob = doc.output('blob');
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                    setTimeout(() => URL.revokeObjectURL(url), 10000);
+                }
+            }
+
             function openSupplierInvoiceDocument(invoiceId, shouldPrint = false, signatureDataUrl = '') {
                 const invoice = appData.supplierInvoices?.[invoiceId];
                 if (!invoice) return;
-                const doc = buildSupplierInvoicePdf(invoice, signatureDataUrl);
+                let doc;
+                try {
+                    doc = buildSupplierInvoicePdf(invoice, signatureDataUrl);
+                } catch (error) {
+                    console.error('Erreur génération PDF fournisseur:', error);
+                    showSuccessToast("Impossible de générer le PDF.");
+                    return;
+                }
                 if (shouldPrint) {
                     const invoiceLabel = getSupplierInvoiceLabel(invoice).replace(/\s+/g, '_');
-                    doc.save(`Facture_${invoiceLabel}.pdf`);
+                    downloadPdfDocument(doc, `Facture_${invoiceLabel}.pdf`);
+                    showSuccessToast('Facture générée.');
                     return;
                 }
                 const blob = doc.output('blob');
@@ -7098,13 +7279,18 @@
                 'Mouvements Magasin': ['Mouvements Magasin', 'Mon Magasin'],
                 'Fournisseurs': 'Fournisseurs',
                 'Statistiques': 'Statistiques',
-                'Paramètres': 'Paramètres'
+                'Paramètres': 'Paramètres',
+                'Demandes d\'accès': 'Demandes d\'accès'
             };
 
             function canAccessPage(pageName) {
                 if (!isAuthenticated || !currentUserData) {
                     console.log(`[canAccessPage] Not authenticated or no user data for page: ${pageName}`);
                     return false;
+                }
+
+                if (pageName === 'Demandes d\'accès') {
+                    return getCurrentUserRole() === 'admin';
                 }
 
                 const requiredPermission = pagePermissions[pageName];
@@ -10121,6 +10307,124 @@
                 }
             }
 
+            function formatAccessRequestStatusBadge(status) {
+                if (status === 'approved') return { label: 'Approuvée', classes: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
+                if (status === 'rejected') return { label: 'Rejetée', classes: 'bg-red-50 text-red-700 border-red-200' };
+                return { label: 'En attente', classes: 'bg-amber-50 text-amber-700 border-amber-200' };
+            }
+
+            function getAccessRequestsSorted() {
+                return Object.values(appData.accessRequests || {}).sort((a, b) => {
+                    const aTime = new Date(a.createdAt || 0).getTime();
+                    const bTime = new Date(b.createdAt || 0).getTime();
+                    return bTime - aTime;
+                });
+            }
+
+            function renderAccessRequests() {
+                if (!accessRequestsEmpty || !accessRequestsTableContainer || !accessRequestsTbody) return;
+                const requests = getAccessRequestsSorted();
+                const pendingCount = requests.filter(req => (req.status || 'pending') === 'pending').length;
+                const approvedCount = requests.filter(req => req.status === 'approved').length;
+                const rejectedCount = requests.filter(req => req.status === 'rejected').length;
+
+                if (accessRequestsCountBadge) accessRequestsCountBadge.textContent = `${requests.length}`;
+                if (accessRequestsCountPending) accessRequestsCountPending.textContent = `${pendingCount}`;
+                if (accessRequestsCountApproved) accessRequestsCountApproved.textContent = `${approvedCount}`;
+                if (accessRequestsCountRejected) accessRequestsCountRejected.textContent = `${rejectedCount}`;
+
+                accessRequestsEmpty.classList.toggle('hidden', requests.length > 0);
+                accessRequestsTableContainer.classList.toggle('hidden', requests.length === 0);
+
+                if (!requests.length) {
+                    accessRequestsTbody.innerHTML = '';
+                    return;
+                }
+
+                accessRequestsTbody.innerHTML = requests.map(req => {
+                    const statusInfo = formatAccessRequestStatusBadge(req.status || 'pending');
+                    const createdAt = req.createdAt ? formatDateForDisplay(req.createdAt) : '-';
+                    return `
+                        <tr>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${createdAt}</td>
+                            <td class="px-4 py-3 text-sm text-gray-800 font-semibold">${req.businessName || '—'}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600">${req.email || '—'}</td>
+                            <td class="px-4 py-3">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${statusInfo.classes}">
+                                    ${statusInfo.label}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-right">
+                                <button type="button" data-access-request-view="${req.id}" class="text-cyan-600 font-semibold hover:text-cyan-700">Voir</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            function openAccessRequestDetailModal(requestId) {
+                if (!accessRequestDetailModal || !requestId) return;
+                const request = appData.accessRequests?.[requestId];
+                if (!request) return;
+                activeAccessRequestId = requestId;
+                const statusInfo = formatAccessRequestStatusBadge(request.status || 'pending');
+
+                if (accessRequestDetailBusiness) accessRequestDetailBusiness.textContent = request.businessName || '—';
+                if (accessRequestDetailEmail) accessRequestDetailEmail.textContent = request.email || '—';
+                if (accessRequestDetailWhatsapp) accessRequestDetailWhatsapp.textContent = request.whatsappPhone || '—';
+                if (accessRequestDetailEmployees) accessRequestDetailEmployees.textContent = request.employeesCount || '—';
+                if (accessRequestDetailRole) accessRequestDetailRole.textContent = request.roleInCompany || '—';
+                if (accessRequestDetailAddress) accessRequestDetailAddress.textContent = request.address || '—';
+                if (accessRequestDetailDate) accessRequestDetailDate.textContent = request.createdAt ? formatDateForDisplay(request.createdAt) : '—';
+                if (accessRequestDetailStatus) accessRequestDetailStatus.textContent = statusInfo.label;
+
+                const isPending = (request.status || 'pending') === 'pending';
+                if (accessRequestApproveButton) {
+                    accessRequestApproveButton.disabled = !isPending;
+                    accessRequestApproveButton.classList.toggle('opacity-60', !isPending);
+                }
+                if (accessRequestRejectButton) {
+                    accessRequestRejectButton.disabled = !isPending;
+                    accessRequestRejectButton.classList.toggle('opacity-60', !isPending);
+                }
+
+                accessRequestDetailModal.classList.remove('hidden');
+            }
+
+            function closeAccessRequestDetailModal() {
+                if (!accessRequestDetailModal) return;
+                accessRequestDetailModal.classList.add('hidden');
+                activeAccessRequestId = null;
+            }
+
+            async function updateAccessRequestStatus(requestId, status) {
+                if (!requestId) return;
+                if (getCurrentUserRole() !== 'admin') {
+                    showSuccessToast("Accès réservé aux administrateurs.");
+                    return;
+                }
+                try {
+                    const updates = {
+                        status,
+                        updatedAt: new Date().toISOString()
+                    };
+                    await update(ref(db, `access_requests/${requestId}`), updates);
+                    showSuccessToast(`Demande ${status === 'approved' ? 'approuvée' : 'rejetée'}.`);
+                    closeAccessRequestDetailModal();
+                } catch (error) {
+                    console.error('Erreur mise à jour demande:', error);
+                    alert('Erreur lors de la mise à jour de la demande.');
+                }
+            }
+
+            function onAccessRequestsValue(snapshot) {
+                appData.accessRequests = snapshot.val() || {};
+                renderAccessRequests();
+                if (activeAccessRequestId) {
+                    openAccessRequestDetailModal(activeAccessRequestId);
+                }
+            }
+
             function setupFirebaseListeners() {
                 cleanupFirebaseListeners();
                 if (!dbBasePath) return;
@@ -10176,6 +10480,14 @@
                 supplierPaymentsRef = ref(db, `${dbBasePath}/supplierPayments`);
                 supplierPaymentsListener = onValue(supplierPaymentsRef, onSupplierPaymentsValue);
 
+                if (getCurrentUserRole() === 'admin') {
+                    accessRequestsRef = ref(db, 'access_requests');
+                    accessRequestsListener = onValue(accessRequestsRef, onAccessRequestsValue);
+                } else {
+                    appData.accessRequests = {};
+                    renderAccessRequests();
+                }
+
                 migrateLocalPendingSales();
             }
 
@@ -10197,8 +10509,9 @@
                 if (suppliersListener && suppliersRef) off(suppliersRef, suppliersListener);
                 if (supplierInvoicesListener && supplierInvoicesRef) off(supplierInvoicesRef, supplierInvoicesListener);
                 if (supplierPaymentsListener && supplierPaymentsRef) off(supplierPaymentsRef, supplierPaymentsListener);
-                storesListener = null; boutiquesListener = null; categoriesListener = null; storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; shopTransferRequestsListener = null; salesHistoryListener = null; pendingSalesListener = null; settingsListener = null; companyMembersListener = null; companyCustomersListener = null; suppliersListener = null; supplierInvoicesListener = null; supplierPaymentsListener = null;
-                appData.stores = {}; appData.boutiques = {}; appData.categories = {}; appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.shopMovements = {}; appData.shopTransferRequests = {}; appData.salesHistory = {}; appData.customers = {}; appData.suppliers = {}; appData.supplierInvoices = {}; appData.supplierPayments = {}; appData.storeExitRequests = {}; appData.pendingSales = {}; appData.settings = {};
+                if (accessRequestsListener && accessRequestsRef) off(accessRequestsRef, accessRequestsListener);
+                storesListener = null; boutiquesListener = null; categoriesListener = null; storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; shopTransferRequestsListener = null; salesHistoryListener = null; pendingSalesListener = null; settingsListener = null; companyMembersListener = null; companyCustomersListener = null; suppliersListener = null; supplierInvoicesListener = null; supplierPaymentsListener = null; accessRequestsListener = null;
+                appData.stores = {}; appData.boutiques = {}; appData.categories = {}; appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.shopMovements = {}; appData.shopTransferRequests = {}; appData.salesHistory = {}; appData.customers = {}; appData.suppliers = {}; appData.supplierInvoices = {}; appData.supplierPayments = {}; appData.storeExitRequests = {}; appData.pendingSales = {}; appData.settings = {}; appData.accessRequests = {};
                 selectedCustomer = null;
                 customerOptionLookup = {};
                 isCustomerHistoryOpen = false;
@@ -10209,6 +10522,7 @@
                 lastDiscountApprovalCode = '';
                 activeSupplierId = null;
                 activeSupplierPaymentDetailId = null;
+                activeAccessRequestId = null;
                 supplierSearchQuery = '';
             }
 
@@ -10277,12 +10591,13 @@
                 updateLoginModeUI();
                 if (isLoginView) {
                     if (loginForm) loginForm.classList.remove('hidden');
-                    if (signupForm) signupForm.classList.add('hidden');
+                    if (accessRequestForm) accessRequestForm.classList.add('hidden');
                     if (authToggleLogin) authToggleLogin.classList.add('bg-white', 'shadow', 'text-gray-800');
                     if (authToggleSignup) authToggleSignup.classList.remove('bg-white', 'shadow', 'text-gray-800');
                 } else {
                     if (loginForm) loginForm.classList.add('hidden');
-                    if (signupForm) signupForm.classList.remove('hidden');
+                    if (accessRequestForm) accessRequestForm.classList.remove('hidden');
+                    clearAccessRequestFeedback();
                     if (authToggleSignup) authToggleSignup.classList.add('bg-white', 'shadow', 'text-gray-800');
                     if (authToggleLogin) authToggleLogin.classList.remove('bg-white', 'shadow', 'text-gray-800');
                 }
@@ -12565,6 +12880,33 @@
                     }
                 });
             }
+            if (accessRequestsTbody) {
+                accessRequestsTbody.addEventListener('click', (event) => {
+                    const viewButton = event.target.closest('[data-access-request-view]');
+                    if (!viewButton) return;
+                    openAccessRequestDetailModal(viewButton.dataset.accessRequestView);
+                });
+            }
+            if (closeAccessRequestDetailModalButton) {
+                closeAccessRequestDetailModalButton.addEventListener('click', closeAccessRequestDetailModal);
+            }
+            if (accessRequestDetailModal) {
+                accessRequestDetailModal.addEventListener('click', (event) => {
+                    if (event.target === accessRequestDetailModal) closeAccessRequestDetailModal();
+                });
+            }
+            if (accessRequestApproveButton) {
+                accessRequestApproveButton.addEventListener('click', async () => {
+                    if (!activeAccessRequestId) return;
+                    await updateAccessRequestStatus(activeAccessRequestId, 'approved');
+                });
+            }
+            if (accessRequestRejectButton) {
+                accessRequestRejectButton.addEventListener('click', async () => {
+                    if (!activeAccessRequestId) return;
+                    await updateAccessRequestStatus(activeAccessRequestId, 'rejected');
+                });
+            }
 
             // Quick Actions buttons
             const quickActionButtons = document.querySelectorAll('[data-quick-action]');
@@ -12646,52 +12988,63 @@
                 }
             });
 
-            if (signupForm) signupForm.addEventListener('submit', async (event) => {
+            function clearAccessRequestFeedback() {
+                if (accessRequestErrorContainer) accessRequestErrorContainer.classList.add('hidden');
+                if (accessRequestSuccess) accessRequestSuccess.classList.add('hidden');
+            }
+
+            function showAccessRequestError(message) {
+                if (!accessRequestError || !accessRequestErrorContainer) return;
+                accessRequestError.textContent = message;
+                accessRequestErrorContainer.classList.remove('hidden');
+            }
+
+            if (accessRequestForm) accessRequestForm.addEventListener('submit', async (event) => {
                 event.preventDefault();
-                const email = signupForm['signup-email'].value;
-                const password = signupForm['signup-password'].value;
-                const fullName = signupForm.fullName.value;
-                const companyName = signupForm.companyName.value;
+                clearAccessRequestFeedback();
+
+                const businessName = (accessBusinessNameInput?.value || '').trim();
+                const employeesCount = Number(accessEmployeesCountInput?.value || 0);
+                const address = (accessAddressInput?.value || '').trim();
+                const whatsappPhone = (accessWhatsappPhoneInput?.value || '').trim();
+                const email = (accessRequestEmailInput?.value || '').trim();
+                const roleInCompany = (accessRoleCompanyInput?.value || '').trim();
+
+                if (!businessName || !address || !whatsappPhone || !email || !roleInCompany) {
+                    showAccessRequestError('Veuillez compléter tous les champs obligatoires.');
+                    return;
+                }
+                if (!Number.isFinite(employeesCount) || employeesCount <= 0) {
+                    showAccessRequestError("Le nombre d'employés doit être supérieur à 0.");
+                    return;
+                }
 
                 try {
-                    if (signupSubmitButton) signupSubmitButton.disabled = true;
-                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                    const user = userCredential.user;
-                    const companyId = push(ref(db, 'companies')).key;
-                    const now = new Date().toISOString();
-                    await set(ref(db, `companies/${companyId}`), { name: companyName, createdAt: now, createdBy: user.uid });
-                    const storeRef = push(ref(db, `companies/${companyId}/stores`));
-                    if (storeRef.key) {
-                        await set(ref(db, `companies/${companyId}/stores/${storeRef.key}`), {
-                            id: storeRef.key,
-                            name: DEFAULT_STORE_NAME,
-                            createdAt: now,
-                            createdBy: user.uid,
-                            active: true,
-                            isDefault: true
-                        });
+                    if (accessRequestSubmitButton) accessRequestSubmitButton.disabled = true;
+                    const requestKey = push(ref(db, 'access_requests')).key;
+                    if (!requestKey) {
+                        showAccessRequestError("Impossible de générer la demande.");
+                        return;
                     }
-                    const boutiqueRef = push(ref(db, `companies/${companyId}/boutiques`));
-                    if (boutiqueRef.key) {
-                        await set(ref(db, `companies/${companyId}/boutiques/${boutiqueRef.key}`), {
-                            id: boutiqueRef.key,
-                            name: DEFAULT_BOUTIQUE_NAME,
-                            createdAt: now,
-                            createdBy: user.uid,
-                            isDefault: true,
-                            linkedStoreIds: storeRef.key ? [storeRef.key] : []
-                        });
-                    }
-                    const userData = { uid: user.uid, email, fullName, companyName, companyId, role: 'admin' };
-                    await set(ref(db, `users/${user.uid}`), userData);
-                    await set(ref(db, `companies/${companyId}/members/${user.uid}`), { fullName, email, role: 'admin', status: 'actif', permissions: [...accessModules], storeAccess: [], boutiqueAccess: [] });
+                    await set(ref(db, `access_requests/${requestKey}`), {
+                        id: requestKey,
+                        businessName,
+                        employeesCount,
+                        address,
+                        whatsappPhone,
+                        email,
+                        roleInCompany,
+                        status: 'pending',
+                        createdAt: new Date().toISOString()
+                    });
+                    if (accessRequestForm) accessRequestForm.reset();
+                    if (accessRequestSuccess) accessRequestSuccess.classList.remove('hidden');
+                    showSuccessToast('Demande envoyée avec succès.');
                 } catch (error) {
-                    if (signupError) {
-                        signupError.textContent = error.message;
-                        if (signupErrorContainer) signupErrorContainer.classList.remove('hidden');
-                    }
+                    console.error('Erreur envoi demande:', error);
+                    showAccessRequestError("Erreur lors de l'envoi de la demande.");
                 } finally {
-                    if (signupSubmitButton) signupSubmitButton.disabled = false;
+                    if (accessRequestSubmitButton) accessRequestSubmitButton.disabled = false;
                 }
             });
 
