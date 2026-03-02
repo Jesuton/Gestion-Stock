@@ -1059,6 +1059,38 @@
                         </div>
                     </div>
                 </div>
+                <div class="mt-8 bg-white p-6 rounded-lg shadow-sm">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-800">Réceptions en attente</h2>
+                            <p class="text-sm text-gray-500 mt-1">Confirmez la réception physique des transferts.</p>
+                        </div>
+                        <span id="pending-shop-transfer-count"
+                            class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">0</span>
+                    </div>
+                    <div id="pending-shop-transfer-placeholder"
+                        class="mt-4 flex items-center justify-center text-sm text-gray-400 h-24 border border-dashed border-gray-200 rounded-xl">
+                        Aucune réception en attente.
+                    </div>
+                    <div id="pending-shop-transfer-table-container"
+                        class="hidden mt-4 overflow-x-auto rounded-xl border border-gray-200">
+                        <table class="min-w-full bg-white divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Magasin</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantité</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Demandé par</th>
+                                    <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pending-shop-transfer-tbody" class="divide-y divide-gray-200">
+                                <!-- Demandes remplies par JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
                 <div class="mt-10 bg-white p-6 rounded-lg shadow-sm">
                     <h2 class="text-xl font-bold text-gray-800">Mouvements du Stock Boutique</h2>
                     <p class="text-sm text-gray-500 mt-1">Historique de tous les ajouts et réapprovisionnements de
@@ -2512,7 +2544,7 @@
                     <p id="transfer-error" class="text-red-500 text-sm mt-2 hidden"></p>
                     <button type="submit" id="transfer-submit-button"
                         class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
-                        Transférer et Créer/Mettre à jour l'article
+                        Envoyer pour validation
                     </button>
                 </div>
             </form>
@@ -2589,7 +2621,7 @@
                     <p id="restock-error" class="text-red-500 text-sm mt-2 hidden"></p>
                     <button type="submit" id="restock-submit-button"
                         class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
-                        Confirmer le réapprovisionnement
+                        Envoyer pour validation
                     </button>
                 </div>
             </form>
@@ -2873,7 +2905,7 @@
             let currentUserData = null;
             let dbBasePath = '';
 
-            const appData = { stores: {}, boutiques: {}, storeProducts: {}, storeMovements: {}, shopStock: {}, shopMovements: {}, salesHistory: {}, customers: {}, suppliers: {}, storeExitRequests: {}, pendingSales: {}, settings: {} };
+            const appData = { stores: {}, boutiques: {}, storeProducts: {}, storeMovements: {}, shopStock: {}, shopMovements: {}, shopTransferRequests: {}, salesHistory: {}, customers: {}, suppliers: {}, storeExitRequests: {}, pendingSales: {}, settings: {} };
             let isSidebarOpen = false;
             let isSidebarCollapsed = false;
             let isCodeLoginMode = false;
@@ -2892,8 +2924,8 @@
             const SALE_SOURCE_MIXED = 'mixed';
 
 
-            let storesListener, boutiquesListener, storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, salesHistoryListener, companyMembersListener, companyCustomersListener, suppliersListener, storeExitRequestsListener, pendingSalesListener, settingsListener;
-            let storesRef, boutiquesRef, storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, salesHistoryRef, companyMembersRef, companyCustomersRef, suppliersRef, storeExitRequestsRef, pendingSalesRef, settingsRef;
+            let storesListener, boutiquesListener, storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, shopTransferRequestsListener, salesHistoryListener, companyMembersListener, companyCustomersListener, suppliersListener, storeExitRequestsListener, pendingSalesListener, settingsListener;
+            let storesRef, boutiquesRef, storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, shopTransferRequestsRef, salesHistoryRef, companyMembersRef, companyCustomersRef, suppliersRef, storeExitRequestsRef, pendingSalesRef, settingsRef;
 
             const accessModules = [
                 'Tableau de bord',
@@ -2987,6 +3019,10 @@
             const addBoutiqueForm = document.getElementById('add-boutique-form');
             const addBoutiqueNameInput = document.getElementById('add-boutique-name');
             const addBoutiqueError = document.getElementById('add-boutique-error');
+            const pendingShopTransferCount = document.getElementById('pending-shop-transfer-count');
+            const pendingShopTransferPlaceholder = document.getElementById('pending-shop-transfer-placeholder');
+            const pendingShopTransferTableContainer = document.getElementById('pending-shop-transfer-table-container');
+            const pendingShopTransferTbody = document.getElementById('pending-shop-transfer-tbody');
             const discountApprovalSettingsSection = document.getElementById('discount-approval-settings');
             const discountApprovalCodeForm = document.getElementById('discount-approval-code-form');
             const discountApprovalCodeInputSetting = document.getElementById('discount-approval-code-setting');
@@ -3731,6 +3767,7 @@
                 populateShopProductSelects();
                 renderShopStock(shopSearchInput ? shopSearchInput.value : '');
                 renderShopMovements();
+                renderPendingShopTransfers();
                 renderSalesCategoryFilters();
                 renderSalesProducts(salesProductSearch ? salesProductSearch.value : '');
                 renderCart();
@@ -8562,6 +8599,7 @@
                 populateStoreProductSelects();
                 renderStoreProducts(storeSearchInput ? storeSearchInput.value : '');
                 renderStoreMovementsPage();
+                renderPendingShopTransfers();
             }
 
             function onBoutiquesValue(snapshot) {
@@ -8591,6 +8629,7 @@
                 populateShopProductSelects();
                 renderShopStock(shopSearchInput ? shopSearchInput.value : '');
                 renderShopMovements();
+                renderPendingShopTransfers();
                 renderSalesCategoryFilters();
                 renderSalesProducts(salesProductSearch ? salesProductSearch.value : '');
                 updateDashboardStats();
@@ -8762,9 +8801,239 @@
                 }).join('');
             }
 
+            function canAccessShopTransferRequest(request) {
+                const boutiqueId = resolveBoutiqueId(request?.boutiqueId);
+                if (!boutiqueId) return false;
+                const allowed = new Set(getAccessibleBoutiqueIds());
+                return allowed.has(boutiqueId);
+            }
+
+            function renderPendingShopTransfers() {
+                if (!pendingShopTransferPlaceholder || !pendingShopTransferTableContainer || !pendingShopTransferTbody) return;
+                const activeBoutique = getActiveBoutiqueId();
+                const allowed = new Set(getAccessibleBoutiqueIds());
+                const requests = Object.values(appData.shopTransferRequests || {})
+                    .filter(request => request.status === EXIT_STATUS_PENDING)
+                    .filter(request => {
+                        const boutiqueId = resolveBoutiqueId(request.boutiqueId);
+                        if (!boutiqueId || !allowed.has(boutiqueId)) return false;
+                        if (activeBoutique && boutiqueId !== activeBoutique) return false;
+                        return true;
+                    })
+                    .sort((a, b) => new Date(b.requestedAt || b.date) - new Date(a.requestedAt || a.date));
+
+                if (pendingShopTransferCount) pendingShopTransferCount.textContent = requests.length;
+
+                if (!requests.length) {
+                    pendingShopTransferPlaceholder.classList.remove('hidden');
+                    pendingShopTransferTableContainer.classList.add('hidden');
+                    pendingShopTransferTbody.innerHTML = '';
+                    return;
+                }
+
+                pendingShopTransferPlaceholder.classList.add('hidden');
+                pendingShopTransferTableContainer.classList.remove('hidden');
+                pendingShopTransferTbody.innerHTML = requests.map(request => {
+                    const date = request.requestedAt || request.date || new Date().toISOString();
+                    const productLabel = request.productName || request.sourceProductName || '-';
+                    const storeName = getStoreName(resolveStoreId(request.storeId));
+                    const requester = request.requestedByName || request.requestedByEmail || '-';
+                    const qty = parseInt(request.quantity, 10) || 0;
+                    return `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(date)}</td>
+                            <td class="px-4 py-3 text-sm font-medium text-gray-900">${productLabel}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${storeName || '-'}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-700">${qty}</td>
+                            <td class="px-4 py-3 text-sm text-gray-500">${requester}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-right">
+                                <div class="inline-flex items-center gap-2">
+                                    <button type="button" data-shop-transfer-approve="${request.id}"
+                                        class="px-3 py-1.5 rounded-lg bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600">Valider</button>
+                                    <button type="button" data-shop-transfer-reject="${request.id}"
+                                        class="px-3 py-1.5 rounded-lg border border-red-200 text-red-600 text-xs font-semibold hover:bg-red-50">Refuser</button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            async function approveShopTransferRequest(requestId) {
+                if (!dbBasePath || !currentUser) return;
+                const request = appData.shopTransferRequests?.[requestId];
+                if (!request || request.status !== EXIT_STATUS_PENDING) {
+                    showSuccessToast("Cette demande a déjà été traitée.");
+                    return;
+                }
+                if (!canAccessShopTransferRequest(request)) {
+                    showSuccessToast("Accès refusé pour cette boutique.");
+                    return;
+                }
+                const sourceProd = appData.storeProducts?.[request.sourceProductId];
+                if (!sourceProd) {
+                    showSuccessToast("Produit source introuvable.");
+                    return;
+                }
+                const qty = parseInt(request.quantity, 10) || 0;
+                if (qty <= 0) return;
+
+                try {
+                    const now = new Date().toISOString();
+                    const updates = {};
+                    const storeId = resolveStoreId(request.storeId) || resolveStoreId(sourceProd.storeId) || getActiveStoreId();
+                    const boutiqueId = resolveBoutiqueId(request.boutiqueId);
+                    if (!boutiqueId) {
+                        showSuccessToast("Boutique introuvable.");
+                        return;
+                    }
+                    const boutiqueName = getBoutiqueName(boutiqueId);
+
+                    let shopItem = request.shopProductId ? appData.shopStock?.[request.shopProductId] : null;
+                    if (!shopItem) {
+                        shopItem = Object.values(appData.shopStock || {}).find(item =>
+                            resolveStoreId(item.sourceStoreId) === storeId &&
+                            resolveBoutiqueId(item.boutiqueId) === boutiqueId &&
+                            item.sourceProductId === request.sourceProductId
+                        );
+                    }
+
+                    const shopOld = shopItem ? (shopItem.quantityInShop || 0) : 0;
+                    const shopNew = shopOld + qty;
+                    const shopId = shopItem ? shopItem.id : (request.shopProductId || push(ref(db, `${dbBasePath}/shopStock`)).key);
+                    const sellingPrice = Number.isFinite(request.sellingPrice) ? request.sellingPrice : getBoutiqueSellingPrice(sourceProd);
+                    const purchaseCost = Number.isFinite(request.purchaseCost) ? request.purchaseCost : sourceProd.purchaseCost;
+                    const alertThreshold = Number.isFinite(request.alertThreshold)
+                        ? request.alertThreshold
+                        : (shopItem?.alertThreshold ?? 5);
+                    if (!Number.isFinite(sellingPrice)) {
+                        showSuccessToast("Prix boutique non défini.");
+                        return;
+                    }
+
+                    updates[`${dbBasePath}/shopStock/${shopId}`] = {
+                        id: shopId,
+                        sourceProductId: request.sourceProductId,
+                        sourceStoreId: storeId,
+                        boutiqueId,
+                        boutiqueName,
+                        name: request.productName || sourceProd.name,
+                        purchaseCost: purchaseCost,
+                        sellingPrice,
+                        quantityInShop: shopNew,
+                        alertThreshold,
+                        createdAt: shopItem ? shopItem.createdAt : now,
+                        updatedAt: now
+                    };
+
+                    const shmKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
+                    updates[`${dbBasePath}/shopMovements/${shmKey}`] = {
+                        id: shmKey,
+                        shopProductId: shopId,
+                        productName: request.productName || sourceProd.name,
+                        storeId,
+                        boutiqueId,
+                        boutiqueName,
+                        type: "Entrée",
+                        quantityChange: qty,
+                        oldStock: shopOld,
+                        newStock: shopNew,
+                        comment: request.comment || "Réception transfert magasin",
+                        date: now,
+                        userEmail: currentUser.email || '',
+                        userName: currentUserData?.fullName || currentUser.email || '',
+                        status: EXIT_STATUS_APPROVED
+                    };
+
+                    if (request.storeMovementId) {
+                        updates[`${dbBasePath}/storeMovements/${request.storeMovementId}/status`] = EXIT_STATUS_APPROVED;
+                        updates[`${dbBasePath}/storeMovements/${request.storeMovementId}/approvedAt`] = now;
+                    }
+
+                    updates[`${dbBasePath}/shopTransferRequests/${requestId}/status`] = EXIT_STATUS_APPROVED;
+                    updates[`${dbBasePath}/shopTransferRequests/${requestId}/validatedAt`] = now;
+                    updates[`${dbBasePath}/shopTransferRequests/${requestId}/validatedBy`] = currentUser.email || currentUserData?.email || '';
+                    updates[`${dbBasePath}/shopTransferRequests/${requestId}/shopProductId`] = shopId;
+                    updates[`${dbBasePath}/shopTransferRequests/${requestId}/shopMovementId`] = shmKey;
+
+                    const boutique = appData.boutiques?.[boutiqueId];
+                    const linkedStoreIds = Array.isArray(boutique?.linkedStoreIds) ? [...new Set(boutique.linkedStoreIds)] : [];
+                    if (storeId && !linkedStoreIds.includes(storeId)) {
+                        linkedStoreIds.push(storeId);
+                        updates[`${dbBasePath}/boutiques/${boutiqueId}/linkedStoreIds`] = linkedStoreIds;
+                        updates[`${dbBasePath}/boutiques/${boutiqueId}/updatedAt`] = now;
+                    }
+
+                    await update(ref(db), updates);
+                    showSuccessToast("Réception confirmée.");
+                } catch (error) {
+                    console.error(error);
+                    showSuccessToast("Impossible de valider cette réception.");
+                }
+            }
+
+            async function rejectShopTransferRequest(requestId) {
+                if (!dbBasePath || !currentUser) return;
+                const request = appData.shopTransferRequests?.[requestId];
+                if (!request || request.status !== EXIT_STATUS_PENDING) {
+                    showSuccessToast("Cette demande a déjà été traitée.");
+                    return;
+                }
+                if (!canAccessShopTransferRequest(request)) {
+                    showSuccessToast("Accès refusé pour cette boutique.");
+                    return;
+                }
+                const sourceProd = appData.storeProducts?.[request.sourceProductId];
+                const qty = parseInt(request.quantity, 10) || 0;
+
+                try {
+                    const now = new Date().toISOString();
+                    const updates = {};
+                    const shouldRestore = request.stockReserved === true || !!request.storeMovementId;
+                    if (shouldRestore && sourceProd && qty > 0) {
+                        const newStock = (sourceProd.quantityInStore || 0) + qty;
+                        updates[`${dbBasePath}/storeProducts/${sourceProd.id}/quantityInStore`] = newStock;
+                        const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
+                        updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
+                            id: moveKey,
+                            productId: sourceProd.id,
+                            productName: sourceProd.name,
+                            storeId: resolveStoreId(request.storeId) || resolveStoreId(sourceProd.storeId) || getActiveStoreId(),
+                            type: "Entrée",
+                            quantityChange: qty,
+                            oldStock: sourceProd.quantityInStore,
+                            newStock,
+                            comment: request.comment ? `Annulation transfert - ${request.comment}` : "Annulation transfert boutique",
+                            date: now,
+                            status: EXIT_STATUS_APPROVED,
+                            userEmail: currentUser.email || '',
+                            userName: currentUserData?.fullName || currentUser.email || ''
+                        };
+                    }
+                    if (request.storeMovementId) {
+                        updates[`${dbBasePath}/storeMovements/${request.storeMovementId}/status`] = EXIT_STATUS_REJECTED;
+                        updates[`${dbBasePath}/storeMovements/${request.storeMovementId}/rejectedAt`] = now;
+                    }
+                    updates[`${dbBasePath}/shopTransferRequests/${requestId}/status`] = EXIT_STATUS_REJECTED;
+                    updates[`${dbBasePath}/shopTransferRequests/${requestId}/validatedAt`] = now;
+                    updates[`${dbBasePath}/shopTransferRequests/${requestId}/validatedBy`] = currentUser.email || currentUserData?.email || '';
+
+                    await update(ref(db), updates);
+                    showSuccessToast("Réception refusée.");
+                } catch (error) {
+                    console.error(error);
+                    showSuccessToast("Impossible de refuser cette réception.");
+                }
+            }
+
             function onShopMovementsValue(snapshot) {
                 appData.shopMovements = snapshot.val() || {};
                 renderShopMovements();
+            }
+
+            function onShopTransferRequestsValue(snapshot) {
+                appData.shopTransferRequests = snapshot.val() || {};
+                renderPendingShopTransfers();
             }
 
             function onSalesHistoryValue(snapshot) {
@@ -8836,6 +9105,9 @@
                 shopMovementsRef = ref(db, `${dbBasePath}/shopMovements`);
                 shopMovementsListener = onValue(shopMovementsRef, onShopMovementsValue);
 
+                shopTransferRequestsRef = ref(db, `${dbBasePath}/shopTransferRequests`);
+                shopTransferRequestsListener = onValue(shopTransferRequestsRef, onShopTransferRequestsValue);
+
                 salesHistoryRef = ref(db, `${dbBasePath}/salesHistory`);
                 salesHistoryListener = onValue(salesHistoryRef, onSalesHistoryValue);
 
@@ -8865,14 +9137,15 @@
                 if (storeExitRequestsListener && storeExitRequestsRef) off(storeExitRequestsRef, storeExitRequestsListener);
                 if (shopStockListener && shopStockRef) off(shopStockRef, shopStockListener);
                 if (shopMovementsListener && shopMovementsRef) off(shopMovementsRef, shopMovementsListener);
+                if (shopTransferRequestsListener && shopTransferRequestsRef) off(shopTransferRequestsRef, shopTransferRequestsListener);
                 if (salesHistoryListener && salesHistoryRef) off(salesHistoryRef, salesHistoryListener);
                 if (pendingSalesListener && pendingSalesRef) off(pendingSalesRef, pendingSalesListener);
                 if (settingsListener && settingsRef) off(settingsRef, settingsListener);
                 if (companyMembersListener && companyMembersRef) off(companyMembersRef, companyMembersListener);
                 if (companyCustomersListener && companyCustomersRef) off(companyCustomersRef, companyCustomersListener);
                 if (suppliersListener && suppliersRef) off(suppliersRef, suppliersListener);
-                storesListener = null; boutiquesListener = null; storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; salesHistoryListener = null; pendingSalesListener = null; settingsListener = null; companyMembersListener = null; companyCustomersListener = null; suppliersListener = null;
-                appData.stores = {}; appData.boutiques = {}; appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.shopMovements = {}; appData.salesHistory = {}; appData.customers = {}; appData.suppliers = {}; appData.storeExitRequests = {}; appData.pendingSales = {}; appData.settings = {};
+                storesListener = null; boutiquesListener = null; storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; shopTransferRequestsListener = null; salesHistoryListener = null; pendingSalesListener = null; settingsListener = null; companyMembersListener = null; companyCustomersListener = null; suppliersListener = null;
+                appData.stores = {}; appData.boutiques = {}; appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.shopMovements = {}; appData.shopTransferRequests = {}; appData.salesHistory = {}; appData.customers = {}; appData.suppliers = {}; appData.storeExitRequests = {}; appData.pendingSales = {}; appData.settings = {};
                 selectedCustomer = null;
                 customerOptionLookup = {};
                 isCustomerHistoryOpen = false;
@@ -10562,6 +10835,19 @@
                     }
                 });
             }
+            if (pendingShopTransferTbody) {
+                pendingShopTransferTbody.addEventListener('click', (event) => {
+                    const approveButton = event.target.closest('[data-shop-transfer-approve]');
+                    if (approveButton) {
+                        approveShopTransferRequest(approveButton.dataset.shopTransferApprove);
+                        return;
+                    }
+                    const rejectButton = event.target.closest('[data-shop-transfer-reject]');
+                    if (rejectButton) {
+                        rejectShopTransferRequest(rejectButton.dataset.shopTransferReject);
+                    }
+                });
+            }
 
             // Event Listeners
             if (hamburgerButton) hamburgerButton.addEventListener('click', () => { isSidebarOpen = true; updateSidebarMobileState(); });
@@ -11543,8 +11829,6 @@
 
                     const updates = {}; const now = new Date().toISOString();
                     const storeNew = sourceProd.quantityInStore - qty;
-                    const shopOld = existingItem ? existingItem.quantityInShop : 0;
-                    const shopNew = shopOld + qty;
 
                     updates[`${dbBasePath}/storeProducts/${sourceId}/quantityInStore`] = storeNew;
                     const smKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
@@ -11559,67 +11843,48 @@
                         quantityChange: qty,
                         oldStock: sourceProd.quantityInStore,
                         newStock: storeNew,
-                        comment: "Transfert Boutique",
+                        comment: "Transfert Boutique (en attente)",
                         date: now,
                         userEmail: currentUser.email || '',
-                        userName: currentUserData?.fullName || currentUser.email || ''
-                    };
-
-                    const shopId = existingItem ? existingItem.id : push(ref(db, `${dbBasePath}/shopStock`)).key;
-                    updates[`${dbBasePath}/shopStock/${shopId}`] = {
-                        id: shopId,
-                        sourceProductId: sourceId,
-                        sourceStoreId: storeId,
-                        boutiqueId: targetBoutiqueId,
-                        boutiqueName: targetBoutiqueName,
-                        name: sourceProd.name,
-                        purchaseCost: sourceProd.purchaseCost,
-                        sellingPrice: price,
-                        quantityInShop: shopNew,
-                        alertThreshold: alertT,
-                        createdAt: existingItem ? existingItem.createdAt : now,
-                        updatedAt: now
+                        userName: currentUserData?.fullName || currentUser.email || '',
+                        status: EXIT_STATUS_PENDING
                     };
 
                     if (canManagePricing()) {
                         updates[`${dbBasePath}/storeProducts/${sourceId}/boutiqueSellingPrice`] = price;
                         updates[`${dbBasePath}/storeProducts/${sourceId}/updatedAt`] = now;
-                        Object.values(appData.shopStock || {}).forEach(item => {
-                            if (item.sourceProductId !== sourceId) return;
-                            updates[`${dbBasePath}/shopStock/${item.id}/sellingPrice`] = price;
-                            updates[`${dbBasePath}/shopStock/${item.id}/updatedAt`] = now;
-                        });
                     }
 
-                    const shmKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
-                    updates[`${dbBasePath}/shopMovements/${shmKey}`] = {
-                        id: shmKey,
-                        shopProductId: shopId,
-                        productName: sourceProd.name,
-                        storeId,
-                        boutiqueId: targetBoutiqueId,
-                        boutiqueName: targetBoutiqueName,
-                        type: "Entrée",
-                        quantityChange: qty,
-                        oldStock: shopOld,
-                        newStock: shopNew,
-                        comment: existingItem ? "Fusion stock" : "Transfert magasin",
-                        date: now,
-                        userEmail: currentUser.email,
-                        userName: currentUserData?.fullName || currentUser.email || '',
-                        status: EXIT_STATUS_APPROVED
-                    };
-
-                    const boutique = appData.boutiques?.[targetBoutiqueId];
-                    const linkedStoreIds = Array.isArray(boutique?.linkedStoreIds) ? [...new Set(boutique.linkedStoreIds)] : [];
-                    if (!linkedStoreIds.includes(storeId)) {
-                        linkedStoreIds.push(storeId);
-                        updates[`${dbBasePath}/boutiques/${targetBoutiqueId}/linkedStoreIds`] = linkedStoreIds;
-                        updates[`${dbBasePath}/boutiques/${targetBoutiqueId}/updatedAt`] = now;
+                    const requestRef = push(ref(db, `${dbBasePath}/shopTransferRequests`));
+                    if (requestRef.key) {
+                        updates[`${dbBasePath}/shopTransferRequests/${requestRef.key}`] = {
+                            id: requestRef.key,
+                            requestType: 'transfer',
+                            status: EXIT_STATUS_PENDING,
+                            storeId,
+                            boutiqueId: targetBoutiqueId,
+                            boutiqueName: targetBoutiqueName,
+                            sourceProductId: sourceId,
+                            productName: sourceProd.name,
+                            purchaseCost: sourceProd.purchaseCost,
+                            sellingPrice: price,
+                            quantity: qty,
+                            alertThreshold: alertT,
+                            requestedAt: now,
+                            requestedById: currentUser.uid || '',
+                            requestedByName: currentUserData?.fullName || currentUser.email || '',
+                            requestedByEmail: currentUser.email || '',
+                            storeMovementId: smKey,
+                            shopProductId: existingItem ? existingItem.id : null,
+                            stockReserved: true,
+                            stockBeforeStore: sourceProd.quantityInStore,
+                            stockAfterStore: storeNew,
+                            comment: "Transfert Boutique"
+                        };
                     }
 
                     await update(ref(db), updates);
-                    showSuccessToast(existingItem ? "Stock fusionné en boutique !" : "Transfert boutique réussi !");
+                    showSuccessToast("Transfert envoyé pour validation.");
                     transferForm.reset();
                     transferModal.classList.add('hidden');
                 } catch (err) {
@@ -11661,7 +11926,6 @@
                     if (restockSubmitButton) restockSubmitButton.disabled = true;
                     const updates = {}; const now = new Date().toISOString();
                     const storeNew = sourceProd.quantityInStore - qty;
-                    const shopNew = shopProd.quantityInShop + qty;
 
                     updates[`${dbBasePath}/storeProducts/${sourceProd.id}/quantityInStore`] = storeNew;
                     const smKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
@@ -11676,35 +11940,45 @@
                         quantityChange: qty,
                         oldStock: sourceProd.quantityInStore,
                         newStock: storeNew,
-                        comment: "Réappro Boutique",
+                        comment: "Réappro Boutique (en attente)",
                         date: now,
                         userEmail: currentUser.email || '',
-                        userName: currentUserData?.fullName || currentUser.email || ''
+                        userName: currentUserData?.fullName || currentUser.email || '',
+                        status: EXIT_STATUS_PENDING
                     };
 
-                    updates[`${dbBasePath}/shopStock/${sid}/quantityInShop`] = shopNew;
-                    updates[`${dbBasePath}/shopStock/${sid}/updatedAt`] = now;
-                    const shmKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
-                    updates[`${dbBasePath}/shopMovements/${shmKey}`] = {
-                        id: shmKey,
-                        shopProductId: sid,
-                        productName: shopProd.name,
-                        storeId: sourceStoreId,
-                        boutiqueId: targetBoutiqueId,
-                        boutiqueName: getBoutiqueName(targetBoutiqueId),
-                        type: "Entrée",
-                        quantityChange: qty,
-                        oldStock: shopProd.quantityInShop,
-                        newStock: shopNew,
-                        comment: comment,
-                        date: now,
-                        userEmail: currentUser.email,
-                        userName: currentUserData?.fullName || currentUser.email || '',
-                        status: EXIT_STATUS_APPROVED
-                    };
+                    const requestRef = push(ref(db, `${dbBasePath}/shopTransferRequests`));
+                    if (requestRef.key) {
+                        updates[`${dbBasePath}/shopTransferRequests/${requestRef.key}`] = {
+                            id: requestRef.key,
+                            requestType: 'restock',
+                            status: EXIT_STATUS_PENDING,
+                            storeId: sourceStoreId,
+                            boutiqueId: targetBoutiqueId,
+                            boutiqueName: getBoutiqueName(targetBoutiqueId),
+                            sourceProductId: sourceProd.id,
+                            productName: shopProd.name,
+                            purchaseCost: sourceProd.purchaseCost,
+                            sellingPrice: Number.isFinite(Number(shopProd.sellingPrice))
+                                ? Number(shopProd.sellingPrice)
+                                : getBoutiqueSellingPrice(sourceProd),
+                            quantity: qty,
+                            alertThreshold: shopProd.alertThreshold,
+                            requestedAt: now,
+                            requestedById: currentUser.uid || '',
+                            requestedByName: currentUserData?.fullName || currentUser.email || '',
+                            requestedByEmail: currentUser.email || '',
+                            storeMovementId: smKey,
+                            shopProductId: sid,
+                            stockReserved: true,
+                            stockBeforeStore: sourceProd.quantityInStore,
+                            stockAfterStore: storeNew,
+                            comment: comment || "Réappro Boutique"
+                        };
+                    }
 
                     await update(ref(db), updates);
-                    showSuccessToast("Réapprovisionnement réussi !");
+                    showSuccessToast("Réapprovisionnement envoyé pour validation.");
                     restockForm.reset();
                     restockModal.classList.add('hidden');
                 } catch (err) {
