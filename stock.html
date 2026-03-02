@@ -3111,7 +3111,7 @@
                             <p id="supplier-invoice-detail-paid" class="text-sm font-semibold text-gray-900 mt-1">-</p>
                         </div>
                         <div class="rounded-2xl bg-gray-50 p-4">
-                            <p class="text-xs text-gray-500">Reste</p>
+                            <p class="text-xs text-gray-500">Reste global</p>
                             <p id="supplier-invoice-detail-balance" class="text-sm font-semibold text-gray-900 mt-1">-</p>
                         </div>
                     </div>
@@ -6840,6 +6840,9 @@
                 const paidAmount = Number(invoice.paidAmount || 0);
                 const totalAmount = Number(invoice.total || 0);
                 const balance = getInvoiceBalance(invoice);
+                const supplierId = invoice.supplierId || payment.supplierId;
+                const supplierRemaining = getSupplierInvoices(supplierId)
+                    .reduce((sum, inv) => sum + getInvoiceBalance(inv), 0);
                 const qty = Number(invoice.quantity || 0);
                 const unitCost = Number(invoice.unitCost || 0);
                 const totalProduct = roundAmount(unitCost * qty);
@@ -6868,7 +6871,7 @@
                 if (supplierInvoiceDetailDate) supplierInvoiceDetailDate.textContent = formatDateOnly(invoice.date || invoice.createdAt || '');
                 if (supplierInvoiceDetailStatus) supplierInvoiceDetailStatus.textContent = statusLabel;
                 if (supplierInvoiceDetailPaid) supplierInvoiceDetailPaid.textContent = formatCurrency(paidAmount, supplierCurrency);
-                if (supplierInvoiceDetailBalance) supplierInvoiceDetailBalance.textContent = formatCurrency(balance, supplierCurrency);
+                if (supplierInvoiceDetailBalance) supplierInvoiceDetailBalance.textContent = formatCurrency(supplierRemaining, supplierCurrency);
 
                 if (supplierInvoiceDetailProducts) {
                     supplierInvoiceDetailProducts.innerHTML = `
@@ -6908,7 +6911,7 @@
                     }
                     summaryRows.push(`<div class="flex items-center justify-between text-sm text-gray-600"><span>Total facture</span><span>${formatCurrency(totalAmount, supplierCurrency)}</span></div>`);
                     summaryRows.push(`<div class="flex items-center justify-between text-sm text-gray-600"><span>Payé</span><span>${formatCurrency(paidAmount, supplierCurrency)}</span></div>`);
-                    summaryRows.push(`<div class="flex items-center justify-between text-base font-semibold text-gray-900 border-t border-emerald-100 pt-3"><span>Reste</span><span class="text-emerald-700">${formatCurrency(balance, supplierCurrency)}</span></div>`);
+                    summaryRows.push(`<div class="flex items-center justify-between text-base font-semibold text-gray-900 border-t border-emerald-100 pt-3"><span>Reste total</span><span class="text-emerald-700">${formatCurrency(supplierRemaining, supplierCurrency)}</span></div>`);
                     supplierInvoiceDetailSummary.innerHTML = summaryRows.join('');
                 }
 
