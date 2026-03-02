@@ -4535,33 +4535,15 @@
                 const invoice = appData.supplierInvoices?.[invoiceId];
                 if (!invoice) return;
                 const doc = buildSupplierInvoicePdf(invoice, signatureDataUrl);
+                if (shouldPrint) {
+                    const invoiceLabel = getSupplierInvoiceLabel(invoice).replace(/\s+/g, '_');
+                    doc.save(`Facture_${invoiceLabel}.pdf`);
+                    return;
+                }
                 const blob = doc.output('blob');
                 const url = URL.createObjectURL(blob);
-                if (shouldPrint) {
-                    const iframe = document.createElement('iframe');
-                    iframe.style.position = 'fixed';
-                    iframe.style.right = '0';
-                    iframe.style.bottom = '0';
-                    iframe.style.width = '0';
-                    iframe.style.height = '0';
-                    iframe.style.border = '0';
-                    iframe.src = url;
-                    document.body.appendChild(iframe);
-                    iframe.onload = () => {
-                        const frameWindow = iframe.contentWindow;
-                        if (frameWindow) {
-                            frameWindow.focus();
-                            frameWindow.print();
-                        }
-                        setTimeout(() => {
-                            iframe.remove();
-                            URL.revokeObjectURL(url);
-                        }, 1000);
-                    };
-                } else {
-                    window.open(url);
-                    setTimeout(() => URL.revokeObjectURL(url), 10000);
-                }
+                window.open(url);
+                setTimeout(() => URL.revokeObjectURL(url), 10000);
             }
 
             function renderTransferBoutiqueSelect() {
