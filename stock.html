@@ -9503,9 +9503,15 @@
             function renderSalesCategoryFilters() {
                 if (!salesCategoryFilters) return;
                 const activeBoutique = getActiveBoutiqueId();
-                const categories = [...new Set(Object.values(appData.shopStock || {})
+                const categoriesSet = new Set();
+                getCategoriesSorted().forEach(category => {
+                    categoriesSet.add(formatCategoryLabel(category.name));
+                });
+                Object.values(appData.shopStock || {})
                     .filter(item => !activeBoutique || resolveBoutiqueId(item.boutiqueId) === activeBoutique)
-                    .map(getShopItemCategory))].sort((a, b) => a.localeCompare(b));
+                    .map(getShopItemCategory)
+                    .forEach(categoryName => categoriesSet.add(categoryName));
+                const categories = [...categoriesSet].sort((a, b) => a.localeCompare(b));
                 if (selectedSalesCategory !== 'Tous' && !categories.includes(selectedSalesCategory)) {
                     selectedSalesCategory = 'Tous';
                 }
