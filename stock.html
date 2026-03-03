@@ -4346,7 +4346,11 @@
             }
 
             function getSupplierInvoices(supplierId) {
-                return Object.values(appData.supplierInvoices || {})
+                return Object.entries(appData.supplierInvoices || {})
+                    .map(([key, inv]) => ({
+                        ...inv,
+                        id: inv?.id || key
+                    }))
                     .filter(inv => inv.supplierId === supplierId)
                     .sort((a, b) => new Date(b.date || b.createdAt || 0) - new Date(a.date || a.createdAt || 0));
             }
@@ -4358,8 +4362,9 @@
             }
 
             function getSupplierInvoiceLabel(invoice) {
-                if (!invoice?.id) return 'Facture';
-                return `FAC-${invoice.id.slice(-6).toUpperCase()}`;
+                const id = invoice?.id || '';
+                if (!id) return 'Facture';
+                return `FAC-${id.slice(-6).toUpperCase()}`;
             }
 
             function getInvoiceBalance(invoice) {
@@ -7210,10 +7215,11 @@
                 }
 
                 if (supplierInvoiceDetailPrint) {
+                    const invoiceId = invoice.id || payment.invoiceId || '';
                     supplierInvoiceDetailPrint.dataset.paymentId = paymentId;
-                    supplierInvoiceDetailPrint.dataset.invoiceId = invoice.id || '';
-                    supplierInvoiceDetailPrint.disabled = !invoice.id;
-                    supplierInvoiceDetailPrint.classList.toggle('opacity-60', !invoice.id);
+                    supplierInvoiceDetailPrint.dataset.invoiceId = invoiceId;
+                    supplierInvoiceDetailPrint.disabled = !invoiceId;
+                    supplierInvoiceDetailPrint.classList.toggle('opacity-60', !invoiceId);
                 }
 
                 supplierInvoiceDetailModal.classList.remove('hidden');
