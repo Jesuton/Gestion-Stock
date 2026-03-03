@@ -5297,6 +5297,16 @@
                 return index;
             }
 
+            function buildSupplierNameIndex() {
+                const index = new Map();
+                Object.values(appData.suppliers || {}).forEach(supplier => {
+                    const key = normalizeString(supplier?.name || '');
+                    if (!key) return;
+                    index.set(key, supplier);
+                });
+                return index;
+            }
+
             function normalizePhone(value) {
                 return (value || '').toString().replace(/[\s().-]/g, '').trim();
             }
@@ -10466,12 +10476,13 @@
                 const idxName = getHeaderIndex(headers, ['nom', 'produit', 'product', 'productname']);
                 const idxDescription = getHeaderIndex(headers, ['description', 'desc']);
                 const idxQuantity = getHeaderIndex(headers, ['quantite', 'quantity', 'qte', 'qty']);
+                const idxSupplier = getHeaderIndex(headers, ['fournisseur', 'supplier', 'suppliername', 'supplierid', 'fournisseurid']);
                 const idxExpiration = getHeaderIndex(headers, ['dateexpiration', 'expiration', 'peremption']);
 
-                if (idxName < 0 || idxDescription < 0 || idxQuantity < 0) {
+                if (idxName < 0 || idxDescription < 0 || idxQuantity < 0 || idxSupplier < 0) {
                     setImportMessage(
                         storeImportCsvError,
-                        'Colonnes requises: nom, description, quantite.',
+                        'Colonnes requises: nom, description, quantite, fournisseur.',
                         true
                     );
                     return;
@@ -10479,6 +10490,7 @@
 
                 const entryProducts = getEntrySelectableProducts();
                 const productsIndex = buildProductNameIndex(entryProducts);
+                const suppliersIndex = buildSupplierNameIndex();
                 const updates = {};
                 const errors = [];
                 const stockTracker = new Map();
@@ -10508,6 +10520,17 @@
                     const qty = parseCsvNumber(row[idxQuantity]);
                     if (!Number.isFinite(qty) || qty <= 0 || !Number.isInteger(qty)) {
                         errors.push(`Ligne ${lineNumber}: quantité invalide.`);
+                        continue;
+                    }
+
+                    const supplierRaw = (row[idxSupplier] || '').toString().trim();
+                    if (!supplierRaw) {
+                        errors.push(`Ligne ${lineNumber}: fournisseur manquant.`);
+                        continue;
+                    }
+                    const supplier = appData.suppliers?.[supplierRaw] || suppliersIndex.get(normalizeString(supplierRaw)) || null;
+                    if (!supplier) {
+                        errors.push(`Ligne ${lineNumber}: fournisseur introuvable (${supplierRaw}).`);
                         continue;
                     }
 
@@ -10565,6 +10588,8 @@
                         oldStock: baseStock,
                         newStock,
                         comment: "Import CSV",
+                        supplierId: supplier?.id || null,
+                        supplierName: supplier?.name || supplierRaw,
                         expirationDate: expirationDate || null,
                         date: now,
                         userEmail: currentUser.email || '',
