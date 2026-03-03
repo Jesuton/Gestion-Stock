@@ -1375,6 +1375,11 @@
                                 class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2">Entrée</button>
                             <button id="open-exit-modal-button"
                                 class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2">Sortie</button>
+                            <button id="store-import-csv-button"
+                                class="px-4 py-2 bg-emerald-600 text-white font-semibold rounded-lg shadow-sm hover:bg-emerald-700 transition-colors flex items-center gap-2">
+                                Importer entrées CSV
+                            </button>
+                            <input type="file" id="store-import-csv-input" class="hidden" accept=".csv,text/csv" />
                             <!-- ID ajouté au bouton "Nouveau Produit" -->
                             <button id="open-new-product-modal-button"
                                 class="px-4 py-2 bg-cyan-400 text-white font-semibold rounded-lg shadow-md hover:bg-cyan-500 transition-colors flex items-center gap-2">
@@ -1382,6 +1387,8 @@
                             </button>
                         </div>
                     </div>
+                    <div id="store-import-csv-status" class="mt-3 text-sm text-gray-500 hidden"></div>
+                    <div id="store-import-csv-error" class="mt-2 text-sm text-red-500 hidden"></div>
 
                     <!-- Conteneur pour la liste des produits du magasin -->
                     <div id="store-products-container" class="mt-6">
@@ -1551,8 +1558,18 @@
                             </svg>
                             Ajouter un produit
                         </button>
+                        <button id="price-table-import-button"
+                            class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-cyan-200 text-cyan-700 font-semibold hover:bg-cyan-50">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4" />
+                            </svg>
+                            Importer CSV
+                        </button>
+                        <input type="file" id="price-table-import-input" class="hidden" accept=".csv,text/csv" />
                     </div>
                 </div>
+                <div id="price-table-import-status" class="mt-3 text-sm text-gray-500 hidden"></div>
+                <div id="price-table-import-error" class="mt-2 text-sm text-red-500 hidden"></div>
 
                 <div id="category-management-card" class="mt-6 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -3581,6 +3598,10 @@
             const priceTableTableContainer = document.getElementById('price-table-table-container');
             const priceTableTbody = document.getElementById('price-table-tbody');
             const priceTableEmpty = document.getElementById('price-table-empty');
+            const priceTableImportButton = document.getElementById('price-table-import-button');
+            const priceTableImportInput = document.getElementById('price-table-import-input');
+            const priceTableImportStatus = document.getElementById('price-table-import-status');
+            const priceTableImportError = document.getElementById('price-table-import-error');
             const openPriceProductModalButton = document.getElementById('open-price-product-modal-button');
             const categoryManagementCard = document.getElementById('category-management-card');
             const categoryForm = document.getElementById('category-form');
@@ -3595,6 +3616,10 @@
             const storeProductsPlaceholder = document.getElementById('store-products-placeholder');
             const storeProductsTableContainer = document.getElementById('store-products-table-container');
             const storeProductsTbody = document.getElementById('store-products-tbody');
+            const storeImportCsvButton = document.getElementById('store-import-csv-button');
+            const storeImportCsvInput = document.getElementById('store-import-csv-input');
+            const storeImportCsvStatus = document.getElementById('store-import-csv-status');
+            const storeImportCsvError = document.getElementById('store-import-csv-error');
             const storeMovementsPlaceholder = document.getElementById('store-movements-placeholder');
             const storeMovementsTableContainer = document.getElementById('store-movements-table-container');
             const storeMovementsTbody = document.getElementById('store-movements-tbody');
@@ -5109,6 +5134,167 @@
 
             function normalizeString(value) {
                 return (value || '').toString().trim().toLowerCase();
+            }
+
+            function normalizeHeaderKey(value) {
+                return (value || '')
+                    .toString()
+                    .trim()
+                    .toLowerCase()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .replace(/[^a-z0-9]/g, '');
+            }
+
+            function detectCsvDelimiter(line) {
+                const candidates = [',', ';', '\t', '|'];
+                let best = ',';
+                let bestCount = -1;
+                const countDelimiter = (value, delimiter) => {
+                    let count = 0;
+                    let inQuotes = false;
+                    for (let i = 0; i < value.length; i += 1) {
+                        const char = value[i];
+                        if (char === '"') {
+                            if (inQuotes && value[i + 1] === '"') {
+                                i += 1;
+                            } else {
+                                inQuotes = !inQuotes;
+                            }
+                        } else if (char === delimiter && !inQuotes) {
+                            count += 1;
+                        }
+                    }
+                    return count;
+                };
+                candidates.forEach((delimiter) => {
+                    const count = countDelimiter(line, delimiter);
+                    if (count > bestCount) {
+                        bestCount = count;
+                        best = delimiter;
+                    }
+                });
+                return best;
+            }
+
+            function parseCsvText(text) {
+                const cleanText = (text || '').replace(/^\uFEFF/, '');
+                if (!cleanText.trim()) return { rows: [], delimiter: ',' };
+                const firstLine = cleanText.split(/\r?\n/)[0] || '';
+                const delimiter = detectCsvDelimiter(firstLine);
+                const rows = [];
+                let row = [];
+                let value = '';
+                let inQuotes = false;
+
+                const pushValue = () => {
+                    row.push(value.trim());
+                    value = '';
+                };
+                const pushRow = () => {
+                    if (row.length) {
+                        rows.push(row);
+                    }
+                    row = [];
+                };
+
+                for (let i = 0; i < cleanText.length; i += 1) {
+                    const char = cleanText[i];
+                    if (char === '"') {
+                        if (inQuotes && cleanText[i + 1] === '"') {
+                            value += '"';
+                            i += 1;
+                        } else {
+                            inQuotes = !inQuotes;
+                        }
+                        continue;
+                    }
+                    if (!inQuotes && char === delimiter) {
+                        pushValue();
+                        continue;
+                    }
+                    if (!inQuotes && (char === '\n' || char === '\r')) {
+                        if (char === '\r' && cleanText[i + 1] === '\n') {
+                            i += 1;
+                        }
+                        pushValue();
+                        pushRow();
+                        continue;
+                    }
+                    value += char;
+                }
+                pushValue();
+                pushRow();
+
+                return { rows, delimiter };
+            }
+
+            function parseCsvNumber(rawValue) {
+                if (rawValue === null || rawValue === undefined) return Number.NaN;
+                let value = rawValue.toString().trim();
+                if (!value) return Number.NaN;
+                value = value.replace(/\s+/g, '');
+                if (value.includes(',') && !value.includes('.')) {
+                    value = value.replace(',', '.');
+                } else if (value.includes(',') && value.includes('.')) {
+                    value = value.replace(/,/g, '');
+                }
+                return Number(value);
+            }
+
+            function isCsvRowEmpty(row) {
+                if (!row || !row.length) return true;
+                return row.every(cell => !cell || !cell.toString().trim());
+            }
+
+            function setImportMessage(target, message, isError = false) {
+                if (!target) return;
+                if (!message) {
+                    target.classList.add('hidden');
+                    target.textContent = '';
+                    return;
+                }
+                target.textContent = message;
+                target.classList.remove('hidden');
+                if (isError) {
+                    target.classList.add('text-red-500');
+                    target.classList.remove('text-gray-500');
+                } else {
+                    target.classList.add('text-gray-500');
+                    target.classList.remove('text-red-500');
+                }
+            }
+
+            function getHeaderIndex(headers, variants) {
+                const normalized = headers.map(normalizeHeaderKey);
+                for (const variant of variants) {
+                    const key = normalizeHeaderKey(variant);
+                    const index = normalized.indexOf(key);
+                    if (index >= 0) return index;
+                }
+                return -1;
+            }
+
+            function buildProductNameIndex(products) {
+                const index = new Map();
+                products.forEach(product => {
+                    const key = normalizeString(product?.name || '');
+                    if (!key) return;
+                    const list = index.get(key) || [];
+                    list.push(product);
+                    index.set(key, list);
+                });
+                return index;
+            }
+
+            function buildCategoryNameIndex() {
+                const index = new Map();
+                Object.values(appData.categories || {}).forEach(category => {
+                    const key = normalizeString(category?.name || '');
+                    if (!key) return;
+                    index.set(key, category);
+                });
+                return index;
             }
 
             function normalizePhone(value) {
@@ -10077,6 +10263,339 @@
                 }
             }
 
+            async function handlePriceTableCsvImport(file) {
+                if (!file) return;
+                setImportMessage(priceTableImportError, '');
+                setImportMessage(priceTableImportStatus, '');
+                if (!currentUser || !dbBasePath) return;
+                const storeId = getActiveStoreId();
+                if (!storeId) {
+                    setImportMessage(priceTableImportError, 'Veuillez créer ou sélectionner un magasin.', true);
+                    return;
+                }
+                if (!canManagePricing()) {
+                    setImportMessage(priceTableImportError, "Accès refusé pour importer des prix.", true);
+                    return;
+                }
+
+                const text = await file.text();
+                const { rows } = parseCsvText(text);
+                if (rows.length < 2) {
+                    setImportMessage(priceTableImportError, "Fichier CSV vide ou invalide.", true);
+                    return;
+                }
+
+                const headers = rows[0];
+                const idxName = getHeaderIndex(headers, ['nom', 'produit', 'product', 'productname']);
+                const idxCategory = getHeaderIndex(headers, ['categorie', 'category', 'type']);
+                const idxPurchase = getHeaderIndex(headers, ['prixachat', 'coutachat', 'purchasecost', 'cost', 'buyprice']);
+                const idxStore = getHeaderIndex(headers, ['prixmagasin', 'storeprice', 'prixintern', 'store']);
+                const idxBoutique = getHeaderIndex(headers, ['prixboutique', 'boutiqueprice', 'boutique']);
+                const idxCurrency = getHeaderIndex(headers, ['devise', 'currency']);
+
+                if (idxName < 0 || idxCategory < 0 || idxPurchase < 0 || idxStore < 0 || idxBoutique < 0 || idxCurrency < 0) {
+                    setImportMessage(
+                        priceTableImportError,
+                        'Colonnes requises: nom, categorie, prix_achat, prix_magasin, prix_boutique, devise.',
+                        true
+                    );
+                    return;
+                }
+
+                const productsIndex = buildProductNameIndex(Object.values(appData.storeProducts || {}));
+                const categoriesIndex = buildCategoryNameIndex();
+                const updates = {};
+                const errors = [];
+                const seenNames = new Set();
+                let created = 0;
+                let updated = 0;
+                const now = new Date().toISOString();
+
+                for (let i = 1; i < rows.length; i += 1) {
+                    const row = rows[i];
+                    if (isCsvRowEmpty(row)) continue;
+                    const lineNumber = i + 1;
+                    const rawName = (row[idxName] || '').trim();
+                    if (!rawName) {
+                        errors.push(`Ligne ${lineNumber}: nom du produit manquant.`);
+                        continue;
+                    }
+                    const normalizedName = normalizeString(rawName);
+                    if (seenNames.has(normalizedName)) {
+                        errors.push(`Ligne ${lineNumber}: nom du produit en double (${rawName}).`);
+                        continue;
+                    }
+                    seenNames.add(normalizedName);
+
+                    const purchaseCost = parseCsvNumber(row[idxPurchase]);
+                    const storePrice = parseCsvNumber(row[idxStore]);
+                    const boutiquePrice = parseCsvNumber(row[idxBoutique]);
+                    const currency = (row[idxCurrency] || '').toString().trim().toUpperCase();
+
+                    if (!Number.isFinite(purchaseCost) || purchaseCost < 0) {
+                        errors.push(`Ligne ${lineNumber}: prix d'achat invalide.`);
+                        continue;
+                    }
+                    if (!Number.isFinite(storePrice) || storePrice < 0) {
+                        errors.push(`Ligne ${lineNumber}: prix magasin invalide.`);
+                        continue;
+                    }
+                    if (!Number.isFinite(boutiquePrice) || boutiquePrice < 0) {
+                        errors.push(`Ligne ${lineNumber}: prix boutique invalide.`);
+                        continue;
+                    }
+                    if (!currency) {
+                        errors.push(`Ligne ${lineNumber}: devise manquante.`);
+                        continue;
+                    }
+
+                    let categoryId = null;
+                    const categoryName = idxCategory >= 0 ? (row[idxCategory] || '').toString().trim() : '';
+                    if (categoryName) {
+                        const normalizedCategory = normalizeString(categoryName);
+                        const existingCategory = categoriesIndex.get(normalizedCategory);
+                        if (existingCategory) {
+                            categoryId = existingCategory.id;
+                        } else if (canManageCategories()) {
+                            const newRef = push(ref(db, `${dbBasePath}/categories`));
+                            categoryId = newRef.key;
+                            updates[`${dbBasePath}/categories/${categoryId}`] = {
+                                id: categoryId,
+                                name: categoryName,
+                                createdAt: now,
+                                updatedAt: now,
+                                createdBy: currentUser.uid || ''
+                            };
+                            categoriesIndex.set(normalizedCategory, { id: categoryId, name: categoryName });
+                        } else {
+                            errors.push(`Ligne ${lineNumber}: catégorie "${categoryName}" inconnue.`);
+                            continue;
+                        }
+                    }
+
+                    const matches = productsIndex.get(normalizedName) || [];
+                    if (matches.length > 1) {
+                        errors.push(`Ligne ${lineNumber}: plusieurs produits portent le nom "${rawName}".`);
+                        continue;
+                    }
+
+                    if (matches.length === 1) {
+                        const product = matches[0];
+                        updated += 1;
+                        updates[`${dbBasePath}/storeProducts/${product.id}/purchaseCost`] = purchaseCost;
+                        updates[`${dbBasePath}/storeProducts/${product.id}/storeSellingPrice`] = storePrice;
+                        updates[`${dbBasePath}/storeProducts/${product.id}/boutiqueSellingPrice`] = boutiquePrice;
+                        updates[`${dbBasePath}/storeProducts/${product.id}/currency`] = currency;
+                        updates[`${dbBasePath}/storeProducts/${product.id}/categoryId`] = categoryId || null;
+                        updates[`${dbBasePath}/storeProducts/${product.id}/updatedAt`] = now;
+
+                        const shopItems = Object.values(appData.shopStock || {}).filter(item => item.sourceProductId === product.id);
+                        shopItems.forEach(item => {
+                            updates[`${dbBasePath}/shopStock/${item.id}/sellingPrice`] = boutiquePrice;
+                            updates[`${dbBasePath}/shopStock/${item.id}/purchaseCost`] = purchaseCost;
+                            updates[`${dbBasePath}/shopStock/${item.id}/categoryId`] = categoryId || null;
+                            updates[`${dbBasePath}/shopStock/${item.id}/updatedAt`] = now;
+                        });
+                        continue;
+                    }
+
+                    const newRef = push(ref(db, `${dbBasePath}/storeProducts`));
+                    const newId = newRef.key;
+                    created += 1;
+                    updates[`${dbBasePath}/storeProducts/${newId}`] = {
+                        id: newId,
+                        name: rawName.trim(),
+                        description: '',
+                        purchaseCost,
+                        storeSellingPrice: storePrice,
+                        boutiqueSellingPrice: boutiquePrice,
+                        currency,
+                        categoryId: categoryId || null,
+                        quantityInStore: 0,
+                        createdAt: now,
+                        updatedAt: now,
+                        storeId: UNASSIGNED_STORE_ID
+                    };
+                }
+
+                const total = created + updated;
+                if (!total) {
+                    setImportMessage(priceTableImportError, errors[0] || "Aucune ligne valide à importer.", true);
+                    return;
+                }
+
+                if (!confirm(`Importer ${total} produit(s) dans le tableau des prix ?`)) return;
+
+                try {
+                    await update(ref(db), updates);
+                    setImportMessage(
+                        priceTableImportStatus,
+                        `Import terminé: ${total} produit(s) (${created} créés, ${updated} mis à jour).`
+                    );
+                    showSuccessToast("Import CSV terminé.");
+                    if (errors.length) {
+                        const preview = errors.slice(0, 5).join(' ');
+                        const suffix = errors.length > 5 ? ` (+${errors.length - 5} autres)` : '';
+                        setImportMessage(priceTableImportError, `${preview}${suffix}`, true);
+                    }
+                } catch (error) {
+                    console.error(error);
+                    setImportMessage(priceTableImportError, "Impossible d'importer le CSV.", true);
+                }
+            }
+
+            async function handleStoreEntryCsvImport(file) {
+                if (!file) return;
+                setImportMessage(storeImportCsvError, '');
+                setImportMessage(storeImportCsvStatus, '');
+                if (!currentUser || !dbBasePath) return;
+                const storeId = getActiveStoreId();
+                if (!storeId) {
+                    setImportMessage(storeImportCsvError, 'Veuillez créer ou sélectionner un magasin.', true);
+                    return;
+                }
+
+                const text = await file.text();
+                const { rows } = parseCsvText(text);
+                if (rows.length < 2) {
+                    setImportMessage(storeImportCsvError, "Fichier CSV vide ou invalide.", true);
+                    return;
+                }
+
+                const headers = rows[0];
+                const idxName = getHeaderIndex(headers, ['nom', 'produit', 'product', 'productname']);
+                const idxDescription = getHeaderIndex(headers, ['description', 'desc']);
+                const idxQuantity = getHeaderIndex(headers, ['quantite', 'quantity', 'qte', 'qty']);
+                const idxExpiration = getHeaderIndex(headers, ['dateexpiration', 'expiration', 'peremption']);
+
+                if (idxName < 0 || idxDescription < 0 || idxQuantity < 0) {
+                    setImportMessage(
+                        storeImportCsvError,
+                        'Colonnes requises: nom, description, quantite.',
+                        true
+                    );
+                    return;
+                }
+
+                const entryProducts = getEntrySelectableProducts();
+                const productsIndex = buildProductNameIndex(entryProducts);
+                const updates = {};
+                const errors = [];
+                const stockTracker = new Map();
+                const now = new Date().toISOString();
+                let imported = 0;
+
+                for (let i = 1; i < rows.length; i += 1) {
+                    const row = rows[i];
+                    if (isCsvRowEmpty(row)) continue;
+                    const lineNumber = i + 1;
+                    const rawName = (row[idxName] || '').trim();
+                    if (!rawName) {
+                        errors.push(`Ligne ${lineNumber}: nom du produit manquant.`);
+                        continue;
+                    }
+                    const normalizedName = normalizeString(rawName);
+                    const matches = productsIndex.get(normalizedName) || [];
+                    if (!matches.length) {
+                        errors.push(`Ligne ${lineNumber}: produit "${rawName}" introuvable dans le tableau des prix.`);
+                        continue;
+                    }
+                    if (matches.length > 1) {
+                        errors.push(`Ligne ${lineNumber}: nom du produit ambigu (${rawName}).`);
+                        continue;
+                    }
+                    const product = matches[0];
+                    const qty = parseCsvNumber(row[idxQuantity]);
+                    if (!Number.isFinite(qty) || qty <= 0 || !Number.isInteger(qty)) {
+                        errors.push(`Ligne ${lineNumber}: quantité invalide.`);
+                        continue;
+                    }
+
+                    const purchaseCost = Number(product?.purchaseCost);
+                    const storePrice = Number(product?.storeSellingPrice);
+                    const boutiquePrice = Number(product?.boutiqueSellingPrice);
+                    if (!Number.isFinite(purchaseCost) || !Number.isFinite(storePrice) || !Number.isFinite(boutiquePrice)) {
+                        errors.push(`Ligne ${lineNumber}: prix non définis pour "${rawName}".`);
+                        continue;
+                    }
+
+                    const isUnassigned = product.storeId === UNASSIGNED_STORE_ID;
+                    const baseStock = stockTracker.has(product.id)
+                        ? stockTracker.get(product.id)
+                        : (isUnassigned ? 0 : (Number(product.quantityInStore) || 0));
+                    const newStock = baseStock + qty;
+                    stockTracker.set(product.id, newStock);
+
+                    const description = (row[idxDescription] || '').toString().trim();
+                    let expirationDate = '';
+                    if (idxExpiration >= 0) {
+                        const rawExpiration = (row[idxExpiration] || '').toString().trim();
+                        if (rawExpiration) {
+                            const parsedDate = new Date(rawExpiration);
+                            if (Number.isNaN(parsedDate.getTime())) {
+                                errors.push(`Ligne ${lineNumber}: date d'expiration invalide.`);
+                                continue;
+                            }
+                            expirationDate = rawExpiration;
+                        }
+                    }
+
+                    updates[`${dbBasePath}/storeProducts/${product.id}/quantityInStore`] = newStock;
+                    updates[`${dbBasePath}/storeProducts/${product.id}/updatedAt`] = now;
+                    if (isUnassigned) {
+                        updates[`${dbBasePath}/storeProducts/${product.id}/storeId`] = storeId;
+                    }
+                    if (description) {
+                        updates[`${dbBasePath}/storeProducts/${product.id}/description`] = description;
+                        updates[`${dbBasePath}/storeProducts/${product.id}/updatedAt`] = now;
+                    }
+                    if (expirationDate) {
+                        updates[`${dbBasePath}/storeProducts/${product.id}/expirationDate`] = expirationDate;
+                        updates[`${dbBasePath}/storeProducts/${product.id}/updatedAt`] = now;
+                    }
+
+                    const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
+                    updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
+                        id: moveKey,
+                        productId: product.id,
+                        productName: product.name,
+                        storeId,
+                        type: "Entrée",
+                        quantityChange: qty,
+                        oldStock: baseStock,
+                        newStock,
+                        comment: "Import CSV",
+                        expirationDate: expirationDate || null,
+                        date: now,
+                        userEmail: currentUser.email || '',
+                        userName: currentUserData?.fullName || currentUser.email || ''
+                    };
+
+                    imported += 1;
+                }
+
+                if (!imported) {
+                    setImportMessage(storeImportCsvError, errors[0] || "Aucune ligne valide à importer.", true);
+                    return;
+                }
+
+                if (!confirm(`Importer ${imported} ligne(s) dans le magasin ?`)) return;
+
+                try {
+                    await update(ref(db), updates);
+                    setImportMessage(storeImportCsvStatus, `Import terminé: ${imported} ligne(s) ajoutée(s).`);
+                    showSuccessToast("Import CSV terminé.");
+                    if (errors.length) {
+                        const preview = errors.slice(0, 5).join(' ');
+                        const suffix = errors.length > 5 ? ` (+${errors.length - 5} autres)` : '';
+                        setImportMessage(storeImportCsvError, `${preview}${suffix}`, true);
+                    }
+                } catch (error) {
+                    console.error(error);
+                    setImportMessage(storeImportCsvError, "Impossible d'importer le CSV.", true);
+                }
+            }
+
             async function deleteStoreProduct(productId) {
                 if (!productId || !dbBasePath) return;
                 if (!hasPermission('Supprimer Stock Magasin')) {
@@ -13579,6 +14098,17 @@
                     if (productId) savePriceTableRow(productId);
                 });
             }
+            if (priceTableImportButton && priceTableImportInput) {
+                priceTableImportButton.addEventListener('click', () => {
+                    priceTableImportInput.click();
+                });
+                priceTableImportInput.addEventListener('change', async (event) => {
+                    const file = event.target.files?.[0];
+                    if (!file) return;
+                    await handlePriceTableCsvImport(file);
+                    priceTableImportInput.value = '';
+                });
+            }
             if (categoryForm) {
                 categoryForm.addEventListener('submit', async (event) => {
                     event.preventDefault();
@@ -13612,6 +14142,17 @@
                 customerHistorySelect.addEventListener('change', (event) => {
                     selectedCustomerHistoryKey = event.target.value || null;
                     renderSalesHistory();
+                });
+            }
+            if (storeImportCsvButton && storeImportCsvInput) {
+                storeImportCsvButton.addEventListener('click', () => {
+                    storeImportCsvInput.click();
+                });
+                storeImportCsvInput.addEventListener('change', async (event) => {
+                    const file = event.target.files?.[0];
+                    if (!file) return;
+                    await handleStoreEntryCsvImport(file);
+                    storeImportCsvInput.value = '';
                 });
             }
             if (customerHistoryList) {
