@@ -5690,6 +5690,24 @@
                 return Number.isNaN(parsed.getTime()) ? null : parsed;
             }
 
+            function getSaleActivityTimestamp(sale) {
+                if (!sale) return 0;
+                const candidates = [
+                    sale.updatedAt,
+                    sale.validationUpdatedAt,
+                    sale.paymentPaidAt,
+                    sale.validatedAt,
+                    sale.requestedAt,
+                    sale.createdAt,
+                    sale.date
+                ];
+                for (const value of candidates) {
+                    const parsed = parseDateForFilter(value);
+                    if (parsed) return parsed.getTime();
+                }
+                return 0;
+            }
+
             function isDateInFilter(dateValue, filterKey) {
                 if (!filterKey || filterKey === 'all') return true;
                 const date = parseDateForFilter(dateValue);
@@ -6069,6 +6087,7 @@
                     ];
                     return matchesHistorySearch(salesHistorySearch, values);
                 });
+                filteredStoreValidation.sort((a, b) => getSaleActivityTimestamp(b) - getSaleActivityTimestamp(a));
 
                 const pendingGroups = filteredGroups.filter(group => group.paymentStatus === 'pending');
                 const payLaterGroups = filteredGroups.filter(group => group.paymentStatus === 'pay_later' || group.payLater);
@@ -6302,6 +6321,13 @@
                                 </svg>
                                 A payer plus tard
                             </button>
+                            <button type="button" data-store-validation-id="${sale.id}" data-store-validation-action="cancel"
+                                class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-rose-600 text-white font-semibold hover:bg-rose-700">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                Annuler
+                            </button>
                             ${detailsButtonHtml}
                         ` : detailsButtonHtml;
                         return `
@@ -6441,6 +6467,16 @@
                                 Marquer comme payé
                             </button>
                         ` : '';
+                        const canCancel = getCurrentUserRole() === 'admin';
+                        const cancelButtonHtml = canCancel ? `
+                            <button type="button" data-history-action="cancel" data-history-id="${group.id}"
+                                class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-rose-600 text-white font-semibold hover:bg-rose-700">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                Annuler
+                            </button>
+                        ` : '';
                         const detailsButtonHtml = `
                             <button type="button" data-history-action="details" data-history-id="${group.id}"
                                 class="${isPayLater ? 'inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700' : 'flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700'}">
@@ -6503,6 +6539,7 @@
                                     <div class="mt-4 flex flex-col md:flex-row gap-3">
                                         ${markPaidButtonHtml}
                                         ${detailsButtonHtml}
+                                        ${cancelButtonHtml}
                                         ${isPayLater ? '' : `
                                             <button type="button" data-history-action="print" data-history-id="${group.id}"
                                                 class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gray-900 text-white font-semibold hover:bg-gray-800">
@@ -6635,6 +6672,13 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 11h18M5 7v10a2 2 0 002 2h10a2 2 0 002-2V7" />
                                         </svg>
                                         A payer plus tard
+                                    </button>
+                                    <button type="button" data-history-action="cancel" data-history-id="${group.id}"
+                                        class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-rose-600 text-white font-semibold hover:bg-rose-700">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                        Annuler
                                     </button>
                                     <button type="button" data-history-action="details" data-history-id="${group.id}"
                                         class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700">
@@ -8280,6 +8324,28 @@
                 return null;
             }
 
+            async function findMemberByEmail(email) {
+                if (!email) return null;
+                const companiesSnapshot = await get(ref(db, 'companies'));
+                if (!companiesSnapshot.exists()) return null;
+                const normalizedEmail = email.trim().toLowerCase();
+                const companies = companiesSnapshot.val();
+                for (const [companyId, companyData] of Object.entries(companies)) {
+                    if (!companyData.members) continue;
+                    for (const [memberId, memberData] of Object.entries(companyData.members)) {
+                        if ((memberData.email || '').trim().toLowerCase() === normalizedEmail) {
+                            return {
+                                companyId,
+                                companyName: companyData.companyName || companyData.name || '',
+                                memberId,
+                                member: memberData
+                            };
+                        }
+                    }
+                }
+                return null;
+            }
+
             async function handleAccessCodeLogin(email, code) {
                 if (!email || !code) {
                     if (loginError) {
@@ -9475,6 +9541,83 @@
                 } catch (error) {
                     console.error(error);
                     showSuccessToast("Impossible de valider cette vente pour le moment.");
+                }
+            }
+
+            async function cancelStoreValidationSale(saleId) {
+                if (!dbBasePath || !currentUser) return;
+                if (getCurrentUserRole() !== 'admin') {
+                    showSuccessToast("Accès réservé aux administrateurs.");
+                    return;
+                }
+                const sale = appData.salesHistory?.[saleId];
+                if (!sale || !isStoreValidationPending(sale)) {
+                    showSuccessToast("Cette vente a déjà été traitée.");
+                    return;
+                }
+                const invoiceLabel = `INV-${(sale.saleGroupId || sale.id || '').slice(-6).toUpperCase()}`;
+                if (!confirm(`Annuler la vente ${invoiceLabel} ?`)) return;
+
+                const requestId = sale.storeRequestId || sale.approvedFromRequest || sale.requestId;
+                if (requestId && appData.storeExitRequests?.[requestId]?.status === EXIT_STATUS_PENDING) {
+                    await rejectExitRequest(requestId);
+                    return;
+                }
+
+                try {
+                    const now = new Date().toISOString();
+                    const updates = {};
+                    const product = appData.storeProducts?.[sale.storeProductId];
+                    const quantity = parseInt(sale.quantity, 10) || 0;
+                    const shouldRestore = sale.stockReserved === true || !!sale.storeMovementId || !!sale.storeMovementKey;
+
+                    if (shouldRestore && product && quantity > 0) {
+                        const newStock = (product.quantityInStore || 0) + quantity;
+                        updates[`${dbBasePath}/storeProducts/${product.id}/quantityInStore`] = newStock;
+                        const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
+                        updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
+                            id: moveKey,
+                            productId: product.id,
+                            productName: product.name,
+                            storeId: resolveStoreId(sale.storeId) || resolveStoreId(product.storeId) || getActiveStoreId(),
+                            type: "Entrée",
+                            quantityChange: quantity,
+                            oldStock: product.quantityInStore,
+                            newStock,
+                            comment: sale.comment ? `Annulation vente magasin - ${sale.comment}` : "Annulation vente magasin",
+                            date: now,
+                            status: EXIT_STATUS_APPROVED,
+                            userEmail: currentUser.email || '',
+                            userName: currentUserData?.fullName || currentUser.email || ''
+                        };
+                    }
+
+                    updates[`${dbBasePath}/salesHistory/${saleId}/validationStatus`] = 'rejected';
+                    updates[`${dbBasePath}/salesHistory/${saleId}/paymentStatus`] = 'rejected';
+                    updates[`${dbBasePath}/salesHistory/${saleId}/rejectedAt`] = now;
+                    updates[`${dbBasePath}/salesHistory/${saleId}/rejectedBy`] = currentUser.email || currentUserData?.email || '';
+
+                    if (sale.storeMovementId) {
+                        updates[`${dbBasePath}/storeMovements/${sale.storeMovementId}/status`] = EXIT_STATUS_REJECTED;
+                        updates[`${dbBasePath}/storeMovements/${sale.storeMovementId}/rejectedAt`] = now;
+                    }
+                    if (requestId) {
+                        updates[`${dbBasePath}/storeExitRequests/${requestId}/status`] = EXIT_STATUS_REJECTED;
+                        updates[`${dbBasePath}/storeExitRequests/${requestId}/validatedAt`] = now;
+                        updates[`${dbBasePath}/storeExitRequests/${requestId}/validatedBy`] = currentUser.email || currentUserData?.email || '';
+                    }
+
+                    await update(ref(db), updates);
+
+                    sale.validationStatus = 'rejected';
+                    sale.paymentStatus = 'rejected';
+                    renderSalesHistory();
+                    updateDashboardStats();
+                    updateAllStats();
+                    showSuccessToast('Vente magasin annulée.');
+                } catch (error) {
+                    console.error(error);
+                    showSuccessToast("Impossible d'annuler cette vente pour le moment.");
                 }
             }
 
@@ -11355,6 +11498,126 @@
                 }
             }
 
+            async function cancelSalesGroup(groupId) {
+                if (!currentUser || !dbBasePath || !groupId) return;
+                if (getCurrentUserRole() !== 'admin') {
+                    showSuccessToast("Accès réservé aux administrateurs.");
+                    return;
+                }
+                const entries = Object.values(appData.salesHistory || {}).filter(sale => {
+                    const group = sale.saleGroupId || sale.id;
+                    return group === groupId;
+                });
+                if (!entries.length) {
+                    showSalesErrorMessage("Impossible de trouver cette vente.");
+                    return;
+                }
+                const invoiceLabel = `INV-${groupId.slice(-6).toUpperCase()}`;
+                if (!confirm(`Annuler la vente ${invoiceLabel} ?`)) return;
+
+                try {
+                    const updates = {};
+                    const now = new Date().toISOString();
+
+                    for (const sale of entries) {
+                        if (sale.paymentStatus === 'rejected' || sale.validationStatus === 'rejected') continue;
+                        const quantity = parseInt(sale.quantity, 10) || 0;
+                        const comment = sale.comment ? `Annulation vente ${invoiceLabel} - ${sale.comment}` : `Annulation vente ${invoiceLabel}`;
+
+                        if (sale.shopProductId) {
+                            const shopProduct = appData.shopStock?.[sale.shopProductId];
+                            if (shopProduct && quantity > 0) {
+                                const newStock = (Number(shopProduct.quantityInShop) || 0) + quantity;
+                                updates[`${dbBasePath}/shopStock/${sale.shopProductId}/quantityInShop`] = newStock;
+                                const moveKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
+                                updates[`${dbBasePath}/shopMovements/${moveKey}`] = {
+                                    id: moveKey,
+                                    shopProductId: sale.shopProductId,
+                                    productName: sale.productName || shopProduct.name || 'Produit',
+                                    boutiqueId: resolveBoutiqueId(sale.boutiqueId) || resolveBoutiqueId(shopProduct.boutiqueId),
+                                    boutiqueName: getBoutiqueName(resolveBoutiqueId(sale.boutiqueId) || resolveBoutiqueId(shopProduct.boutiqueId)),
+                                    type: "Entrée",
+                                    quantityChange: quantity,
+                                    oldStock: shopProduct.quantityInShop,
+                                    newStock,
+                                    comment,
+                                    date: now,
+                                    userEmail: currentUser.email || '',
+                                    userName: currentUserData?.fullName || currentUser.email || '',
+                                    status: EXIT_STATUS_APPROVED
+                                };
+                            }
+                        } else if (sale.storeProductId) {
+                            const storeProduct = appData.storeProducts?.[sale.storeProductId];
+                            if (storeProduct && quantity > 0) {
+                                const newStock = (Number(storeProduct.quantityInStore) || 0) + quantity;
+                                updates[`${dbBasePath}/storeProducts/${storeProduct.id}/quantityInStore`] = newStock;
+                                const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
+                                updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
+                                    id: moveKey,
+                                    productId: storeProduct.id,
+                                    productName: storeProduct.name || 'Produit',
+                                    storeId: resolveStoreId(sale.storeId) || resolveStoreId(storeProduct.storeId) || getActiveStoreId(),
+                                    type: "Entrée",
+                                    quantityChange: quantity,
+                                    oldStock: storeProduct.quantityInStore,
+                                    newStock,
+                                    comment,
+                                    date: now,
+                                    userEmail: currentUser.email || '',
+                                    userName: currentUserData?.fullName || currentUser.email || '',
+                                    status: EXIT_STATUS_APPROVED
+                                };
+                            }
+                        }
+
+                        updates[`${dbBasePath}/salesHistory/${sale.id}/paymentStatus`] = 'rejected';
+                        updates[`${dbBasePath}/salesHistory/${sale.id}/validationStatus`] = 'rejected';
+                        updates[`${dbBasePath}/salesHistory/${sale.id}/payLater`] = false;
+                        updates[`${dbBasePath}/salesHistory/${sale.id}/paymentPaidAt`] = '';
+                        updates[`${dbBasePath}/salesHistory/${sale.id}/rejectedAt`] = now;
+                        updates[`${dbBasePath}/salesHistory/${sale.id}/rejectedBy`] = currentUser.email || currentUserData?.email || '';
+
+                        const requestId = sale.storeRequestId || sale.approvedFromRequest || sale.requestId;
+                        if (requestId) {
+                            updates[`${dbBasePath}/storeExitRequests/${requestId}/status`] = EXIT_STATUS_REJECTED;
+                            updates[`${dbBasePath}/storeExitRequests/${requestId}/validatedAt`] = now;
+                            updates[`${dbBasePath}/storeExitRequests/${requestId}/validatedBy`] = currentUser.email || currentUserData?.email || '';
+                        }
+
+                        if (sale.storeMovementId) {
+                            updates[`${dbBasePath}/storeMovements/${sale.storeMovementId}/status`] = EXIT_STATUS_REJECTED;
+                            updates[`${dbBasePath}/storeMovements/${sale.storeMovementId}/rejectedAt`] = now;
+                        }
+                    }
+
+                    updates[`${dbBasePath}/sales/${groupId}/status`] = 'annulee';
+                    updates[`${dbBasePath}/sales/${groupId}/paymentStatus`] = 'rejected';
+                    updates[`${dbBasePath}/sales/${groupId}/payLater`] = false;
+                    updates[`${dbBasePath}/sales/${groupId}/paymentPaidAt`] = '';
+                    updates[`${dbBasePath}/sales/${groupId}/rejectedAt`] = now;
+                    updates[`${dbBasePath}/sales/${groupId}/rejectedBy`] = currentUser.email || currentUserData?.email || '';
+
+                    await update(ref(db), updates);
+
+                    entries.forEach(sale => {
+                        sale.paymentStatus = 'rejected';
+                        sale.validationStatus = 'rejected';
+                        sale.payLater = false;
+                    });
+                    renderSalesHistory();
+                    updateDashboardStats();
+                    updateAllStats();
+                    if (activeSalesDetailId === groupId) {
+                        closeSalesDetailModal();
+                    }
+                    showSuccessToast('Vente annulée.');
+                } catch (error) {
+                    console.error(error);
+                    showSalesErrorMessage("Impossible d'annuler cette vente pour le moment.");
+                }
+            }
+
             async function validatePendingSale(pendingId) {
                 if (!currentUser || !dbBasePath || !pendingId) return;
                 const pendingSales = getPendingSalesList();
@@ -12449,6 +12712,10 @@
                             markSaleAsPayLater(groupId);
                             return;
                         }
+                        if (action === 'cancel') {
+                            cancelSalesGroup(groupId);
+                            return;
+                        }
                         if (action === 'print') {
                             generateReceiptFromGroup(groupId);
                             return;
@@ -12463,7 +12730,11 @@
                         const saleId = storeValidationButton.dataset.storeValidationId;
                         const action = storeValidationButton.dataset.storeValidationAction;
                         if (saleId && action) {
-                            resolveStoreValidationSale(saleId, action);
+                            if (action === 'cancel') {
+                                cancelStoreValidationSale(saleId);
+                            } else {
+                                resolveStoreValidationSale(saleId, action);
+                            }
                         }
                         return;
                     }
@@ -13796,6 +14067,48 @@
                             ensureCurrentUserInTeam();
                             updateSettingsAccess();
                             updateUI();
+                            return;
+                        }
+
+                        const fallbackMatch = await findMemberByEmail(user.email || '');
+                        if (!fallbackMatch) {
+                            console.warn('Aucun profil trouvé pour cet email dans les entreprises.');
+                            return;
+                        }
+
+                        const memberData = fallbackMatch.member || {};
+                        const resolvedRole = (memberData.role || 'consultation').toLowerCase();
+                        const resolvedPermissions = Array.isArray(memberData.permissions)
+                            ? memberData.permissions
+                            : (resolvedRole === 'admin' ? [...accessModules] : ['Tableau de bord']);
+
+                        const fallbackUserData = {
+                            uid: user.uid,
+                            fullName: memberData.fullName || memberData.name || user.email || 'Utilisateur',
+                            email: user.email || memberData.email || '',
+                            role: resolvedRole,
+                            status: memberData.status || 'actif',
+                            permissions: resolvedPermissions,
+                            storeAccess: Array.isArray(memberData.storeAccess) ? memberData.storeAccess : [],
+                            boutiqueAccess: Array.isArray(memberData.boutiqueAccess) ? memberData.boutiqueAccess : [],
+                            companyId: fallbackMatch.companyId,
+                            companyName: fallbackMatch.companyName || '',
+                            accessCode: memberData.accessCode || '',
+                            createdAt: new Date().toISOString()
+                        };
+
+                        try {
+                            await set(ref(db, `users/${user.uid}`), fallbackUserData);
+                            currentUserData = fallbackUserData;
+                            dbBasePath = `companies/${fallbackMatch.companyId}`;
+                            await ensureStoresSetup();
+                            await ensureBoutiquesSetup();
+                            setupFirebaseListeners();
+                            ensureCurrentUserInTeam();
+                            updateSettingsAccess();
+                            updateUI();
+                        } catch (error) {
+                            console.error('Impossible de créer le profil utilisateur:', error);
                         }
                     });
                 } else {
