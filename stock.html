@@ -10563,6 +10563,27 @@
                         }
                     }
 
+                    const supplierCurrency = (getSupplierCurrency(supplier) || DEFAULT_SUPPLIER_CURRENCY).toUpperCase();
+                    const productCurrency = (product.currency || DEFAULT_SUPPLIER_CURRENCY).toUpperCase();
+                    const rawRate = Number(getSupplierConversionRate(supplier));
+                    const conversionRate = Number.isFinite(rawRate) && rawRate > 0 ? rawRate : 1;
+                    const unitCost = purchaseCost;
+                    const totalProduct = roundAmount(unitCost * qty);
+                    let totalSupplier = totalProduct;
+                    let baseTotal = totalProduct;
+                    if (supplierCurrency !== DEFAULT_SUPPLIER_CURRENCY) {
+                        if (productCurrency === DEFAULT_SUPPLIER_CURRENCY) {
+                            totalSupplier = roundAmount(totalProduct / conversionRate);
+                            baseTotal = totalProduct;
+                        } else {
+                            totalSupplier = totalProduct;
+                            baseTotal = roundAmount(totalSupplier * conversionRate);
+                        }
+                    } else {
+                        totalSupplier = totalProduct;
+                        baseTotal = totalProduct;
+                    }
+
                     updates[`${dbBasePath}/storeProducts/${product.id}/quantityInStore`] = newStock;
                     updates[`${dbBasePath}/storeProducts/${product.id}/updatedAt`] = now;
                     if (isUnassigned) {
@@ -10574,6 +10595,10 @@
                     }
                     if (expirationDate) {
                         updates[`${dbBasePath}/storeProducts/${product.id}/expirationDate`] = expirationDate;
+                        updates[`${dbBasePath}/storeProducts/${product.id}/updatedAt`] = now;
+                    }
+                    if (!product.supplierId && supplier?.id) {
+                        updates[`${dbBasePath}/storeProducts/${product.id}/supplierId`] = supplier.id;
                         updates[`${dbBasePath}/storeProducts/${product.id}/updatedAt`] = now;
                     }
 
@@ -10595,6 +10620,29 @@
                         userEmail: currentUser.email || '',
                         userName: currentUserData?.fullName || currentUser.email || ''
                     };
+
+                    const invoiceKey = push(ref(db, `${dbBasePath}/supplierInvoices`)).key;
+                    updates[`${dbBasePath}/supplierInvoices/${invoiceKey}`] = {
+                        id: invoiceKey,
+                        supplierId: supplier.id,
+                        supplierName: supplier.name || supplierRaw,
+                        productId: product.id,
+                        productName: product.name || rawName,
+                        quantity: qty,
+                        unitCost,
+                        productCurrency,
+                        currency: supplierCurrency,
+                        conversionRate,
+                        baseTotal,
+                        total: totalSupplier,
+                        paidAmount: 0,
+                        status: 'open',
+                        storeId,
+                        date: now,
+                        createdAt: now,
+                        source: 'csv_import'
+                    };
+                    updates[`${dbBasePath}/suppliers/${supplier.id}/updatedAt`] = now;
 
                     imported += 1;
                 }
