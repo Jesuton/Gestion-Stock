@@ -4697,6 +4697,11 @@
                 const unitCostBase = Number(invoice.unitCostBase || 0);
                 const qty = Number(invoice.quantity || 0);
                 const totalProduct = roundAmount(unitCost * qty);
+                const formatPDFCurrency = (amount) => {
+                    const value = Number(amount || 0);
+                    const rounded = Math.round(value);
+                    return rounded.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+                };
 
                 doc.setFontSize(16);
                 doc.setFont(undefined, 'bold');
@@ -4725,13 +4730,30 @@
                     `${formatPDFCurrency(totalProduct)} ${productCurrency}`
                 ]];
 
-                doc.autoTable({
-                    startY: 62,
-                    head: [['Produit', 'Qté', 'PU', 'Total']],
-                    body: tableData
-                });
-
-                let y = doc.lastAutoTable.finalY + 10;
+                let y = 62;
+                if (typeof doc.autoTable === 'function') {
+                    doc.autoTable({
+                        startY: y,
+                        head: [['Produit', 'Qté', 'PU', 'Total']],
+                        body: tableData
+                    });
+                    y = doc.lastAutoTable.finalY + 10;
+                } else {
+                    doc.setFontSize(10);
+                    doc.setFont(undefined, 'bold');
+                    doc.text('Produit', 14, y);
+                    doc.text('Qté', 90, y);
+                    doc.text('PU', 110, y);
+                    doc.text('Total', 150, y);
+                    doc.setFont(undefined, 'normal');
+                    y += 6;
+                    const fallbackRow = tableData[0] || ['—', '0', '0', '0'];
+                    doc.text(String(fallbackRow[0]), 14, y);
+                    doc.text(String(fallbackRow[1]), 90, y);
+                    doc.text(String(fallbackRow[2]), 110, y);
+                    doc.text(String(fallbackRow[3]), 150, y);
+                    y += 10;
+                }
                 doc.setFontSize(10);
                 doc.setFont(undefined, 'bold');
                 doc.text('Résumé', 14, y);
