@@ -247,6 +247,11 @@
                     <div data-icon="stats" class="w-5 h-5"></div>
                     <span class="sidebar-text">Historique ventes</span>
                 </button>
+                <button data-page="Messagerie"
+                    class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
+                    <div data-icon="chat" class="w-5 h-5"></div>
+                    <span class="sidebar-text">Messagerie</span>
+                </button>
                 <button data-page="Stock Boutique"
                     class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
                     <div data-icon="box" class="w-5 h-5"></div>
@@ -1007,6 +1012,116 @@
                             <p>Aucune vente enregistrée</p>
                         </div>
                         <div id="sales-history-list" class="hidden space-y-4"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page: Messagerie -->
+            <div id="page-Messagerie" class="page-content p-4 md:p-8 hidden">
+                <div class="flex flex-col lg:flex-row gap-6">
+                    <div class="lg:w-80 bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-900">Messagerie</h1>
+                                <p class="text-sm text-gray-500 mt-1">Discussions internes à l'entreprise.</p>
+                            </div>
+                            <button id="chat-create-button"
+                                class="inline-flex items-center justify-center px-3 py-2 rounded-xl bg-cyan-500 text-white text-sm font-semibold hover:bg-cyan-600">
+                                Nouveau
+                            </button>
+                        </div>
+                        <div class="mt-4 relative">
+                            <input type="text" id="chat-search-input" placeholder="Rechercher une discussion..."
+                                class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-cyan-500 focus:border-cyan-500" />
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </div>
+                        <button id="chat-notifications-button"
+                            class="mt-4 w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50">
+                            Activer les notifications
+                        </button>
+                        <div class="mt-4">
+                            <div id="chat-list-empty" class="flex items-center justify-center text-sm text-gray-400 h-24 border border-dashed border-gray-200 rounded-xl">
+                                Aucune discussion.
+                            </div>
+                            <div id="chat-list" class="hidden space-y-3 max-h-[520px] overflow-y-auto pr-1"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col min-h-[520px]">
+                        <div class="p-5 border-b border-gray-100">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <div>
+                                    <p id="chat-active-title" class="text-lg font-semibold text-gray-900">Sélectionnez une discussion</p>
+                                    <p id="chat-active-meta" class="text-sm text-gray-500 mt-1">—</p>
+                                </div>
+                                <button id="chat-mark-read-button"
+                                    class="inline-flex items-center justify-center px-3 py-2 rounded-xl border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50">
+                                    Marquer comme lu
+                                </button>
+                            </div>
+                            <div class="mt-4 relative">
+                                <input type="text" id="chat-message-search" placeholder="Rechercher dans la conversation..."
+                                    class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-cyan-500 focus:border-cyan-500" />
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="chat-messages" class="flex-1 overflow-y-auto p-5 space-y-4 bg-gray-50">
+                            <div id="chat-messages-empty" class="flex items-center justify-center text-sm text-gray-400 h-32 border border-dashed border-gray-200 rounded-xl">
+                                Aucun message pour le moment.
+                            </div>
+                            <div id="chat-messages-list" class="space-y-4"></div>
+                        </div>
+                        <div class="p-4 border-t border-gray-100 bg-white">
+                            <form id="chat-composer-form" class="space-y-3">
+                                <div id="chat-attachment-preview" class="hidden items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600">
+                                    <span id="chat-attachment-name" class="font-semibold">Pièce jointe</span>
+                                    <button type="button" id="chat-attachment-remove" class="text-red-500 font-semibold hover:text-red-600">Retirer</button>
+                                </div>
+                                <div class="flex flex-col sm:flex-row sm:items-end gap-2">
+                                    <div class="relative flex-1">
+                                        <textarea id="chat-message-input" rows="2" placeholder="Écrire un message..."
+                                            class="w-full rounded-xl border border-gray-200 p-3 text-sm focus:ring-cyan-500 focus:border-cyan-500"></textarea>
+                                        <div id="chat-emoji-panel"
+                                            class="hidden absolute bottom-full left-0 mb-2 bg-white border border-gray-200 rounded-xl shadow-lg p-3 w-64 z-10">
+                                            <div class="grid grid-cols-8 gap-2 text-lg">
+                                                <button type="button">😀</button>
+                                                <button type="button">😁</button>
+                                                <button type="button">😂</button>
+                                                <button type="button">😊</button>
+                                                <button type="button">😍</button>
+                                                <button type="button">😎</button>
+                                                <button type="button">🤝</button>
+                                                <button type="button">👍</button>
+                                                <button type="button">🙏</button>
+                                                <button type="button">🔥</button>
+                                                <button type="button">✨</button>
+                                                <button type="button">🎉</button>
+                                                <button type="button">💬</button>
+                                                <button type="button">📌</button>
+                                                <button type="button">✅</button>
+                                                <button type="button">⚡</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <input type="file" id="chat-attachment-input" class="hidden" accept="image/*,.pdf" />
+                                    <button type="button" id="chat-attachment-button"
+                                        class="px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50">📎</button>
+                                    <button type="button" id="chat-emoji-button"
+                                        class="px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50">😊</button>
+                                    <button type="submit" id="chat-send-button"
+                                        class="px-4 py-2 rounded-xl bg-cyan-500 text-white text-sm font-semibold hover:bg-cyan-600">Envoyer</button>
+                                </div>
+                                <p id="chat-send-error" class="text-xs text-red-500 hidden"></p>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2983,6 +3098,49 @@
         </div>
     </div>
 
+    <!-- Modal: Nouvelle conversation -->
+    <div id="chat-create-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 m-4">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-gray-800">Nouvelle conversation</h2>
+                <button id="chat-create-close" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <form id="chat-create-form" class="space-y-4">
+                <div>
+                    <label class="text-sm font-medium text-gray-600" for="chat-create-type">Type de discussion</label>
+                    <select id="chat-create-type"
+                        class="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-cyan-500 focus:border-cyan-500">
+                        <option value="direct">Discussion privée</option>
+                        <option value="group">Groupe</option>
+                    </select>
+                </div>
+                <div id="chat-group-name-row" class="hidden">
+                    <label class="text-sm font-medium text-gray-600" for="chat-group-name">Nom du groupe *</label>
+                    <input type="text" id="chat-group-name" placeholder="Ex: Équipe Ventes"
+                        class="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-cyan-500 focus:border-cyan-500" />
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-600" for="chat-member-search">Membres</label>
+                    <input type="text" id="chat-member-search" placeholder="Rechercher un membre..."
+                        class="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-cyan-500 focus:border-cyan-500" />
+                    <div id="chat-members-empty" class="mt-3 text-sm text-gray-400 hidden">Aucun membre disponible.</div>
+                    <div id="chat-members-list" class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1"></div>
+                </div>
+                <p id="chat-create-error" class="text-sm text-red-500 hidden"></p>
+                <div class="pt-2 flex items-center gap-3">
+                    <button type="button" id="chat-create-cancel"
+                        class="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50">Annuler</button>
+                    <button type="submit" id="chat-create-submit"
+                        class="flex-1 py-2.5 rounded-xl bg-cyan-500 text-white text-sm font-semibold hover:bg-cyan-600">Créer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- 
       TOAST DE SUCCÈS GLOBAL
     -->
@@ -3226,7 +3384,8 @@
                 clock: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v5l3 3" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 100-18 9 9 0 000 18z" /></svg>`,
                 menu: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>`,
                 arrowLeft: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>`,
-                arrowRight: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>`
+                arrowRight: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>`,
+                chat: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h8m-8 4h5m6 2a2 2 0 01-2 2H7l-4 4V6a2 2 0 012-2h12a2 2 0 012 2v10z" /></svg>`
             };
             const svg = icons[name] || '';
             if (className && svg) {
@@ -3298,13 +3457,14 @@
             const SALE_SOURCE_MIXED = 'mixed';
 
 
-            let storesListener, boutiquesListener, categoriesListener, storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, shopTransferRequestsListener, salesHistoryListener, companyMembersListener, companyCustomersListener, suppliersListener, supplierInvoicesListener, supplierPaymentsListener, storeExitRequestsListener, pendingSalesListener, settingsListener;
-            let storesRef, boutiquesRef, categoriesRef, storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, shopTransferRequestsRef, salesHistoryRef, companyMembersRef, companyCustomersRef, suppliersRef, supplierInvoicesRef, supplierPaymentsRef, storeExitRequestsRef, pendingSalesRef, settingsRef;
+            let storesListener, boutiquesListener, categoriesListener, storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, shopTransferRequestsListener, salesHistoryListener, companyMembersListener, companyCustomersListener, suppliersListener, supplierInvoicesListener, supplierPaymentsListener, storeExitRequestsListener, pendingSalesListener, settingsListener, chatListListener, chatReadsListener, chatMessagesListener;
+            let storesRef, boutiquesRef, categoriesRef, storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, shopTransferRequestsRef, salesHistoryRef, companyMembersRef, companyCustomersRef, suppliersRef, supplierInvoicesRef, supplierPaymentsRef, storeExitRequestsRef, pendingSalesRef, settingsRef, chatListRef, chatReadsRef, chatMessagesRef;
 
             const accessModules = [
                 'Tableau de bord',
                 'Ventes',
                 'Historique des ventes',
+                'Messagerie',
                 'Stock Boutique',
                 'Mon Magasin',
                 'Tableau des prix',
@@ -3335,6 +3495,14 @@
             let supplierSearchQuery = '';
             let activeSupplierId = null;
             let activeSupplierPaymentDetailId = null;
+            let chatListState = {};
+            let chatReadsState = {};
+            let chatMessagesState = {};
+            let activeChatId = null;
+            let chatSearchQuery = '';
+            let chatMessageSearchQuery = '';
+            let chatAttachment = null;
+            let lastNotifiedChatMessages = {};
 
             // Cart state
             let cartItems = [];
@@ -3521,6 +3689,42 @@
             const customerHistoryPlaceholder = document.getElementById('customer-history-placeholder');
             const customerHistoryTableContainer = document.getElementById('customer-history-table-container');
             const customerHistoryTbody = document.getElementById('customer-history-tbody');
+
+            // Messagerie
+            const chatCreateButton = document.getElementById('chat-create-button');
+            const chatNotificationsButton = document.getElementById('chat-notifications-button');
+            const chatSearchInput = document.getElementById('chat-search-input');
+            const chatList = document.getElementById('chat-list');
+            const chatListEmpty = document.getElementById('chat-list-empty');
+            const chatActiveTitle = document.getElementById('chat-active-title');
+            const chatActiveMeta = document.getElementById('chat-active-meta');
+            const chatMarkReadButton = document.getElementById('chat-mark-read-button');
+            const chatMessageSearchInput = document.getElementById('chat-message-search');
+            const chatMessages = document.getElementById('chat-messages');
+            const chatMessagesEmpty = document.getElementById('chat-messages-empty');
+            const chatMessagesList = document.getElementById('chat-messages-list');
+            const chatComposerForm = document.getElementById('chat-composer-form');
+            const chatMessageInput = document.getElementById('chat-message-input');
+            const chatEmojiButton = document.getElementById('chat-emoji-button');
+            const chatEmojiPanel = document.getElementById('chat-emoji-panel');
+            const chatAttachmentButton = document.getElementById('chat-attachment-button');
+            const chatAttachmentInput = document.getElementById('chat-attachment-input');
+            const chatAttachmentPreview = document.getElementById('chat-attachment-preview');
+            const chatAttachmentName = document.getElementById('chat-attachment-name');
+            const chatAttachmentRemove = document.getElementById('chat-attachment-remove');
+            const chatSendButton = document.getElementById('chat-send-button');
+            const chatSendError = document.getElementById('chat-send-error');
+            const chatCreateModal = document.getElementById('chat-create-modal');
+            const chatCreateClose = document.getElementById('chat-create-close');
+            const chatCreateCancel = document.getElementById('chat-create-cancel');
+            const chatCreateForm = document.getElementById('chat-create-form');
+            const chatCreateType = document.getElementById('chat-create-type');
+            const chatGroupNameRow = document.getElementById('chat-group-name-row');
+            const chatGroupNameInput = document.getElementById('chat-group-name');
+            const chatMemberSearchInput = document.getElementById('chat-member-search');
+            const chatMembersList = document.getElementById('chat-members-list');
+            const chatMembersEmpty = document.getElementById('chat-members-empty');
+            const chatCreateError = document.getElementById('chat-create-error');
 
             // Cart elements
             const cartItemsCount = document.getElementById('cart-items-count');
@@ -7186,6 +7390,7 @@
                 'Tableau de bord': 'Tableau de bord',
                 'Ventes': 'Ventes',
                 'Historique des ventes': 'Historique des ventes',
+                'Messagerie': 'Messagerie',
                 'Stock Boutique': 'Stock Boutique',
                 'Mon Magasin': 'Mon Magasin',
                 'Tableau des prix': 'Tableau des prix',
@@ -8163,6 +8368,506 @@
                 if (accessTotalPending) accessTotalPending.textContent = teamMembersState.filter(m => m.status === 'pending').length;
             }
 
+            // === MESSAGERIE INTERNE ===
+            const CHAT_ATTACHMENT_MAX_SIZE = 300 * 1024;
+
+            function escapeHtml(value) {
+                return (value || '')
+                    .toString()
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            function normalizeChatTimestamp(value) {
+                if (!value) return 0;
+                if (typeof value === 'number') return value;
+                const date = new Date(value);
+                const ts = date.getTime();
+                return Number.isFinite(ts) ? ts : 0;
+            }
+
+            function formatChatTime(value) {
+                if (!value) return '';
+                const date = new Date(value);
+                if (Number.isNaN(date.getTime())) return '';
+                return date.toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+            }
+
+            function formatChatMessageTime(value) {
+                if (!value) return '';
+                const date = new Date(value);
+                if (Number.isNaN(date.getTime())) return '';
+                return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+            }
+
+            function getMemberLabel(memberId) {
+                if (!memberId) return 'Utilisateur';
+                if (currentUser?.uid === memberId) return 'Vous';
+                const member = teamMembersState.find(m => m.id === memberId);
+                return member?.fullName || member?.name || member?.email || 'Utilisateur';
+            }
+
+            function getChatMemberIds(chat) {
+                if (!chat?.members) return [];
+                if (Array.isArray(chat.members)) return chat.members.filter(Boolean);
+                return Object.keys(chat.members).filter(id => chat.members[id]);
+            }
+
+            function getChatDisplayName(chat) {
+                if (!chat) return 'Discussion';
+                if (chat.type === 'group') return chat.name || 'Groupe';
+                const members = getChatMemberIds(chat).filter(id => id !== currentUser?.uid);
+                if (!members.length) return 'Discussion privée';
+                return members.map(getMemberLabel).join(', ');
+            }
+
+            function getChatMetaText(chat) {
+                const members = getChatMemberIds(chat);
+                if (!members.length) return '—';
+                const label = members.length === 1 ? 'membre' : 'membres';
+                return `${members.length} ${label}`;
+            }
+
+            function filterChatBySearch(chat, query) {
+                if (!query) return true;
+                const term = query.toLowerCase();
+                const name = getChatDisplayName(chat).toLowerCase();
+                if (name.includes(term)) return true;
+                const members = getChatMemberIds(chat).map(getMemberLabel).join(' ').toLowerCase();
+                return members.includes(term);
+            }
+
+            function isChatUnread(chat) {
+                if (!chat?.lastMessage || !currentUser?.uid) return false;
+                const lastReadAt = chatReadsState?.[chat.id]?.[currentUser.uid]?.lastReadAt;
+                const lastMessageAt = chat.lastMessage?.createdAt;
+                if (!lastMessageAt) return false;
+                const hasUnread = normalizeChatTimestamp(lastMessageAt) > normalizeChatTimestamp(lastReadAt);
+                return hasUnread && chat.lastMessage?.senderId !== currentUser.uid;
+            }
+
+            function renderChatList() {
+                if (!chatList || !chatListEmpty || !currentUser?.uid) return;
+                const chats = Object.values(chatListState || {})
+                    .filter(chat => getChatMemberIds(chat).includes(currentUser.uid))
+                    .filter(chat => filterChatBySearch(chat, chatSearchQuery))
+                    .sort((a, b) => normalizeChatTimestamp(b.lastActivity || b.lastMessage?.createdAt) - normalizeChatTimestamp(a.lastActivity || a.lastMessage?.createdAt));
+
+                if (!chats.length) {
+                    chatListEmpty.classList.remove('hidden');
+                    chatList.classList.add('hidden');
+                    chatList.innerHTML = '';
+                    return;
+                }
+
+                chatListEmpty.classList.add('hidden');
+                chatList.classList.remove('hidden');
+                chatList.innerHTML = chats.map(chat => {
+                    const isActive = chat.id === activeChatId;
+                    const lastMessage = chat.lastMessage;
+                    const preview = lastMessage?.type === 'file'
+                        ? 'Pièce jointe'
+                        : (lastMessage?.text || 'Aucun message');
+                    const unread = isChatUnread(chat);
+                    return `
+                        <button type="button" data-chat-id="${chat.id}"
+                            class="w-full text-left rounded-xl border ${isActive ? 'border-cyan-200 bg-cyan-50/40' : 'border-gray-200 bg-white hover:bg-gray-50'} p-3 transition">
+                            <div class="flex items-center justify-between gap-2">
+                                <p class="text-sm font-semibold text-gray-900 truncate">${escapeHtml(getChatDisplayName(chat))}</p>
+                                <span class="text-[10px] text-gray-400">${formatChatTime(lastMessage?.createdAt || chat.lastActivity)}</span>
+                            </div>
+                            <div class="mt-1 flex items-center justify-between gap-2">
+                                <p class="text-xs text-gray-500 truncate">${escapeHtml(preview)}</p>
+                                ${unread ? '<span class="text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Non lu</span>' : ''}
+                            </div>
+                        </button>
+                    `;
+                }).join('');
+            }
+
+            function formatMessageText(text) {
+                return escapeHtml(text).replace(/\n/g, '<br>');
+            }
+
+            function renderChatMessages() {
+                if (!chatMessages || !chatMessagesEmpty || !chatMessagesList || !chatActiveTitle || !chatActiveMeta) return;
+                if (!activeChatId || !chatListState[activeChatId]) {
+                    chatActiveTitle.textContent = 'Sélectionnez une discussion';
+                    chatActiveMeta.textContent = '—';
+                    chatMessagesEmpty.classList.remove('hidden');
+                    chatMessagesList.innerHTML = '';
+                    setChatComposerState(false);
+                    return;
+                }
+
+                const chat = chatListState[activeChatId];
+                chatActiveTitle.textContent = getChatDisplayName(chat);
+                chatActiveMeta.textContent = getChatMetaText(chat);
+
+                const messagesMap = chatMessagesState[activeChatId] || {};
+                const messages = Object.values(messagesMap)
+                    .filter(message => {
+                        if (!chatMessageSearchQuery) return true;
+                        const term = chatMessageSearchQuery.toLowerCase();
+                        const content = (message.text || '').toLowerCase();
+                        const attachmentName = (message.attachment?.name || '').toLowerCase();
+                        return content.includes(term) || attachmentName.includes(term);
+                    })
+                    .sort((a, b) => normalizeChatTimestamp(a.createdAt) - normalizeChatTimestamp(b.createdAt));
+
+                if (!messages.length) {
+                    chatMessagesEmpty.classList.remove('hidden');
+                    chatMessagesList.innerHTML = '';
+                    setChatComposerState(true);
+                    return;
+                }
+
+                chatMessagesEmpty.classList.add('hidden');
+                chatMessagesList.innerHTML = messages.map(message => {
+                    const isMine = message.senderId === currentUser?.uid;
+                    const bubbleClass = isMine
+                        ? 'bg-cyan-500 text-white'
+                        : 'bg-white border border-gray-200 text-gray-800';
+                    const sender = isMine ? 'Vous' : (message.senderName || getMemberLabel(message.senderId));
+                    const time = formatChatMessageTime(message.createdAt);
+                    let attachmentHtml = '';
+                    if (message.attachment?.dataUrl) {
+                        const safeUrl = encodeURI(message.attachment.dataUrl);
+                        if ((message.attachment.type || '').startsWith('image/')) {
+                            attachmentHtml = `
+                                <div class="mt-2">
+                                    <img src="${safeUrl}" alt="Pièce jointe" class="max-w-full rounded-lg border border-gray-200" />
+                                </div>
+                            `;
+                        } else {
+                            attachmentHtml = `
+                                <div class="mt-2">
+                                    <a href="${safeUrl}" download="${escapeHtml(message.attachment.name || 'piece-jointe')}"
+                                        class="inline-flex items-center gap-2 text-xs font-semibold ${isMine ? 'text-white' : 'text-cyan-600'}">
+                                        📎 ${escapeHtml(message.attachment.name || 'Pièce jointe')}
+                                    </a>
+                                </div>
+                            `;
+                        }
+                    }
+                    return `
+                        <div class="flex ${isMine ? 'justify-end' : 'justify-start'}">
+                            <div class="max-w-[78%] rounded-2xl px-4 py-3 ${bubbleClass}">
+                                <p class="text-[11px] ${isMine ? 'text-cyan-50' : 'text-gray-400'}">${escapeHtml(sender)}</p>
+                                ${message.text ? `<p class="mt-1 text-sm leading-relaxed">${formatMessageText(message.text)}</p>` : ''}
+                                ${attachmentHtml}
+                                <p class="mt-2 text-[10px] ${isMine ? 'text-cyan-100' : 'text-gray-400'}">${time}</p>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                setChatComposerState(true);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            function setChatComposerState(enabled) {
+                const isEnabled = Boolean(enabled);
+                if (chatMessageInput) chatMessageInput.disabled = !isEnabled;
+                if (chatAttachmentButton) chatAttachmentButton.disabled = !isEnabled;
+                if (chatEmojiButton) chatEmojiButton.disabled = !isEnabled;
+                if (chatSendButton) chatSendButton.disabled = !isEnabled;
+            }
+
+            function setChatAttachment(attachment) {
+                chatAttachment = attachment;
+                if (chatAttachmentPreview && chatAttachmentName) {
+                    if (attachment) {
+                        chatAttachmentName.textContent = attachment.name || 'Pièce jointe';
+                        chatAttachmentPreview.classList.remove('hidden');
+                        chatAttachmentPreview.classList.add('flex');
+                    } else {
+                        chatAttachmentPreview.classList.add('hidden');
+                        chatAttachmentPreview.classList.remove('flex');
+                    }
+                }
+            }
+
+            function clearChatAttachment() {
+                setChatAttachment(null);
+                if (chatAttachmentInput) chatAttachmentInput.value = '';
+            }
+
+            function markChatRead(chatId, force = false) {
+                if (!chatId || !currentUser?.uid || !dbBasePath) return;
+                const chat = chatListState[chatId];
+                if (!chat) return;
+                const lastMessageAt = chat.lastMessage?.createdAt;
+                const lastReadAt = chatReadsState?.[chatId]?.[currentUser.uid]?.lastReadAt;
+                if (!force && lastMessageAt && normalizeChatTimestamp(lastMessageAt) <= normalizeChatTimestamp(lastReadAt)) return;
+                const payload = { lastReadAt: new Date().toISOString() };
+                set(ref(db, `${dbBasePath}/chatReads/${chatId}/${currentUser.uid}`), payload);
+            }
+
+            function detachChatMessagesListener() {
+                if (chatMessagesListener && chatMessagesRef) off(chatMessagesRef, chatMessagesListener);
+                chatMessagesListener = null;
+                chatMessagesRef = null;
+            }
+
+            function attachChatMessagesListener(chatId) {
+                detachChatMessagesListener();
+                if (!chatId || !dbBasePath) return;
+                chatMessagesRef = ref(db, `${dbBasePath}/chatMessages/${chatId}`);
+                chatMessagesListener = onValue(chatMessagesRef, snapshot => {
+                    chatMessagesState = { ...chatMessagesState, [chatId]: snapshot.val() || {} };
+                    renderChatMessages();
+                    markChatRead(chatId);
+                });
+            }
+
+            function openChat(chatId) {
+                if (!chatId) return;
+                activeChatId = chatId;
+                chatMessageSearchQuery = '';
+                if (chatMessageSearchInput) chatMessageSearchInput.value = '';
+                attachChatMessagesListener(chatId);
+                renderChatList();
+                renderChatMessages();
+                markChatRead(chatId, true);
+            }
+
+            function maybeNotifyNewMessage(chat) {
+                if (!chat?.lastMessage || !currentUser?.uid) return;
+                const lastMessageAt = chat.lastMessage.createdAt;
+                const lastNotifiedAt = lastNotifiedChatMessages[chat.id];
+                if (lastNotifiedAt === lastMessageAt) return;
+                if (chat.lastMessage.senderId === currentUser.uid) {
+                    lastNotifiedChatMessages[chat.id] = lastMessageAt;
+                    return;
+                }
+                const isActiveChat = currentPage === 'Messagerie' && activeChatId === chat.id;
+                if (!isActiveChat) {
+                    const sender = getMemberLabel(chat.lastMessage.senderId);
+                    showSuccessToast(`Nouveau message de ${sender}`);
+                    if ('Notification' in window && Notification.permission === 'granted') {
+                        new Notification('Nouveau message', {
+                            body: `${sender} • ${chat.lastMessage.text || 'Pièce jointe'}`
+                        });
+                    }
+                }
+                lastNotifiedChatMessages[chat.id] = lastMessageAt;
+            }
+
+            function requestChatNotifications() {
+                if (!('Notification' in window)) {
+                    showSuccessToast("Les notifications ne sont pas supportées par ce navigateur.");
+                    return;
+                }
+                if (Notification.permission === 'granted') {
+                    showSuccessToast('Notifications déjà activées.');
+                    return;
+                }
+                Notification.requestPermission().then(result => {
+                    if (result === 'granted') {
+                        showSuccessToast('Notifications activées.');
+                    } else {
+                        showSuccessToast('Notifications refusées.');
+                    }
+                });
+            }
+
+            function onChatListValue(snapshot) {
+                const data = snapshot.val() || {};
+                chatListState = Object.keys(data).reduce((acc, key) => {
+                    acc[key] = { id: key, ...data[key] };
+                    return acc;
+                }, {});
+                if (activeChatId) {
+                    const activeChat = chatListState[activeChatId];
+                    if (!activeChat || !getChatMemberIds(activeChat).includes(currentUser?.uid)) {
+                        activeChatId = null;
+                        detachChatMessagesListener();
+                    }
+                }
+                if (activeChatId && !chatListState[activeChatId]) {
+                    activeChatId = null;
+                    detachChatMessagesListener();
+                }
+                renderChatList();
+                renderChatMessages();
+                Object.values(chatListState).forEach(chat => maybeNotifyNewMessage(chat));
+            }
+
+            function onChatReadsValue(snapshot) {
+                chatReadsState = snapshot.val() || {};
+                renderChatList();
+                renderChatMessages();
+            }
+
+            function setupChatListeners() {
+                if (!dbBasePath) return;
+                chatListRef = ref(db, `${dbBasePath}/chats`);
+                chatListListener = onValue(chatListRef, onChatListValue);
+                chatReadsRef = ref(db, `${dbBasePath}/chatReads`);
+                chatReadsListener = onValue(chatReadsRef, onChatReadsValue);
+            }
+
+            function closeChatCreateModal() {
+                if (chatCreateModal) chatCreateModal.classList.add('hidden');
+                if (chatCreateForm) chatCreateForm.reset();
+                if (chatCreateError) chatCreateError.classList.add('hidden');
+            }
+
+            function updateChatCreateTypeUI() {
+                const type = chatCreateType?.value || 'direct';
+                if (chatGroupNameRow) chatGroupNameRow.classList.toggle('hidden', type !== 'group');
+            }
+
+            function renderChatMembersList() {
+                if (!chatMembersList || !chatMembersEmpty) return;
+                const query = (chatMemberSearchInput?.value || '').trim().toLowerCase();
+                const members = teamMembersState
+                    .filter(member => member.id !== currentUser?.uid)
+                    .filter(member => {
+                        if (!query) return true;
+                        const label = `${member.fullName || ''} ${member.name || ''} ${member.email || ''}`.toLowerCase();
+                        return label.includes(query);
+                    });
+
+                if (!members.length) {
+                    chatMembersEmpty.classList.remove('hidden');
+                    chatMembersList.innerHTML = '';
+                    return;
+                }
+
+                chatMembersEmpty.classList.add('hidden');
+                chatMembersList.innerHTML = members.map(member => `
+                    <label class="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-xs text-gray-700">
+                        <input type="checkbox" data-chat-member="${member.id}" class="h-4 w-4 rounded border-gray-300 text-cyan-500 focus:ring-cyan-500" />
+                        <span class="font-semibold">${escapeHtml(member.fullName || member.name || member.email)}</span>
+                    </label>
+                `).join('');
+            }
+
+            function getExistingDirectChat(memberId) {
+                const chats = Object.values(chatListState || {});
+                return chats.find(chat => {
+                    if (chat.type !== 'direct') return false;
+                    const memberIds = getChatMemberIds(chat);
+                    return memberIds.includes(memberId) && memberIds.includes(currentUser?.uid);
+                });
+            }
+
+            async function createChatConversation(type, memberIds, groupName) {
+                if (!dbBasePath || !currentUser?.uid) return null;
+                const now = new Date().toISOString();
+                const chatRef = push(ref(db, `${dbBasePath}/chats`));
+                const members = {};
+                members[currentUser.uid] = true;
+                memberIds.forEach(id => { members[id] = true; });
+                const chatPayload = {
+                    id: chatRef.key,
+                    type,
+                    name: groupName || '',
+                    members,
+                    createdAt: now,
+                    createdBy: currentUser.uid,
+                    lastActivity: now
+                };
+                await set(chatRef, chatPayload);
+                await set(ref(db, `${dbBasePath}/chatReads/${chatRef.key}/${currentUser.uid}`), { lastReadAt: now });
+                return chatRef.key;
+            }
+
+            async function handleChatCreateSubmit(event) {
+                event.preventDefault();
+                if (!chatCreateType || !chatMembersList || !chatCreateError) return;
+                const type = chatCreateType.value;
+                const selectedIds = Array.from(chatMembersList.querySelectorAll('input[data-chat-member]:checked'))
+                    .map(input => input.dataset.chatMember)
+                    .filter(Boolean);
+                chatCreateError.classList.add('hidden');
+                if (type === 'direct') {
+                    if (selectedIds.length !== 1) {
+                        chatCreateError.textContent = 'Sélectionnez un membre pour une discussion privée.';
+                        chatCreateError.classList.remove('hidden');
+                        return;
+                    }
+                    const existing = getExistingDirectChat(selectedIds[0]);
+                    if (existing) {
+                        closeChatCreateModal();
+                        openChat(existing.id);
+                        return;
+                    }
+                    const chatId = await createChatConversation('direct', selectedIds, '');
+                    closeChatCreateModal();
+                    if (chatId) openChat(chatId);
+                    return;
+                }
+                if (!chatGroupNameInput?.value.trim()) {
+                    chatCreateError.textContent = 'Le nom du groupe est requis.';
+                    chatCreateError.classList.remove('hidden');
+                    return;
+                }
+                if (selectedIds.length < 2) {
+                    chatCreateError.textContent = 'Sélectionnez au moins 2 membres pour un groupe.';
+                    chatCreateError.classList.remove('hidden');
+                    return;
+                }
+                const chatId = await createChatConversation('group', selectedIds, chatGroupNameInput.value.trim());
+                closeChatCreateModal();
+                if (chatId) openChat(chatId);
+            }
+
+            async function handleChatSend(event) {
+                event.preventDefault();
+                if (!activeChatId || !dbBasePath || !currentUser?.uid) {
+                    if (chatSendError) {
+                        chatSendError.textContent = 'Sélectionnez une discussion.';
+                        chatSendError.classList.remove('hidden');
+                    }
+                    return;
+                }
+                const text = (chatMessageInput?.value || '').trim();
+                if (!text && !chatAttachment) {
+                    if (chatSendError) {
+                        chatSendError.textContent = 'Écrivez un message ou ajoutez une pièce jointe.';
+                        chatSendError.classList.remove('hidden');
+                    }
+                    return;
+                }
+                if (chatSendError) chatSendError.classList.add('hidden');
+                const now = new Date().toISOString();
+                const messageRef = push(ref(db, `${dbBasePath}/chatMessages/${activeChatId}`));
+                const payload = {
+                    id: messageRef.key,
+                    senderId: currentUser.uid,
+                    senderName: currentUserData?.fullName || currentUser?.email || 'Utilisateur',
+                    text: text || '',
+                    createdAt: now,
+                    type: chatAttachment ? 'file' : 'text'
+                };
+                if (chatAttachment) {
+                    payload.attachment = {
+                        name: chatAttachment.name,
+                        type: chatAttachment.type,
+                        size: chatAttachment.size,
+                        dataUrl: chatAttachment.dataUrl
+                    };
+                }
+                await set(messageRef, payload);
+                await update(ref(db, `${dbBasePath}/chats/${activeChatId}`), {
+                    lastMessage: {
+                        text: text || (chatAttachment ? chatAttachment.name : ''),
+                        createdAt: now,
+                        senderId: currentUser.uid,
+                        type: chatAttachment ? 'file' : 'text'
+                    },
+                    lastActivity: now
+                });
+                markChatRead(activeChatId, true);
+                if (chatMessageInput) chatMessageInput.value = '';
+                clearChatAttachment();
+            }
+
             function openAccessScopeModal(memberId) {
                 if (!accessScopeModal) return;
                 const member = teamMembersState.find(m => m.id === memberId);
@@ -8422,6 +9127,9 @@
                     renderStoreProducts(storeSearchInput ? storeSearchInput.value : '');
                     renderShopStock(shopSearchInput ? shopSearchInput.value : '');
                 }
+                renderChatMembersList();
+                renderChatList();
+                renderChatMessages();
                 updateUI();
             }
 
@@ -8481,10 +9189,10 @@
 
                     const accessCode = generateAccessCode();
                     const basePermissions = role === 'consultation'
-                        ? ['Tableau de bord', 'Statistiques']
+                        ? ['Tableau de bord', 'Messagerie', 'Statistiques']
                         : (role === 'manager'
-                            ? ['Tableau de bord', 'Ventes', 'Historique des ventes', 'Stock Boutique', 'Mon Magasin', 'Tableau des prix', 'Mouvements Magasin', 'Fournisseurs', 'Statistiques']
-                            : ['Tableau de bord', 'Ventes', 'Historique des ventes', 'Stock Boutique']);
+                            ? ['Tableau de bord', 'Ventes', 'Historique des ventes', 'Messagerie', 'Stock Boutique', 'Mon Magasin', 'Tableau des prix', 'Mouvements Magasin', 'Fournisseurs', 'Statistiques']
+                            : ['Tableau de bord', 'Ventes', 'Historique des ventes', 'Messagerie', 'Stock Boutique']);
 
                     try {
                         const newMemberRef = push(ref(db, `${dbBasePath}/members`));
@@ -8579,6 +9287,143 @@
                     const allChecked = boxes.every(box => box.checked);
                     boxes.forEach(box => { box.checked = !allChecked; });
                 });
+            }
+
+            if (chatCreateButton) {
+                chatCreateButton.addEventListener('click', () => {
+                    if (!chatCreateModal) return;
+                    if (chatMemberSearchInput) chatMemberSearchInput.value = '';
+                    if (chatGroupNameInput) chatGroupNameInput.value = '';
+                    renderChatMembersList();
+                    updateChatCreateTypeUI();
+                    chatCreateModal.classList.remove('hidden');
+                });
+            }
+
+            if (chatCreateClose) chatCreateClose.addEventListener('click', closeChatCreateModal);
+            if (chatCreateCancel) chatCreateCancel.addEventListener('click', closeChatCreateModal);
+
+            if (chatCreateType) {
+                chatCreateType.addEventListener('change', () => {
+                    updateChatCreateTypeUI();
+                    if (chatMembersList) {
+                        chatMembersList.querySelectorAll('input[data-chat-member]').forEach(input => { input.checked = false; });
+                    }
+                });
+            }
+
+            if (chatMemberSearchInput) {
+                chatMemberSearchInput.addEventListener('input', () => {
+                    renderChatMembersList();
+                });
+            }
+
+            if (chatMembersList) {
+                chatMembersList.addEventListener('change', (event) => {
+                    const target = event.target.closest('input[data-chat-member]');
+                    if (!target || !chatCreateType) return;
+                    if (chatCreateType.value === 'direct' && target.checked) {
+                        chatMembersList.querySelectorAll('input[data-chat-member]').forEach(input => {
+                            if (input !== target) input.checked = false;
+                        });
+                    }
+                });
+            }
+
+            if (chatCreateForm) {
+                chatCreateForm.addEventListener('submit', handleChatCreateSubmit);
+            }
+
+            if (chatSearchInput) {
+                chatSearchInput.addEventListener('input', () => {
+                    chatSearchQuery = chatSearchInput.value.trim();
+                    renderChatList();
+                });
+            }
+
+            if (chatMessageSearchInput) {
+                chatMessageSearchInput.addEventListener('input', () => {
+                    chatMessageSearchQuery = chatMessageSearchInput.value.trim();
+                    renderChatMessages();
+                });
+            }
+
+            if (chatList) {
+                chatList.addEventListener('click', (event) => {
+                    const button = event.target.closest('button[data-chat-id]');
+                    if (!button) return;
+                    openChat(button.dataset.chatId);
+                });
+            }
+
+            if (chatMarkReadButton) {
+                chatMarkReadButton.addEventListener('click', () => {
+                    if (!activeChatId) return;
+                    markChatRead(activeChatId, true);
+                    renderChatList();
+                });
+            }
+
+            if (chatEmojiButton) {
+                chatEmojiButton.addEventListener('click', () => {
+                    if (!chatEmojiPanel) return;
+                    chatEmojiPanel.classList.toggle('hidden');
+                });
+            }
+
+            if (chatEmojiPanel) {
+                chatEmojiPanel.addEventListener('click', (event) => {
+                    const button = event.target.closest('button');
+                    if (!button || !chatMessageInput) return;
+                    chatMessageInput.value += button.textContent;
+                    chatMessageInput.focus();
+                });
+            }
+
+            document.addEventListener('click', (event) => {
+                if (!chatEmojiPanel || !chatEmojiButton) return;
+                if (chatEmojiPanel.classList.contains('hidden')) return;
+                const isInside = chatEmojiPanel.contains(event.target) || chatEmojiButton.contains(event.target);
+                if (!isInside) chatEmojiPanel.classList.add('hidden');
+            });
+
+            if (chatAttachmentButton && chatAttachmentInput) {
+                chatAttachmentButton.addEventListener('click', () => chatAttachmentInput.click());
+                chatAttachmentInput.addEventListener('change', () => {
+                    const file = chatAttachmentInput.files?.[0];
+                    if (!file) return;
+                    if (file.size > CHAT_ATTACHMENT_MAX_SIZE) {
+                        if (chatSendError) {
+                            chatSendError.textContent = `Fichier trop volumineux (max ${(CHAT_ATTACHMENT_MAX_SIZE / 1024).toFixed(0)} Ko).`;
+                            chatSendError.classList.remove('hidden');
+                        }
+                        chatAttachmentInput.value = '';
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        setChatAttachment({
+                            name: file.name,
+                            type: file.type,
+                            size: file.size,
+                            dataUrl: reader.result
+                        });
+                        if (chatSendError) chatSendError.classList.add('hidden');
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            if (chatAttachmentRemove) {
+                chatAttachmentRemove.addEventListener('click', clearChatAttachment);
+            }
+
+            if (chatComposerForm) {
+                chatComposerForm.addEventListener('submit', handleChatSend);
+            }
+
+            if (chatNotificationsButton) {
+                chatNotificationsButton.addEventListener('click', requestChatNotifications);
             }
 
             if (addStoreForm) {
@@ -10370,6 +11215,8 @@
                 supplierPaymentsRef = ref(db, `${dbBasePath}/supplierPayments`);
                 supplierPaymentsListener = onValue(supplierPaymentsRef, onSupplierPaymentsValue);
 
+                setupChatListeners();
+
                 migrateLocalPendingSales();
             }
 
@@ -10391,7 +11238,11 @@
                 if (suppliersListener && suppliersRef) off(suppliersRef, suppliersListener);
                 if (supplierInvoicesListener && supplierInvoicesRef) off(supplierInvoicesRef, supplierInvoicesListener);
                 if (supplierPaymentsListener && supplierPaymentsRef) off(supplierPaymentsRef, supplierPaymentsListener);
-                storesListener = null; boutiquesListener = null; categoriesListener = null; storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; shopTransferRequestsListener = null; salesHistoryListener = null; pendingSalesListener = null; settingsListener = null; companyMembersListener = null; companyCustomersListener = null; suppliersListener = null; supplierInvoicesListener = null; supplierPaymentsListener = null;
+                if (chatListListener && chatListRef) off(chatListRef, chatListListener);
+                if (chatReadsListener && chatReadsRef) off(chatReadsRef, chatReadsListener);
+                if (chatMessagesListener && chatMessagesRef) off(chatMessagesRef, chatMessagesListener);
+                storesListener = null; boutiquesListener = null; categoriesListener = null; storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; shopTransferRequestsListener = null; salesHistoryListener = null; pendingSalesListener = null; settingsListener = null; companyMembersListener = null; companyCustomersListener = null; suppliersListener = null; supplierInvoicesListener = null; supplierPaymentsListener = null; chatListListener = null; chatReadsListener = null; chatMessagesListener = null;
+                chatListRef = null; chatReadsRef = null; chatMessagesRef = null;
                 appData.stores = {}; appData.boutiques = {}; appData.categories = {}; appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.shopMovements = {}; appData.shopTransferRequests = {}; appData.salesHistory = {}; appData.customers = {}; appData.suppliers = {}; appData.supplierInvoices = {}; appData.supplierPayments = {}; appData.storeExitRequests = {}; appData.pendingSales = {}; appData.settings = {};
                 selectedCustomer = null;
                 customerOptionLookup = {};
@@ -10404,6 +11255,14 @@
                 activeSupplierId = null;
                 activeSupplierPaymentDetailId = null;
                 supplierSearchQuery = '';
+                chatListState = {};
+                chatReadsState = {};
+                chatMessagesState = {};
+                activeChatId = null;
+                chatSearchQuery = '';
+                chatMessageSearchQuery = '';
+                chatAttachment = null;
+                lastNotifiedChatMessages = {};
             }
 
             function updateUI() {
