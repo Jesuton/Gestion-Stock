@@ -1378,7 +1378,7 @@
                             <!-- ID ajouté au bouton "Nouveau Produit" -->
                             <button id="open-new-product-modal-button"
                                 class="px-4 py-2 bg-cyan-400 text-white font-semibold rounded-lg shadow-md hover:bg-cyan-500 transition-colors flex items-center gap-2">
-                                + Nouveau Produit (Tableau des prix)
+                                Importer un produit au magasin
                             </button>
                         </div>
                     </div>
@@ -2601,18 +2601,10 @@
                             required>
                     </div>
                     <div>
-                        <label for="entry-supplier-select" class="block text-sm font-medium text-gray-700">Fournisseur *</label>
-                        <div class="mt-1 flex flex-col sm:flex-row gap-2">
-                            <select id="entry-supplier-select"
-                                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400"
-                                required>
-                                <option value="">Sélectionnez un fournisseur</option>
-                            </select>
-                            <button type="button" id="open-supplier-modal-button"
-                                class="px-4 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 font-semibold hover:bg-gray-50 whitespace-nowrap">
-                                Nouveau fournisseur
-                            </button>
-                        </div>
+                        <label for="entry-expiration-date" class="block text-sm font-medium text-gray-700">Date d'expiration *</label>
+                        <input type="date" id="entry-expiration-date"
+                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400"
+                            required />
                     </div>
                     <div>
                         <label for="entry-comment" class="block text-sm font-medium text-gray-700">Commentaire</label>
@@ -3786,6 +3778,7 @@
             const entryProductSelectRow = document.getElementById('entry-product-select-row');
             const entryDescriptionInput = document.getElementById('entry-description');
             const entrySupplierSelect = document.getElementById('entry-supplier-select');
+            const entryExpirationDateInput = document.getElementById('entry-expiration-date');
             const openSupplierModalButton = document.getElementById('open-supplier-modal-button');
             const entryError = document.getElementById('entry-error');
             const entrySubmitButton = document.getElementById('entry-submit-button');
@@ -14330,12 +14323,12 @@
                 const qty = parseInt(entryForm['entry-quantity'].value, 10);
                 const comment = entryForm['entry-comment'].value;
                 const description = entryDescriptionInput ? entryDescriptionInput.value.trim() : '';
-                const supplierId = entrySupplierSelect ? entrySupplierSelect.value : '';
+                const expirationDate = entryExpirationDateInput ? entryExpirationDateInput.value : '';
                 const prod = getEntryProductById(pid);
                 if (!prod || qty <= 0) return;
-                if (!supplierId) {
+                if (!expirationDate) {
                     if (entryError) {
-                        entryError.textContent = "Veuillez sélectionner un fournisseur.";
+                        entryError.textContent = "Veuillez renseigner la date d'expiration.";
                         entryError.classList.remove('hidden');
                     }
                     return;
@@ -14347,12 +14340,7 @@
                     showSuccessToast("Veuillez définir les prix dans le tableau des prix avant d'ajouter du stock.");
                     return;
                 }
-                const supplier = getSupplierById(supplierId);
-                const supplierName = getSupplierName(supplierId) || (appData.suppliers?.[supplierId]?.name || '');
-                const supplierCurrency = getSupplierCurrency(supplier);
-                const supplierRate = getSupplierConversionRate(supplier);
                 const productCurrency = (prod.currency || DEFAULT_SUPPLIER_CURRENCY).toUpperCase();
-                const fxRateToCfa = getCurrencyToCfaRate(productCurrency);
 
                 try {
                     if (entrySubmitButton) entrySubmitButton.disabled = true;
@@ -14370,13 +14358,11 @@
                         updates[`${dbBasePath}/storeProducts/${pid}/description`] = description;
                         updates[`${dbBasePath}/storeProducts/${pid}/updatedAt`] = new Date().toISOString();
                     }
+                    if (expirationDate) {
+                        updates[`${dbBasePath}/storeProducts/${pid}/expirationDate`] = expirationDate;
+                        updates[`${dbBasePath}/storeProducts/${pid}/updatedAt`] = new Date().toISOString();
+                    }
                     const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
-                    const invoiceKey = push(ref(db, `${dbBasePath}/supplierInvoices`)).key;
-                    const baseTotal = roundAmount(purchaseCost * qty * fxRateToCfa);
-                    const unitCostBase = roundAmount(purchaseCost * fxRateToCfa);
-                    const invoiceTotal = supplierCurrency === DEFAULT_SUPPLIER_CURRENCY
-                        ? baseTotal
-                        : roundAmount(baseTotal / supplierRate);
                     updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
                         id: moveKey,
                         productId: pid,
@@ -14387,38 +14373,12 @@
                         oldStock: baseStock,
                         newStock,
                         comment,
-                        supplierId,
-                        supplierName,
+                        expirationDate,
                         date: new Date().toISOString(),
                         userEmail: currentUser.email || '',
                         userName: currentUserData?.fullName || currentUser.email || ''
                     };
-                    updates[`${dbBasePath}/storeProducts/${pid}/supplierId`] = supplierId;
-                    updates[`${dbBasePath}/storeProducts/${pid}/supplierName`] = supplierName;
                     updates[`${dbBasePath}/storeProducts/${pid}/updatedAt`] = new Date().toISOString();
-                    updates[`${dbBasePath}/supplierInvoices/${invoiceKey}`] = {
-                        id: invoiceKey,
-                        supplierId,
-                        supplierName,
-                        storeId,
-                        productId: pid,
-                        productName: prod.name,
-                        quantity: qty,
-                        unitCost: purchaseCost,
-                        unitCostBase,
-                        productCurrency,
-                        fxRateToCfa,
-                        baseTotal,
-                        baseCurrency: DEFAULT_SUPPLIER_CURRENCY,
-                        total: invoiceTotal,
-                        currency: supplierCurrency,
-                        conversionRate: supplierRate,
-                        status: 'open',
-                        paidAmount: 0,
-                        date: new Date().toISOString(),
-                        createdAt: new Date().toISOString(),
-                        storeMovementId: moveKey
-                    };
                     await update(ref(db), updates);
                     showSuccessToast("Entrée de stock réussie !");
                     entryForm.reset();
