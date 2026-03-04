@@ -320,7 +320,9 @@
                     <div data-icon="menu" class="w-6 h-6"></div>
                 </button>
                 <h1 id="mobile-page-title" class="text-lg font-semibold text-gray-800">Tableau de bord</h1>
-                <div class="w-6"></div> <!-- Spacer -->
+                <button id="mobile-logout-button" class="text-gray-500 hover:text-gray-800" aria-label="Déconnexion">
+                    <div data-icon="logout" class="w-6 h-6"></div>
+                </button>
             </header>
 
             <!-- Page: Tableau de bord -->
@@ -2705,7 +2707,7 @@
 
     <!-- Modal: Paiement fournisseur -->
     <div id="supplier-payment-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 m-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 m-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold text-gray-800">Enregistrer un paiement fournisseur</h2>
                 <button id="close-supplier-payment-modal-button" class="text-gray-400 hover:text-gray-600">
@@ -3528,6 +3530,7 @@
             const authPageContainer = document.getElementById('auth-page-container');
             const layoutContainer = document.getElementById('layout-container');
             const logoutButton = document.getElementById('logout-button');
+            const mobileLogoutButton = document.getElementById('mobile-logout-button');
             const navButtons = document.querySelectorAll('.nav-button');
             const pageContents = document.querySelectorAll('.page-content');
             const authToggleLogin = document.getElementById('auth-toggle-login');
@@ -15340,14 +15343,17 @@
                 updateUI();
             }));
 
-            if (logoutButton) logoutButton.addEventListener('click', () => {
+            const handleLogoutClick = () => {
                 if (isCodeSession) {
                     handleManualLogout();
                     showSuccessToast('Déconnecté');
                 } else {
                     signOut(auth);
                 }
-            });
+            };
+
+            if (logoutButton) logoutButton.addEventListener('click', handleLogoutClick);
+            if (mobileLogoutButton) mobileLogoutButton.addEventListener('click', handleLogoutClick);
 
             // Delete event listeners with permission checks
             if (storeProductsTbody) {
