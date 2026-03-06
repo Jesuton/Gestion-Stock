@@ -46,6 +46,27 @@
             overflow-x: hidden;
         }
 
+        :root {
+            --app-height: 100vh;
+        }
+
+        .h-screen {
+            height: var(--app-height) !important;
+        }
+
+        .min-h-screen {
+            min-height: var(--app-height) !important;
+        }
+
+        [id$="-modal"] > div {
+            max-height: min(90vh, 48rem);
+            overflow-y: auto;
+        }
+
+        main {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
         @media (max-width: 1024px) {
             #sidebar {
                 width: min(85vw, 22rem);
@@ -3372,6 +3393,13 @@
             get,
             remove
         } from "firebase/database";
+
+        const setAppHeight = () => {
+            document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
+        };
+
+        setAppHeight();
+        window.addEventListener('resize', setAppHeight);
 
         // --- GESTION DES ICÔNES SVG ---
         function getIconSVG(name, className = '') {
