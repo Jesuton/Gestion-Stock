@@ -1486,7 +1486,7 @@
                         <h1 class="text-3xl font-bold text-gray-800">Inventaire</h1>
                         <p class="text-sm text-gray-500 mt-1">Comparez le stock virtuel et le stock physique.</p>
                     </div>
-                    <div class="flex flex-wrap items-center gap-2">
+                    <div id="inventory-location-toolbar" class="flex flex-wrap items-center gap-2">
                         <select id="inventory-location-type"
                             class="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-gray-600 bg-white">
                             <option value="store">Magasin</option>
@@ -1503,116 +1503,183 @@
                     </div>
                 </div>
 
-                <div class="mt-5 grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-                        <p class="text-xs uppercase text-gray-400">Produits</p>
-                        <p id="inventory-summary-total" class="text-2xl font-semibold text-gray-900">0</p>
-                    </div>
-                    <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-                        <p class="text-xs uppercase text-gray-400">Conformes</p>
-                        <p id="inventory-summary-match" class="text-2xl font-semibold text-emerald-600">0</p>
-                    </div>
-                    <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-                        <p class="text-xs uppercase text-gray-400">Écarts</p>
-                        <p id="inventory-summary-mismatch" class="text-2xl font-semibold text-rose-600">0</p>
-                    </div>
-                    <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-                        <p class="text-xs uppercase text-gray-400">Non comptés</p>
-                        <p id="inventory-summary-pending" class="text-2xl font-semibold text-gray-500">0</p>
+                <div class="mt-4 flex flex-wrap gap-2">
+                    <div class="inline-flex rounded-xl border border-gray-200 bg-white p-1 shadow-sm">
+                        <button type="button" data-inventory-view="location"
+                            class="inventory-view-button px-4 py-2 rounded-lg text-sm font-semibold bg-cyan-500 text-white">
+                            Par emplacement
+                        </button>
+                        <button type="button" data-inventory-view="global"
+                            class="inventory-view-button px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 hover:text-gray-900">
+                            Vue globale
+                        </button>
                     </div>
                 </div>
 
-                <div class="mt-6 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-                        <div>
-                            <h2 class="text-lg font-semibold text-gray-900">Saisie de l'inventaire</h2>
-                            <p class="text-sm text-gray-500 mt-1">Renseignez le stock physique puis validez.</p>
+                <div id="inventory-location-section">
+                    <div class="mt-5 grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                            <p class="text-xs uppercase text-gray-400">Produits</p>
+                            <p id="inventory-summary-total" class="text-2xl font-semibold text-gray-900">0</p>
                         </div>
-                        <div class="text-xs text-gray-500 bg-gray-50 border border-gray-100 px-3 py-2 rounded-xl">
-                            Astuce: cochez <span class="font-semibold text-gray-700">Conforme</span> pour remplir automatiquement.
+                        <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                            <p class="text-xs uppercase text-gray-400">Conformes</p>
+                            <p id="inventory-summary-match" class="text-2xl font-semibold text-emerald-600">0</p>
                         </div>
-                    </div>
-
-                    <div class="mt-4 overflow-x-auto rounded-xl border border-gray-200">
-                        <table class="min-w-full bg-white divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
-                                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Stock virtuel</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock physique</th>
-                                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Écart</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
-                                </tr>
-                            </thead>
-                            <tbody id="inventory-tbody" class="divide-y divide-gray-200"></tbody>
-                        </table>
-                        <div id="inventory-empty"
-                            class="flex items-center justify-center text-sm text-gray-400 h-32">
-                            Sélectionnez un magasin ou une boutique pour démarrer.
+                        <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                            <p class="text-xs uppercase text-gray-400">Écarts</p>
+                            <p id="inventory-summary-mismatch" class="text-2xl font-semibold text-rose-600">0</p>
+                        </div>
+                        <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                            <p class="text-xs uppercase text-gray-400">Non comptés</p>
+                            <p id="inventory-summary-pending" class="text-2xl font-semibold text-gray-500">0</p>
                         </div>
                     </div>
 
-                    <div class="mt-4 grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 items-center">
-                        <textarea id="inventory-comment" rows="2" placeholder="Commentaire d'inventaire (optionnel)"
-                            class="w-full rounded-xl border border-gray-200 p-3 text-sm focus:ring-cyan-500 focus:border-cyan-500"></textarea>
-                        <div class="flex items-center gap-3">
-                            <button id="inventory-cancel-button"
-                                class="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50">
-                                Annuler
-                            </button>
-                            <button id="inventory-save-button"
-                                class="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700">
-                                Enregistrer l'inventaire
-                            </button>
+                    <div class="mt-6 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                            <div>
+                                <h2 class="text-lg font-semibold text-gray-900">Saisie de l'inventaire</h2>
+                                <p class="text-sm text-gray-500 mt-1">Renseignez le stock physique puis validez.</p>
+                            </div>
+                            <div class="text-xs text-gray-500 bg-gray-50 border border-gray-100 px-3 py-2 rounded-xl">
+                                Astuce: cochez <span class="font-semibold text-gray-700">Conforme</span> pour remplir automatiquement.
+                            </div>
                         </div>
-                    </div>
-                    <p id="inventory-error" class="mt-3 text-sm text-red-500 hidden"></p>
-                </div>
 
-                <div class="mt-6 grid grid-cols-1 xl:grid-cols-[360px_1fr] gap-6">
-                    <div class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-                        <div class="flex items-center justify-between">
-                            <h3 class="text-sm font-semibold text-gray-800">Historique</h3>
-                            <span id="inventory-history-count" class="text-xs font-semibold text-gray-500">0</span>
-                        </div>
-                        <div id="inventory-history-empty" class="mt-4 text-sm text-gray-400">Aucun inventaire.</div>
-                        <div id="inventory-history-table-container" class="mt-4 overflow-x-auto hidden">
+                        <div class="mt-4 overflow-x-auto rounded-xl border border-gray-200">
                             <table class="min-w-full bg-white divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
                                     <tr>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Écarts</th>
-                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Stock virtuel</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock physique</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Écart</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
                                     </tr>
                                 </thead>
-                                <tbody id="inventory-history-tbody" class="divide-y divide-gray-200"></tbody>
+                                <tbody id="inventory-tbody" class="divide-y divide-gray-200"></tbody>
                             </table>
+                            <div id="inventory-empty"
+                                class="flex items-center justify-center text-sm text-gray-400 h-32">
+                                Sélectionnez un magasin ou une boutique pour démarrer.
+                            </div>
                         </div>
+
+                        <div class="mt-4 grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 items-center">
+                            <textarea id="inventory-comment" rows="2" placeholder="Commentaire d'inventaire (optionnel)"
+                                class="w-full rounded-xl border border-gray-200 p-3 text-sm focus:ring-cyan-500 focus:border-cyan-500"></textarea>
+                            <div class="flex items-center gap-3">
+                                <button id="inventory-cancel-button"
+                                    class="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50">
+                                    Annuler
+                                </button>
+                                <button id="inventory-save-button"
+                                    class="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700">
+                                    Enregistrer l'inventaire
+                                </button>
+                            </div>
+                        </div>
+                        <p id="inventory-error" class="mt-3 text-sm text-red-500 hidden"></p>
                     </div>
 
-                    <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-                        <div id="inventory-history-detail-empty" class="text-sm text-gray-400">
-                            Sélectionnez un inventaire pour afficher le détail.
-                        </div>
-                        <div id="inventory-history-detail" class="hidden space-y-4">
-                            <div>
-                                <h3 id="inventory-history-detail-title" class="text-lg font-semibold text-gray-900">—</h3>
-                                <p id="inventory-history-detail-subtitle" class="text-sm text-gray-500">—</p>
+                    <div class="mt-6 grid grid-cols-1 xl:grid-cols-[360px_1fr] gap-6">
+                        <div class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-sm font-semibold text-gray-800">Historique</h3>
+                                <span id="inventory-history-count" class="text-xs font-semibold text-gray-500">0</span>
                             </div>
-                            <div class="overflow-x-auto rounded-xl border border-gray-200">
+                            <div id="inventory-history-empty" class="mt-4 text-sm text-gray-400">Aucun inventaire.</div>
+                            <div id="inventory-history-table-container" class="mt-4 overflow-x-auto hidden">
                                 <table class="min-w-full bg-white divide-y divide-gray-200">
                                     <thead class="bg-gray-50">
                                         <tr>
-                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
-                                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Virtuel</th>
-                                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Physique</th>
-                                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Écart</th>
-                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Écarts</th>
+                                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="inventory-history-detail-tbody" class="divide-y divide-gray-200"></tbody>
+                                    <tbody id="inventory-history-tbody" class="divide-y divide-gray-200"></tbody>
                                 </table>
                             </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+                            <div id="inventory-history-detail-empty" class="text-sm text-gray-400">
+                                Sélectionnez un inventaire pour afficher le détail.
+                            </div>
+                            <div id="inventory-history-detail" class="hidden space-y-4">
+                                <div>
+                                    <h3 id="inventory-history-detail-title" class="text-lg font-semibold text-gray-900">—</h3>
+                                    <p id="inventory-history-detail-subtitle" class="text-sm text-gray-500">—</p>
+                                </div>
+                                <div class="overflow-x-auto rounded-xl border border-gray-200">
+                                    <table class="min-w-full bg-white divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
+                                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Virtuel</th>
+                                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Physique</th>
+                                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Écart</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="inventory-history-detail-tbody" class="divide-y divide-gray-200"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="inventory-global-section" class="hidden">
+                    <div class="mt-5 grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                            <p class="text-xs uppercase text-gray-400">Produits distincts</p>
+                            <p id="inventory-global-total-products" class="text-2xl font-semibold text-gray-900">0</p>
+                        </div>
+                        <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                            <p class="text-xs uppercase text-gray-400">Stock magasin</p>
+                            <p id="inventory-global-store-stock" class="text-2xl font-semibold text-slate-700">0</p>
+                        </div>
+                        <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                            <p class="text-xs uppercase text-gray-400">Stock boutique</p>
+                            <p id="inventory-global-shop-stock" class="text-2xl font-semibold text-indigo-600">0</p>
+                        </div>
+                        <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                            <p class="text-xs uppercase text-gray-400">Total entreprise</p>
+                            <p id="inventory-global-total-stock" class="text-2xl font-semibold text-emerald-600">0</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                            <div>
+                                <h2 class="text-lg font-semibold text-gray-900">Répartition globale</h2>
+                                <p class="text-sm text-gray-500 mt-1">Stock actuel par produit et par emplacement.</p>
+                            </div>
+                            <div class="text-xs text-gray-500 bg-gray-50 border border-gray-100 px-3 py-2 rounded-xl">
+                                Astuce: cliquez sur <span class="font-semibold text-gray-700">Voir</span> pour afficher le détail.
+                            </div>
+                        </div>
+
+                        <div id="inventory-global-empty"
+                            class="mt-4 flex items-center justify-center text-sm text-gray-400 h-32 border border-dashed border-gray-200 rounded-xl">
+                            Aucun stock disponible.
+                        </div>
+                        <div id="inventory-global-table-container" class="mt-4 overflow-x-auto rounded-xl border border-gray-200 hidden">
+                            <table class="min-w-full bg-white divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Magasins</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Boutiques</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="inventory-global-tbody" class="divide-y divide-gray-200"></tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -3716,6 +3783,8 @@
             let inventoryDraftItems = [];
             let inventoryDraftActive = false;
             let activeInventoryHistoryId = null;
+            let inventoryViewMode = 'location';
+            let inventoriesPathSuffix = 'inventories';
 
             // Cart state
             let cartItems = [];
@@ -3848,6 +3917,10 @@
             const shopMovementFilterStatus = document.getElementById('shop-movement-filter-status');
             const shopMovementFilterStart = document.getElementById('shop-movement-filter-start');
             const shopMovementFilterEnd = document.getElementById('shop-movement-filter-end');
+            const inventoryLocationToolbar = document.getElementById('inventory-location-toolbar');
+            const inventoryViewButtons = document.querySelectorAll('[data-inventory-view]');
+            const inventoryLocationSection = document.getElementById('inventory-location-section');
+            const inventoryGlobalSection = document.getElementById('inventory-global-section');
             const inventoryLocationTypeSelect = document.getElementById('inventory-location-type');
             const inventoryLocationSelect = document.getElementById('inventory-location-select');
             const inventoryStartButton = document.getElementById('inventory-start-button');
@@ -3870,6 +3943,13 @@
             const inventoryHistoryDetailTitle = document.getElementById('inventory-history-detail-title');
             const inventoryHistoryDetailSubtitle = document.getElementById('inventory-history-detail-subtitle');
             const inventoryHistoryDetailTbody = document.getElementById('inventory-history-detail-tbody');
+            const inventoryGlobalTotalProducts = document.getElementById('inventory-global-total-products');
+            const inventoryGlobalStoreStock = document.getElementById('inventory-global-store-stock');
+            const inventoryGlobalShopStock = document.getElementById('inventory-global-shop-stock');
+            const inventoryGlobalTotalStock = document.getElementById('inventory-global-total-stock');
+            const inventoryGlobalTableContainer = document.getElementById('inventory-global-table-container');
+            const inventoryGlobalEmpty = document.getElementById('inventory-global-empty');
+            const inventoryGlobalTbody = document.getElementById('inventory-global-tbody');
             if (inventorySaveButton) inventorySaveButton.disabled = true;
 
             const salesError = document.getElementById('sales-error');
@@ -11705,6 +11785,7 @@
                 renderStoreMovementsPage();
                 renderPendingShopTransfers();
                 renderInventoryLocationOptions();
+                renderInventoryGlobalView();
             }
 
             function onBoutiquesValue(snapshot) {
@@ -11740,6 +11821,7 @@
                 updateDashboardStats();
                 updateAllStats();
                 renderInventoryLocationOptions();
+                renderInventoryGlobalView();
             }
 
             function onCategoriesValue(snapshot) {
@@ -11758,6 +11840,7 @@
                 renderPriceTable();
                 updateDashboardStats();
                 updateAllStats();
+                renderInventoryGlobalView();
             }
 
             function renderShopStock(searchTerm = '') {
@@ -11855,6 +11938,176 @@
                 if (!inventoryError) return;
                 inventoryError.textContent = message;
                 inventoryError.classList.remove('hidden');
+            }
+
+            function getInventoriesPath() {
+                if (!dbBasePath) return '';
+                return `${dbBasePath}/${inventoriesPathSuffix}`;
+            }
+
+            function refreshInventoriesListener() {
+                if (!dbBasePath) return;
+                if (inventoriesListener && inventoriesRef) off(inventoriesRef, inventoriesListener);
+                inventoriesRef = ref(db, getInventoriesPath());
+                inventoriesListener = onValue(inventoriesRef, onInventoriesValue);
+            }
+
+            function setInventoriesPathSuffix(nextSuffix) {
+                if (!nextSuffix || inventoriesPathSuffix === nextSuffix) return;
+                inventoriesPathSuffix = nextSuffix;
+                refreshInventoriesListener();
+            }
+
+            function setInventoryViewMode(nextMode) {
+                const mode = nextMode === 'global' ? 'global' : 'location';
+                inventoryViewMode = mode;
+                if (inventoryViewButtons.length) {
+                    inventoryViewButtons.forEach(button => {
+                        const isActive = button.dataset.inventoryView === mode;
+                        button.classList.toggle('bg-cyan-500', isActive);
+                        button.classList.toggle('text-white', isActive);
+                        button.classList.toggle('text-gray-600', !isActive);
+                        button.classList.toggle('hover:text-gray-900', !isActive);
+                    });
+                }
+                if (inventoryLocationToolbar) inventoryLocationToolbar.classList.toggle('hidden', mode !== 'location');
+                if (inventoryLocationSection) inventoryLocationSection.classList.toggle('hidden', mode !== 'location');
+                if (inventoryGlobalSection) inventoryGlobalSection.classList.toggle('hidden', mode !== 'global');
+                if (mode === 'global') {
+                    renderInventoryGlobalView();
+                }
+            }
+
+            function buildInventoryGlobalAggregate() {
+                const aggregate = new Map();
+                const allowedStoreIds = new Set(getAccessibleStoreIds());
+                const allowedBoutiqueIds = new Set(getAccessibleBoutiqueIds());
+                const ensureEntry = (key, name) => {
+                    const resolvedKey = key || normalizeString(name) || `key_${aggregate.size}`;
+                    if (!aggregate.has(resolvedKey)) {
+                        aggregate.set(resolvedKey, {
+                            key: resolvedKey,
+                            name: name || 'Produit',
+                            storeQty: 0,
+                            shopQty: 0,
+                            storeBreakdown: {},
+                            shopBreakdown: {}
+                        });
+                    } else if (name && !aggregate.get(resolvedKey).name) {
+                        aggregate.get(resolvedKey).name = name;
+                    }
+                    return aggregate.get(resolvedKey);
+                };
+
+                Object.values(appData.storeProducts || {}).forEach(product => {
+                    if (!product) return;
+                    const name = product.name || 'Produit';
+                    const key = product.id || normalizeString(name);
+                    const entry = ensureEntry(key, name);
+                    const qty = Number(product.quantityInStore) || 0;
+                    const storeId = resolveStoreId(product.storeId) || product.storeId || UNASSIGNED_STORE_ID;
+                    if (storeId && storeId !== UNASSIGNED_STORE_ID && allowedStoreIds.size && !allowedStoreIds.has(storeId)) {
+                        return;
+                    }
+                    entry.storeQty += qty;
+                    if (storeId) {
+                        entry.storeBreakdown[storeId] = (entry.storeBreakdown[storeId] || 0) + qty;
+                    }
+                });
+
+                Object.values(appData.shopStock || {}).forEach(item => {
+                    if (!item) return;
+                    const sourceId = item.sourceProductId && appData.storeProducts?.[item.sourceProductId]
+                        ? item.sourceProductId
+                        : (item.sourceProductId || '');
+                    const name = item.name || appData.storeProducts?.[sourceId]?.name || 'Produit';
+                    const key = sourceId || normalizeString(name);
+                    const entry = ensureEntry(key, name);
+                    const qty = Number(item.quantityInShop) || 0;
+                    const boutiqueId = resolveBoutiqueId(item.boutiqueId) || item.boutiqueId || '';
+                    if (boutiqueId && allowedBoutiqueIds.size && !allowedBoutiqueIds.has(boutiqueId)) {
+                        return;
+                    }
+                    entry.shopQty += qty;
+                    if (boutiqueId) {
+                        entry.shopBreakdown[boutiqueId] = (entry.shopBreakdown[boutiqueId] || 0) + qty;
+                    }
+                });
+
+                return Array.from(aggregate.values())
+                    .map(entry => ({ ...entry, totalQty: entry.storeQty + entry.shopQty }))
+                    .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            }
+
+            function renderInventoryGlobalView() {
+                if (!inventoryGlobalSection) return;
+                const items = buildInventoryGlobalAggregate();
+                const storeTotal = items.reduce((sum, item) => sum + (Number(item.storeQty) || 0), 0);
+                const shopTotal = items.reduce((sum, item) => sum + (Number(item.shopQty) || 0), 0);
+                const totalStock = storeTotal + shopTotal;
+
+                if (inventoryGlobalTotalProducts) inventoryGlobalTotalProducts.textContent = formatCompactNumber(items.length);
+                if (inventoryGlobalStoreStock) inventoryGlobalStoreStock.textContent = formatCompactNumber(storeTotal);
+                if (inventoryGlobalShopStock) inventoryGlobalShopStock.textContent = formatCompactNumber(shopTotal);
+                if (inventoryGlobalTotalStock) inventoryGlobalTotalStock.textContent = formatCompactNumber(totalStock);
+
+                if (!inventoryGlobalTbody || !inventoryGlobalTableContainer || !inventoryGlobalEmpty) return;
+                if (!items.length) {
+                    inventoryGlobalEmpty.classList.remove('hidden');
+                    inventoryGlobalTableContainer.classList.add('hidden');
+                    inventoryGlobalTbody.innerHTML = '';
+                    return;
+                }
+
+                inventoryGlobalEmpty.classList.add('hidden');
+                inventoryGlobalTableContainer.classList.remove('hidden');
+                inventoryGlobalTbody.innerHTML = items.map(entry => {
+                    const entryKey = encodeURIComponent(entry.key || entry.name || '');
+                    const storeEntries = Object.entries(entry.storeBreakdown || {}).map(([id, qty]) => ({
+                        id,
+                        qty,
+                        name: id === UNASSIGNED_STORE_ID ? 'Non assigné' : (getStoreName(id) || 'Magasin')
+                    })).sort((a, b) => a.name.localeCompare(b.name));
+                    const shopEntries = Object.entries(entry.shopBreakdown || {}).map(([id, qty]) => ({
+                        id,
+                        qty,
+                        name: getBoutiqueName(id) || 'Boutique'
+                    })).sort((a, b) => a.name.localeCompare(b.name));
+
+                    const storeTags = storeEntries.length
+                        ? storeEntries.map(item => `<span class="px-2 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold">${escapeHtml(item.name)} · ${item.qty}</span>`).join('')
+                        : '<span class="text-xs text-gray-400">Aucun stock magasin.</span>';
+                    const shopTags = shopEntries.length
+                        ? shopEntries.map(item => `<span class="px-2 py-1 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-semibold">${escapeHtml(item.name)} · ${item.qty}</span>`).join('')
+                        : '<span class="text-xs text-gray-400">Aucun stock boutique.</span>';
+
+                    return `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 text-sm font-semibold text-gray-900">${escapeHtml(entry.name || '')}</td>
+                            <td class="px-4 py-3 text-sm text-right text-gray-700 font-semibold">${entry.totalQty}</td>
+                            <td class="px-4 py-3 text-sm text-right text-gray-600">${entry.storeQty}</td>
+                            <td class="px-4 py-3 text-sm text-right text-gray-600">${entry.shopQty}</td>
+                            <td class="px-4 py-3 text-right">
+                                <button type="button" data-inventory-breakdown="${entryKey}"
+                                    class="text-xs font-semibold text-cyan-600 hover:text-cyan-800">Voir</button>
+                            </td>
+                        </tr>
+                        <tr data-inventory-breakdown-row="${entryKey}" class="hidden bg-gray-50">
+                            <td colspan="5" class="px-4 py-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Magasins</p>
+                                        <div class="mt-2 flex flex-wrap gap-2">${storeTags}</div>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Boutiques</p>
+                                        <div class="mt-2 flex flex-wrap gap-2">${shopTags}</div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
             }
 
             function getInventoryRowDisplay(systemQty, physicalQty) {
@@ -12075,7 +12328,7 @@
                     return;
                 }
 
-                const invRef = push(ref(db, `${dbBasePath}/inventories`));
+                const invRef = push(ref(db, getInventoriesPath()));
                 const invId = invRef.key;
                 if (!invId) {
                     showInventoryError("Impossible de créer l'inventaire.");
@@ -12084,18 +12337,15 @@
 
                 const now = new Date().toISOString();
                 const locationName = getInventoryLocationName();
-                const updates = {};
                 let mismatchCount = 0;
                 const totalItems = inventoryDraftItems.length;
-
-                inventoryDraftItems.forEach(item => {
+                const itemPayloads = inventoryDraftItems.map(item => {
                     const systemQty = Number(item.systemQty) || 0;
                     const physicalQty = Number(item.physicalQty);
                     const delta = physicalQty - systemQty;
                     const status = delta === 0 ? 'match' : 'mismatch';
                     if (status === 'mismatch') mismatchCount += 1;
-
-                    updates[`${dbBasePath}/inventories/${invId}/items/${item.id}`] = {
+                    return {
                         itemId: item.id,
                         productName: item.name,
                         systemQty,
@@ -12103,44 +12353,65 @@
                         delta,
                         status
                     };
-
-                    const basePath = inventoryLocationType === 'store'
-                        ? `${dbBasePath}/storeProducts/${item.id}/inventory`
-                        : `${dbBasePath}/shopStock/${item.id}/inventory`;
-                    updates[basePath] = {
-                        physicalQty,
-                        systemQty,
-                        delta,
-                        status,
-                        checkedAt: now,
-                        checkedBy: currentUser?.uid || '',
-                        checkedByName: currentUserData?.fullName || currentUser?.displayName || currentUser?.email || '',
-                        checkedByEmail: currentUser?.email || '',
-                        locationId: inventoryLocationId,
-                        locationName
-                    };
                 });
 
-                updates[`${dbBasePath}/inventories/${invId}`] = {
-                    id: invId,
-                    locationType: inventoryLocationType,
-                    locationId: inventoryLocationId,
-                    locationName,
-                    totalItems,
-                    mismatchCount,
-                    comment: (inventoryCommentInput?.value || '').trim(),
-                    createdAt: now,
-                    createdBy: currentUser?.uid || '',
-                    createdByName: currentUserData?.fullName || currentUser?.displayName || currentUser?.email || ''
+                const buildUpdates = (inventoryPath) => {
+                    const updates = {};
+                    itemPayloads.forEach(item => {
+                        updates[`${inventoryPath}/${invId}/items/${item.itemId}`] = item;
+                        const basePath = inventoryLocationType === 'store'
+                            ? `${dbBasePath}/storeProducts/${item.itemId}/inventory`
+                            : `${dbBasePath}/shopStock/${item.itemId}/inventory`;
+                        updates[basePath] = {
+                            physicalQty: item.physicalQty,
+                            systemQty: item.systemQty,
+                            delta: item.delta,
+                            status: item.status,
+                            checkedAt: now,
+                            checkedBy: currentUser?.uid || '',
+                            checkedByName: currentUserData?.fullName || currentUser?.displayName || currentUser?.email || '',
+                            checkedByEmail: currentUser?.email || '',
+                            locationId: inventoryLocationId,
+                            locationName
+                        };
+                    });
+
+                    updates[`${inventoryPath}/${invId}`] = {
+                        id: invId,
+                        locationType: inventoryLocationType,
+                        locationId: inventoryLocationId,
+                        locationName,
+                        totalItems,
+                        mismatchCount,
+                        comment: (inventoryCommentInput?.value || '').trim(),
+                        createdAt: now,
+                        createdBy: currentUser?.uid || '',
+                        createdByName: currentUserData?.fullName || currentUser?.displayName || currentUser?.email || ''
+                    };
+                    return updates;
                 };
 
                 try {
-                    await update(ref(db), updates);
+                    await update(ref(db), buildUpdates(getInventoriesPath()));
                     showSuccessToast('Inventaire enregistré.');
                     resetInventoryDraft();
                 } catch (error) {
                     console.error(error);
-                    showInventoryError("Impossible d'enregistrer l'inventaire.");
+                    const errorCode = (error?.code || '').toString().toUpperCase();
+                    if (errorCode.includes('PERMISSION') && inventoriesPathSuffix === 'inventories') {
+                        try {
+                            setInventoriesPathSuffix('settings/inventories');
+                            await update(ref(db), buildUpdates(getInventoriesPath()));
+                            showSuccessToast('Inventaire enregistré.');
+                            resetInventoryDraft();
+                            return;
+                        } catch (fallbackError) {
+                            console.error(fallbackError);
+                            showInventoryError(`Impossible d'enregistrer l'inventaire. ${fallbackError?.message || ''}`.trim());
+                            return;
+                        }
+                    }
+                    showInventoryError(`Impossible d'enregistrer l'inventaire. ${error?.message || ''}`.trim());
                 }
             }
 
@@ -12252,6 +12523,7 @@
                 updateDashboardStats();
                 updateAllStats();
                 renderCart();
+                renderInventoryGlobalView();
             }
 
             function renderShopMovements() {
@@ -12695,7 +12967,7 @@
                 supplierPaymentsRef = ref(db, `${dbBasePath}/supplierPayments`);
                 supplierPaymentsListener = onValue(supplierPaymentsRef, onSupplierPaymentsValue);
 
-                inventoriesRef = ref(db, `${dbBasePath}/inventories`);
+                inventoriesRef = ref(db, getInventoriesPath());
                 inventoriesListener = onValue(inventoriesRef, onInventoriesValue);
 
                 setupChatListeners();
@@ -12728,6 +13000,7 @@
                 storesListener = null; boutiquesListener = null; categoriesListener = null; storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; shopTransferRequestsListener = null; salesHistoryListener = null; pendingSalesListener = null; settingsListener = null; companyMembersListener = null; companyCustomersListener = null; suppliersListener = null; supplierInvoicesListener = null; supplierPaymentsListener = null; inventoriesListener = null; chatListListener = null; chatReadsListener = null; chatMessagesListener = null;
                 chatListRef = null; chatReadsRef = null; chatMessagesRef = null; inventoriesRef = null;
                 appData.stores = {}; appData.boutiques = {}; appData.categories = {}; appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.shopMovements = {}; appData.shopTransferRequests = {}; appData.salesHistory = {}; appData.customers = {}; appData.suppliers = {}; appData.supplierInvoices = {}; appData.supplierPayments = {}; appData.storeExitRequests = {}; appData.pendingSales = {}; appData.settings = {}; appData.inventories = {};
+                inventoriesPathSuffix = 'inventories';
                 selectedCustomer = null;
                 customerOptionLookup = {};
                 isCustomerHistoryOpen = false;
@@ -14817,6 +15090,24 @@
                 });
             }
 
+            if (inventoryViewButtons.length) {
+                inventoryViewButtons.forEach(button => {
+                    button.addEventListener('click', () => setInventoryViewMode(button.dataset.inventoryView));
+                });
+            }
+
+            if (inventoryGlobalTbody) {
+                inventoryGlobalTbody.addEventListener('click', (event) => {
+                    const button = event.target.closest('button[data-inventory-breakdown]');
+                    if (!button) return;
+                    const key = button.dataset.inventoryBreakdown;
+                    const detailRow = inventoryGlobalTbody.querySelector(`[data-inventory-breakdown-row="${key}"]`);
+                    if (!detailRow) return;
+                    const isHidden = detailRow.classList.toggle('hidden');
+                    button.textContent = isHidden ? 'Voir' : 'Masquer';
+                });
+            }
+
             if (inventoryLocationTypeSelect) {
                 inventoryLocationTypeSelect.addEventListener('change', () => {
                     inventoryLocationType = inventoryLocationTypeSelect.value || 'store';
@@ -16581,6 +16872,7 @@
 
             updateUI();
             updateAuthFormView();
+            setInventoryViewMode(inventoryViewMode);
             renderSalesCategoryFilters();
             renderSalesProducts();
             loadTaxSetting();
