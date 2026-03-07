@@ -12357,8 +12357,9 @@
 
                 const buildUpdates = (inventoryPath) => {
                     const updates = {};
+                    const itemsMap = {};
                     itemPayloads.forEach(item => {
-                        updates[`${inventoryPath}/${invId}/items/${item.itemId}`] = item;
+                        itemsMap[item.itemId] = item;
                         const basePath = inventoryLocationType === 'store'
                             ? `${dbBasePath}/storeProducts/${item.itemId}/inventory`
                             : `${dbBasePath}/shopStock/${item.itemId}/inventory`;
@@ -12386,7 +12387,8 @@
                         comment: (inventoryCommentInput?.value || '').trim(),
                         createdAt: now,
                         createdBy: currentUser?.uid || '',
-                        createdByName: currentUserData?.fullName || currentUser?.displayName || currentUser?.email || ''
+                        createdByName: currentUserData?.fullName || currentUser?.displayName || currentUser?.email || '',
+                        items: itemsMap
                     };
                     return updates;
                 };
