@@ -293,6 +293,11 @@
                     <div data-icon="box" class="w-5 h-5"></div>
                     <span class="sidebar-text">Mon Magasin</span>
                 </button>
+                <button data-page="Inventaire"
+                    class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
+                    <div data-icon="clipboard" class="w-5 h-5"></div>
+                    <span class="sidebar-text">Inventaire</span>
+                </button>
                 <button data-page="Tableau des prix"
                     class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
                     <div data-icon="dollar" class="w-5 h-5"></div>
@@ -1471,6 +1476,145 @@
                         </div>
                     </div>
 
+                </div>
+            </div>
+
+            <!-- Page: Inventaire -->
+            <div id="page-Inventaire" class="page-content p-4 md:p-8 hidden">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-800">Inventaire</h1>
+                        <p class="text-sm text-gray-500 mt-1">Comparez le stock virtuel et le stock physique.</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <select id="inventory-location-type"
+                            class="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-gray-600 bg-white">
+                            <option value="store">Magasin</option>
+                            <option value="shop">Boutique</option>
+                        </select>
+                        <select id="inventory-location-select"
+                            class="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-gray-700 bg-white">
+                            <option value="">Sélectionner...</option>
+                        </select>
+                        <button id="inventory-start-button"
+                            class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-500 text-white text-sm font-semibold hover:bg-cyan-600">
+                            Lancer l'inventaire
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mt-5 grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                        <p class="text-xs uppercase text-gray-400">Produits</p>
+                        <p id="inventory-summary-total" class="text-2xl font-semibold text-gray-900">0</p>
+                    </div>
+                    <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                        <p class="text-xs uppercase text-gray-400">Conformes</p>
+                        <p id="inventory-summary-match" class="text-2xl font-semibold text-emerald-600">0</p>
+                    </div>
+                    <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                        <p class="text-xs uppercase text-gray-400">Écarts</p>
+                        <p id="inventory-summary-mismatch" class="text-2xl font-semibold text-rose-600">0</p>
+                    </div>
+                    <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                        <p class="text-xs uppercase text-gray-400">Non comptés</p>
+                        <p id="inventory-summary-pending" class="text-2xl font-semibold text-gray-500">0</p>
+                    </div>
+                </div>
+
+                <div class="mt-6 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                        <div>
+                            <h2 class="text-lg font-semibold text-gray-900">Saisie de l'inventaire</h2>
+                            <p class="text-sm text-gray-500 mt-1">Renseignez le stock physique puis validez.</p>
+                        </div>
+                        <div class="text-xs text-gray-500 bg-gray-50 border border-gray-100 px-3 py-2 rounded-xl">
+                            Astuce: cochez <span class="font-semibold text-gray-700">Conforme</span> pour remplir automatiquement.
+                        </div>
+                    </div>
+
+                    <div class="mt-4 overflow-x-auto rounded-xl border border-gray-200">
+                        <table class="min-w-full bg-white divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
+                                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Stock virtuel</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock physique</th>
+                                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Écart</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventory-tbody" class="divide-y divide-gray-200"></tbody>
+                        </table>
+                        <div id="inventory-empty"
+                            class="flex items-center justify-center text-sm text-gray-400 h-32">
+                            Sélectionnez un magasin ou une boutique pour démarrer.
+                        </div>
+                    </div>
+
+                    <div class="mt-4 grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 items-center">
+                        <textarea id="inventory-comment" rows="2" placeholder="Commentaire d'inventaire (optionnel)"
+                            class="w-full rounded-xl border border-gray-200 p-3 text-sm focus:ring-cyan-500 focus:border-cyan-500"></textarea>
+                        <div class="flex items-center gap-3">
+                            <button id="inventory-cancel-button"
+                                class="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50">
+                                Annuler
+                            </button>
+                            <button id="inventory-save-button"
+                                class="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700">
+                                Enregistrer l'inventaire
+                            </button>
+                        </div>
+                    </div>
+                    <p id="inventory-error" class="mt-3 text-sm text-red-500 hidden"></p>
+                </div>
+
+                <div class="mt-6 grid grid-cols-1 xl:grid-cols-[360px_1fr] gap-6">
+                    <div class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-sm font-semibold text-gray-800">Historique</h3>
+                            <span id="inventory-history-count" class="text-xs font-semibold text-gray-500">0</span>
+                        </div>
+                        <div id="inventory-history-empty" class="mt-4 text-sm text-gray-400">Aucun inventaire.</div>
+                        <div id="inventory-history-table-container" class="mt-4 overflow-x-auto hidden">
+                            <table class="min-w-full bg-white divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Écarts</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="inventory-history-tbody" class="divide-y divide-gray-200"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+                        <div id="inventory-history-detail-empty" class="text-sm text-gray-400">
+                            Sélectionnez un inventaire pour afficher le détail.
+                        </div>
+                        <div id="inventory-history-detail" class="hidden space-y-4">
+                            <div>
+                                <h3 id="inventory-history-detail-title" class="text-lg font-semibold text-gray-900">—</h3>
+                                <p id="inventory-history-detail-subtitle" class="text-sm text-gray-500">—</p>
+                            </div>
+                            <div class="overflow-x-auto rounded-xl border border-gray-200">
+                                <table class="min-w-full bg-white divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
+                                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Virtuel</th>
+                                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Physique</th>
+                                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Écart</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="inventory-history-detail-tbody" class="divide-y divide-gray-200"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -3433,6 +3577,7 @@
                 sales: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>`,
                 box: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>`,
                 stats: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>`,
+                clipboard: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5h6m-6 4h6m-7 9h8a2 2 0 002-2V7a2 2 0 00-2-2h-1a2 2 0 00-2-2h-2a2 2 0 00-2 2H6a2 2 0 00-2 2v9a2 2 0 002 2z" /></svg>`,
                 dollar: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v18m0-14c-2.209 0-4 1.343-4 3s1.791 3 4 3 4 1.343 4 3-1.791 3-4 3" /></svg>`,
                 truck: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 104 0M1 17a2 2 0 104 0m4-7V3H1v11h2m6 0H5m10-4h4l3 3v4h-2m-5 0h-4" /></svg>`,
                 settings: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>`,
@@ -3498,7 +3643,7 @@
             let currentUserData = null;
             let dbBasePath = '';
 
-            const appData = { stores: {}, boutiques: {}, categories: {}, storeProducts: {}, storeMovements: {}, shopStock: {}, shopMovements: {}, shopTransferRequests: {}, salesHistory: {}, customers: {}, suppliers: {}, supplierInvoices: {}, supplierPayments: {}, storeExitRequests: {}, pendingSales: {}, settings: {} };
+            const appData = { stores: {}, boutiques: {}, categories: {}, storeProducts: {}, storeMovements: {}, shopStock: {}, shopMovements: {}, shopTransferRequests: {}, salesHistory: {}, customers: {}, suppliers: {}, supplierInvoices: {}, supplierPayments: {}, storeExitRequests: {}, pendingSales: {}, settings: {}, inventories: {} };
             let isSidebarOpen = false;
             let isSidebarCollapsed = false;
             let isCodeLoginMode = false;
@@ -3519,8 +3664,8 @@
             const SALE_SOURCE_MIXED = 'mixed';
 
 
-            let storesListener, boutiquesListener, categoriesListener, storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, shopTransferRequestsListener, salesHistoryListener, companyMembersListener, companyCustomersListener, suppliersListener, supplierInvoicesListener, supplierPaymentsListener, storeExitRequestsListener, pendingSalesListener, settingsListener, chatListListener, chatReadsListener, chatMessagesListener;
-            let storesRef, boutiquesRef, categoriesRef, storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, shopTransferRequestsRef, salesHistoryRef, companyMembersRef, companyCustomersRef, suppliersRef, supplierInvoicesRef, supplierPaymentsRef, storeExitRequestsRef, pendingSalesRef, settingsRef, chatListRef, chatReadsRef, chatMessagesRef;
+            let storesListener, boutiquesListener, categoriesListener, storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, shopTransferRequestsListener, salesHistoryListener, companyMembersListener, companyCustomersListener, suppliersListener, supplierInvoicesListener, supplierPaymentsListener, storeExitRequestsListener, pendingSalesListener, settingsListener, inventoriesListener, chatListListener, chatReadsListener, chatMessagesListener;
+            let storesRef, boutiquesRef, categoriesRef, storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, shopTransferRequestsRef, salesHistoryRef, companyMembersRef, companyCustomersRef, suppliersRef, supplierInvoicesRef, supplierPaymentsRef, storeExitRequestsRef, pendingSalesRef, settingsRef, inventoriesRef, chatListRef, chatReadsRef, chatMessagesRef;
 
             const accessModules = [
                 'Tableau de bord',
@@ -3529,6 +3674,7 @@
                 'Messagerie',
                 'Stock Boutique',
                 'Mon Magasin',
+                'Inventaire',
                 'Tableau des prix',
                 'Mouvements Magasin',
                 'Fournisseurs',
@@ -3565,6 +3711,11 @@
             let chatMessageSearchQuery = '';
             let chatAttachment = null;
             let lastNotifiedChatMessages = {};
+            let inventoryLocationType = 'store';
+            let inventoryLocationId = null;
+            let inventoryDraftItems = [];
+            let inventoryDraftActive = false;
+            let activeInventoryHistoryId = null;
 
             // Cart state
             let cartItems = [];
@@ -3697,6 +3848,29 @@
             const shopMovementFilterStatus = document.getElementById('shop-movement-filter-status');
             const shopMovementFilterStart = document.getElementById('shop-movement-filter-start');
             const shopMovementFilterEnd = document.getElementById('shop-movement-filter-end');
+            const inventoryLocationTypeSelect = document.getElementById('inventory-location-type');
+            const inventoryLocationSelect = document.getElementById('inventory-location-select');
+            const inventoryStartButton = document.getElementById('inventory-start-button');
+            const inventorySaveButton = document.getElementById('inventory-save-button');
+            const inventoryCancelButton = document.getElementById('inventory-cancel-button');
+            const inventoryTbody = document.getElementById('inventory-tbody');
+            const inventoryEmpty = document.getElementById('inventory-empty');
+            const inventoryCommentInput = document.getElementById('inventory-comment');
+            const inventoryError = document.getElementById('inventory-error');
+            const inventorySummaryTotal = document.getElementById('inventory-summary-total');
+            const inventorySummaryMatch = document.getElementById('inventory-summary-match');
+            const inventorySummaryMismatch = document.getElementById('inventory-summary-mismatch');
+            const inventorySummaryPending = document.getElementById('inventory-summary-pending');
+            const inventoryHistoryCount = document.getElementById('inventory-history-count');
+            const inventoryHistoryEmpty = document.getElementById('inventory-history-empty');
+            const inventoryHistoryTableContainer = document.getElementById('inventory-history-table-container');
+            const inventoryHistoryTbody = document.getElementById('inventory-history-tbody');
+            const inventoryHistoryDetail = document.getElementById('inventory-history-detail');
+            const inventoryHistoryDetailEmpty = document.getElementById('inventory-history-detail-empty');
+            const inventoryHistoryDetailTitle = document.getElementById('inventory-history-detail-title');
+            const inventoryHistoryDetailSubtitle = document.getElementById('inventory-history-detail-subtitle');
+            const inventoryHistoryDetailTbody = document.getElementById('inventory-history-detail-tbody');
+            if (inventorySaveButton) inventorySaveButton.disabled = true;
 
             const salesError = document.getElementById('sales-error');
             const salesHistoryEmpty = document.getElementById('sales-history-empty');
@@ -7778,6 +7952,7 @@
                 'Messagerie': 'Messagerie',
                 'Stock Boutique': 'Stock Boutique',
                 'Mon Magasin': 'Mon Magasin',
+                'Inventaire': 'Inventaire',
                 'Tableau des prix': 'Tableau des prix',
                 'Mouvements Magasin': ['Mouvements Magasin', 'Mon Magasin'],
                 'Fournisseurs': 'Fournisseurs',
@@ -11529,6 +11704,7 @@
                 renderStoreProducts(storeSearchInput ? storeSearchInput.value : '');
                 renderStoreMovementsPage();
                 renderPendingShopTransfers();
+                renderInventoryLocationOptions();
             }
 
             function onBoutiquesValue(snapshot) {
@@ -11563,6 +11739,7 @@
                 renderSalesProducts(salesProductSearch ? salesProductSearch.value : '');
                 updateDashboardStats();
                 updateAllStats();
+                renderInventoryLocationOptions();
             }
 
             function onCategoriesValue(snapshot) {
@@ -11668,6 +11845,381 @@
                     shopStockPlaceholder.classList.remove('hidden');
                     shopStockTbody.innerHTML = '';
                 }
+            }
+
+            function clearInventoryError() {
+                if (inventoryError) inventoryError.classList.add('hidden');
+            }
+
+            function showInventoryError(message) {
+                if (!inventoryError) return;
+                inventoryError.textContent = message;
+                inventoryError.classList.remove('hidden');
+            }
+
+            function getInventoryRowDisplay(systemQty, physicalQty) {
+                if (!Number.isFinite(physicalQty)) {
+                    return {
+                        label: 'Non compté',
+                        classes: 'bg-gray-100 text-gray-500 border-gray-200',
+                        deltaLabel: '—',
+                        deltaClass: 'text-gray-400'
+                    };
+                }
+                const delta = physicalQty - systemQty;
+                if (delta === 0) {
+                    return {
+                        label: 'Conforme',
+                        classes: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                        deltaLabel: '0',
+                        deltaClass: 'text-emerald-600'
+                    };
+                }
+                const deltaLabel = `${delta > 0 ? '+' : ''}${delta}`;
+                return {
+                    label: 'Écart',
+                    classes: 'bg-rose-50 text-rose-700 border-rose-200',
+                    deltaLabel,
+                    deltaClass: 'text-rose-600'
+                };
+            }
+
+            function getInventoryLocationName() {
+                if (inventoryLocationType === 'store') return getStoreName(inventoryLocationId) || 'Magasin';
+                return getBoutiqueName(inventoryLocationId) || 'Boutique';
+            }
+
+            function renderInventoryLocationOptions() {
+                if (!inventoryLocationSelect || !inventoryLocationTypeSelect) return;
+                inventoryLocationType = inventoryLocationTypeSelect.value || inventoryLocationType || 'store';
+                inventoryLocationTypeSelect.value = inventoryLocationType;
+                const options = inventoryLocationType === 'store'
+                    ? getStoresSorted().filter(store => getAccessibleStoreIds().includes(store.id))
+                    : getBoutiquesSorted().filter(boutique => getAccessibleBoutiqueIds().includes(boutique.id));
+
+                inventoryLocationSelect.innerHTML = '<option value="">Sélectionner...</option>';
+                options.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.id;
+                    option.textContent = item.name || (inventoryLocationType === 'store' ? DEFAULT_STORE_NAME : DEFAULT_BOUTIQUE_NAME);
+                    inventoryLocationSelect.appendChild(option);
+                });
+
+                const defaultId = inventoryLocationType === 'store' ? getActiveStoreId() : getActiveBoutiqueId();
+                if (!inventoryLocationId || !options.find(item => item.id === inventoryLocationId)) {
+                    inventoryLocationId = defaultId || (options[0] ? options[0].id : null);
+                }
+                inventoryLocationSelect.value = inventoryLocationId || '';
+                renderInventoryHistoryList();
+                renderInventoryHistoryDetail(null);
+            }
+
+            function getInventorySourceItems() {
+                if (!inventoryLocationId) return [];
+                if (inventoryLocationType === 'store') {
+                    const storeId = resolveStoreId(inventoryLocationId);
+                    return Object.values(appData.storeProducts || {})
+                        .filter(product => resolveStoreId(product.storeId) === storeId)
+                        .map(product => ({
+                            id: product.id,
+                            name: product.name || '',
+                            systemQty: Number(product.quantityInStore) || 0,
+                            physicalQty: '',
+                            sourceType: 'store'
+                        }))
+                        .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                }
+                const boutiqueId = resolveBoutiqueId(inventoryLocationId);
+                return Object.values(appData.shopStock || {})
+                    .filter(item => resolveBoutiqueId(item.boutiqueId) === boutiqueId)
+                    .map(item => ({
+                        id: item.id,
+                        name: item.name || '',
+                        systemQty: Number(item.quantityInShop) || 0,
+                        physicalQty: '',
+                        sourceType: 'shop'
+                    }))
+                    .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            }
+
+            function updateInventorySummary() {
+                const total = inventoryDraftItems.length;
+                let matchCount = 0;
+                let mismatchCount = 0;
+                let pendingCount = 0;
+                inventoryDraftItems.forEach(item => {
+                    const physical = Number(item.physicalQty);
+                    if (!Number.isFinite(physical)) {
+                        pendingCount += 1;
+                        return;
+                    }
+                    if (physical === item.systemQty) matchCount += 1;
+                    else mismatchCount += 1;
+                });
+
+                if (inventorySummaryTotal) inventorySummaryTotal.textContent = total;
+                if (inventorySummaryMatch) inventorySummaryMatch.textContent = matchCount;
+                if (inventorySummaryMismatch) inventorySummaryMismatch.textContent = mismatchCount;
+                if (inventorySummaryPending) inventorySummaryPending.textContent = pendingCount;
+            }
+
+            function renderInventoryDraftTable() {
+                if (!inventoryTbody || !inventoryEmpty) return;
+                if (!inventoryDraftActive || !inventoryDraftItems.length) {
+                    inventoryTbody.innerHTML = '';
+                    inventoryEmpty.classList.remove('hidden');
+                    if (inventorySaveButton) inventorySaveButton.disabled = true;
+                    updateInventorySummary();
+                    return;
+                }
+
+                inventoryEmpty.classList.add('hidden');
+                if (inventorySaveButton) inventorySaveButton.disabled = false;
+
+                inventoryTbody.innerHTML = inventoryDraftItems.map(item => {
+                    const physical = Number(item.physicalQty);
+                    const display = getInventoryRowDisplay(item.systemQty, physical);
+                    const inputValue = Number.isFinite(physical) ? physical : '';
+                    return `
+                        <tr data-inventory-row="${item.id}">
+                            <td class="px-4 py-3 text-sm font-semibold text-gray-900">${item.name}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600 text-right">${item.systemQty}</td>
+                            <td class="px-4 py-3 text-sm">
+                                <div class="flex items-center gap-2">
+                                    <input type="number" min="0" step="1" value="${inputValue}"
+                                        data-inventory-input="${item.id}"
+                                        class="w-24 rounded-lg border border-gray-200 px-2 py-1 text-sm focus:ring-cyan-500 focus:border-cyan-500" />
+                                    <button type="button"
+                                        data-inventory-fill="${item.id}"
+                                        class="px-2 py-1 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50">
+                                        Conforme
+                                    </button>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-right">
+                                <span data-inventory-delta="${item.id}" class="font-semibold ${display.deltaClass}">${display.deltaLabel}</span>
+                            </td>
+                            <td class="px-4 py-3 text-sm">
+                                <span data-inventory-status="${item.id}"
+                                    class="inline-flex items-center px-2.5 py-1 rounded-full border text-xs font-semibold ${display.classes}">
+                                    ${display.label}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                updateInventorySummary();
+            }
+
+            function updateInventoryRowDisplay(itemId) {
+                if (!inventoryTbody) return;
+                const item = inventoryDraftItems.find(row => row.id === itemId);
+                if (!item) return;
+                const physical = Number(item.physicalQty);
+                const display = getInventoryRowDisplay(item.systemQty, physical);
+                const deltaEl = inventoryTbody.querySelector(`[data-inventory-delta="${itemId}"]`);
+                const statusEl = inventoryTbody.querySelector(`[data-inventory-status="${itemId}"]`);
+                if (deltaEl) {
+                    deltaEl.textContent = display.deltaLabel;
+                    deltaEl.className = `font-semibold ${display.deltaClass}`;
+                }
+                if (statusEl) {
+                    statusEl.textContent = display.label;
+                    statusEl.className = `inline-flex items-center px-2.5 py-1 rounded-full border text-xs font-semibold ${display.classes}`;
+                }
+                updateInventorySummary();
+            }
+
+            function startInventoryDraft() {
+                clearInventoryError();
+                if (!inventoryLocationId) {
+                    showInventoryError('Sélectionnez un magasin ou une boutique.');
+                    return;
+                }
+                inventoryDraftItems = getInventorySourceItems();
+                inventoryDraftActive = true;
+                activeInventoryHistoryId = null;
+                renderInventoryDraftTable();
+                renderInventoryHistoryDetail(null);
+                if (!inventoryDraftItems.length) {
+                    showInventoryError('Aucun produit trouvé pour cet emplacement.');
+                }
+            }
+
+            function resetInventoryDraft() {
+                inventoryDraftItems = [];
+                inventoryDraftActive = false;
+                if (inventoryCommentInput) inventoryCommentInput.value = '';
+                clearInventoryError();
+                renderInventoryDraftTable();
+            }
+
+            async function saveInventoryDraft() {
+                clearInventoryError();
+                if (!dbBasePath || !currentUser) {
+                    showInventoryError('Utilisateur non authentifié.');
+                    return;
+                }
+                if (!inventoryDraftActive || !inventoryDraftItems.length) {
+                    showInventoryError('Aucun inventaire en cours.');
+                    return;
+                }
+                if (!inventoryLocationId) {
+                    showInventoryError('Sélectionnez un magasin ou une boutique.');
+                    return;
+                }
+
+                const missing = inventoryDraftItems.filter(item => !Number.isFinite(Number(item.physicalQty)));
+                if (missing.length) {
+                    showInventoryError('Veuillez saisir le stock physique pour tous les produits.');
+                    return;
+                }
+
+                const invRef = push(ref(db, `${dbBasePath}/inventories`));
+                const invId = invRef.key;
+                if (!invId) {
+                    showInventoryError("Impossible de créer l'inventaire.");
+                    return;
+                }
+
+                const now = new Date().toISOString();
+                const locationName = getInventoryLocationName();
+                const updates = {};
+                let mismatchCount = 0;
+                const totalItems = inventoryDraftItems.length;
+
+                inventoryDraftItems.forEach(item => {
+                    const systemQty = Number(item.systemQty) || 0;
+                    const physicalQty = Number(item.physicalQty);
+                    const delta = physicalQty - systemQty;
+                    const status = delta === 0 ? 'match' : 'mismatch';
+                    if (status === 'mismatch') mismatchCount += 1;
+
+                    updates[`${dbBasePath}/inventories/${invId}/items/${item.id}`] = {
+                        itemId: item.id,
+                        productName: item.name,
+                        systemQty,
+                        physicalQty,
+                        delta,
+                        status
+                    };
+
+                    const basePath = inventoryLocationType === 'store'
+                        ? `${dbBasePath}/storeProducts/${item.id}/inventory`
+                        : `${dbBasePath}/shopStock/${item.id}/inventory`;
+                    updates[basePath] = {
+                        physicalQty,
+                        systemQty,
+                        delta,
+                        status,
+                        checkedAt: now,
+                        checkedBy: currentUser?.uid || '',
+                        checkedByName: currentUserData?.fullName || currentUser?.displayName || currentUser?.email || '',
+                        checkedByEmail: currentUser?.email || '',
+                        locationId: inventoryLocationId,
+                        locationName
+                    };
+                });
+
+                updates[`${dbBasePath}/inventories/${invId}`] = {
+                    id: invId,
+                    locationType: inventoryLocationType,
+                    locationId: inventoryLocationId,
+                    locationName,
+                    totalItems,
+                    mismatchCount,
+                    comment: (inventoryCommentInput?.value || '').trim(),
+                    createdAt: now,
+                    createdBy: currentUser?.uid || '',
+                    createdByName: currentUserData?.fullName || currentUser?.displayName || currentUser?.email || ''
+                };
+
+                try {
+                    await update(ref(db), updates);
+                    showSuccessToast('Inventaire enregistré.');
+                    resetInventoryDraft();
+                } catch (error) {
+                    console.error(error);
+                    showInventoryError("Impossible d'enregistrer l'inventaire.");
+                }
+            }
+
+            function renderInventoryHistoryList() {
+                if (!inventoryHistoryTbody || !inventoryHistoryEmpty || !inventoryHistoryTableContainer) return;
+                const items = Object.values(appData.inventories || {}).filter(inv =>
+                    inv.locationType === inventoryLocationType &&
+                    inv.locationId === inventoryLocationId
+                ).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+                if (inventoryHistoryCount) inventoryHistoryCount.textContent = items.length;
+
+                if (!items.length) {
+                    inventoryHistoryEmpty.classList.remove('hidden');
+                    inventoryHistoryTableContainer.classList.add('hidden');
+                    inventoryHistoryTbody.innerHTML = '';
+                    return;
+                }
+
+                inventoryHistoryEmpty.classList.add('hidden');
+                inventoryHistoryTableContainer.classList.remove('hidden');
+                inventoryHistoryTbody.innerHTML = items.map(inv => {
+                    const mismatch = Number(inv.mismatchCount) || 0;
+                    const dateLabel = formatDateForDisplay(inv.createdAt || inv.date || '');
+                    return `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 text-sm text-gray-600">${dateLabel}</td>
+                            <td class="px-4 py-3 text-sm text-right ${mismatch ? 'text-rose-600 font-semibold' : 'text-emerald-600 font-semibold'}">${mismatch}</td>
+                            <td class="px-4 py-3 text-right">
+                                <button type="button" data-inventory-view="${inv.id}"
+                                    class="text-xs font-semibold text-cyan-600 hover:text-cyan-800">Voir</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            function renderInventoryHistoryDetail(invId) {
+                if (!inventoryHistoryDetail || !inventoryHistoryDetailEmpty || !inventoryHistoryDetailTbody) return;
+                if (!invId) {
+                    inventoryHistoryDetail.classList.add('hidden');
+                    inventoryHistoryDetailEmpty.classList.remove('hidden');
+                    inventoryHistoryDetailTbody.innerHTML = '';
+                    return;
+                }
+                const inv = appData.inventories?.[invId];
+                if (!inv) {
+                    inventoryHistoryDetail.classList.add('hidden');
+                    inventoryHistoryDetailEmpty.classList.remove('hidden');
+                    inventoryHistoryDetailTbody.innerHTML = '';
+                    return;
+                }
+
+                const items = Object.values(inv.items || {}).sort((a, b) => (a.productName || '').localeCompare(b.productName || ''));
+                const detailDate = formatDateForDisplay(inv.createdAt || inv.date || '');
+                inventoryHistoryDetailTitle.textContent = `Inventaire ${inv.locationName || ''}`.trim();
+                inventoryHistoryDetailSubtitle.textContent = `Réalisé le ${detailDate} · ${inv.createdByName || '—'}`;
+                inventoryHistoryDetailEmpty.classList.add('hidden');
+                inventoryHistoryDetail.classList.remove('hidden');
+                inventoryHistoryDetailTbody.innerHTML = items.map(item => {
+                    const statusLabel = item.status === 'match' ? 'Conforme' : 'Écart';
+                    const statusClass = item.status === 'match'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : 'bg-rose-50 text-rose-700 border-rose-200';
+                    const deltaLabel = `${item.delta > 0 ? '+' : ''}${item.delta}`;
+                    return `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 text-sm font-semibold text-gray-900">${item.productName || ''}</td>
+                            <td class="px-4 py-3 text-sm text-right text-gray-600">${item.systemQty}</td>
+                            <td class="px-4 py-3 text-sm text-right text-gray-600">${item.physicalQty}</td>
+                            <td class="px-4 py-3 text-sm text-right ${item.delta === 0 ? 'text-emerald-600' : 'text-rose-600'}">${deltaLabel}</td>
+                            <td class="px-4 py-3 text-sm">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full border text-xs font-semibold ${statusClass}">
+                                    ${statusLabel}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
             }
 
             async function migrateShopStockBoutiques() {
@@ -12079,6 +12631,14 @@
                 }
             }
 
+            function onInventoriesValue(snapshot) {
+                appData.inventories = snapshot.val() || {};
+                renderInventoryHistoryList();
+                if (activeInventoryHistoryId) {
+                    renderInventoryHistoryDetail(activeInventoryHistoryId);
+                }
+            }
+
 
             function setupFirebaseListeners() {
                 cleanupFirebaseListeners();
@@ -12135,6 +12695,9 @@
                 supplierPaymentsRef = ref(db, `${dbBasePath}/supplierPayments`);
                 supplierPaymentsListener = onValue(supplierPaymentsRef, onSupplierPaymentsValue);
 
+                inventoriesRef = ref(db, `${dbBasePath}/inventories`);
+                inventoriesListener = onValue(inventoriesRef, onInventoriesValue);
+
                 setupChatListeners();
 
                 migrateLocalPendingSales();
@@ -12158,12 +12721,13 @@
                 if (suppliersListener && suppliersRef) off(suppliersRef, suppliersListener);
                 if (supplierInvoicesListener && supplierInvoicesRef) off(supplierInvoicesRef, supplierInvoicesListener);
                 if (supplierPaymentsListener && supplierPaymentsRef) off(supplierPaymentsRef, supplierPaymentsListener);
+                if (inventoriesListener && inventoriesRef) off(inventoriesRef, inventoriesListener);
                 if (chatListListener && chatListRef) off(chatListRef, chatListListener);
                 if (chatReadsListener && chatReadsRef) off(chatReadsRef, chatReadsListener);
                 if (chatMessagesListener && chatMessagesRef) off(chatMessagesRef, chatMessagesListener);
-                storesListener = null; boutiquesListener = null; categoriesListener = null; storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; shopTransferRequestsListener = null; salesHistoryListener = null; pendingSalesListener = null; settingsListener = null; companyMembersListener = null; companyCustomersListener = null; suppliersListener = null; supplierInvoicesListener = null; supplierPaymentsListener = null; chatListListener = null; chatReadsListener = null; chatMessagesListener = null;
-                chatListRef = null; chatReadsRef = null; chatMessagesRef = null;
-                appData.stores = {}; appData.boutiques = {}; appData.categories = {}; appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.shopMovements = {}; appData.shopTransferRequests = {}; appData.salesHistory = {}; appData.customers = {}; appData.suppliers = {}; appData.supplierInvoices = {}; appData.supplierPayments = {}; appData.storeExitRequests = {}; appData.pendingSales = {}; appData.settings = {};
+                storesListener = null; boutiquesListener = null; categoriesListener = null; storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; shopTransferRequestsListener = null; salesHistoryListener = null; pendingSalesListener = null; settingsListener = null; companyMembersListener = null; companyCustomersListener = null; suppliersListener = null; supplierInvoicesListener = null; supplierPaymentsListener = null; inventoriesListener = null; chatListListener = null; chatReadsListener = null; chatMessagesListener = null;
+                chatListRef = null; chatReadsRef = null; chatMessagesRef = null; inventoriesRef = null;
+                appData.stores = {}; appData.boutiques = {}; appData.categories = {}; appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.shopMovements = {}; appData.shopTransferRequests = {}; appData.salesHistory = {}; appData.customers = {}; appData.suppliers = {}; appData.supplierInvoices = {}; appData.supplierPayments = {}; appData.storeExitRequests = {}; appData.pendingSales = {}; appData.settings = {}; appData.inventories = {};
                 selectedCustomer = null;
                 customerOptionLookup = {};
                 isCustomerHistoryOpen = false;
@@ -12183,6 +12747,11 @@
                 chatMessageSearchQuery = '';
                 chatAttachment = null;
                 lastNotifiedChatMessages = {};
+                inventoryLocationType = 'store';
+                inventoryLocationId = null;
+                inventoryDraftItems = [];
+                inventoryDraftActive = false;
+                activeInventoryHistoryId = null;
             }
 
             function updateUI() {
@@ -14245,6 +14814,69 @@
                         physicalQty: null,
                         action: 'match'
                     });
+                });
+            }
+
+            if (inventoryLocationTypeSelect) {
+                inventoryLocationTypeSelect.addEventListener('change', () => {
+                    inventoryLocationType = inventoryLocationTypeSelect.value || 'store';
+                    inventoryLocationId = null;
+                    resetInventoryDraft();
+                    renderInventoryLocationOptions();
+                });
+            }
+
+            if (inventoryLocationSelect) {
+                inventoryLocationSelect.addEventListener('change', () => {
+                    inventoryLocationId = inventoryLocationSelect.value || null;
+                    resetInventoryDraft();
+                    renderInventoryHistoryList();
+                    renderInventoryHistoryDetail(null);
+                });
+            }
+
+            if (inventoryStartButton) {
+                inventoryStartButton.addEventListener('click', startInventoryDraft);
+            }
+
+            if (inventoryCancelButton) {
+                inventoryCancelButton.addEventListener('click', resetInventoryDraft);
+            }
+
+            if (inventorySaveButton) {
+                inventorySaveButton.addEventListener('click', saveInventoryDraft);
+            }
+
+            if (inventoryTbody) {
+                inventoryTbody.addEventListener('input', (event) => {
+                    const input = event.target.closest('input[data-inventory-input]');
+                    if (!input) return;
+                    const itemId = input.dataset.inventoryInput;
+                    const item = inventoryDraftItems.find(row => row.id === itemId);
+                    if (!item) return;
+                    item.physicalQty = input.value === '' ? '' : Number(input.value);
+                    updateInventoryRowDisplay(itemId);
+                });
+
+                inventoryTbody.addEventListener('click', (event) => {
+                    const button = event.target.closest('button[data-inventory-fill]');
+                    if (!button) return;
+                    const itemId = button.dataset.inventoryFill;
+                    const item = inventoryDraftItems.find(row => row.id === itemId);
+                    if (!item) return;
+                    item.physicalQty = item.systemQty;
+                    const input = inventoryTbody.querySelector(`input[data-inventory-input="${itemId}"]`);
+                    if (input) input.value = item.systemQty;
+                    updateInventoryRowDisplay(itemId);
+                });
+            }
+
+            if (inventoryHistoryTbody) {
+                inventoryHistoryTbody.addEventListener('click', (event) => {
+                    const btn = event.target.closest('button[data-inventory-view]');
+                    if (!btn) return;
+                    activeInventoryHistoryId = btn.dataset.inventoryView;
+                    renderInventoryHistoryDetail(activeInventoryHistoryId);
                 });
             }
             if (pendingShopTransferTbody) {
