@@ -1173,7 +1173,7 @@
                         </select>
                     </div>
                 </div>
-                <div class="mt-6 bg-white p-6 rounded-lg shadow-sm">
+                    <div class="mt-6 bg-white p-6 rounded-lg shadow-sm">
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div class="relative flex-grow">
                             <!-- ID AJOUTÉ ICI -->
@@ -1188,6 +1188,10 @@
                                 </svg>
                             </div>
                         </div>
+                    </div>
+                    <div class="mt-3 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-xs text-gray-500">
+                        Inventaire rapide: renseignez le stock physique puis cliquez sur <span class="font-semibold text-gray-600">Écart</span> si différent,
+                        ou cochez <span class="font-semibold text-gray-600">Conforme</span> si identique.
                     </div>
                     <!-- Conteneur pour la liste des produits de la boutique -->
                     <div id="shop-stock-container" class="mt-6">
@@ -1214,6 +1218,9 @@
                                         <th scope="col"
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Seuil d'alerte</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Stock physique</th>
                                         <th scope="col"
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Actions</th>
@@ -1420,6 +1427,10 @@
                             </button>
                         </div>
                     </div>
+                    <div class="mt-3 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-xs text-gray-500">
+                        Inventaire rapide: renseignez le stock physique puis cliquez sur <span class="font-semibold text-gray-600">Écart</span> si différent,
+                        ou cochez <span class="font-semibold text-gray-600">Conforme</span> si identique.
+                    </div>
                     <div id="store-import-csv-status" class="mt-3 text-sm text-gray-500 hidden"></div>
                     <div id="store-import-csv-error" class="mt-2 text-sm text-red-500 hidden"></div>
 
@@ -1445,6 +1456,9 @@
                                         <th scope="col"
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Quantité</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Stock physique</th>
                                         <th scope="col"
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Actions</th>
@@ -4113,6 +4127,45 @@
                 }
                 if (Number.isNaN(date.getTime())) return '-';
                 return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+            }
+
+            function getInventoryStatusDisplay(inventory, systemQty) {
+                const physicalRaw = inventory?.physicalQty;
+                const physicalQty = Number(physicalRaw);
+                if (!Number.isFinite(physicalQty)) {
+                    return {
+                        label: 'Non vérifié',
+                        classes: 'bg-gray-100 text-gray-500 border-gray-200',
+                        status: 'pending',
+                        delta: null
+                    };
+                }
+                const deltaValue = Number.isFinite(Number(inventory?.delta))
+                    ? Number(inventory.delta)
+                    : physicalQty - (Number(systemQty) || 0);
+                const status = inventory?.status || (deltaValue === 0 ? 'match' : 'mismatch');
+                if (status === 'match' || deltaValue === 0) {
+                    return {
+                        label: 'Conforme',
+                        classes: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                        status: 'match',
+                        delta: 0
+                    };
+                }
+                const deltaLabel = `${deltaValue > 0 ? '+' : ''}${deltaValue}`;
+                return {
+                    label: `Écart ${deltaLabel}`,
+                    classes: 'bg-red-50 text-red-700 border-red-200',
+                    status: 'mismatch',
+                    delta: deltaValue
+                };
+            }
+
+            function formatInventoryMeta(inventory) {
+                if (!inventory?.checkedAt) return '—';
+                const dateLabel = formatDateOnly(inventory.checkedAt);
+                const userLabel = inventory.checkedByName || inventory.checkedByEmail || inventory.checkedBy || '';
+                return userLabel ? `${dateLabel} · ${userLabel}` : dateLabel;
             }
 
             function formatPaymentStatusBadge(status, payLater) {
@@ -10125,6 +10178,12 @@
                             : quantity <= 50
                                 ? 'bg-amber-100 text-amber-700'
                                 : 'bg-emerald-100 text-emerald-700';
+                        const inventory = product.inventory || {};
+                        const inventoryStatus = getInventoryStatusDisplay(inventory, quantity);
+                        const inventoryPhysical = Number.isFinite(Number(inventory.physicalQty)) ? Number(inventory.physicalQty) : '';
+                        const inventoryMeta = formatInventoryMeta(inventory);
+                        const inventoryChecked = inventoryStatus.status === 'match';
+                        const inventoryMismatch = inventoryStatus.status === 'mismatch';
                         const entryButtonHtml = `
                             <button type="button"
                                 class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-emerald-100 text-emerald-600 hover:bg-emerald-200"
@@ -10152,6 +10211,39 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.description || ''}</td>
                                   <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">
                                       <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${quantityClass}">${quantity}</span>
+                                  </td>
+                                  <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                      <div class="flex flex-col gap-2">
+                                          <div class="flex items-center gap-2 flex-wrap">
+                                              <input type="number" min="0" step="1"
+                                                  value="${inventoryPhysical}"
+                                                  placeholder="${quantity}"
+                                                  data-inventory-qty
+                                                  data-inventory-type="store"
+                                                  data-inventory-id="${product.id}"
+                                                  class="w-20 rounded-lg border border-gray-200 px-2 py-1 text-xs text-gray-700 focus:ring-cyan-500 focus:border-cyan-500" />
+                                              <label class="inline-flex items-center gap-1 text-xs text-gray-600">
+                                                  <input type="checkbox"
+                                                      class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                                      data-inventory-check
+                                                      data-inventory-type="store"
+                                                      data-inventory-id="${product.id}"
+                                                      ${inventoryChecked ? 'checked' : ''}>
+                                                  Conforme
+                                              </label>
+                                              <button type="button"
+                                                  class="px-2 py-1 rounded-lg border text-xs font-semibold ${inventoryMismatch ? 'border-red-200 text-red-600' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}"
+                                                  data-inventory-action="refute"
+                                                  data-inventory-type="store"
+                                                  data-inventory-id="${product.id}">
+                                                  Écart
+                                              </button>
+                                          </div>
+                                          <div class="flex items-center gap-2 text-[11px] text-gray-400">
+                                              <span class="inline-flex items-center px-2 py-0.5 rounded-full border ${inventoryStatus.classes}">${inventoryStatus.label}</span>
+                                              <span>${inventoryMeta}</span>
+                                          </div>
+                                      </div>
                                   </td>
                                   <td class="px-6 py-4 whitespace-nowrap text-sm">
                                       <div class="flex items-center gap-2">
@@ -10799,6 +10891,66 @@
                 } catch (err) {
                     console.error(err);
                     alert('Erreur lors de la suppression');
+                }
+            }
+
+            async function saveInventoryCheck({ scope, id, physicalQty, action }) {
+                if (!id || !dbBasePath || !currentUser) return;
+                const isStore = scope === 'store';
+                const item = isStore ? appData.storeProducts?.[id] : appData.shopStock?.[id];
+                if (!item) {
+                    showSuccessToast('Article introuvable.');
+                    return;
+                }
+
+                const systemQty = Number(isStore ? item.quantityInStore : item.quantityInShop) || 0;
+                let targetPhysical = (physicalQty === '' || physicalQty === null || physicalQty === undefined)
+                    ? NaN
+                    : Number(physicalQty);
+                if (action === 'match') {
+                    targetPhysical = systemQty;
+                }
+                if (!Number.isFinite(targetPhysical)) {
+                    showSuccessToast("Renseignez le stock physique.");
+                    return;
+                }
+
+                const delta = targetPhysical - systemQty;
+                if (action === 'refute' && delta === 0) {
+                    showSuccessToast("Le stock correspond déjà. Cochez Conforme.");
+                    return;
+                }
+
+                const status = action === 'match' || delta === 0 ? 'match' : 'mismatch';
+                const now = new Date().toISOString();
+                const locationId = isStore
+                    ? (resolveStoreId(item.storeId) || getActiveStoreId())
+                    : (resolveBoutiqueId(item.boutiqueId) || getActiveBoutiqueId());
+                const locationName = isStore ? getStoreName(locationId) : getBoutiqueName(locationId);
+
+                const inventoryPayload = {
+                    physicalQty: targetPhysical,
+                    systemQty,
+                    delta,
+                    status,
+                    checkedAt: now,
+                    checkedBy: currentUser?.uid || '',
+                    checkedByName: currentUserData?.fullName || currentUser?.displayName || currentUser?.email || '',
+                    checkedByEmail: currentUser?.email || '',
+                    locationId: locationId || null,
+                    locationName: locationName || ''
+                };
+
+                try {
+                    const basePath = isStore ? `${dbBasePath}/storeProducts/${id}` : `${dbBasePath}/shopStock/${id}`;
+                    const updates = {};
+                    updates[`${basePath}/inventory`] = inventoryPayload;
+                    updates[`${basePath}/updatedAt`] = now;
+                    await update(ref(db), updates);
+                    showSuccessToast(status === 'match' ? 'Inventaire confirmé.' : "Écart d'inventaire enregistré.");
+                } catch (error) {
+                    console.error(error);
+                    showSuccessToast("Impossible d'enregistrer l'inventaire.");
                 }
             }
 
@@ -11455,6 +11607,12 @@
                             : getBoutiqueSellingPrice(sourceProduct);
                         const hasPrice = Number.isFinite(sellingPrice);
                         const priceDisplay = hasPrice ? formatCurrency(sellingPrice, currency) : '<span class="text-gray-400">—</span>';
+                        const inventory = item.inventory || {};
+                        const inventoryStatus = getInventoryStatusDisplay(inventory, Number(item.quantityInShop ?? 0));
+                        const inventoryPhysical = Number.isFinite(Number(inventory.physicalQty)) ? Number(inventory.physicalQty) : '';
+                        const inventoryMeta = formatInventoryMeta(inventory);
+                        const inventoryChecked = inventoryStatus.status === 'match';
+                        const inventoryMismatch = inventoryStatus.status === 'mismatch';
                         const deleteButtonHtml = canDelete
                             ? `<button class="delete-icon text-gray-400 hover:text-red-500" data-type="shop" data-stock-id="${item.id}">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
@@ -11466,6 +11624,39 @@
                                   <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${isLowStock ? 'text-red-600' : 'text-gray-700'}">${item.quantityInShop}</td>
                                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${priceDisplay}</td>
                                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.alertThreshold}</td>
+                                  <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                      <div class="flex flex-col gap-2">
+                                          <div class="flex items-center gap-2 flex-wrap">
+                                              <input type="number" min="0" step="1"
+                                                  value="${inventoryPhysical}"
+                                                  placeholder="${item.quantityInShop}"
+                                                  data-inventory-qty
+                                                  data-inventory-type="shop"
+                                                  data-inventory-id="${item.id}"
+                                                  class="w-20 rounded-lg border border-gray-200 px-2 py-1 text-xs text-gray-700 focus:ring-emerald-500 focus:border-emerald-500" />
+                                              <label class="inline-flex items-center gap-1 text-xs text-gray-600">
+                                                  <input type="checkbox"
+                                                      class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                                      data-inventory-check
+                                                      data-inventory-type="shop"
+                                                      data-inventory-id="${item.id}"
+                                                      ${inventoryChecked ? 'checked' : ''}>
+                                                  Conforme
+                                              </label>
+                                              <button type="button"
+                                                  class="px-2 py-1 rounded-lg border text-xs font-semibold ${inventoryMismatch ? 'border-red-200 text-red-600' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}"
+                                                  data-inventory-action="refute"
+                                                  data-inventory-type="shop"
+                                                  data-inventory-id="${item.id}">
+                                                  Écart
+                                              </button>
+                                          </div>
+                                          <div class="flex items-center gap-2 text-[11px] text-gray-400">
+                                              <span class="inline-flex items-center px-2 py-0.5 rounded-full border ${inventoryStatus.classes}">${inventoryStatus.label}</span>
+                                              <span>${inventoryMeta}</span>
+                                          </div>
+                                      </div>
+                                  </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
                                     ${deleteButtonHtml}
                                 </td>
@@ -11709,6 +11900,7 @@
                         sellingPrice,
                         quantityInShop: shopNew,
                         alertThreshold,
+                        inventory: shopItem?.inventory || null,
                         createdAt: shopItem ? shopItem.createdAt : now,
                         updatedAt: now
                     };
@@ -13956,6 +14148,20 @@
             // --- ÉCOUTEURS POUR LA SUPPRESSION ---
             if (storeProductsTbody) {
                 storeProductsTbody.addEventListener('click', async (e) => {
+                    const inventoryButton = e.target.closest('button[data-inventory-action]');
+                    if (inventoryButton) {
+                        const row = inventoryButton.closest('tr');
+                        const input = row?.querySelector('input[data-inventory-qty]');
+                        const physicalQty = input?.value;
+                        await saveInventoryCheck({
+                            scope: inventoryButton.dataset.inventoryType,
+                            id: inventoryButton.dataset.inventoryId,
+                            physicalQty,
+                            action: inventoryButton.dataset.inventoryAction
+                        });
+                        return;
+                    }
+
                     const actionButton = e.target.closest('button[data-store-action]');
                     if (actionButton && actionButton.dataset.productId) {
                         const action = actionButton.dataset.storeAction;
@@ -13973,6 +14179,21 @@
                         await deleteStoreProduct(btn.dataset.productId);
                     }
                 });
+
+                storeProductsTbody.addEventListener('change', async (e) => {
+                    const checkbox = e.target.closest('input[data-inventory-check]');
+                    if (!checkbox) return;
+                    if (!checkbox.checked) {
+                        checkbox.checked = true;
+                        return;
+                    }
+                    await saveInventoryCheck({
+                        scope: checkbox.dataset.inventoryType,
+                        id: checkbox.dataset.inventoryId,
+                        physicalQty: null,
+                        action: 'match'
+                    });
+                });
             }
 
             if (storeMovementsTableContainer) {
@@ -13989,12 +14210,41 @@
 
             if (shopStockTbody) {
                 shopStockTbody.addEventListener('click', async (e) => {
+                    const inventoryButton = e.target.closest('button[data-inventory-action]');
+                    if (inventoryButton) {
+                        const row = inventoryButton.closest('tr');
+                        const input = row?.querySelector('input[data-inventory-qty]');
+                        const physicalQty = input?.value;
+                        await saveInventoryCheck({
+                            scope: inventoryButton.dataset.inventoryType,
+                            id: inventoryButton.dataset.inventoryId,
+                            physicalQty,
+                            action: inventoryButton.dataset.inventoryAction
+                        });
+                        return;
+                    }
+
                     if (e.shopDeleteHandled) return;
                     const btn = e.target.closest('button.delete-icon');
                     if (btn && btn.dataset.stockId) {
                         e.shopDeleteHandled = true;
                         await deleteShopProduct(btn.dataset.stockId);
                     }
+                });
+
+                shopStockTbody.addEventListener('change', async (e) => {
+                    const checkbox = e.target.closest('input[data-inventory-check]');
+                    if (!checkbox) return;
+                    if (!checkbox.checked) {
+                        checkbox.checked = true;
+                        return;
+                    }
+                    await saveInventoryCheck({
+                        scope: checkbox.dataset.inventoryType,
+                        id: checkbox.dataset.inventoryId,
+                        physicalQty: null,
+                        action: 'match'
+                    });
                 });
             }
             if (pendingShopTransferTbody) {
