@@ -313,6 +313,11 @@
                     <div data-icon="clock" class="w-5 h-5"></div>
                     <span class="sidebar-text">Mouvements Magasin</span>
                 </button>
+                <button data-page="Traçabilité"
+                    class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
+                    <div data-icon="chartBar" class="w-5 h-5"></div>
+                    <span class="sidebar-text">Traçabilité</span>
+                </button>
                 <button data-page="Statistiques"
                     class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
                     <div data-icon="stats" class="w-5 h-5"></div>
@@ -1799,6 +1804,109 @@
                                 <tbody id="store-movements-tbody" class="divide-y divide-gray-200">
                                     <!-- Lignes de mouvements insérées par JS -->
                                 </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page: Traçabilité -->
+            <div id="page-Traçabilité" class="page-content p-4 md:p-8 hidden">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-sky-100 text-sky-600 flex items-center justify-center">
+                            <div data-icon="chartBar" class="w-5 h-5"></div>
+                        </div>
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900">Traçabilité produit</h1>
+                            <p class="text-sm text-gray-500">Suivez chaque étape du stock, de l'entrée à la sortie.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <div class="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 items-end">
+                        <div class="space-y-3">
+                            <div>
+                                <label class="text-xs font-semibold text-gray-500">Rechercher un produit</label>
+                                <input type="text" id="traceability-product-search" placeholder="Nom du produit..."
+                                    class="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:ring-sky-500 focus:border-sky-500" />
+                            </div>
+                            <div>
+                                <label class="text-xs font-semibold text-gray-500">Produit sélectionné</label>
+                                <select id="traceability-product-select"
+                                    class="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:ring-sky-500 focus:border-sky-500">
+                                    <option value="">Sélectionner un produit</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="inline-flex rounded-xl border border-gray-200 bg-gray-50 p-1 w-fit">
+                            <button type="button" id="traceability-view-timeline"
+                                class="px-4 py-2 rounded-lg text-sm font-semibold bg-sky-500 text-white">Timeline</button>
+                            <button type="button" id="traceability-view-table"
+                                class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 hover:text-gray-900">Tableau</button>
+                        </div>
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                        <div class="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                            <p class="text-xs uppercase text-gray-400">Stock magasin</p>
+                            <p id="traceability-summary-store" class="text-lg font-semibold text-gray-900">—</p>
+                        </div>
+                        <div class="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                            <p class="text-xs uppercase text-gray-400">Stock boutique</p>
+                            <p id="traceability-summary-shop" class="text-lg font-semibold text-gray-900">—</p>
+                        </div>
+                        <div class="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                            <p class="text-xs uppercase text-gray-400">Total</p>
+                            <p id="traceability-summary-total" class="text-lg font-semibold text-gray-900">—</p>
+                        </div>
+                        <div class="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                            <p class="text-xs uppercase text-gray-400">Événements</p>
+                            <p id="traceability-summary-events" class="text-lg font-semibold text-gray-900">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <div id="traceability-empty"
+                        class="flex flex-col items-center justify-center text-center text-gray-500 h-40 border border-dashed border-gray-200 rounded-2xl">
+                        <p>Sélectionnez un produit pour afficher son parcours.</p>
+                    </div>
+                    <div id="traceability-timeline-wrapper" class="hidden">
+                        <div id="traceability-timeline" class="relative pl-8 space-y-4"></div>
+                    </div>
+                    <div id="traceability-table-wrapper" class="hidden">
+                        <div class="overflow-x-auto rounded-2xl border border-gray-200">
+                            <table class="min-w-full bg-white divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Date</th>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Étape</th>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Emplacement</th>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Qté</th>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Changement</th>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Statut</th>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Utilisateur</th>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Détails</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="traceability-table-tbody" class="divide-y divide-gray-200"></tbody>
                             </table>
                         </div>
                     </div>
@@ -3789,6 +3897,9 @@
             let activeInventoryHistoryId = null;
             let inventoryViewMode = 'location';
             let inventoriesPathSuffix = 'inventories';
+            let traceabilityViewMode = 'timeline';
+            let traceabilitySelectedProductId = '';
+            let traceabilitySearchQuery = '';
 
             // Cart state
             let cartItems = [];
@@ -3849,6 +3960,19 @@
             const shopSearchInput = document.getElementById('shop-search-input');
             const storeSelector = document.getElementById('store-selector');
             const storeSelectorMovements = document.getElementById('store-selector-movements');
+            const traceabilityProductSearch = document.getElementById('traceability-product-search');
+            const traceabilityProductSelect = document.getElementById('traceability-product-select');
+            const traceabilityViewTimeline = document.getElementById('traceability-view-timeline');
+            const traceabilityViewTable = document.getElementById('traceability-view-table');
+            const traceabilityTimelineWrapper = document.getElementById('traceability-timeline-wrapper');
+            const traceabilityTimeline = document.getElementById('traceability-timeline');
+            const traceabilityTableWrapper = document.getElementById('traceability-table-wrapper');
+            const traceabilityTableTbody = document.getElementById('traceability-table-tbody');
+            const traceabilityEmpty = document.getElementById('traceability-empty');
+            const traceabilitySummaryStore = document.getElementById('traceability-summary-store');
+            const traceabilitySummaryShop = document.getElementById('traceability-summary-shop');
+            const traceabilitySummaryTotal = document.getElementById('traceability-summary-total');
+            const traceabilitySummaryEvents = document.getElementById('traceability-summary-events');
             const settingsStoresSection = document.getElementById('settings-stores-section');
             const storesCountBadge = document.getElementById('stores-count-badge');
             const storesList = document.getElementById('stores-list');
@@ -8003,6 +8127,7 @@
                 'Inventaire': 'Inventaire',
                 'Tableau des prix': 'Tableau des prix',
                 'Mouvements Magasin': ['Mouvements Magasin', 'Mon Magasin'],
+                'Traçabilité': ['Mouvements Magasin', 'Stock Boutique', 'Mon Magasin', 'Inventaire'],
                 'Fournisseurs': 'Fournisseurs',
                 'Statistiques': 'Statistiques',
                 'Paramètres': 'Paramètres'
@@ -10573,7 +10698,13 @@
                 updates[`${dbBasePath}/storeProducts/${productId}/categoryId`] = categoryId || null;
                 updates[`${dbBasePath}/storeProducts/${productId}/updatedAt`] = now;
 
-                const shopItems = Object.values(appData.shopStock || {}).filter(item => item.sourceProductId === productId);
+                const allowedBoutiques = new Set(getAccessibleBoutiqueIds());
+                const shopItems = Object.values(appData.shopStock || {}).filter(item => {
+                    if (item.sourceProductId !== productId) return false;
+                    const boutiqueId = resolveBoutiqueId(item.boutiqueId);
+                    if (allowedBoutiques.size && boutiqueId && !allowedBoutiques.has(boutiqueId)) return false;
+                    return true;
+                });
                 shopItems.forEach(item => {
                     updates[`${dbBasePath}/shopStock/${item.id}/sellingPrice`] = boutiquePrice;
                     updates[`${dbBasePath}/shopStock/${item.id}/purchaseCost`] = purchaseCost;
@@ -11253,6 +11384,7 @@
             function onStoreMovementsValue(snapshot) {
                 appData.storeMovements = snapshot.val() || {};
                 renderStoreMovementsPage();
+                renderTraceabilityPage();
             }
 
             function renderPendingExitRequests() {
@@ -11631,6 +11763,7 @@
                 appData.storeExitRequests = snapshot.val() || {};
                 renderPendingExitRequests();
                 renderStoreMovementsPage();
+                renderTraceabilityPage();
             }
 
             function onStoresValue(snapshot) {
@@ -11659,6 +11792,7 @@
                 renderPendingShopTransfers();
                 renderInventoryLocationOptions();
                 renderInventoryGlobalView();
+                renderTraceabilityPage();
             }
 
             function onBoutiquesValue(snapshot) {
@@ -11695,6 +11829,7 @@
                 updateAllStats();
                 renderInventoryLocationOptions();
                 renderInventoryGlobalView();
+                renderTraceabilityPage();
             }
 
             function onCategoriesValue(snapshot) {
@@ -11714,6 +11849,7 @@
                 updateDashboardStats();
                 updateAllStats();
                 renderInventoryGlobalView();
+                renderTraceabilityPage();
             }
 
             function renderShopStock(searchTerm = '') {
@@ -12435,6 +12571,7 @@
                 updateAllStats();
                 renderCart();
                 renderInventoryGlobalView();
+                renderTraceabilityPage();
             }
 
             function renderShopMovements() {
@@ -12515,6 +12652,501 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(move.date)}</td>
                             </tr>`;
                 }).join('');
+            }
+
+            function getTraceabilityStoreLabel(storeId) {
+                if (!storeId || storeId === UNASSIGNED_STORE_ID) return 'Non assigné';
+                return getStoreName(storeId) || 'Magasin';
+            }
+
+            function getTraceabilityBoutiqueLabel(boutiqueId, fallback = 'Boutique') {
+                const resolved = resolveBoutiqueId(boutiqueId);
+                if (!resolved) return fallback;
+                return getBoutiqueName(resolved) || fallback;
+            }
+
+            function getTraceabilityProducts(search = '') {
+                const normalized = normalizeString(search);
+                const allowedStores = new Set(getAccessibleStoreIds());
+                return Object.values(appData.storeProducts || {}).filter(product => {
+                    const rawStoreId = product.storeId || UNASSIGNED_STORE_ID;
+                    const resolvedStoreId = rawStoreId === UNASSIGNED_STORE_ID ? UNASSIGNED_STORE_ID : resolveStoreId(rawStoreId);
+                    if (rawStoreId !== UNASSIGNED_STORE_ID && allowedStores.size && !allowedStores.has(resolvedStoreId)) return false;
+                    if (normalized && !normalizeString(product.name || '').includes(normalized)) return false;
+                    return true;
+                }).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            }
+
+            function renderTraceabilityProductOptions() {
+                if (!traceabilityProductSelect) return;
+                const products = getTraceabilityProducts(traceabilitySearchQuery);
+                const currentSelection = traceabilityProductSelect.value || traceabilitySelectedProductId;
+                traceabilityProductSelect.innerHTML = '<option value="">Sélectionner un produit</option>';
+                products.forEach(product => {
+                    const rawStoreId = product.storeId || UNASSIGNED_STORE_ID;
+                    const storeLabel = rawStoreId === UNASSIGNED_STORE_ID
+                        ? 'Non assigné'
+                        : getTraceabilityStoreLabel(resolveStoreId(rawStoreId));
+                    const option = document.createElement('option');
+                    option.value = product.id;
+                    option.textContent = storeLabel ? `${product.name} · ${storeLabel}` : product.name;
+                    traceabilityProductSelect.appendChild(option);
+                });
+                if (currentSelection && traceabilityProductSelect.querySelector(`option[value="${currentSelection}"]`)) {
+                    traceabilityProductSelect.value = currentSelection;
+                } else {
+                    traceabilityProductSelect.value = '';
+                }
+                traceabilityProductSelect.disabled = products.length === 0;
+                traceabilitySelectedProductId = traceabilityProductSelect.value || '';
+            }
+
+            function getTraceabilityDotClass(label = '') {
+                const normalized = normalizeString(label);
+                if (normalized.includes('entree')) return 'bg-emerald-500';
+                if (normalized.includes('sortie') || normalized.includes('vente')) return 'bg-rose-500';
+                if (normalized.includes('transfert') || normalized.includes('reappro')) return 'bg-purple-500';
+                if (normalized.includes('ajustement')) return 'bg-indigo-500';
+                if (normalized.includes('suppression') || normalized.includes('annulation')) return 'bg-red-500';
+                if (normalized.includes('inventaire')) return 'bg-slate-500';
+                if (normalized.includes('demande')) return 'bg-amber-500';
+                if (normalized.includes('creation')) return 'bg-blue-500';
+                return 'bg-sky-500';
+            }
+
+            function buildTraceabilityDetails({ location, quantity, change, stockBefore, stockAfter, amountLabel, customer, user }) {
+                const details = [];
+                if (location) details.push(`Emplacement: ${location}`);
+                if (Number.isFinite(quantity)) details.push(`Qté: ${Math.abs(quantity)}`);
+                if (Number.isFinite(change)) details.push(`Changement: ${change > 0 ? '+' : ''}${change}`);
+                if (Number.isFinite(stockBefore) || Number.isFinite(stockAfter)) {
+                    const beforeLabel = Number.isFinite(stockBefore) ? stockBefore : '-';
+                    const afterLabel = Number.isFinite(stockAfter) ? stockAfter : '-';
+                    details.push(`Stock: ${beforeLabel} → ${afterLabel}`);
+                }
+                if (amountLabel) details.push(`Montant: ${amountLabel}`);
+                if (customer) details.push(`Client: ${customer}`);
+                if (user) details.push(`Utilisateur: ${user}`);
+                return details;
+            }
+
+            function buildTraceabilityEvents(productId) {
+                const events = [];
+                const product = appData.storeProducts?.[productId];
+                if (!product) return events;
+
+                const baseStoreId = product.storeId || UNASSIGNED_STORE_ID;
+                const storeLabel = baseStoreId === UNASSIGNED_STORE_ID
+                    ? 'Non assigné'
+                    : getTraceabilityStoreLabel(resolveStoreId(baseStoreId));
+
+                const pushEvent = (event) => {
+                    if (!event || !event.date) return;
+                    events.push(event);
+                };
+
+                if (product.createdAt) {
+                    pushEvent({
+                        id: `product-created-${productId}`,
+                        date: product.createdAt,
+                        label: 'Création produit',
+                        badge: { label: 'Création', classes: 'bg-blue-50 text-blue-700 border border-blue-200' },
+                        dotClass: getTraceabilityDotClass('création'),
+                        location: storeLabel,
+                        quantity: null,
+                        change: null,
+                        statusLabel: '',
+                        statusClass: '',
+                        user: '',
+                        comment: 'Produit ajouté au catalogue.'
+                    });
+                }
+
+                Object.values(appData.storeMovements || {}).forEach(move => {
+                    if (move.productId !== productId) return;
+                    const badge = getMovementTypeBadge(move);
+                    const statusBadge = getStatusBadge(move.status || EXIT_STATUS_APPROVED);
+                    const qty = parseInt(move.quantityChange, 10) || 0;
+                    const isEntry = move.type === 'Entrée';
+                    const isAdjustment = move.type === 'Ajustement';
+                    const changeValue = isEntry ? Math.abs(qty) : (isAdjustment ? qty : -Math.abs(qty));
+                    const location = getTraceabilityStoreLabel(resolveStoreId(move.storeId) || baseStoreId);
+                    const userLabel = move.userName || move.userFullName || move.userEmail || move.userId || '';
+                    pushEvent({
+                        id: `store-move-${move.id}`,
+                        date: move.date,
+                        label: `Magasin · ${badge.label}`,
+                        badge,
+                        dotClass: getTraceabilityDotClass(badge.label),
+                        location,
+                        quantity: Math.abs(qty),
+                        change: changeValue,
+                        stockBefore: Number(move.oldStock),
+                        stockAfter: Number(move.newStock),
+                        statusLabel: statusBadge.label,
+                        statusClass: statusBadge.classes,
+                        user: userLabel,
+                        comment: move.comment || ''
+                    });
+                });
+
+                Object.values(appData.storeExitRequests || {}).forEach(request => {
+                    if (request.productId !== productId) return;
+                    const statusBadge = formatExitStatusBadge(request.status || EXIT_STATUS_PENDING);
+                    const qty = parseInt(request.quantity, 10) || 0;
+                    const userLabel = request.requestedByName || request.requestedBy || request.requestedByEmail || '';
+                    pushEvent({
+                        id: `store-exit-${request.id}`,
+                        date: request.requestedAt || request.date,
+                        label: 'Magasin · Demande sortie',
+                        badge: { label: 'Demande sortie', classes: 'bg-amber-50 text-amber-700 border border-amber-200' },
+                        dotClass: getTraceabilityDotClass('demande'),
+                        location: getTraceabilityStoreLabel(resolveStoreId(request.storeId) || baseStoreId),
+                        quantity: Math.abs(qty),
+                        change: -Math.abs(qty),
+                        stockBefore: Number(request.stockBefore),
+                        stockAfter: Number(request.stockAfter),
+                        statusLabel: statusBadge.label,
+                        statusClass: statusBadge.classes,
+                        user: userLabel,
+                        comment: request.comment || ''
+                    });
+                });
+
+                Object.values(appData.shopTransferRequests || {}).forEach(request => {
+                    if (request.sourceProductId !== productId) return;
+                    const statusBadge = formatExitStatusBadge(request.status || EXIT_STATUS_PENDING);
+                    const qty = parseInt(request.quantity, 10) || 0;
+                    const requestLabel = request.requestType === 'restock' ? 'Réappro boutique' : 'Transfert boutique';
+                    const boutiqueLabel = getTraceabilityBoutiqueLabel(request.boutiqueId, request.boutiqueName || 'Boutique');
+                    const userLabel = request.requestedByName || request.requestedByEmail || '';
+                    pushEvent({
+                        id: `transfer-${request.id}`,
+                        date: request.requestedAt || request.date,
+                        label: `${requestLabel} · Demande`,
+                        badge: { label: requestLabel, classes: 'bg-purple-50 text-purple-700 border border-purple-200' },
+                        dotClass: getTraceabilityDotClass(requestLabel),
+                        location: `${boutiqueLabel} · ${getTraceabilityStoreLabel(resolveStoreId(request.storeId) || baseStoreId)}`,
+                        quantity: Math.abs(qty),
+                        change: -Math.abs(qty),
+                        stockBefore: Number(request.stockBeforeStore),
+                        stockAfter: Number(request.stockAfterStore),
+                        statusLabel: statusBadge.label,
+                        statusClass: statusBadge.classes,
+                        user: userLabel,
+                        comment: request.comment || ''
+                    });
+                });
+
+                const allowedBoutiques = new Set(getAccessibleBoutiqueIds());
+                const shopItems = Object.values(appData.shopStock || {}).filter(item => {
+                    if (item.sourceProductId !== productId) return false;
+                    const boutiqueId = resolveBoutiqueId(item.boutiqueId);
+                    if (allowedBoutiques.size && boutiqueId && !allowedBoutiques.has(boutiqueId)) return false;
+                    return true;
+                });
+                const shopItemIds = new Set(shopItems.map(item => item.id));
+
+                shopItems.forEach(item => {
+                    if (!item.createdAt) return;
+                    const boutiqueLabel = getTraceabilityBoutiqueLabel(item.boutiqueId, item.boutiqueName || 'Boutique');
+                    pushEvent({
+                        id: `shop-created-${item.id}`,
+                        date: item.createdAt,
+                        label: 'Boutique · Création fiche stock',
+                        badge: { label: 'Création boutique', classes: 'bg-slate-100 text-slate-700 border border-slate-200' },
+                        dotClass: getTraceabilityDotClass('création'),
+                        location: boutiqueLabel,
+                        quantity: Number(item.quantityInShop),
+                        change: null,
+                        statusLabel: '',
+                        statusClass: '',
+                        user: '',
+                        comment: 'Fiche stock boutique créée.'
+                    });
+                });
+
+                Object.values(appData.shopMovements || {}).forEach(move => {
+                    if (!shopItemIds.has(move.shopProductId)) return;
+                    const badge = getMovementTypeBadge(move);
+                    const statusBadge = getStatusBadge(move.status || EXIT_STATUS_APPROVED);
+                    const qty = parseInt(move.quantityChange, 10) || 0;
+                    const isEntry = move.type === 'Entrée';
+                    const isAdjustment = move.type === 'Ajustement';
+                    const changeValue = isEntry ? Math.abs(qty) : (isAdjustment ? qty : -Math.abs(qty));
+                    const boutiqueLabel = getTraceabilityBoutiqueLabel(move.boutiqueId, move.boutiqueName || 'Boutique');
+                    const userLabel = move.userName || move.userFullName || move.userEmail || move.userId || '';
+                    pushEvent({
+                        id: `shop-move-${move.id}`,
+                        date: move.date,
+                        label: `Boutique · ${badge.label}`,
+                        badge,
+                        dotClass: getTraceabilityDotClass(badge.label),
+                        location: boutiqueLabel,
+                        quantity: Math.abs(qty),
+                        change: changeValue,
+                        stockBefore: Number(move.oldStock),
+                        stockAfter: Number(move.newStock),
+                        statusLabel: statusBadge.label,
+                        statusClass: statusBadge.classes,
+                        user: userLabel,
+                        comment: move.comment || ''
+                    });
+                });
+
+                Object.values(appData.salesHistory || {}).forEach(sale => {
+                    const isStoreSale = sale.storeProductId === productId;
+                    const isShopSale = sale.shopProductId && shopItemIds.has(sale.shopProductId);
+                    if (!isStoreSale && !isShopSale) return;
+                    const qty = parseInt(sale.quantity, 10) || 0;
+                    const paymentBadge = formatPaymentStatusBadge(sale.paymentStatus, sale.payLater);
+                    const saleBadge = { label: 'Vente', classes: 'bg-sky-50 text-sky-700 border border-sky-200' };
+                    const amountLabel = Number.isFinite(Number(sale.totalAmount))
+                        ? formatCurrency(Number(sale.totalAmount), getSaleCurrency(sale))
+                        : '';
+                    const location = isStoreSale
+                        ? getTraceabilityStoreLabel(resolveStoreId(sale.storeId) || baseStoreId)
+                        : getTraceabilityBoutiqueLabel(sale.boutiqueId, sale.boutiqueName || 'Boutique');
+                    const userLabel = sale.sellerName || '';
+                    const customerLabel = sale.customerName || '';
+                    pushEvent({
+                        id: `sale-${sale.id}`,
+                        date: sale.date,
+                        label: isStoreSale ? 'Vente magasin' : 'Vente boutique',
+                        badge: saleBadge,
+                        dotClass: getTraceabilityDotClass('vente'),
+                        location,
+                        quantity: Math.abs(qty),
+                        change: -Math.abs(qty),
+                        stockBefore: null,
+                        stockAfter: null,
+                        statusLabel: paymentBadge.label,
+                        statusClass: paymentBadge.classes,
+                        user: userLabel,
+                        customer: customerLabel,
+                        amountLabel,
+                        comment: sale.comment || ''
+                    });
+                });
+
+                Object.values(appData.inventories || {}).forEach(inv => {
+                    if (!inv?.items) return;
+                    if (inv.locationType === 'store') {
+                        const item = inv.items?.[productId];
+                        if (!item) return;
+                        const delta = Number(item.delta);
+                        const statusLabel = item.status === 'match' ? 'Conforme' : 'Écart';
+                        const statusClass = item.status === 'match'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : 'bg-rose-50 text-rose-700 border-rose-200';
+                        pushEvent({
+                            id: `inv-${inv.id}-${productId}`,
+                            date: inv.createdAt || inv.date,
+                            label: 'Inventaire magasin',
+                            badge: { label: 'Inventaire', classes: 'bg-slate-100 text-slate-700 border border-slate-200' },
+                            dotClass: getTraceabilityDotClass('inventaire'),
+                            location: inv.locationName || storeLabel,
+                            quantity: Number(item.physicalQty),
+                            change: Number.isFinite(delta) ? delta : null,
+                            stockBefore: Number(item.systemQty),
+                            stockAfter: Number(item.physicalQty),
+                            statusLabel,
+                            statusClass,
+                            user: inv.createdByName || '',
+                            comment: inv.comment || inv.adjustComment || ''
+                        });
+                        return;
+                    }
+
+                    if (inv.locationType === 'shop') {
+                        shopItems.forEach(item => {
+                            const invItem = inv.items?.[item.id];
+                            if (!invItem) return;
+                            const delta = Number(invItem.delta);
+                            const statusLabel = invItem.status === 'match' ? 'Conforme' : 'Écart';
+                            const statusClass = invItem.status === 'match'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : 'bg-rose-50 text-rose-700 border-rose-200';
+                            pushEvent({
+                                id: `inv-${inv.id}-${item.id}`,
+                                date: inv.createdAt || inv.date,
+                                label: 'Inventaire boutique',
+                                badge: { label: 'Inventaire', classes: 'bg-slate-100 text-slate-700 border border-slate-200' },
+                                dotClass: getTraceabilityDotClass('inventaire'),
+                                location: inv.locationName || getTraceabilityBoutiqueLabel(item.boutiqueId, item.boutiqueName || 'Boutique'),
+                                quantity: Number(invItem.physicalQty),
+                                change: Number.isFinite(delta) ? delta : null,
+                                stockBefore: Number(invItem.systemQty),
+                                stockAfter: Number(invItem.physicalQty),
+                                statusLabel,
+                                statusClass,
+                                user: inv.createdByName || '',
+                                comment: inv.comment || inv.adjustComment || ''
+                            });
+                        });
+                    }
+                });
+
+                events.sort((a, b) => new Date(a.date) - new Date(b.date));
+                return events;
+            }
+
+            function renderTraceabilityTimeline(events = []) {
+                if (!traceabilityTimeline) return;
+                if (!events.length) {
+                    traceabilityTimeline.innerHTML = '';
+                    return;
+                }
+                traceabilityTimeline.innerHTML = `
+                    <div class="absolute left-3 top-0 bottom-0 w-px bg-gray-200"></div>
+                    ${events.map(event => {
+                        const dateLabel = formatDateForDisplay(event.date);
+                        const details = buildTraceabilityDetails({
+                            location: event.location,
+                            quantity: event.quantity,
+                            change: event.change,
+                            stockBefore: event.stockBefore,
+                            stockAfter: event.stockAfter,
+                            amountLabel: event.amountLabel,
+                            customer: event.customer,
+                            user: event.user
+                        });
+                        const detailsText = details.length ? details.join(' · ') : '';
+                        const comment = event.comment ? `<p class="mt-2 text-xs text-gray-500">${event.comment}</p>` : '';
+                        const statusBadge = event.statusLabel
+                            ? `<span class="inline-flex items-center px-2.5 py-1 rounded-full border text-xs font-semibold ${event.statusClass}">${event.statusLabel}</span>`
+                            : '';
+                        const badge = event.badge
+                            ? `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${event.badge.classes}">${event.badge.label}</span>`
+                            : '';
+                        return `
+                            <div class="relative pl-8">
+                                <span class="absolute left-1.5 top-5 w-3 h-3 rounded-full ${event.dotClass || 'bg-sky-500'} ring-4 ring-white"></span>
+                                <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+                                    <div class="flex flex-wrap items-center justify-between gap-2">
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            ${badge}
+                                            <p class="text-sm font-semibold text-gray-900">${event.label || '—'}</p>
+                                        </div>
+                                        <div class="text-xs text-gray-500">${dateLabel}</div>
+                                    </div>
+                                    ${statusBadge ? `<div class="mt-2 flex flex-wrap items-center gap-2">${statusBadge}</div>` : ''}
+                                    ${detailsText ? `<p class="mt-2 text-xs text-gray-600">${detailsText}</p>` : ''}
+                                    ${comment}
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                `;
+            }
+
+            function renderTraceabilityTable(events = []) {
+                if (!traceabilityTableTbody) return;
+                if (!events.length) {
+                    traceabilityTableTbody.innerHTML = '';
+                    return;
+                }
+                traceabilityTableTbody.innerHTML = events.map(event => {
+                    const dateLabel = formatDateForDisplay(event.date);
+                    const qtyLabel = Number.isFinite(event.quantity) ? Math.abs(event.quantity) : '-';
+                    const changeLabel = Number.isFinite(event.change) ? `${event.change > 0 ? '+' : ''}${event.change}` : '-';
+                    const changeClass = Number.isFinite(event.change)
+                        ? (event.change >= 0 ? 'text-emerald-600' : 'text-rose-600')
+                        : 'text-gray-400';
+                    const statusBadge = event.statusLabel
+                        ? `<span class="inline-flex items-center px-2.5 py-1 rounded-full border text-xs font-semibold ${event.statusClass}">${event.statusLabel}</span>`
+                        : '<span class="text-xs text-gray-400">—</span>';
+                    const details = buildTraceabilityDetails({
+                        location: '',
+                        quantity: null,
+                        change: null,
+                        stockBefore: event.stockBefore,
+                        stockAfter: event.stockAfter,
+                        amountLabel: event.amountLabel,
+                        customer: event.customer,
+                        user: null
+                    });
+                    const detailsText = event.comment
+                        ? `${details.join(' · ')}${details.length ? ' · ' : ''}${event.comment}`
+                        : details.join(' · ');
+                    return `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 text-sm text-gray-500">${dateLabel}</td>
+                            <td class="px-4 py-3 text-sm font-semibold text-gray-900">${event.label || '—'}</td>
+                            <td class="px-4 py-3 text-sm text-gray-500">${event.location || '—'}</td>
+                            <td class="px-4 py-3 text-sm text-right font-semibold text-gray-700">${qtyLabel}</td>
+                            <td class="px-4 py-3 text-sm text-right font-semibold ${changeClass}">${changeLabel}</td>
+                            <td class="px-4 py-3 text-sm">${statusBadge}</td>
+                            <td class="px-4 py-3 text-sm text-gray-500">${event.user || '—'}</td>
+                            <td class="px-4 py-3 text-sm text-gray-500">${detailsText || '—'}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            function renderTraceabilityPage() {
+                if (!traceabilityEmpty || !traceabilityTimelineWrapper || !traceabilityTableWrapper) return;
+                if (traceabilityViewTimeline && traceabilityViewTable) {
+                    const isTimeline = traceabilityViewMode === 'timeline';
+                    traceabilityViewTimeline.classList.toggle('bg-sky-500', isTimeline);
+                    traceabilityViewTimeline.classList.toggle('text-white', isTimeline);
+                    traceabilityViewTimeline.classList.toggle('text-gray-600', !isTimeline);
+                    traceabilityViewTimeline.classList.toggle('bg-gray-50', !isTimeline);
+                    traceabilityViewTable.classList.toggle('bg-sky-500', !isTimeline);
+                    traceabilityViewTable.classList.toggle('text-white', !isTimeline);
+                    traceabilityViewTable.classList.toggle('text-gray-600', isTimeline);
+                    traceabilityViewTable.classList.toggle('bg-gray-50', isTimeline);
+                }
+                renderTraceabilityProductOptions();
+
+                const productId = traceabilityProductSelect?.value || traceabilitySelectedProductId;
+                const hasProduct = !!productId;
+                if (!hasProduct) {
+                    if (traceabilityEmpty) {
+                        traceabilityEmpty.classList.remove('hidden');
+                        traceabilityEmpty.textContent = 'Sélectionnez un produit pour afficher son parcours.';
+                    }
+                    if (traceabilityTimelineWrapper) traceabilityTimelineWrapper.classList.add('hidden');
+                    if (traceabilityTableWrapper) traceabilityTableWrapper.classList.add('hidden');
+                    if (traceabilitySummaryStore) traceabilitySummaryStore.textContent = '—';
+                    if (traceabilitySummaryShop) traceabilitySummaryShop.textContent = '—';
+                    if (traceabilitySummaryTotal) traceabilitySummaryTotal.textContent = '—';
+                    if (traceabilitySummaryEvents) traceabilitySummaryEvents.textContent = '0';
+                    return;
+                }
+
+                const events = buildTraceabilityEvents(productId);
+                const product = appData.storeProducts?.[productId];
+                const shopItems = Object.values(appData.shopStock || {}).filter(item => item.sourceProductId === productId);
+                const storeStock = Number(product?.quantityInStore) || 0;
+                const shopStockTotal = shopItems.reduce((sum, item) => sum + (Number(item.quantityInShop) || 0), 0);
+                const totalStock = storeStock + shopStockTotal;
+
+                if (traceabilitySummaryStore) traceabilitySummaryStore.textContent = `${storeStock}`;
+                if (traceabilitySummaryShop) traceabilitySummaryShop.textContent = `${shopStockTotal}`;
+                if (traceabilitySummaryTotal) traceabilitySummaryTotal.textContent = `${totalStock}`;
+                if (traceabilitySummaryEvents) traceabilitySummaryEvents.textContent = `${events.length}`;
+
+                if (!events.length) {
+                    traceabilityEmpty.classList.remove('hidden');
+                    traceabilityEmpty.textContent = 'Aucun événement trouvé pour ce produit.';
+                    if (traceabilityTimelineWrapper) traceabilityTimelineWrapper.classList.add('hidden');
+                    if (traceabilityTableWrapper) traceabilityTableWrapper.classList.add('hidden');
+                    renderTraceabilityTimeline([]);
+                    renderTraceabilityTable([]);
+                    return;
+                }
+
+                traceabilityEmpty.classList.add('hidden');
+                if (traceabilityViewMode === 'table') {
+                    if (traceabilityTimelineWrapper) traceabilityTimelineWrapper.classList.add('hidden');
+                    if (traceabilityTableWrapper) traceabilityTableWrapper.classList.remove('hidden');
+                    renderTraceabilityTable(events);
+                } else {
+                    if (traceabilityTableWrapper) traceabilityTableWrapper.classList.add('hidden');
+                    if (traceabilityTimelineWrapper) traceabilityTimelineWrapper.classList.remove('hidden');
+                    renderTraceabilityTimeline(events);
+                }
             }
 
             function canAccessShopTransferRequest(request) {
@@ -12747,11 +13379,13 @@
             function onShopMovementsValue(snapshot) {
                 appData.shopMovements = snapshot.val() || {};
                 renderShopMovements();
+                renderTraceabilityPage();
             }
 
             function onShopTransferRequestsValue(snapshot) {
                 appData.shopTransferRequests = snapshot.val() || {};
                 renderPendingShopTransfers();
+                renderTraceabilityPage();
             }
 
             function onSalesHistoryValue(snapshot) {
@@ -12759,6 +13393,7 @@
                 renderSalesHistory();
                 updateDashboardStats();
                 renderCustomerHistory();
+                renderTraceabilityPage();
             }
 
             function onPendingSalesValue(snapshot) {
@@ -12824,6 +13459,7 @@
                 if (activeInventoryHistoryId) {
                     renderInventoryHistoryDetail(activeInventoryHistoryId);
                 }
+                renderTraceabilityPage();
             }
 
 
@@ -12940,6 +13576,9 @@
                 inventoryDraftItems = [];
                 inventoryDraftActive = false;
                 activeInventoryHistoryId = null;
+                traceabilityViewMode = 'timeline';
+                traceabilitySelectedProductId = '';
+                traceabilitySearchQuery = '';
             }
 
             function updateUI() {
@@ -12996,6 +13635,9 @@
                 updateSettingsAccess();
                 updatePricingAccessState();
                 updateDiscountApprovalUI();
+                if (currentPage === 'Traçabilité') {
+                    renderTraceabilityPage();
+                }
 
                 // Mettre à jour les boutons d'actions rapides
                 if (isAuthenticated && typeof updateQuickActionButtons === 'function') {
@@ -15124,6 +15766,30 @@
                     input.addEventListener('input', renderShopMovements);
                     input.addEventListener('change', renderShopMovements);
                 });
+            if (traceabilityProductSearch) {
+                traceabilityProductSearch.addEventListener('input', () => {
+                    traceabilitySearchQuery = traceabilityProductSearch.value || '';
+                    renderTraceabilityPage();
+                });
+            }
+            if (traceabilityProductSelect) {
+                traceabilityProductSelect.addEventListener('change', () => {
+                    traceabilitySelectedProductId = traceabilityProductSelect.value || '';
+                    renderTraceabilityPage();
+                });
+            }
+            if (traceabilityViewTimeline) {
+                traceabilityViewTimeline.addEventListener('click', () => {
+                    traceabilityViewMode = 'timeline';
+                    renderTraceabilityPage();
+                });
+            }
+            if (traceabilityViewTable) {
+                traceabilityViewTable.addEventListener('click', () => {
+                    traceabilityViewMode = 'table';
+                    renderTraceabilityPage();
+                });
+            }
             if (salesCategoryFilters) {
                 salesCategoryFilters.addEventListener('click', (event) => {
                     const button = event.target.closest('[data-sales-category]');
