@@ -528,6 +528,29 @@
                         </button>
                     </div>
                 </div>
+
+                <div id="dashboard-admin-recovery-card" class="mt-6 bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hidden">
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                        <div>
+                            <h2 class="text-lg font-semibold text-gray-900">Restauration des accès</h2>
+                            <p class="text-sm text-gray-500 mt-1">Nommer rapidement un collaborateur comme administrateur depuis le tableau de bord.</p>
+                        </div>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                            Réservé aux admins
+                        </span>
+                    </div>
+                    <div class="mt-4 flex flex-col lg:flex-row gap-3">
+                        <select id="dashboard-admin-member-select"
+                            class="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-sm focus:ring-cyan-500 focus:border-cyan-500">
+                            <option value="">Sélectionner un collaborateur</option>
+                        </select>
+                        <button type="button" id="dashboard-admin-promote-button"
+                            class="px-5 py-3 rounded-xl bg-cyan-500 text-white text-sm font-semibold hover:bg-cyan-600 disabled:opacity-60 disabled:cursor-not-allowed">
+                            Nommer admin
+                        </button>
+                    </div>
+                    <p id="dashboard-admin-recovery-empty" class="mt-3 text-sm text-gray-400 hidden">Aucun collaborateur disponible pour une promotion.</p>
+                </div>
             </div>
 
             <!-- Page: Ventes -->
@@ -3862,6 +3885,7 @@
                 'Supprimer Stock Boutique',
                 'Supprimer Stock Magasin'
             ];
+            const ADMIN_ACCESS_MODULES = [...accessModules];
             let teamMembersState = [];
             let selectedCustomer = null;
             let customerOptionLookup = {};
@@ -3953,6 +3977,10 @@
             const hamburgerButton = document.getElementById('hamburger-button');
             const sidebarOverlay = document.getElementById('sidebar-overlay');
             const sidebarCollapseToggle = document.getElementById('sidebar-collapse-toggle');
+            const dashboardAdminRecoveryCard = document.getElementById('dashboard-admin-recovery-card');
+            const dashboardAdminMemberSelect = document.getElementById('dashboard-admin-member-select');
+            const dashboardAdminPromoteButton = document.getElementById('dashboard-admin-promote-button');
+            const dashboardAdminRecoveryEmpty = document.getElementById('dashboard-admin-recovery-empty');
 
             const boutiqueSelectorSales = document.getElementById('boutique-selector-sales');
             const boutiqueSelectorStock = document.getElementById('boutique-selector-stock');
@@ -8053,6 +8081,37 @@
                 return [...new Set(list)].sort();
             }
 
+            function getBasePermissionsForRole(role) {
+                if (role === 'admin') return [...ADMIN_ACCESS_MODULES];
+                if (role === 'consultation') return ['Tableau de bord', 'Messagerie', 'Statistiques'];
+                if (role === 'manager') {
+                    return ['Tableau de bord', 'Ventes', 'Historique des ventes', 'Messagerie', 'Stock Boutique', 'Mon Magasin', 'Tableau des prix', 'Mouvements Magasin', 'Fournisseurs', 'Statistiques'];
+                }
+                return ['Tableau de bord', 'Ventes', 'Historique des ventes', 'Messagerie', 'Stock Boutique'];
+            }
+
+            function normalizeMemberSecurity(member = {}) {
+                const normalized = { ...member };
+                normalized.role = (normalized.role || 'consultation').trim().toLowerCase();
+                normalized.permissions = normalizePermissions(normalized.permissions);
+                normalized.storeAccess = Array.isArray(normalized.storeAccess) ? normalized.storeAccess : [];
+                normalized.boutiqueAccess = Array.isArray(normalized.boutiqueAccess) ? normalized.boutiqueAccess : [];
+
+                if (normalized.role === 'admin') {
+                    normalized.permissions = [...ADMIN_ACCESS_MODULES];
+                    normalized.storeAccess = [];
+                    normalized.boutiqueAccess = [];
+                } else if (!normalized.permissions.length) {
+                    normalized.permissions = getBasePermissionsForRole(normalized.role);
+                }
+
+                return normalized;
+            }
+
+            function getAdminMembersCount() {
+                return teamMembersState.filter(member => (member.role || '').toLowerCase() === 'admin').length;
+            }
+
             function updateSettingsAccess() {
                 const canAccessSettings = hasPermission('Paramètres');
                 const isAdmin = getCurrentUserRole() === 'admin';
@@ -8137,6 +8196,10 @@
                 if (!isAuthenticated || !currentUserData) {
                     console.log(`[canAccessPage] Not authenticated or no user data for page: ${pageName}`);
                     return false;
+                }
+
+                if (pageName === 'Tableau de bord') {
+                    return true;
                 }
 
                 const requiredPermission = pagePermissions[pageName];
@@ -8224,6 +8287,52 @@
                     minute: '2-digit'
                 }).replace(' à', ',');
                 target.textContent = formatted;
+            }
+
+            function renderDashboardAdminRecovery() {
+                if (!dashboardAdminRecoveryCard || !dashboardAdminMemberSelect || !dashboardAdminPromoteButton || !dashboardAdminRecoveryEmpty) return;
+                const isAdmin = getCurrentUserRole() === 'admin';
+                dashboardAdminRecoveryCard.classList.toggle('hidden', !isAdmin);
+                if (!isAdmin) return;
+
+                const promotableMembers = teamMembersState
+                    .filter(member => !member.isCurrentUser)
+                    .filter(member => (member.role || '').toLowerCase() !== 'admin')
+                    .sort((a, b) => (a.fullName || a.name || '').localeCompare(b.fullName || b.name || ''));
+
+                const currentValue = dashboardAdminMemberSelect.value || '';
+                dashboardAdminMemberSelect.innerHTML = '<option value="">Sélectionner un collaborateur</option>';
+                promotableMembers.forEach(member => {
+                    const option = document.createElement('option');
+                    option.value = member.id;
+                    option.textContent = `${member.fullName || member.name || 'Collaborateur'}${member.email ? ` · ${member.email}` : ''}`;
+                    dashboardAdminMemberSelect.appendChild(option);
+                });
+
+                if (currentValue && promotableMembers.some(member => member.id === currentValue)) {
+                    dashboardAdminMemberSelect.value = currentValue;
+                }
+
+                const hasCandidates = promotableMembers.length > 0;
+                dashboardAdminMemberSelect.disabled = !hasCandidates;
+                dashboardAdminPromoteButton.disabled = !hasCandidates || !dashboardAdminMemberSelect.value;
+                dashboardAdminRecoveryEmpty.classList.toggle('hidden', hasCandidates);
+            }
+
+            function promoteMemberFromDashboard() {
+                if (getCurrentUserRole() !== 'admin') {
+                    showSuccessToast("Action réservée aux administrateurs.");
+                    return;
+                }
+                const memberId = dashboardAdminMemberSelect?.value || '';
+                if (!memberId) {
+                    showSuccessToast("Sélectionnez un collaborateur.");
+                    return;
+                }
+                setMemberRole(memberId, 'admin');
+                if (dashboardAdminMemberSelect) dashboardAdminMemberSelect.value = '';
+                renderDashboardAdminRecovery();
+                showSuccessToast("Le collaborateur est maintenant administrateur.");
             }
 
             function formatCompactNumber(value) {
@@ -8997,6 +9106,7 @@
                     if (matchKey) member = membersData[matchKey];
                 }
                 if (!member) return false;
+                member = normalizeMemberSecurity(member);
 
                 let changed = false;
                 const nextRole = (member.role || '').trim().toLowerCase() || 'consultation';
@@ -9033,9 +9143,11 @@
                     accessMembersTbody.innerHTML = `<tr><td colspan="7" class="px-4 py-6 text-center text-gray-400">Aucun collaborateur pour le moment.</td></tr>`;
                 } else {
                     const rows = teamMembersState.map(member => {
+                        const isAdmin = member.role === 'admin';
+                        const isLastAdmin = isAdmin && getAdminMembersCount() <= 1;
                         const permissionButtons = accessModules.map(module => {
-                            const isActive = member.role === 'admin' ? true : member.permissions?.includes(module);
-                            const classes = `px-3 py-1 rounded-full border text-xs font-semibold mr-2 mb-2 inline-flex ${isActive ? 'bg-cyan-50 border-cyan-200 text-cyan-600' : 'bg-gray-100 border-gray-200 text-gray-500'}`;
+                            const isActive = isAdmin ? true : member.permissions?.includes(module);
+                            const classes = `px-3 py-1 rounded-full border text-xs font-semibold mr-2 mb-2 inline-flex ${isActive ? 'bg-cyan-50 border-cyan-200 text-cyan-600' : 'bg-gray-100 border-gray-200 text-gray-500'} ${isAdmin ? 'opacity-70 cursor-not-allowed' : ''}`;
                             return `<button type="button" data-member-id="${member.id}" data-permission="${module}" class="${classes}">${module}</button>`;
                         }).join('');
                         const storeAccessIds = Array.isArray(member.storeAccess) ? member.storeAccess : [];
@@ -9050,10 +9162,12 @@
                             <div class="space-y-1">
                                 <p class="text-xs text-gray-500"><span class="font-semibold">Magasins :</span> ${storeLabel || '—'}</p>
                                 <p class="text-xs text-gray-500"><span class="font-semibold">Boutiques :</span> ${boutiqueLabel || '—'}</p>
-                                <button type="button" data-access-scope="${member.id}"
-                                    class="mt-1 inline-flex items-center gap-2 px-3 py-1 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-100">
-                                    Gérer
-                                </button>
+                                ${isAdmin
+                                    ? '<span class="mt-1 inline-flex items-center gap-2 px-3 py-1 rounded-lg border border-emerald-200 bg-emerald-50 text-xs font-semibold text-emerald-700">Accès complet</span>'
+                                    : `<button type="button" data-access-scope="${member.id}"
+                                        class="mt-1 inline-flex items-center gap-2 px-3 py-1 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-100">
+                                        Gérer
+                                    </button>`}
                             </div>
                         `;
                         const accessCodeBlock = member.accessCode ? `
@@ -9072,7 +9186,7 @@
                                 </td>
                                 <td class="px-4 py-3 text-sm text-gray-500">${member.email || '-'}</td>
                                 <td class="px-4 py-3">
-                                    <select data-role-select="${member.id}" class="rounded-lg border-gray-200 focus:ring-cyan-400 focus:border-cyan-400 text-sm">
+                                    <select data-role-select="${member.id}" class="rounded-lg border-gray-200 focus:ring-cyan-400 focus:border-cyan-400 text-sm" ${isLastAdmin ? 'title="Le dernier administrateur ne peut pas être rétrogradé."' : ''}>
                                         <option value="admin" ${member.role === 'admin' ? 'selected' : ''}>Admin</option>
                                         <option value="manager" ${member.role === 'manager' ? 'selected' : ''}>Manager</option>
                                         <option value="vendeur" ${member.role === 'vendeur' ? 'selected' : ''}>Vendeur</option>
@@ -9661,6 +9775,15 @@
                 if (!activeAccessScopeMemberId) return;
                 const member = teamMembersState.find(m => m.id === activeAccessScopeMemberId);
                 if (!member) return;
+                if ((member.role || '').toLowerCase() === 'admin') {
+                    member.storeAccess = [];
+                    member.boutiqueAccess = [];
+                    saveMemberState(member);
+                    renderAccessMembers();
+                    closeAccessScopeModal();
+                    showSuccessToast("Les administrateurs conservent l'accès à tous les magasins et boutiques.");
+                    return;
+                }
                 const stores = getStoresSorted();
                 const boutiques = getBoutiquesSorted();
                 const selectedStoreIds = accessScopeStores
@@ -9691,6 +9814,10 @@
             function toggleMemberPermission(memberId, permission) {
                 const member = teamMembersState.find(m => m.id === memberId);
                 if (!member) return;
+                if ((member.role || '').toLowerCase() === 'admin') {
+                    showSuccessToast("Les administrateurs gardent automatiquement tous les modules.");
+                    return;
+                }
                 member.permissions = member.permissions || [];
                 if (permission === 'Paramètres' && member.role !== 'admin') {
                     showSuccessToast("Seuls les administrateurs peuvent accéder aux paramètres.");
@@ -9715,17 +9842,26 @@
             function setMemberRole(memberId, role) {
                 const member = teamMembersState.find(m => m.id === memberId);
                 if (!member) return;
-                member.role = role;
-                member.permissions = member.permissions || [];
-                if (role === 'admin' && !member.permissions.includes('Paramètres')) {
-                    member.permissions.push('Paramètres');
+                const currentRole = (member.role || '').toLowerCase();
+                if (currentRole === 'admin' && role !== 'admin' && getAdminMembersCount() <= 1) {
+                    showSuccessToast("Le dernier administrateur ne peut pas être rétrogradé.");
+                    renderAccessMembers();
+                    return;
                 }
-                if (role !== 'admin') {
-                    member.permissions = member.permissions.filter(permission => permission !== 'Paramètres');
+                member.role = role;
+                if (role === 'admin') {
+                    member.permissions = [...ADMIN_ACCESS_MODULES];
+                    member.storeAccess = [];
+                    member.boutiqueAccess = [];
+                } else {
+                    const nextPermissions = normalizePermissions(member.permissions).filter(permission => permission !== 'Paramètres');
+                    member.permissions = nextPermissions.length ? nextPermissions : getBasePermissionsForRole(role);
                 }
                 if (member.isCurrentUser && currentUserData) {
                     currentUserData.role = role;
                     currentUserData.permissions = [...member.permissions];
+                    currentUserData.storeAccess = [...(member.storeAccess || [])];
+                    currentUserData.boutiqueAccess = [...(member.boutiqueAccess || [])];
                     updateUI();
                     renderStoreProducts(storeSearchInput ? storeSearchInput.value : '');
                     renderShopStock(shopSearchInput ? shopSearchInput.value : '');
@@ -9804,7 +9940,7 @@
                     isAuthenticated = true;
                     isCodeSession = true;
                     currentUser = { email, uid: match.memberId };
-                    currentUserData = {
+                    currentUserData = normalizeMemberSecurity({
                         uid: match.memberId,
                         email,
                         fullName: match.member.fullName || match.member.name || 'Collaborateur',
@@ -9815,7 +9951,7 @@
                         accessCode: match.member.accessCode,
                         storeAccess: Array.isArray(match.member.storeAccess) ? match.member.storeAccess : [],
                         boutiqueAccess: Array.isArray(match.member.boutiqueAccess) ? match.member.boutiqueAccess : []
-                    };
+                    });
                     dbBasePath = `companies/${match.companyId}`;
                     if (match.member.status !== 'actif') {
                         await update(ref(db, `${dbBasePath}/members/${match.memberId}`), { status: 'actif' });
@@ -9838,7 +9974,7 @@
 
             function saveMemberState(member) {
                 if (!member || !member.id || !dbBasePath) return;
-                const memberCopy = { ...member };
+                const memberCopy = normalizeMemberSecurity(member);
                 delete memberCopy.isCurrentUser;
                 set(ref(db, `${dbBasePath}/members/${member.id}`), memberCopy);
             }
@@ -9850,16 +9986,32 @@
 
             function onCompanyMembersValue(snapshot) {
                 const membersData = snapshot.val() || {};
-                teamMembersState = Object.keys(membersData).map(key => ({
-                    id: key,
-                    ...membersData[key],
-                }));
+                const memberUpdates = {};
+                teamMembersState = Object.keys(membersData).map(key => {
+                    const normalized = normalizeMemberSecurity({
+                        id: key,
+                        ...membersData[key],
+                    });
+                    const permissionsChanged = JSON.stringify(normalizePermissions(membersData[key]?.permissions)) !== JSON.stringify(normalized.permissions);
+                    const storeAccessChanged = JSON.stringify(Array.isArray(membersData[key]?.storeAccess) ? membersData[key].storeAccess : []) !== JSON.stringify(normalized.storeAccess);
+                    const boutiqueAccessChanged = JSON.stringify(Array.isArray(membersData[key]?.boutiqueAccess) ? membersData[key].boutiqueAccess : []) !== JSON.stringify(normalized.boutiqueAccess);
+                    if (permissionsChanged || storeAccessChanged || boutiqueAccessChanged) {
+                        memberUpdates[`${dbBasePath}/members/${key}/permissions`] = normalized.permissions;
+                        memberUpdates[`${dbBasePath}/members/${key}/storeAccess`] = normalized.storeAccess;
+                        memberUpdates[`${dbBasePath}/members/${key}/boutiqueAccess`] = normalized.boutiqueAccess;
+                    }
+                    return normalized;
+                });
+                if (dbBasePath && Object.keys(memberUpdates).length) {
+                    update(ref(db), memberUpdates).catch(error => console.error('Impossible de normaliser les droits admin:', error));
+                }
                 const permissionsChanged = syncCurrentUserFromMembers(membersData);
                 ensureCurrentUserInTeam();
                 if (permissionsChanged) {
                     renderStoreProducts(storeSearchInput ? storeSearchInput.value : '');
                     renderShopStock(shopSearchInput ? shopSearchInput.value : '');
                 }
+                renderDashboardAdminRecovery();
                 renderChatMembersList();
                 renderChatList();
                 renderChatMessages();
@@ -9880,6 +10032,11 @@
                     }
                     const removeButton = event.target.closest('button[data-remove-member]');
                     if (removeButton) {
+                        const memberToRemove = teamMembersState.find(member => member.id === removeButton.dataset.removeMember);
+                        if (memberToRemove && (memberToRemove.role || '').toLowerCase() === 'admin' && getAdminMembersCount() <= 1) {
+                            showSuccessToast("Le dernier administrateur ne peut pas être supprimé.");
+                            return;
+                        }
                         teamMembersState = teamMembersState.filter(member => member.id !== removeButton.dataset.removeMember || member.isCurrentUser);
                         renderAccessMembers();
                         deleteMember(removeButton.dataset.removeMember);
@@ -9921,11 +10078,7 @@
                     if (!name || !email) return;
 
                     const accessCode = generateAccessCode();
-                    const basePermissions = role === 'consultation'
-                        ? ['Tableau de bord', 'Messagerie', 'Statistiques']
-                        : (role === 'manager'
-                            ? ['Tableau de bord', 'Ventes', 'Historique des ventes', 'Messagerie', 'Stock Boutique', 'Mon Magasin', 'Tableau des prix', 'Mouvements Magasin', 'Fournisseurs', 'Statistiques']
-                            : ['Tableau de bord', 'Ventes', 'Historique des ventes', 'Messagerie', 'Stock Boutique']);
+                    const basePermissions = getBasePermissionsForRole(role);
 
                     try {
                         const newMemberRef = push(ref(db, `${dbBasePath}/members`));
@@ -9935,7 +10088,7 @@
                             email,
                             role,
                             status: 'pending',
-                            permissions: role === 'admin' ? [...accessModules] : basePermissions,
+                            permissions: basePermissions,
                             storeAccess: [],
                             boutiqueAccess: [],
                             accessCode,
@@ -13635,6 +13788,7 @@
                 updateSettingsAccess();
                 updatePricingAccessState();
                 updateDiscountApprovalUI();
+                renderDashboardAdminRecovery();
                 if (currentPage === 'Traçabilité') {
                     renderTraceabilityPage();
                 }
@@ -15754,6 +15908,16 @@
             if (salesProductSearch) salesProductSearch.addEventListener('input', () => {
                 renderSalesProducts(salesProductSearch.value);
             });
+            if (dashboardAdminMemberSelect) {
+                dashboardAdminMemberSelect.addEventListener('change', () => {
+                    if (dashboardAdminPromoteButton) {
+                        dashboardAdminPromoteButton.disabled = !dashboardAdminMemberSelect.value;
+                    }
+                });
+            }
+            if (dashboardAdminPromoteButton) {
+                dashboardAdminPromoteButton.addEventListener('click', promoteMemberFromDashboard);
+            }
             [storeMovementFilterProduct, storeMovementFilterType, storeMovementFilterUser, storeMovementFilterStatus, storeMovementFilterStart, storeMovementFilterEnd]
                 .filter(Boolean)
                 .forEach(input => {
@@ -17337,9 +17501,8 @@
                     currentUser = user;
                     get(ref(db, `users/${user.uid}`)).then(async (snapshot) => {
                         if (snapshot.exists()) {
-                            currentUserData = snapshot.val();
+                            currentUserData = normalizeMemberSecurity(snapshot.val() || {});
                             currentUserData.role = currentUserData.role || 'consultation';
-                            currentUserData.permissions = Array.isArray(currentUserData.permissions) ? currentUserData.permissions : [];
                             dbBasePath = currentUserData.companyId ? `companies/${currentUserData.companyId}` : `users/${user.uid}`;
                             await ensureStoresSetup();
                             await ensureBoutiquesSetup();
@@ -17360,9 +17523,9 @@
                         const resolvedRole = (memberData.role || 'consultation').toLowerCase();
                         const resolvedPermissions = Array.isArray(memberData.permissions)
                             ? memberData.permissions
-                            : (resolvedRole === 'admin' ? [...accessModules] : ['Tableau de bord']);
+                            : getBasePermissionsForRole(resolvedRole);
 
-                        const fallbackUserData = {
+                        const fallbackUserData = normalizeMemberSecurity({
                             uid: user.uid,
                             fullName: memberData.fullName || memberData.name || user.email || 'Utilisateur',
                             email: user.email || memberData.email || '',
@@ -17375,7 +17538,7 @@
                             companyName: fallbackMatch.companyName || '',
                             accessCode: memberData.accessCode || '',
                             createdAt: new Date().toISOString()
-                        };
+                        });
 
                         try {
                             await set(ref(db, `users/${user.uid}`), fallbackUserData);
