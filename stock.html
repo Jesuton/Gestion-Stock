@@ -2161,7 +2161,7 @@
                     </div>
                 </div>
 
-                <div class="mt-6 grid grid-cols-1 xl:grid-cols-[360px_1fr] gap-6">
+                <div class="mt-6 grid grid-cols-1 lg:grid-cols-[300px_1fr] xl:grid-cols-[360px_1fr] gap-6">
                     <div class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
                         <div class="flex items-center justify-between">
                             <h2 class="text-lg font-semibold text-gray-900">Liste fournisseurs</h2>
@@ -2172,7 +2172,7 @@
                                 class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-emerald-400 focus:border-emerald-400" />
                         </div>
                         <div id="suppliers-empty" class="mt-6 text-sm text-gray-400 hidden">Aucun fournisseur.</div>
-                        <div id="suppliers-list" class="mt-4 space-y-2 max-h-[520px] overflow-y-auto pr-1"></div>
+                        <div id="suppliers-list" class="mt-4 space-y-2 max-h-[320px] lg:max-h-[520px] overflow-y-auto pr-1"></div>
                     </div>
 
                     <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
@@ -17513,6 +17513,11 @@
                     activeSupplierId = button.dataset.supplierId;
                     renderSuppliersList();
                     renderSupplierDetail();
+                    
+                    // Scroll automatique vers les détails sur mobile (écrans < lg)
+                    if (window.innerWidth < 1024 && supplierDetail) {
+                        supplierDetail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
                 });
             }
             if (supplierPaymentsTbody) {
