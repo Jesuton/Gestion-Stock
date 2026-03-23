@@ -108,6 +108,94 @@
                 justify-content: center;
             }
         }
+
+        /* --- NOUVEAUX STYLES RESPONSIVE & INTERACTIONS SOURIS --- */
+        
+        /* 1. Améliorer la responsivité des icônes ("images") pour empêcher les déformations */
+        svg, img {
+            flex-shrink: 0;
+        }
+
+        /* 2. Interactive: hover effects pour boutons, lignes de tableaux et cartes */
+        tbody tr {
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            position: relative;
+        }
+        @media (hover: hover) and (pointer: fine) {
+            tbody tr:hover {
+                background-color: #f8fafc; /* text-slate-50 */
+                transform: scale(1.005);
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+                z-index: 10;
+            }
+            
+            /* Pour les cartes de produits générées dynamiquement */
+            #sales-products-container > div, .bg-white.rounded-2xl.shadow-sm.border {
+                transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+                will-change: transform;
+            }
+            #sales-products-container > div:hover {
+                transform: translateY(-4px) scale(1.02);
+                box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+                border-color: #67e8f9; /* cyan-300 */
+                z-index: 20;
+            }
+
+            /* Animations des boutons globaux */
+            button {
+                transition: all 0.2s ease-in-out;
+            }
+            button:active {
+                transform: scale(0.96);
+            }
+            
+            /* Amélioration visuelle des boutons nav */
+            .nav-button:hover {
+                transform: translateX(4px);
+                background-color: #f3f4f6; /* hover bg */
+            }
+            .nav-button.bg-cyan-400:hover {
+                background-color: #22d3ee; /* keep cyan brighter */
+            }
+        }
+
+        /* 3. Ajustements Mobile spécifiques ("sur les petits écrans c'est différent et on ne voit pas bien") */
+        @media (max-width: 640px) {
+            /* Empêcher les tables de casser le layout */
+            [id$="-table-container"], .overflow-x-auto {
+                max-width: 100vw;
+                padding-bottom: 0.5rem;
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            /* Agrandir touch targets pour les tableaux sur mobile */
+            th, td {
+                padding: 1rem 0.75rem !important; 
+                min-width: max-content;
+            }
+
+            /* Grille de produits sur 1 colonne aérée */
+            #sales-products-container {
+                grid-template-columns: 1fr !important;
+                gap: 1.25rem;
+                padding-bottom: 2rem;
+            }
+            
+            /* Les éléments cliquables plus accessibles */
+            button, select, input {
+                min-height: 44px;
+            }
+            
+            /* Ajustement des select dans le header ou flex containers */
+            .flex.items-center select {
+                padding-top: 0.5rem;
+                padding-bottom: 0.5rem;
+            }
+        }
+        
     </style>
     <script type="importmap">
 {
