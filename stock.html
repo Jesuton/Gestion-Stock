@@ -3086,6 +3086,19 @@
                             <!-- Options remplies par JS -->
                         </select>
                     </div>
+                    <div id="entry-supplier-select-row">
+                        <label for="entry-supplier-select" class="block text-sm font-medium text-gray-700">Fournisseur *</label>
+                        <div class="flex items-center gap-2 mt-1">
+                            <select id="entry-supplier-select"
+                                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400"
+                                required>
+                                <option value="">Sélectionnez un fournisseur</option>
+                            </select>
+                            <button type="button" id="open-supplier-modal-button" class="px-3 h-[48px] border border-gray-300 rounded-lg bg-gray-50 flex items-center justify-center hover:bg-gray-100 min-w-[48px] flex-shrink-0" title="Nouveau Fournisseur">
+                                <svg class="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                            </button>
+                        </div>
+                    </div>
                     <div>
                         <label for="entry-description" class="block text-sm font-medium text-gray-700">Description</label>
                         <textarea id="entry-description" placeholder="Description du produit" rows="2"
@@ -16926,6 +16939,14 @@
                     return;
                 }
                 const pid = entryProductSelect.value;
+                const supplierId = entrySupplierSelect ? entrySupplierSelect.value : null;
+                if (!supplierId) {
+                    if (entryError) {
+                        entryError.textContent = "Veuillez sélectionner un fournisseur.";
+                        entryError.classList.remove('hidden');
+                    }
+                    return;
+                }
                 const qty = parseInt(entryForm['entry-quantity'].value, 10);
                 const comment = entryForm['entry-comment'].value;
                 const description = entryDescriptionInput ? entryDescriptionInput.value.trim() : '';
@@ -16985,6 +17006,30 @@
                         userName: currentUserData?.fullName || currentUser.email || ''
                     };
                     updates[`${dbBasePath}/storeProducts/${pid}/updatedAt`] = new Date().toISOString();
+
+                    // --- INJECTION AUTOMATIQUE DE LA FACTURE FOURNISSEUR ---
+                    const invoiceKey = push(ref(db, `${dbBasePath}/supplierInvoices`)).key;
+                    const supplier = getSuppliersSorted().find(s => s.id === supplierId);
+                    const invoiceBaseTotal = qty * purchaseCost;
+                    const invoiceCurrency = productCurrency || (supplier && supplier.currency) || 'FCFA';
+                    
+                    updates[`${dbBasePath}/supplierInvoices/${invoiceKey}`] = {
+                        id: invoiceKey,
+                        supplierId: supplierId,
+                        productId: pid,
+                        productName: prod.name,
+                        quantity: qty,
+                        unitCost: purchaseCost,
+                        baseTotal: invoiceBaseTotal,
+                        total: invoiceBaseTotal,
+                        paidAmount: 0,
+                        status: 'open',
+                        storeId: storeId,
+                        currency: invoiceCurrency,
+                        date: new Date().toISOString()
+                    };
+                    // -------------------------------------------------------
+
                     await update(ref(db), updates);
                     showSuccessToast("Entrée de stock réussie !");
                     entryForm.reset();
