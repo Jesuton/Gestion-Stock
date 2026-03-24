@@ -402,11 +402,7 @@
                     <div data-icon="chartBar" class="w-5 h-5"></div>
                     <span class="sidebar-text">Traçabilité</span>
                 </button>
-                <button data-page="Statistiques"
-                    class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
-                    <div data-icon="stats" class="w-5 h-5"></div>
-                    <span class="sidebar-text">Statistiques</span>
-                </button>
+
                 <button data-page="Paramètres"
                     class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
                     <div data-icon="settings" class="w-5 h-5"></div>
@@ -1379,7 +1375,20 @@
                     <h2 class="text-xl font-bold text-gray-800">Mouvements du Stock Boutique</h2>
                     <p class="text-sm text-gray-500 mt-1">Historique de tous les ajouts et réapprovisionnements de
                         stock.</p>
-                    <div class="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3 text-sm">
+                    <details class="group mt-4 [&_summary::-webkit-details-marker]:hidden bg-gray-50 rounded-xl border border-gray-100">
+                        <summary class="flex items-center justify-between p-3 cursor-pointer list-none hover:bg-gray-100 rounded-xl transition-colors border border-transparent hover:border-gray-200">
+                            <div class="flex items-center gap-2 text-gray-700 font-semibold text-sm">
+                                <svg class="w-5 h-5 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                                </svg>
+                                Filtres de recherche
+                            </div>
+                            <span class="transition group-open:rotate-180 text-gray-400">
+                                <svg fill="none" height="20" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg"><polyline points="6 9 12 15 18 9"/></svg>
+                            </span>
+                        </summary>
+                        <div class="p-4 pt-0">
+                            <div class="mt-2 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3 text-sm pt-4 border-t border-gray-200">
                         <div class="flex flex-col gap-1">
                             <label class="text-xs font-semibold text-gray-500">Produit</label>
                             <input type="text" id="shop-movement-filter-product" placeholder="Nom du produit"
@@ -1422,7 +1431,9 @@
                                     class="w-full rounded-lg border border-gray-200 px-3 py-2 focus:ring-cyan-500 focus:border-cyan-500" />
                             </div>
                         </div>
-                    </div>
+                            </div>
+                        </div>
+                    </details>
                     <!-- Conteneur pour les mouvements de la boutique -->
                     <div id="shop-movements-container" class="mt-6">
                         <!-- Message si vide (visible par défaut) -->
@@ -2294,121 +2305,7 @@
             </div>
 
 
-            <!-- Page: Statistiques -->
-            <div id="page-Statistiques" class="page-content p-4 md:p-8 hidden">
-                <h1 class="text-3xl font-bold text-gray-800">Statistiques</h1>
-                <p class="text-gray-500 mt-1">Analysez vos performances commerciales globales</p>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
-                    <!-- StatCard -->
-                    <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
-                        <div>
-                            <p class="text-sm text-gray-500">Ventes totales</p>
-                            <p id="stat-total-sales" class="text-2xl font-bold text-gray-800 mt-1">0</p>
-                            <p class="text-xs text-gray-400 mt-2">Depuis le début</p>
-                        </div>
-                        <div class="p-3 rounded-lg bg-blue-100">
-                            <div data-icon="sales" class="w-6 h-6 text-blue-500"></div>
-                        </div>
-                    </div>
-                    <!-- StatCard -->
-                    <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
-                        <div>
-                            <p class="text-sm text-gray-500">Revenus totaux</p>
-                            <p id="stat-revenue" class="text-2xl font-bold text-gray-800 mt-1">0 FCFA</p>
-                            <p class="text-xs text-gray-400 mt-2">Depuis le début</p>
-                        </div>
-                        <div class="p-3 rounded-lg bg-indigo-100">
-                            <div data-icon="stats" class="w-6 h-6 text-indigo-500"></div>
-                        </div>
-                    </div>
-                    <!-- StatCard -->
-                    <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
-                        <div>
-                            <p class="text-sm text-gray-500">Produits en stock</p>
-                            <p id="stat-products-in-stock" class="text-2xl font-bold text-gray-800 mt-1">0</p>
-                            <p class="text-xs text-gray-400 mt-2">Dans la boutique</p>
-                        </div>
-                        <div class="p-3 rounded-lg bg-green-100">
-                            <div data-icon="box" class="w-6 h-6 text-green-500"></div>
-                        </div>
-                    </div>
-                    <!-- StatCard -->
-                    <div class="bg-white p-5 rounded-lg shadow-sm flex items-start justify-between">
-                        <div>
-                            <p class="text-sm text-gray-500">Marge moyenne</p>
-                            <p id="stat-avg-margin" class="text-2xl font-bold text-gray-800 mt-1">0%</p>
-                            <p class="text-xs text-gray-400 mt-2">Sur toutes les ventes</p>
-                        </div>
-                        <div class="p-3 rounded-lg bg-purple-100">
-                            <div data-icon="chartBar" class="w-6 h-6 text-purple-500"></div>
-                        </div>
-                    </div>
-                </div>
 
-                <div class="mt-10 grid grid-cols-1 xl:grid-cols-2 gap-8">
-                    <!-- Section Produits les plus vendus -->
-                    <div class="bg-white p-6 rounded-lg shadow-sm">
-                        <h2 class="text-xl font-bold text-gray-800">Produits les plus vendus</h2>
-                        <p class="text-sm text-gray-500 mt-1">Classement par quantité vendue.</p>
-                        <div id="best-selling-container" class="mt-4">
-                            <div id="best-selling-placeholder" class="text-center text-gray-500 py-8">
-                                <p>Aucune donnée de vente disponible.</p>
-                            </div>
-                            <div id="best-selling-table-container" class="hidden overflow-x-auto">
-                                <table class="min-w-full bg-white">
-                                    <thead class="bg-gray-50">
-                                        <tr>
-                                            <th scope="col"
-                                                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Produit</th>
-                                            <th scope="col"
-                                                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Qté Vendue</th>
-                                            <th scope="col"
-                                                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Revenu Généré</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="best-selling-tbody" class="divide-y divide-gray-200">
-                                        <!-- Données insérées par JS -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Section Performance des vendeurs -->
-                    <div class="bg-white p-6 rounded-lg shadow-sm">
-                        <h2 class="text-xl font-bold text-gray-800">Performance des vendeurs</h2>
-                        <p class="text-sm text-gray-500 mt-1">Classement par revenu généré.</p>
-                        <div id="seller-performance-container" class="mt-4">
-                            <div id="seller-performance-placeholder" class="text-center text-gray-500 py-8">
-                                <p>Aucune donnée de vente disponible.</p>
-                            </div>
-                            <div id="seller-performance-table-container" class="hidden overflow-x-auto">
-                                <table class="min-w-full bg-white">
-                                    <thead class="bg-gray-50">
-                                        <tr>
-                                            <th scope="col"
-                                                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Vendeur</th>
-                                            <th scope="col"
-                                                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Nb. Ventes</th>
-                                            <th scope="col"
-                                                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Revenu Total</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="seller-performance-tbody" class="divide-y divide-gray-200">
-                                        <!-- Données insérées par JS -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <!-- Page: Paramètres -->
             <div id="page-Paramètres" class="page-content p-4 md:p-8 hidden">
@@ -8194,9 +8091,9 @@
 
             function getBasePermissionsForRole(role) {
                 if (role === 'admin') return [...ADMIN_ACCESS_MODULES];
-                if (role === 'consultation') return ['Tableau de bord', 'Messagerie', 'Statistiques'];
+                if (role === 'consultation') return ['Tableau de bord', 'Messagerie'];
                 if (role === 'manager') {
-                    return ['Tableau de bord', 'Ventes', 'Historique des ventes', 'Messagerie', 'Stock Boutique', 'Mon Magasin', 'Tableau des prix', 'Mouvements Magasin', 'Fournisseurs', 'Statistiques'];
+                    return ['Tableau de bord', 'Ventes', 'Historique des ventes', 'Messagerie', 'Stock Boutique', 'Mon Magasin', 'Tableau des prix', 'Mouvements Magasin', 'Fournisseurs'];
                 }
                 return ['Tableau de bord', 'Ventes', 'Historique des ventes', 'Messagerie', 'Stock Boutique'];
             }
@@ -8299,7 +8196,6 @@
                 'Mouvements Magasin': ['Mouvements Magasin', 'Mon Magasin'],
                 'Traçabilité': ['Mouvements Magasin', 'Stock Boutique', 'Mon Magasin', 'Inventaire'],
                 'Fournisseurs': 'Fournisseurs',
-                'Statistiques': 'Statistiques',
                 'Paramètres': 'Paramètres'
             };
 
