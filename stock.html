@@ -3332,11 +3332,15 @@
     <!-- 
       MODAL "TRANSFÉRER UN ARTICLE DEPUIS LE MAGASIN"
     -->
-    <div id="transfer-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 m-4">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-gray-800">Transférer un article depuis le Magasin</h2>
-                <button id="close-transfer-modal-button" class="text-gray-400 hover:text-gray-600">
+    <div id="transfer-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 backdrop-blur-sm hidden">
+        <div class="w-full max-w-3xl m-4 overflow-hidden rounded-[28px] border border-white/70 bg-white shadow-2xl">
+            <div class="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-5 sm:px-7">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-600">Magasin vers boutique</p>
+                    <h2 class="mt-2 text-2xl font-bold text-slate-900">Transférer un article</h2>
+                    <p class="mt-1 text-sm text-slate-500">Le magasin sort des cartons. La boutique reçoit le conditionnement choisi ici.</p>
+                </div>
+                <button id="close-transfer-modal-button" class="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                         xmlns="http://www.w3.org/2000/svg">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
@@ -3345,111 +3349,129 @@
                 </button>
             </div>
             <form id="transfer-form">
-                <div class="space-y-4">
+                <div class="space-y-5 px-6 py-6 sm:px-7 sm:py-7">
                     <div>
-                        <label for="transfer-product-select" class="block text-sm font-medium text-gray-700">Article
-                            Source (depuis le Magasin) *</label>
+                        <label for="transfer-product-select" class="block text-sm font-semibold text-slate-700">Article source *</label>
                         <select id="transfer-product-select"
-                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                            class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400"
                             required>
                             <option value="">Sélectionnez un article à transférer...</option>
                             <!-- Options remplies par JS -->
                         </select>
                     </div>
                     <div>
-                        <label for="transfer-boutique-select" class="block text-sm font-medium text-gray-700">Boutique
-                            cible *</label>
+                        <label for="transfer-boutique-select" class="block text-sm font-semibold text-slate-700">Boutique cible *</label>
                         <select id="transfer-boutique-select"
-                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                            class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400"
                             required>
                             <option value="">Sélectionnez une boutique...</option>
                         </select>
                     </div>
 
-                    <div id="transfer-source-info" class="hidden">
-                        <h4 class="text-sm font-medium text-gray-700">Informations de l'article source</h4>
-                        <p class="mt-1 p-3 bg-gray-100 rounded-lg text-sm text-gray-600">
-                            Coût d'achat: <span id="transfer-cost-display" class="font-semibold">0 CFA</span>
-                        </p>
+                    <div id="transfer-source-info" class="hidden rounded-2xl border border-cyan-100 bg-gradient-to-br from-white via-slate-50 to-cyan-50/60 p-4 shadow-sm">
+                        <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <h4 class="text-sm font-semibold text-slate-800">Source magasin</h4>
+                                <p class="text-xs text-slate-500">Référence magasin utilisée pour sortir les cartons.</p>
+                            </div>
+                            <span class="inline-flex items-center rounded-full border border-cyan-200 bg-white px-3 py-1 text-[11px] font-semibold text-cyan-700">
+                                Stock carton
+                            </span>
+                        </div>
+                        <div class="mt-4 rounded-2xl border border-white bg-white/90 p-3 shadow-sm">
+                            <p class="text-[11px] uppercase tracking-wide text-slate-400">Coût d'achat carton</p>
+                            <p class="mt-2 text-sm font-semibold text-slate-900">Coût d'achat : <span id="transfer-cost-display">0 CFA</span></p>
+                        </div>
                     </div>
 
-                    <p class="text-xs text-gray-500">
+                    <p class="text-xs leading-5 text-slate-500">
                         Le stock magasin reste en cartons. Le split vers la boutique se fait ici, selon les prix définis dans le tableau des prix.
                     </p>
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label for="transfer-quantity" class="block text-sm font-medium text-gray-700">Cartons source à transférer *</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                            <label for="transfer-quantity" class="block text-sm font-semibold text-slate-700">Cartons source à transférer *</label>
+                            <p class="mt-1 text-xs text-slate-500">Impossible d'envoyer plus que le stock magasin réel.</p>
                             <input type="number" id="transfer-quantity" placeholder="1" min="1"
-                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                                class="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                                 required>
                         </div>
-                        <div>
-                            <label for="transfer-alert-threshold" class="block text-sm font-medium text-gray-700">Seuil
-                                d'alerte</label>
+                        <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                            <label for="transfer-alert-threshold" class="block text-sm font-semibold text-slate-700">Seuil d'alerte</label>
+                            <p class="mt-1 text-xs text-slate-500">Seuil de stock à conserver en suivi boutique.</p>
                             <input type="number" id="transfer-alert-threshold" placeholder="10" value="10" min="0"
-                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400">
+                                class="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
                         </div>
                     </div>
 
-                    <div id="transfer-packaging-panel" class="hidden rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-4">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                            <div class="rounded-lg bg-white border border-gray-200 p-3">
-                                <p class="text-xs uppercase text-gray-400">Unités par carton</p>
-                                <p id="transfer-units-per-carton-display" class="mt-1 font-semibold text-gray-900">—</p>
+                    <div id="transfer-packaging-panel" class="hidden rounded-[24px] border border-cyan-100 bg-gradient-to-br from-slate-50 via-white to-cyan-50/60 p-4 sm:p-5 space-y-5 shadow-inner">
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                                <p class="text-sm font-semibold text-slate-900">Répartition vers la boutique</p>
+                                <p class="mt-1 text-xs leading-5 text-slate-500">Définissez le mix boutique. Le reste est calculé automatiquement en détail si le prix DTL existe.</p>
                             </div>
-                            <div class="rounded-lg bg-white border border-gray-200 p-3">
-                                <p class="text-xs uppercase text-gray-400">Total disponible</p>
-                                <p id="transfer-total-units-display" class="mt-1 font-semibold text-gray-900">0 unité</p>
+                            <span class="inline-flex items-center rounded-full border border-cyan-200 bg-white px-3 py-1 text-[11px] font-semibold text-cyan-700 shadow-sm">
+                                Calcul en temps réel
+                            </span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                            <div class="rounded-2xl border border-white bg-white/90 p-3 shadow-sm">
+                                <p class="text-[11px] uppercase tracking-wide text-slate-400">Unités / carton</p>
+                                <p id="transfer-units-per-carton-display" class="mt-2 text-lg font-bold text-slate-900">—</p>
                             </div>
-                            <div class="rounded-lg bg-white border border-gray-200 p-3">
-                                <p class="text-xs uppercase text-gray-400">Répartition finale</p>
-                                <p id="transfer-breakdown-summary" class="mt-1 font-semibold text-gray-900">Aucune</p>
+                            <div class="rounded-2xl border border-white bg-white/90 p-3 shadow-sm">
+                                <p class="text-[11px] uppercase tracking-wide text-slate-400">Total disponible</p>
+                                <p id="transfer-total-units-display" class="mt-2 text-lg font-bold text-slate-900">0 unité</p>
+                            </div>
+                            <div class="rounded-2xl border border-white bg-white/90 p-3 shadow-sm">
+                                <p class="text-[11px] uppercase tracking-wide text-slate-400">Répartition finale</p>
+                                <p id="transfer-breakdown-summary" class="mt-2 text-sm font-semibold leading-5 text-slate-900">Aucune</p>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                            <div>
-                                <label for="transfer-breakdown-carton" class="block text-xs font-medium text-gray-600">Cartons boutique</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+                            <div class="rounded-2xl border border-slate-200 bg-white/80 p-3">
+                                <label for="transfer-breakdown-carton" class="block text-xs font-semibold uppercase tracking-wide text-slate-500">Cartons boutique</label>
                                 <input type="number" id="transfer-breakdown-carton" value="0" min="0" step="1"
-                                    class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400">
+                                    class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400">
                             </div>
-                            <div>
-                                <label for="transfer-breakdown-lot12" class="block text-xs font-medium text-gray-600">Lots de 12</label>
+                            <div class="rounded-2xl border border-slate-200 bg-white/80 p-3">
+                                <label for="transfer-breakdown-lot12" class="block text-xs font-semibold uppercase tracking-wide text-slate-500">Lots de 12</label>
                                 <input type="number" id="transfer-breakdown-lot12" value="0" min="0" step="1"
-                                    class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400">
+                                    class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400">
                             </div>
-                            <div>
-                                <label for="transfer-breakdown-lot6" class="block text-xs font-medium text-gray-600">Lots de 6</label>
+                            <div class="rounded-2xl border border-slate-200 bg-white/80 p-3">
+                                <label for="transfer-breakdown-lot6" class="block text-xs font-semibold uppercase tracking-wide text-slate-500">Lots de 6</label>
                                 <input type="number" id="transfer-breakdown-lot6" value="0" min="0" step="1"
-                                    class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400">
+                                    class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400">
                             </div>
-                            <div>
-                                <label for="transfer-breakdown-detail" class="block text-xs font-medium text-gray-600">Unités restantes</label>
+                            <div class="rounded-2xl border border-slate-200 bg-white/80 p-3">
+                                <label for="transfer-breakdown-detail" class="block text-xs font-semibold uppercase tracking-wide text-slate-500">Unités restantes</label>
                                 <input type="number" id="transfer-breakdown-detail" value="0" min="0" step="1" readonly
-                                    class="mt-1 w-full p-3 border border-gray-200 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed">
+                                    class="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-slate-600 cursor-not-allowed">
                             </div>
                         </div>
-                        <p id="transfer-breakdown-hint" class="text-xs text-gray-500">Le reste du carton est automatiquement affecté en unités si le prix détail est défini.</p>
+                        <p id="transfer-breakdown-hint" class="rounded-2xl border border-dashed border-cyan-200 bg-white/70 px-4 py-3 text-xs leading-5 text-slate-500">Le reste du carton est automatiquement affecté en unités si le prix détail est défini.</p>
                     </div>
 
                     <div id="transfer-stock-warning"
-                        class="hidden flex items-center p-3 bg-yellow-100 border border-yellow-200 rounded-lg">
+                        class="hidden flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
                         <svg class="w-5 h-5 text-yellow-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <p class="text-sm text-yellow-700">Cette valeur doit être inférieure ou égale à X.</p>
+                        <p class="text-sm text-amber-700">Cette valeur doit être inférieure ou égale à X.</p>
                     </div>
 
-                    <p class="text-xs text-gray-500">
+                    <p class="text-xs leading-5 text-slate-500">
                         Si un article de boutique lié à cette source existe déjà, le stock sera fusionné. Sinon, un
                         nouvel article sera créé.
                     </p>
 
-                    <p id="transfer-error" class="text-red-500 text-sm mt-2 hidden"></p>
+                    <p id="transfer-error" class="hidden rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600"></p>
                     <button type="submit" id="transfer-submit-button"
-                        class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
+                        class="w-full rounded-2xl bg-cyan-500 px-4 py-3.5 font-bold text-white shadow-md transition-colors hover:bg-cyan-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none">
                         Envoyer pour validation
                     </button>
                 </div>
@@ -3460,11 +3482,15 @@
     <!-- 
       MODAL "RÉAPPROVISIONNER UN ARTICLE"
     -->
-    <div id="restock-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 m-4">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-gray-800">Réapprovisionner un article</h2>
-                <button id="close-restock-modal-button" class="text-gray-400 hover:text-gray-600">
+    <div id="restock-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 backdrop-blur-sm hidden">
+        <div class="w-full max-w-3xl m-4 overflow-hidden rounded-[28px] border border-white/70 bg-white shadow-2xl">
+            <div class="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-5 sm:px-7">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-purple-600">Réappro ciblé</p>
+                    <h2 class="mt-2 text-2xl font-bold text-slate-900">Réapprovisionner un article</h2>
+                    <p class="mt-1 text-sm text-slate-500">Le stock boutique est rechargé à partir du stock carton réellement disponible en magasin.</p>
+                </div>
+                <button id="close-restock-modal-button" class="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                         xmlns="http://www.w3.org/2000/svg">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
@@ -3473,60 +3499,84 @@
                 </button>
             </div>
             <form id="restock-form">
-                <div class="space-y-4">
+                <div class="space-y-5 px-6 py-6 sm:px-7 sm:py-7">
                     <div>
-                        <label for="restock-boutique-select" class="block text-sm font-medium text-gray-700">Boutique *</label>
+                        <label for="restock-boutique-select" class="block text-sm font-semibold text-slate-700">Boutique *</label>
                         <select id="restock-boutique-select"
-                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                            class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400"
                             required>
                             <option value="">Sélectionnez une boutique...</option>
                         </select>
                     </div>
                     <div>
-                        <label for="restock-product-select" class="block text-sm font-medium text-gray-700">Produit de
-                            la Boutique *</label>
+                        <label for="restock-product-select" class="block text-sm font-semibold text-slate-700">Produit de la boutique *</label>
                         <select id="restock-product-select"
-                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                            class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400"
                             required>
                             <option value="">Sélectionnez un produit à réapprovisionner</option>
                             <!-- Options remplies par JS -->
                         </select>
                     </div>
 
-                    <div id="restock-source-info" class="hidden">
-                        <h4 class="text-sm font-medium text-gray-700">Article Source</h4>
-                        <p class="mt-1 p-3 bg-gray-100 rounded-lg text-sm text-gray-600">
-                            <span id="restock-source-name" class="font-semibold"></span>
-                            (Stock magasin disponible: <span id="restock-source-stock" class="font-semibold">0</span>)
-                        </p>
+                    <div id="restock-source-info" class="hidden rounded-2xl border border-purple-100 bg-gradient-to-br from-slate-50 to-purple-50/40 p-4 shadow-inner">
+                        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                            <div>
+                                <h4 class="text-sm font-semibold text-gray-800">Source magasin</h4>
+                                <p class="text-xs text-gray-500 mt-1">Le réapprovisionnement consomme le stock carton du magasin.</p>
+                            </div>
+                            <span class="inline-flex items-center rounded-full border border-purple-200 bg-white px-3 py-1 text-[11px] font-semibold text-purple-700">
+                                Réappro ciblé
+                            </span>
+                        </div>
+                        <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div class="rounded-2xl bg-white/90 border border-white p-3 shadow-sm">
+                                <p class="text-[11px] uppercase tracking-wide text-gray-400">Produit source</p>
+                                <p id="restock-source-name" class="mt-2 text-sm font-semibold text-gray-900">—</p>
+                            </div>
+                            <div class="rounded-2xl bg-white/90 border border-white p-3 shadow-sm">
+                                <p class="text-[11px] uppercase tracking-wide text-gray-400">Conditionnement boutique</p>
+                                <p id="restock-source-package" class="mt-2 text-sm font-semibold text-gray-900">—</p>
+                            </div>
+                            <div class="rounded-2xl bg-white/90 border border-white p-3 shadow-sm">
+                                <p class="text-[11px] uppercase tracking-wide text-gray-400">Stock magasin disponible</p>
+                                <p id="restock-source-stock" class="mt-2 text-sm font-semibold text-gray-900">0</p>
+                            </div>
+                        </div>
                     </div>
 
-                    <div>
-                        <label for="restock-quantity" class="block text-sm font-medium text-gray-700">Quantité à Ajouter
-                            (depuis le Magasin) *</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                        <label for="restock-quantity" class="block text-sm font-semibold text-slate-700">Quantité à ajouter *</label>
+                        <p class="mt-1 text-xs text-slate-500">La valeur suit le conditionnement boutique sélectionné.</p>
                         <input type="number" id="restock-quantity" placeholder="1" min="1"
-                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                            class="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                             required>
+                        </div>
+                        <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                            <label for="restock-carton-equivalent" class="block text-sm font-semibold text-slate-700">Équivalent magasin</label>
+                            <p class="mt-1 text-xs text-slate-500">Conversion automatique en cartons source.</p>
+                            <input type="text" id="restock-carton-equivalent" value="—" readonly
+                                class="mt-3 w-full rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3.5 text-slate-600 cursor-not-allowed">
+                        </div>
                     </div>
 
                     <div id="restock-stock-warning"
-                        class="hidden flex items-center p-3 bg-yellow-100 border border-yellow-200 rounded-lg">
+                        class="hidden flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
                         <svg class="w-5 h-5 text-yellow-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <p class="text-sm text-yellow-700">Cette valeur doit être inférieure ou égale à X.</p>
+                        <p class="text-sm text-amber-700">Cette valeur doit être inférieure ou égale à X.</p>
                     </div>
 
                     <div>
-                        <label for="restock-comment" class="block text-sm font-medium text-gray-700">Commentaire
-                            (Optionnel)</label>
+                        <label for="restock-comment" class="block text-sm font-semibold text-slate-700">Commentaire (optionnel)</label>
                         <textarea id="restock-comment" placeholder="ex: Réapprovisionnement hebdomadaire" rows="3"
-                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"></textarea>
+                            class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400"></textarea>
                     </div>
-                    <p id="restock-error" class="text-red-500 text-sm mt-2 hidden"></p>
+                    <p id="restock-error" class="hidden rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600"></p>
                     <button type="submit" id="restock-submit-button"
-                        class="w-full bg-cyan-400 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-500 transition-colors shadow-md hover:shadow-lg">
+                        class="w-full rounded-2xl bg-cyan-500 px-4 py-3.5 font-bold text-white shadow-md transition-colors hover:bg-cyan-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none">
                         Envoyer pour validation
                     </button>
                 </div>
@@ -4487,7 +4537,9 @@
             const restockProductSelect = document.getElementById('restock-product-select');
             const restockSourceInfo = document.getElementById('restock-source-info');
             const restockSourceName = document.getElementById('restock-source-name');
+            const restockSourcePackage = document.getElementById('restock-source-package');
             const restockSourceStock = document.getElementById('restock-source-stock');
+            const restockCartonEquivalent = document.getElementById('restock-carton-equivalent');
             const restockStockWarning = document.getElementById('restock-stock-warning');
             const restockError = document.getElementById('restock-error');
             const restockSubmitButton = document.getElementById('restock-submit-button');
@@ -5550,6 +5602,8 @@
                 if (transferTotalUnitsDisplay) transferTotalUnitsDisplay.textContent = '0 unité';
                 if (transferUnitsPerCartonDisplay) transferUnitsPerCartonDisplay.textContent = '—';
                 if (transferStockWarning) transferStockWarning.classList.add('hidden');
+                if (transferError) transferError.classList.add('hidden');
+                if (transferSubmitButton) transferSubmitButton.disabled = true;
             }
 
             function seedDefaultTransferBreakdown() {
@@ -5567,19 +5621,36 @@
 
             function updateTransferPackagingUI() {
                 const sourceProduct = transferProductSelect ? getActiveStoreProductById(transferProductSelect.value) : null;
-                const sourceCartons = parseNonNegativeInteger(transferForm?.['transfer-quantity']?.value, 0);
+                const quantityInput = transferForm?.['transfer-quantity'];
+                const sourceCartons = parseNonNegativeInteger(quantityInput?.value, 0);
                 const showPanel = !!sourceProduct;
                 if (transferPackagingPanel) transferPackagingPanel.classList.toggle('hidden', !showPanel);
                 if (!sourceProduct) {
                     resetTransferPackagingInputs();
+                    if (quantityInput) {
+                        quantityInput.disabled = true;
+                        quantityInput.value = '';
+                        quantityInput.removeAttribute('max');
+                    }
                     return;
                 }
 
                 const unitsPerCarton = getUnitsPerCarton(sourceProduct);
+                const availableCartons = parseNonNegativeInteger(sourceProduct.quantityInStore, 0);
                 const availableTypes = new Set(getAvailablePackageTypes(sourceProduct));
+                if (quantityInput) {
+                    quantityInput.disabled = availableCartons <= 0;
+                    if (availableCartons > 0) {
+                        quantityInput.setAttribute('max', String(availableCartons));
+                    } else {
+                        quantityInput.value = '';
+                        quantityInput.removeAttribute('max');
+                    }
+                }
+                const effectiveSourceCartons = availableCartons > 0 ? sourceCartons : 0;
                 const toggleBreakdownInput = (input, packageType) => {
                     if (!input) return;
-                    const enabled = availableTypes.has(packageType);
+                    const enabled = availableCartons > 0 && availableTypes.has(packageType);
                     input.disabled = !enabled;
                     input.classList.toggle('bg-gray-100', !enabled);
                     input.classList.toggle('text-gray-400', !enabled);
@@ -5590,7 +5661,7 @@
                 toggleBreakdownInput(transferBreakdownLot12Input, 'lot12');
                 toggleBreakdownInput(transferBreakdownLot6Input, 'lot6');
 
-                const plan = computeTransferPackagingPlan(sourceProduct, sourceCartons, {
+                const plan = computeTransferPackagingPlan(sourceProduct, effectiveSourceCartons, {
                     carton: transferBreakdownCartonInput?.value,
                     lot12: transferBreakdownLot12Input?.value,
                     lot6: transferBreakdownLot6Input?.value
@@ -5611,8 +5682,10 @@
 
                 if (transferStockWarning) {
                     let warning = '';
-                    if (sourceCartons > (parseNonNegativeInteger(sourceProduct.quantityInStore, 0))) {
-                        warning = `Cette valeur doit être inférieure ou égale à ${parseNonNegativeInteger(sourceProduct.quantityInStore, 0)} carton(s).`;
+                    if (availableCartons <= 0) {
+                        warning = "Aucun carton disponible dans le magasin pour ce produit.";
+                    } else if (sourceCartons > availableCartons) {
+                        warning = `Cette valeur doit être inférieure ou égale à ${availableCartons} carton(s).`;
                     } else if (plan.isOverflow) {
                         warning = "La répartition dépasse le contenu total des cartons source.";
                     } else if (!plan.isValid) {
@@ -5626,6 +5699,142 @@
                         transferStockWarning.classList.add('hidden');
                     }
                 }
+                if (transferSubmitButton) {
+                    transferSubmitButton.disabled =
+                        availableCartons <= 0 ||
+                        sourceCartons <= 0 ||
+                        sourceCartons > availableCartons ||
+                        !plan.isValid ||
+                        !plan.targets.length;
+                }
+                if (transferError && !transferSubmitButton?.disabled) {
+                    transferError.classList.add('hidden');
+                }
+            }
+
+            function clearTransferError() {
+                if (transferError) transferError.classList.add('hidden');
+            }
+
+            function showTransferError(message) {
+                if (!transferError) return;
+                transferError.textContent = message;
+                transferError.classList.remove('hidden');
+            }
+
+            function clearRestockError() {
+                if (restockError) restockError.classList.add('hidden');
+            }
+
+            function showRestockError(message) {
+                if (!restockError) return;
+                restockError.textContent = message;
+                restockError.classList.remove('hidden');
+            }
+
+            function getRestockAvailability(shopItem) {
+                const sourceProduct = shopItem ? appData.storeProducts?.[shopItem.sourceProductId] : null;
+                const sourceStoreId = resolveStoreId(shopItem?.sourceStoreId);
+                const activeStoreId = getActiveStoreId();
+                const resolvedSourceProduct = sourceProduct &&
+                    (!sourceStoreId || resolveStoreId(sourceProduct.storeId) === sourceStoreId) &&
+                    (!activeStoreId || resolveStoreId(sourceProduct.storeId) === activeStoreId)
+                    ? sourceProduct
+                    : null;
+                const packageType = shopItem?.packagingType || 'detail';
+                const packageUnits = Number(shopItem?.unitsPerPackage) || (resolvedSourceProduct ? getPackageUnits(resolvedSourceProduct, packageType) : 1);
+                const availableCartons = parseNonNegativeInteger(resolvedSourceProduct?.quantityInStore, 0);
+                const unitsPerCarton = resolvedSourceProduct ? getUnitsPerCarton(resolvedSourceProduct) : 1;
+                const availableUnits = availableCartons * unitsPerCarton;
+                const maxPackages = packageUnits > 0 ? Math.floor(availableUnits / packageUnits) : 0;
+                return {
+                    sourceProduct: resolvedSourceProduct,
+                    packageType,
+                    packageUnits,
+                    unitsPerCarton,
+                    availableCartons,
+                    availableUnits,
+                    maxPackages
+                };
+            }
+
+            function updateRestockFormState() {
+                const shopItem = restockProductSelect ? appData.shopStock?.[restockProductSelect.value] : null;
+                const quantity = parseNonNegativeInteger(restockForm?.['restock-quantity']?.value, 0);
+                const availability = getRestockAvailability(shopItem);
+
+                if (!shopItem || !availability.sourceProduct) {
+                    if (restockSourceInfo) restockSourceInfo.classList.add('hidden');
+                    if (restockCartonEquivalent) restockCartonEquivalent.value = '—';
+                    if (restockStockWarning) {
+                        const textNode = restockStockWarning.querySelector('p');
+                        if (shopItem && textNode) {
+                            textNode.textContent = "Le produit source n'existe plus dans le magasin sélectionné.";
+                            restockStockWarning.classList.remove('hidden');
+                        } else {
+                            restockStockWarning.classList.add('hidden');
+                        }
+                    }
+                    if (restockSubmitButton) restockSubmitButton.disabled = true;
+                    if (restockForm?.['restock-quantity']) {
+                        restockForm['restock-quantity'].disabled = true;
+                        restockForm['restock-quantity'].value = '';
+                        restockForm['restock-quantity'].removeAttribute('max');
+                    }
+                    clearRestockError();
+                    return;
+                }
+
+                const { sourceProduct, packageType, packageUnits, unitsPerCarton, availableCartons, availableUnits, maxPackages } = availability;
+                const requestedUnits = quantity * packageUnits;
+                const requestedCartons = unitsPerCarton > 0 ? (requestedUnits / unitsPerCarton) : 0;
+                const packageLabel = `${getPackageLabel(packageType)} · ${packageUnits} unité(s)`;
+                const stockLabel = `${availableCartons} carton(s) · ${availableUnits} unité(s)`;
+
+                if (restockSourceName) restockSourceName.textContent = sourceProduct.name || 'Produit';
+                if (restockSourcePackage) restockSourcePackage.textContent = packageLabel;
+                if (restockSourceStock) restockSourceStock.textContent = stockLabel;
+                if (restockCartonEquivalent) {
+                    restockCartonEquivalent.value = quantity > 0
+                        ? `${requestedCartons.toFixed(2).replace(/\.00$/, '')} carton(s) source`
+                        : '—';
+                }
+                if (restockSourceInfo) restockSourceInfo.classList.remove('hidden');
+                if (restockForm?.['restock-quantity']) {
+                    restockForm['restock-quantity'].disabled = maxPackages <= 0;
+                    if (maxPackages > 0) {
+                        restockForm['restock-quantity'].setAttribute('max', String(maxPackages));
+                    } else {
+                        restockForm['restock-quantity'].value = '';
+                        restockForm['restock-quantity'].removeAttribute('max');
+                    }
+                }
+
+                let warning = '';
+                if (maxPackages <= 0) {
+                    warning = "Aucun stock magasin disponible pour ce produit.";
+                } else if (quantity > 0 && quantity > maxPackages) {
+                    warning = `Vous pouvez ajouter au maximum ${maxPackages} ${getPackageLabel(packageType).toLowerCase()}(s).`;
+                } else if (quantity > 0 && requestedUnits % unitsPerCarton !== 0) {
+                    warning = "La quantité demandée ne correspond pas à un nombre entier de cartons source.";
+                }
+
+                if (restockStockWarning) {
+                    if (warning) {
+                        restockStockWarning.classList.remove('hidden');
+                        const textNode = restockStockWarning.querySelector('p');
+                        if (textNode) textNode.textContent = warning;
+                    } else {
+                        restockStockWarning.classList.add('hidden');
+                    }
+                }
+
+                if (warning && maxPackages <= 0) {
+                    if (restockSubmitButton) restockSubmitButton.disabled = true;
+                } else {
+                    if (restockSubmitButton) restockSubmitButton.disabled = !quantity || quantity > maxPackages || requestedUnits % unitsPerCarton !== 0;
+                }
+                clearRestockError();
             }
 
             function renderRestockBoutiqueSelect() {
@@ -10924,7 +11133,7 @@
                 const activeProducts = getActiveStoreProducts();
                 const entryProducts = getEntrySelectableProducts();
 
-                const fillSelect = (select, products, showAssignmentHint = false) => {
+                const fillSelect = (select, products, showAssignmentHint = false, disableOutOfStock = false) => {
                     if (!select) return;
                     const firstOption = select.options[0];
                     select.innerHTML = '';
@@ -10936,10 +11145,11 @@
                         const qty = Number(product.quantityInStore) || 0;
                         const option = document.createElement('option');
                         option.value = product.id;
+                        option.disabled = disableOutOfStock && qty <= 0;
                         if (showAssignmentHint && isUnassigned) {
-                            option.textContent = `${product.name} (Non assigné)`;
+                            option.textContent = `${product.name} (Non assigné${option.disabled ? ' · Rupture' : ''})`;
                         } else {
-                            option.textContent = `${product.name} (Actuellement : ${qty})`;
+                            option.textContent = `${product.name} (Actuellement : ${qty}${option.disabled ? ' · Rupture' : ''})`;
                         }
                         select.appendChild(option);
                     });
@@ -10947,7 +11157,7 @@
 
                 fillSelect(entryProductSelect, entryProducts, true);
                 fillSelect(exitProductSelect, activeProducts);
-                fillSelect(transferProductSelect, activeProducts);
+                fillSelect(transferProductSelect, activeProducts, false, true);
 
                 if (entryProductSelect && entryProductSelect.value) {
                     updateEntryProductInfo(getEntryProductById(entryProductSelect.value));
@@ -10955,6 +11165,10 @@
                 if (exitProductSelect && exitProductSelect.value) {
                     updateExitProductInfo(getActiveStoreProductById(exitProductSelect.value));
                 }
+                if (transferProductSelect && transferProductSelect.selectedOptions.length && transferProductSelect.selectedOptions[0]?.disabled) {
+                    transferProductSelect.value = '';
+                }
+                updateTransferPackagingUI();
             }
 
             function updateEntryProductInfo(product) {
@@ -11048,12 +11262,19 @@
                     select.innerHTML = '';
                     select.appendChild(firstOption.cloneNode(true));
                     products.forEach(product => {
+                        const availability = getRestockAvailability(product);
                         const option = document.createElement('option');
                         option.value = product.id;
-                        option.textContent = `${getShopItemDisplayName(product)} (Actuellement : ${product.quantityInShop})`;
+                        const isMissingSource = !availability.sourceProduct;
+                        option.disabled = isMissingSource || availability.maxPackages <= 0;
+                        option.textContent = `${getShopItemDisplayName(product)} (Actuellement : ${product.quantityInShop}${isMissingSource ? ' · Source magasin introuvable' : availability.maxPackages <= 0 ? ' · Rupture magasin' : ` · Max: ${availability.maxPackages}`})`;
                         select.appendChild(option);
                     });
                 });
+                if (restockProductSelect && restockProductSelect.selectedOptions.length && restockProductSelect.selectedOptions[0]?.disabled) {
+                    restockProductSelect.value = '';
+                }
+                updateRestockFormState();
             }
 
             function renderStoreProducts(searchTerm = '') {
@@ -17651,6 +17872,7 @@
             if (transferForm) transferForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 if (!currentUser || !dbBasePath) return;
+                clearTransferError();
                 const storeId = getActiveStoreId();
                 if (!storeId) {
                     showSuccessToast('Veuillez créer ou sélectionner un magasin.');
@@ -17662,11 +17884,11 @@
                 const alertT = parseInt(transferForm['transfer-alert-threshold'].value, 10) || 5;
                 const sourceProd = getActiveStoreProductById(sourceId);
                 if (!targetBoutiqueId) {
-                    showSuccessToast('Veuillez sélectionner une boutique.');
+                    showTransferError('Veuillez sélectionner une boutique.');
                     return;
                 }
                 if (!sourceProd || qty > sourceProd.quantityInStore) {
-                    alert("Stock magasin insuffisant.");
+                    showTransferError("Stock magasin insuffisant pour ce transfert.");
                     return;
                 }
                 const plan = computeTransferPackagingPlan(sourceProd, qty, {
@@ -17675,16 +17897,16 @@
                     lot6: transferBreakdownLot6Input?.value
                 });
                 if (!plan.totalUnits || !plan.targets.length) {
-                    showSuccessToast("Définissez une répartition valide pour la boutique.");
+                    showTransferError("Définissez une répartition valide pour la boutique.");
                     return;
                 }
                 if (!plan.isValid) {
-                    showSuccessToast("La répartition ne correspond pas au contenu des cartons source.");
+                    showTransferError("La répartition ne correspond pas au contenu des cartons source.");
                     return;
                 }
                 const invalidTarget = plan.targets.find(target => !Number.isFinite(target.sellingPrice) || target.sellingPrice < 0);
                 if (invalidTarget) {
-                    showSuccessToast(`Prix boutique non défini pour ${invalidTarget.code}.`);
+                    showTransferError(`Prix boutique non défini pour ${invalidTarget.code}.`);
                     return;
                 }
 
@@ -17759,13 +17981,14 @@
                 } catch (err) {
                     console.error(err);
                 } finally {
-                    if (transferSubmitButton) transferSubmitButton.disabled = false;
+                    updateTransferPackagingUI();
                 }
             });
 
             if (restockForm) restockForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 if (!currentUser || !dbBasePath) return;
+                clearRestockError();
                 const sid = restockProductSelect.value;
                 const targetBoutiqueId = restockBoutiqueSelect?.value || getActiveBoutiqueId();
                 const qty = parseInt(restockForm['restock-quantity'].value, 10);
@@ -17794,17 +18017,18 @@
                 const packageUnits = Number(shopProd.unitsPerPackage) || getPackageUnits(sourceProd, packageType);
                 const unitsPerCarton = getUnitsPerCarton(sourceProd);
                 const totalUnitsRequested = qty * packageUnits;
+                const maxPackages = Math.floor((parseNonNegativeInteger(sourceProd.quantityInStore, 0) * unitsPerCarton) / Math.max(packageUnits, 1));
                 if (!sourceProd || qty <= 0) {
-                    showSuccessToast("Quantité invalide.");
+                    showRestockError("Quantité invalide.");
                     return;
                 }
                 if (totalUnitsRequested % unitsPerCarton !== 0) {
-                    showSuccessToast("Ce réappro ne correspond pas à un nombre entier de cartons. Utilisez le transfert mixte.");
+                    showRestockError("Ce réappro ne correspond pas à un nombre entier de cartons source. Utilisez le transfert mixte.");
                     return;
                 }
                 const sourceCartons = totalUnitsRequested / unitsPerCarton;
                 if (sourceCartons > sourceProd.quantityInStore) {
-                    alert("Stock magasin insuffisant.");
+                    showRestockError(`Stock magasin insuffisant. Maximum autorisé: ${Math.max(maxPackages, 0)} ${getPackageLabel(packageType).toLowerCase()}(s).`);
                     return;
                 }
 
@@ -17894,7 +18118,7 @@
                 } catch (err) {
                     console.error(err);
                 } finally {
-                    if (restockSubmitButton) restockSubmitButton.disabled = false;
+                    updateRestockFormState();
                 }
             });
 
@@ -18008,6 +18232,9 @@
                 renderRestockBoutiqueSelect();
                 populateShopProductSelects();
                 restockSourceInfo.classList.add('hidden');
+                if (restockCartonEquivalent) restockCartonEquivalent.value = '—';
+                if (restockStockWarning) restockStockWarning.classList.add('hidden');
+                if (restockSubmitButton) restockSubmitButton.disabled = true;
             });
 
             // Modals Close
@@ -18121,16 +18348,17 @@
             });
 
             if (restockProductSelect) restockProductSelect.addEventListener('change', () => {
-                const si = appData.shopStock[restockProductSelect.value];
-                const sp = si ? appData.storeProducts[si.sourceProductId] : null;
-                if (si && sp) {
-                    restockSourceName.textContent = sp.name;
-                    restockSourceStock.textContent = sp.quantityInStore;
-                    restockSourceInfo.classList.remove('hidden');
-                } else {
-                    restockSourceInfo.classList.add('hidden');
-                }
+                updateRestockFormState();
             });
+            if (restockBoutiqueSelect) {
+                restockBoutiqueSelect.addEventListener('change', () => {
+                    populateShopProductSelects();
+                    updateRestockFormState();
+                });
+            }
+            if (restockForm?.['restock-quantity']) {
+                restockForm['restock-quantity'].addEventListener('input', updateRestockFormState);
+            }
 
             function updateAllStats() {
                 const sales = getCountableSalesEntries();
