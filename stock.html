@@ -1544,6 +1544,10 @@
                         <div class="flex items-center justify-start xl:justify-end gap-2 flex-wrap">
                             <button id="open-entry-modal-button"
                                 class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2 whitespace-nowrap">Entrée</button>
+                            <button id="open-quick-product-modal-button"
+                                class="px-4 py-2 bg-white border border-cyan-200 text-cyan-700 font-semibold rounded-lg shadow-sm hover:bg-cyan-50 transition-colors flex items-center gap-2 whitespace-nowrap">
+                                Entrée rapide
+                            </button>
                             <button id="open-exit-modal-button"
                                 class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2 whitespace-nowrap">Sortie</button>
                             <button id="store-import-csv-button"
@@ -4503,6 +4507,7 @@
 
             // Modals
             const openNewProductModalButton = document.getElementById('open-new-product-modal-button');
+            const openQuickProductModalButton = document.getElementById('open-quick-product-modal-button');
             const newProductModal = document.getElementById('new-product-modal');
             const closeNewProductModalButton = document.getElementById('close-new-product-modal-button');
             const newProductForm = document.getElementById('new-product-form');
@@ -9233,6 +9238,7 @@
                 if (pricePackagingAddButton) pricePackagingAddButton.disabled = !canEdit;
                 if (pricePackagingSaveButton) pricePackagingSaveButton.disabled = !canEdit;
                 if (openPriceProductModalButton) openPriceProductModalButton.style.display = canEdit ? '' : 'none';
+                if (openQuickProductModalButton) openQuickProductModalButton.style.display = canRegister ? '' : 'none';
                 if (!canEdit) {
                     if (productBaseCodeInput && !productBaseCodeInput.value) productBaseCodeInput.value = '';
                     if (productBaseUnitLabelInput && !productBaseUnitLabelInput.value) productBaseUnitLabelInput.value = 'Unité';
@@ -19472,6 +19478,18 @@
             if (openNewProductModalButton) openNewProductModalButton.addEventListener('click', () => {
                 if (!getActiveStoreId()) {
                     showSuccessToast('Veuillez créer ou sélectionner un magasin.');
+                    return;
+                }
+                populateStoreProductSelects();
+                openEntryModalForProduct();
+            });
+            if (openQuickProductModalButton) openQuickProductModalButton.addEventListener('click', () => {
+                if (!getActiveStoreId()) {
+                    showSuccessToast('Veuillez créer ou sélectionner un magasin.');
+                    return;
+                }
+                if (!canRegisterProductDraft()) {
+                    showSuccessToast("Accès refusé pour ajouter un produit.");
                     return;
                 }
                 newProductModal.classList.remove('hidden');
