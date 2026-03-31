@@ -3124,19 +3124,6 @@
                             <input type="text" id="entry-new-name" placeholder="Ex: Caméra HD"
                                 class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400">
                         </div>
-                        <div>
-                            <label for="entry-new-category" class="block text-sm font-medium text-gray-700">Catégorie (optionnel)</label>
-                            <select id="entry-new-category"
-                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400">
-                                <option value="">Sans catégorie</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="entry-new-purchase-cost" class="block text-sm font-medium text-gray-700">Coût d'achat (optionnel)</label>
-                            <input type="number" id="entry-new-purchase-cost" placeholder="0" min="0" step="0.01"
-                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400">
-                            <p class="text-xs text-gray-500 mt-1">Si vide, la facture fournisseur sera à 0.</p>
-                        </div>
                         <div class="rounded-xl border border-amber-200 bg-amber-50/70 p-3 text-xs text-amber-700">
                             Les prix de vente seront à définir dans le tableau des prix après l'entrée.
                         </div>
@@ -4576,8 +4563,6 @@
             const entryExistingPanel = document.getElementById('entry-existing-panel');
             const entryNewPanel = document.getElementById('entry-new-panel');
             const entryNewNameInput = document.getElementById('entry-new-name');
-            const entryNewCategorySelect = document.getElementById('entry-new-category');
-            const entryNewPurchaseCostInput = document.getElementById('entry-new-purchase-cost');
             const entryProductCombobox = document.getElementById('entry-product-combobox');
             const entryProductSearchInput = document.getElementById('entry-product-search');
             const entryProductToggleButton = document.getElementById('entry-product-toggle');
@@ -9290,7 +9275,6 @@
                 toggleInput(productBaseUnitLabelInput, canRegister);
                 toggleInput(productCurrencyInput, canRegister);
                 toggleInput(productCategorySelect, canManageCategories());
-                toggleInput(entryNewCategorySelect, canManageCategories());
                 if (newProductAddPackagingButton) newProductAddPackagingButton.disabled = !canRegister;
                 if (pricePackagingAddButton) pricePackagingAddButton.disabled = !canEdit;
                 if (pricePackagingSaveButton) pricePackagingSaveButton.disabled = !canEdit;
@@ -12236,11 +12220,6 @@
                 if (entryDescriptionInput) entryDescriptionInput.value = product.description || '';
             }
 
-            function renderEntryCategorySelect(selectedId = '') {
-                if (!entryNewCategorySelect) return;
-                entryNewCategorySelect.innerHTML = getCategoryOptionsHtml(selectedId);
-            }
-
             function setEntryTabStyles(activeButton, inactiveButton) {
                 if (!activeButton || !inactiveButton) return;
                 activeButton.classList.add('bg-emerald-600', 'text-white', 'shadow');
@@ -12332,8 +12311,6 @@
                 }
                 entryForm.reset();
                 if (entryError) entryError.classList.add('hidden');
-                renderEntryCategorySelect('');
-                if (entryNewPurchaseCostInput) entryNewPurchaseCostInput.value = '';
                 setEntryMode('existing');
                 if (entryProductSelectRow) entryProductSelectRow.classList.toggle('hidden', !!productId);
                 if (entryProductSelect) entryProductSelect.value = productId || '';
@@ -12466,6 +12443,49 @@
                     storeProductsPlaceholder.classList.remove('hidden');
                     storeProductsTbody.innerHTML = '';
                 }
+            }
+
+            function queueSupplierInvoiceCostUpdates(updates, productId, unitCost, productCurrency, now) {
+                if (!updates || !productId) return;
+                if (!Number.isFinite(unitCost)) return;
+                const normalizedCurrency = (productCurrency || DEFAULT_SUPPLIER_CURRENCY).toUpperCase();
+                Object.entries(appData.supplierInvoices || {}).forEach(([invoiceId, invoice]) => {
+                    if (!invoice || invoice.productId !== productId) return;
+                    const currentUnitCost = Number(invoice.unitCost);
+                    if (Number.isFinite(currentUnitCost) && currentUnitCost > 0) return;
+                    const qty = Number(invoice.quantity) || 0;
+                    if (!Number.isFinite(qty) || qty <= 0) return;
+                    const supplier = getSupplierById(invoice.supplierId);
+                    const supplierCurrency = (invoice.currency || getSupplierCurrency(supplier) || DEFAULT_SUPPLIER_CURRENCY).toUpperCase();
+                    const rawRate = Number(invoice.conversionRate || getSupplierConversionRate(supplier) || 1);
+                    const conversionRate = Number.isFinite(rawRate) && rawRate > 0 ? rawRate : 1;
+                    let baseTotal = roundAmount(qty * unitCost);
+                    let total = baseTotal;
+                    if (supplierCurrency !== DEFAULT_SUPPLIER_CURRENCY) {
+                        if (normalizedCurrency === DEFAULT_SUPPLIER_CURRENCY) {
+                            total = roundAmount(baseTotal / conversionRate);
+                        } else {
+                            total = baseTotal;
+                            baseTotal = roundAmount(total * conversionRate);
+                        }
+                    }
+                    const paidAmount = Number(invoice.paidAmount) || 0;
+                    const status = paidAmount >= total ? 'paid' : paidAmount > 0 ? 'partial' : 'open';
+                    updates[`${dbBasePath}/supplierInvoices/${invoiceId}/unitCost`] = unitCost;
+                    updates[`${dbBasePath}/supplierInvoices/${invoiceId}/baseTotal`] = baseTotal;
+                    updates[`${dbBasePath}/supplierInvoices/${invoiceId}/total`] = total;
+                    updates[`${dbBasePath}/supplierInvoices/${invoiceId}/status`] = status;
+                    updates[`${dbBasePath}/supplierInvoices/${invoiceId}/updatedAt`] = now;
+                    if (!invoice.productCurrency) {
+                        updates[`${dbBasePath}/supplierInvoices/${invoiceId}/productCurrency`] = normalizedCurrency;
+                    }
+                    if (!invoice.currency) {
+                        updates[`${dbBasePath}/supplierInvoices/${invoiceId}/currency`] = supplierCurrency;
+                    }
+                    if (invoice.conversionRate == null && supplierCurrency !== DEFAULT_SUPPLIER_CURRENCY) {
+                        updates[`${dbBasePath}/supplierInvoices/${invoiceId}/conversionRate`] = conversionRate;
+                    }
+                });
             }
 
             function renderPriceTable() {
@@ -12669,6 +12689,10 @@
                     updates[`${dbBasePath}/shopStock/${item.id}/unitsPerPackage`] = getPackageUnits(productSnapshot, packageType);
                     updates[`${dbBasePath}/shopStock/${item.id}/updatedAt`] = now;
                 });
+                if (pricingStatus === PRICING_STATUS_ACTIVE) {
+                    const nextUnitCost = Number(legacyFields.purchaseCost);
+                    queueSupplierInvoiceCostUpdates(updates, productId, nextUnitCost, currency, now);
+                }
 
                 try {
                     await update(ref(db), updates);
@@ -15994,6 +16018,10 @@
                     updates[`${dbBasePath}/shopStock/${item.id}/unitsPerPackage`] = getPackageUnits(productSnapshot, packageType);
                     updates[`${dbBasePath}/shopStock/${item.id}/updatedAt`] = now;
                 });
+                if (pricingStatus === PRICING_STATUS_ACTIVE) {
+                    const nextUnitCost = Number(legacyFields.purchaseCost);
+                    queueSupplierInvoiceCostUpdates(updates, activePricePackagingProductId, nextUnitCost, currency, now);
+                }
                 try {
                     await update(ref(db), updates);
                     showSuccessToast("Conditionnements mis à jour.");
@@ -16038,7 +16066,6 @@
 
                 if (categoryForm) categoryForm.classList.toggle('hidden', !canManageCategories());
                 renderProductCategorySelect(productCategorySelect?.value || '');
-                renderEntryCategorySelect(entryNewCategorySelect?.value || '');
             }
 
             function clearCategoryError() {
@@ -16179,8 +16206,7 @@
                 Object.values(appData.shopStock || {})
                     .filter(item => {
                         if (activeBoutique && resolveBoutiqueId(item.boutiqueId) !== activeBoutique) return false;
-                        const sourceProduct = appData.storeProducts?.[item.sourceProductId];
-                        return isProductPricingComplete(sourceProduct);
+                        return true;
                     })
                     .map(getShopItemCategory)
                     .forEach(categoryName => categoriesSet.add(categoryName));
@@ -16203,8 +16229,6 @@
                 const normalizedSearch = normalizeString(searchTerm);
                 const activeBoutique = getActiveBoutiqueId();
                 const stock = Object.values(appData.shopStock || {}).filter(item => {
-                    const sourceProduct = appData.storeProducts?.[item.sourceProductId];
-                    if (!isProductPricingComplete(sourceProduct)) return false;
                     const name = normalizeString(`${item.name || ''} ${item.sourceName || ''}`);
                     const category = normalizeString(getShopItemCategory(item));
                     const matchesSearch = !normalizedSearch || name.includes(normalizedSearch) || category.includes(normalizedSearch);
@@ -19081,7 +19105,6 @@
                 const isNewMode = entryMode === 'new';
                 let pid = entryProductSelect ? entryProductSelect.value : '';
                 let prod = null;
-                let enteredPurchaseCost = null;
 
                 if (isNewMode) {
                     if (!canRegisterProductDraft()) {
@@ -19096,7 +19119,6 @@
                         }
                         return;
                     }
-                    enteredPurchaseCost = parseOptionalMoney(entryNewPurchaseCostInput?.value);
                     const existingProduct = Object.values(appData.storeProducts || {}).find(product => {
                         if (normalizeString(product.name) !== normalizeString(name)) return false;
                         if (product.storeId === UNASSIGNED_STORE_ID) return true;
@@ -19109,15 +19131,13 @@
                         const now = new Date().toISOString();
                         const baseProductCode = generateEntryProductCode(name);
                         const baseUnitLabel = DEFAULT_BASE_UNIT_LABEL;
-                        const rawCategoryId = entryNewCategorySelect?.value || '';
-                        const categoryId = canManageCategories() ? rawCategoryId : '';
                         const currency = (DEFAULT_SUPPLIER_CURRENCY || 'CFA').toUpperCase();
                         const packagings = [
                             buildPackagingDraft({
                                 code: 'CTN',
                                 label: 'Conditionnement principal',
                                 unitCount: 1,
-                                purchaseCost: Number.isFinite(enteredPurchaseCost) ? enteredPurchaseCost : null,
+                                purchaseCost: null,
                                 storePrice: null,
                                 shopPrice: null,
                                 allowPurchase: true,
@@ -19136,7 +19156,7 @@
                             baseUnitLabel,
                             packagings,
                             currency,
-                            categoryId: categoryId || null,
+                            categoryId: null,
                             pricingStatus: PRICING_STATUS_PENDING,
                             ...legacyFields,
                             quantityInStore: 0,
@@ -19152,9 +19172,7 @@
                 }
 
                 if (!prod || qty <= 0) return;
-                const purchaseCost = isNewMode
-                    ? (Number.isFinite(enteredPurchaseCost) ? enteredPurchaseCost : Number(prod?.purchaseCost))
-                    : Number(prod?.purchaseCost);
+                const purchaseCost = Number(prod?.purchaseCost);
                 const storePrice = Number(prod?.storeSellingPrice);
                 const boutiquePrice = Number(prod?.boutiqueSellingPrice);
                 if (!isNewMode && (!Number.isFinite(purchaseCost) || !Number.isFinite(storePrice) || !Number.isFinite(boutiquePrice))) {
