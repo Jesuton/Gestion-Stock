@@ -1970,14 +1970,29 @@
                     <div class="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 items-end">
                         <div class="space-y-3">
                             <div>
-                                <label class="text-xs font-semibold text-gray-500">Rechercher un produit</label>
-                                <input type="text" id="traceability-product-search" placeholder="Nom du produit..."
-                                    class="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:ring-sky-500 focus:border-sky-500" />
-                            </div>
-                            <div>
-                                <label class="text-xs font-semibold text-gray-500">Produit sélectionné</label>
-                                <select id="traceability-product-select"
-                                    class="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:ring-sky-500 focus:border-sky-500">
+                                <label for="traceability-product-search" class="text-xs font-semibold text-gray-500">Produit sélectionné</label>
+                                <div id="traceability-product-combobox" class="relative mt-2">
+                                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
+                                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                    <input type="text" id="traceability-product-search" autocomplete="off" placeholder="Rechercher ou sélectionner un produit..."
+                                        class="w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-12 text-sm text-gray-800 shadow-sm focus:border-sky-500 focus:ring-sky-500">
+                                    <button type="button" id="traceability-product-toggle"
+                                        class="absolute inset-y-0 right-0 flex items-center px-4 text-gray-400 transition hover:text-gray-600"
+                                        aria-label="Afficher les produits" aria-expanded="false">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </button>
+                                    <div id="traceability-product-dropdown"
+                                        class="hidden absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+                                        <div id="traceability-product-options" class="max-h-72 space-y-1 overflow-y-auto p-2"></div>
+                                        <div id="traceability-product-empty" class="hidden px-4 py-6 text-sm text-gray-400">Aucun produit correspondant.</div>
+                                    </div>
+                                </div>
+                                <select id="traceability-product-select" class="hidden">
                                     <option value="">Sélectionner un produit</option>
                                 </select>
                             </div>
@@ -3057,9 +3072,28 @@
                     <div id="entry-product-select-row">
                         <label for="entry-product-select" class="block text-sm font-medium text-gray-700">Produit
                             *</label>
-                        <select id="entry-product-select"
-                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400"
-                            required>
+                        <div id="entry-product-combobox" class="relative mt-1">
+                            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <input type="text" id="entry-product-search" autocomplete="off" placeholder="Rechercher ou sélectionner un produit..."
+                                class="w-full rounded-lg border border-gray-300 bg-white py-3 pl-11 pr-12 text-gray-800 shadow-sm focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400">
+                            <button type="button" id="entry-product-toggle"
+                                class="absolute inset-y-0 right-0 flex items-center px-4 text-gray-400 transition hover:text-gray-600"
+                                aria-label="Afficher les produits" aria-expanded="false">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                            <div id="entry-product-dropdown"
+                                class="hidden absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+                                <div id="entry-product-options" class="max-h-72 space-y-1 overflow-y-auto p-2"></div>
+                                <div id="entry-product-empty" class="hidden px-4 py-6 text-sm text-gray-400">Aucun produit correspondant.</div>
+                            </div>
+                        </div>
+                        <select id="entry-product-select" class="hidden" required>
                             <option value="">Sélectionnez un produit</option>
                             <!-- Options remplies par JS -->
                         </select>
@@ -3281,9 +3315,28 @@
                     <div id="exit-product-select-row">
                         <label for="exit-product-select" class="block text-sm font-medium text-gray-700">Produit
                             *</label>
-                        <select id="exit-product-select"
-                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
-                            required>
+                        <div id="exit-product-combobox" class="relative mt-1">
+                            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <input type="text" id="exit-product-search" autocomplete="off" placeholder="Rechercher ou sélectionner un produit..."
+                                class="w-full rounded-lg border border-gray-300 bg-white py-3 pl-11 pr-12 text-gray-800 shadow-sm focus:border-orange-400 focus:ring-2 focus:ring-orange-400">
+                            <button type="button" id="exit-product-toggle"
+                                class="absolute inset-y-0 right-0 flex items-center px-4 text-gray-400 transition hover:text-gray-600"
+                                aria-label="Afficher les produits" aria-expanded="false">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                            <div id="exit-product-dropdown"
+                                class="hidden absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+                                <div id="exit-product-options" class="max-h-72 space-y-1 overflow-y-auto p-2"></div>
+                                <div id="exit-product-empty" class="hidden px-4 py-6 text-sm text-gray-400">Aucun produit correspondant.</div>
+                            </div>
+                        </div>
+                        <select id="exit-product-select" class="hidden" required>
                             <option value="">Sélectionnez un produit</option>
                             <!-- Options remplies par JS -->
                         </select>
@@ -3364,12 +3417,31 @@
             <form id="transfer-form">
                 <div class="space-y-5 px-6 py-6 sm:px-7 sm:py-7">
                     <div>
-                        <label for="transfer-product-select" class="block text-sm font-semibold text-slate-700">Article source *</label>
-                        <input type="text" id="transfer-product-search" placeholder="Rechercher un article par nom, code ou description..."
-                            class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
-                        <select id="transfer-product-select"
-                            class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400"
-                            required>
+                        <label for="transfer-product-search" class="block text-sm font-semibold text-slate-700">Article source *</label>
+                        <div id="transfer-product-combobox" class="relative mt-2">
+                            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <input type="text" id="transfer-product-search" autocomplete="off" placeholder="Rechercher ou sélectionner un article..."
+                                class="w-full rounded-2xl border border-slate-200 bg-white py-3.5 pl-11 pr-12 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
+                            <button type="button" id="transfer-product-toggle"
+                                class="absolute inset-y-0 right-0 flex items-center px-4 text-slate-400 transition hover:text-slate-600"
+                                aria-label="Afficher les articles" aria-expanded="false">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                            <div id="transfer-product-dropdown"
+                                class="hidden absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+                                <div id="transfer-product-options" class="max-h-72 space-y-1 overflow-y-auto p-2"></div>
+                                <div id="transfer-product-empty" class="hidden px-4 py-6 text-sm text-slate-400">
+                                    Aucun article correspondant.
+                                </div>
+                            </div>
+                        </div>
+                        <select id="transfer-product-select" class="hidden">
                             <option value="">Sélectionnez un article à transférer...</option>
                             <!-- Options remplies par JS -->
                         </select>
@@ -3499,10 +3571,29 @@
                         </select>
                     </div>
                     <div>
-                        <label for="restock-product-select" class="block text-sm font-semibold text-slate-700">Produit de la boutique *</label>
-                        <select id="restock-product-select"
-                            class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400"
-                            required>
+                        <label for="restock-product-search" class="block text-sm font-semibold text-slate-700">Produit de la boutique *</label>
+                        <div id="restock-product-combobox" class="relative mt-2">
+                            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <input type="text" id="restock-product-search" autocomplete="off" placeholder="Rechercher ou sélectionner un produit..."
+                                class="w-full rounded-2xl border border-slate-200 bg-white py-3.5 pl-11 pr-12 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
+                            <button type="button" id="restock-product-toggle"
+                                class="absolute inset-y-0 right-0 flex items-center px-4 text-slate-400 transition hover:text-slate-600"
+                                aria-label="Afficher les produits" aria-expanded="false">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                            <div id="restock-product-dropdown"
+                                class="hidden absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+                                <div id="restock-product-options" class="max-h-72 space-y-1 overflow-y-auto p-2"></div>
+                                <div id="restock-product-empty" class="hidden px-4 py-6 text-sm text-slate-400">Aucun produit correspondant.</div>
+                            </div>
+                        </div>
+                        <select id="restock-product-select" class="hidden" required>
                             <option value="">Sélectionnez un produit à réapprovisionner</option>
                             <!-- Options remplies par JS -->
                         </select>
@@ -4070,6 +4161,14 @@
             let traceabilitySelectedProductId = '';
             let traceabilitySearchQuery = '';
             let activePricePackagingProductId = null;
+            let transferProductSearchQuery = '';
+            let isTransferProductDropdownOpen = false;
+            const productComboboxStates = {
+                entry: { query: '', isOpen: false },
+                exit: { query: '', isOpen: false },
+                restock: { query: '', isOpen: false },
+                traceability: { query: '', isOpen: false }
+            };
 
             // Cart state
             let cartItems = [];
@@ -4135,7 +4234,12 @@
             const shopSearchInput = document.getElementById('shop-search-input');
             const storeSelector = document.getElementById('store-selector');
             const storeSelectorMovements = document.getElementById('store-selector-movements');
+            const traceabilityProductCombobox = document.getElementById('traceability-product-combobox');
             const traceabilityProductSearch = document.getElementById('traceability-product-search');
+            const traceabilityProductToggle = document.getElementById('traceability-product-toggle');
+            const traceabilityProductDropdown = document.getElementById('traceability-product-dropdown');
+            const traceabilityProductOptions = document.getElementById('traceability-product-options');
+            const traceabilityProductEmpty = document.getElementById('traceability-product-empty');
             const traceabilityProductSelect = document.getElementById('traceability-product-select');
             const traceabilityViewTimeline = document.getElementById('traceability-view-timeline');
             const traceabilityViewTable = document.getElementById('traceability-view-table');
@@ -4424,6 +4528,12 @@
             const entryModal = document.getElementById('entry-modal');
             const closeEntryModalButton = document.getElementById('close-entry-modal-button');
             const entryForm = document.getElementById('entry-form');
+            const entryProductCombobox = document.getElementById('entry-product-combobox');
+            const entryProductSearchInput = document.getElementById('entry-product-search');
+            const entryProductToggleButton = document.getElementById('entry-product-toggle');
+            const entryProductDropdown = document.getElementById('entry-product-dropdown');
+            const entryProductOptions = document.getElementById('entry-product-options');
+            const entryProductEmpty = document.getElementById('entry-product-empty');
             const entryProductSelect = document.getElementById('entry-product-select');
             const entryProductInfo = document.getElementById('entry-product-info');
             const entryProductName = document.getElementById('entry-product-name');
@@ -4494,6 +4604,12 @@
             const exitModal = document.getElementById('exit-modal');
             const closeExitModalButton = document.getElementById('close-exit-modal-button');
             const exitForm = document.getElementById('exit-form');
+            const exitProductCombobox = document.getElementById('exit-product-combobox');
+            const exitProductSearchInput = document.getElementById('exit-product-search');
+            const exitProductToggleButton = document.getElementById('exit-product-toggle');
+            const exitProductDropdown = document.getElementById('exit-product-dropdown');
+            const exitProductOptions = document.getElementById('exit-product-options');
+            const exitProductEmpty = document.getElementById('exit-product-empty');
             const exitProductSelect = document.getElementById('exit-product-select');
             const exitProductInfo = document.getElementById('exit-product-info');
             const exitProductName = document.getElementById('exit-product-name');
@@ -4513,7 +4629,12 @@
             const transferModal = document.getElementById('transfer-modal');
             const closeTransferModalButton = document.getElementById('close-transfer-modal-button');
             const transferForm = document.getElementById('transfer-form');
+            const transferProductCombobox = document.getElementById('transfer-product-combobox');
             const transferProductSearchInput = document.getElementById('transfer-product-search');
+            const transferProductToggleButton = document.getElementById('transfer-product-toggle');
+            const transferProductDropdown = document.getElementById('transfer-product-dropdown');
+            const transferProductOptions = document.getElementById('transfer-product-options');
+            const transferProductEmpty = document.getElementById('transfer-product-empty');
             const transferProductSelect = document.getElementById('transfer-product-select');
             const transferBoutiqueSelect = document.getElementById('transfer-boutique-select');
             const transferPackagingPanel = document.getElementById('transfer-packaging-panel');
@@ -4533,6 +4654,12 @@
             const closeRestockModalButton = document.getElementById('close-restock-modal-button');
             const restockBoutiqueSelect = document.getElementById('restock-boutique-select');
             const restockForm = document.getElementById('restock-form');
+            const restockProductCombobox = document.getElementById('restock-product-combobox');
+            const restockProductSearchInput = document.getElementById('restock-product-search');
+            const restockProductToggleButton = document.getElementById('restock-product-toggle');
+            const restockProductDropdown = document.getElementById('restock-product-dropdown');
+            const restockProductOptions = document.getElementById('restock-product-options');
+            const restockProductEmpty = document.getElementById('restock-product-empty');
             const restockProductSelect = document.getElementById('restock-product-select');
             const restockSourceInfo = document.getElementById('restock-source-info');
             const restockSourceName = document.getElementById('restock-source-name');
@@ -5591,6 +5718,427 @@
                     transferBoutiqueSelect.appendChild(option);
                 });
                 transferBoutiqueSelect.value = getActiveBoutiqueId() || '';
+            }
+
+            function getTransferProductDisplayLabel(product) {
+                if (!product) return '';
+                const name = product.name || 'Produit sans nom';
+                const code = product.baseCode || product.sku || product.id || '';
+                return code ? `${name} · ${code}` : name;
+            }
+
+            function closeTransferProductDropdown({ restoreSelection = false } = {}) {
+                isTransferProductDropdownOpen = false;
+                if (transferProductDropdown) transferProductDropdown.classList.add('hidden');
+                if (transferProductToggleButton) transferProductToggleButton.setAttribute('aria-expanded', 'false');
+                if (restoreSelection && transferProductSearchInput) {
+                    const selectedProduct = transferProductSelect ? getActiveStoreProductById(transferProductSelect.value) : null;
+                    transferProductSearchQuery = '';
+                    transferProductSearchInput.value = selectedProduct ? getTransferProductDisplayLabel(selectedProduct) : '';
+                }
+            }
+
+            function openTransferProductDropdown() {
+                isTransferProductDropdownOpen = true;
+                if (transferProductDropdown) transferProductDropdown.classList.remove('hidden');
+                if (transferProductToggleButton) transferProductToggleButton.setAttribute('aria-expanded', 'true');
+            }
+
+            function renderTransferProductDropdown() {
+                if (!transferProductOptions || !transferProductEmpty) return;
+                const products = getActiveStoreProducts();
+                const query = normalizeString(transferProductSearchQuery);
+                const filteredProducts = products.filter(product => {
+                    if (!query) return true;
+                    const name = normalizeString(product?.name);
+                    const code = normalizeString(product?.baseCode || product?.sku || product?.id);
+                    const description = normalizeString(product?.description);
+                    return name.includes(query) || code.includes(query) || description.includes(query);
+                });
+
+                transferProductOptions.innerHTML = filteredProducts.map(product => {
+                    const qty = parseNonNegativeInteger(product.quantityInStore, 0);
+                    const code = escapeHtml(product.baseCode || product.sku || product.id || '—');
+                    const name = escapeHtml(product.name || 'Produit sans nom');
+                    const description = product.description
+                        ? `<p class="mt-1 truncate text-xs text-slate-400">${escapeHtml(product.description)}</p>`
+                        : '';
+                    const isSelected = transferProductSelect?.value === product.id;
+                    const isDisabled = qty <= 0;
+                    return `
+                        <button type="button"
+                            data-transfer-product-option="${escapeHtml(product.id)}"
+                            class="flex w-full items-start justify-between gap-3 rounded-xl px-3 py-3 text-left transition ${isSelected ? 'bg-cyan-50 ring-1 ring-cyan-200' : 'hover:bg-slate-50'} ${isDisabled ? 'cursor-not-allowed opacity-55' : ''}"
+                            ${isDisabled ? 'disabled' : ''}>
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-semibold text-slate-800">${name}</p>
+                                <p class="mt-1 text-xs font-medium uppercase tracking-wide text-slate-400">${code}</p>
+                                ${description}
+                            </div>
+                            <div class="shrink-0 text-right">
+                                <span class="inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${isDisabled ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}">
+                                    ${isDisabled ? 'Rupture' : `Stock ${qty}`}
+                                </span>
+                            </div>
+                        </button>
+                    `;
+                }).join('');
+
+                transferProductOptions.classList.toggle('hidden', filteredProducts.length === 0);
+                transferProductEmpty.classList.toggle('hidden', filteredProducts.length > 0);
+            }
+
+            function setTransferProductSelection(productId, { closeDropdown = true } = {}) {
+                if (!transferProductSelect) return;
+                transferProductSelect.value = productId || '';
+                const selectedProduct = productId ? getActiveStoreProductById(productId) : null;
+                transferProductSearchQuery = '';
+                if (transferProductSearchInput) {
+                    transferProductSearchInput.value = selectedProduct ? getTransferProductDisplayLabel(selectedProduct) : '';
+                }
+                renderTransferProductDropdown();
+                transferProductSelect.dispatchEvent(new Event('change'));
+                if (closeDropdown) {
+                    closeTransferProductDropdown();
+                }
+            }
+
+            function buildProductComboboxOptionMarkup(item, selectedValue) {
+                const isSelected = selectedValue === item.value;
+                const disabledClass = item.disabled ? 'cursor-not-allowed opacity-55' : '';
+                const activeClass = isSelected ? 'bg-cyan-50 ring-1 ring-cyan-200' : 'hover:bg-slate-50';
+                const description = item.description
+                    ? `<p class="mt-1 truncate text-xs text-slate-400">${escapeHtml(item.description)}</p>`
+                    : '';
+                const meta = item.meta
+                    ? `<p class="mt-1 text-xs font-medium uppercase tracking-wide text-slate-400">${escapeHtml(item.meta)}</p>`
+                    : '';
+                const badge = item.badge
+                    ? `<span class="inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${item.badgeClasses || 'bg-slate-100 text-slate-600'}">${escapeHtml(item.badge)}</span>`
+                    : '';
+
+                return `
+                    <button type="button"
+                        data-product-option="${escapeHtml(item.value)}"
+                        class="flex w-full items-start justify-between gap-3 rounded-xl px-3 py-3 text-left transition ${activeClass} ${disabledClass}"
+                        ${item.disabled ? 'disabled' : ''}>
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-semibold text-slate-800">${escapeHtml(item.title)}</p>
+                            ${meta}
+                            ${description}
+                        </div>
+                        <div class="shrink-0 text-right">
+                            ${badge}
+                        </div>
+                    </button>
+                `;
+            }
+
+            function getEntryProductComboboxItems(search = '') {
+                const normalized = normalizeString(search);
+                return getEntrySelectableProducts()
+                    .filter(product => {
+                        if (!normalized) return true;
+                        const haystack = [
+                            product.name,
+                            product.baseCode,
+                            product.sku,
+                            product.description,
+                            product.id
+                        ].map(normalizeString).join(' ');
+                        return haystack.includes(normalized);
+                    })
+                    .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+                    .map(product => {
+                        const qty = parseNonNegativeInteger(product.quantityInStore, 0);
+                        const isUnassigned = product.storeId === UNASSIGNED_STORE_ID;
+                        return {
+                            value: product.id,
+                            title: product.name || 'Produit sans nom',
+                            meta: product.baseCode || product.sku || product.id || '—',
+                            description: product.description || (isUnassigned ? 'Produit non encore assigné au magasin.' : ''),
+                            badge: isUnassigned ? 'Non assigné' : `Stock ${qty}`,
+                            badgeClasses: isUnassigned ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700',
+                            displayLabel: getTransferProductDisplayLabel(product)
+                        };
+                    });
+            }
+
+            function getExitProductComboboxItems(search = '') {
+                const normalized = normalizeString(search);
+                return getActiveStoreProducts()
+                    .filter(product => {
+                        if (!normalized) return true;
+                        const haystack = [
+                            product.name,
+                            product.baseCode,
+                            product.sku,
+                            product.description,
+                            product.id
+                        ].map(normalizeString).join(' ');
+                        return haystack.includes(normalized);
+                    })
+                    .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+                    .map(product => {
+                        const qty = parseNonNegativeInteger(product.quantityInStore, 0);
+                        return {
+                            value: product.id,
+                            title: product.name || 'Produit sans nom',
+                            meta: product.baseCode || product.sku || product.id || '—',
+                            description: product.description || '',
+                            badge: `Stock ${qty}`,
+                            badgeClasses: qty > 0 ? 'bg-orange-50 text-orange-700' : 'bg-rose-50 text-rose-700',
+                            displayLabel: getTransferProductDisplayLabel(product)
+                        };
+                    });
+            }
+
+            function getRestockProductComboboxItems(search = '') {
+                const normalized = normalizeString(search);
+                const boutiqueId = restockBoutiqueSelect?.value || getActiveBoutiqueId();
+                const storeId = getActiveStoreId();
+                return Object.values(appData.shopStock || {})
+                    .filter(item => {
+                        const matchesBoutique = boutiqueId ? resolveBoutiqueId(item.boutiqueId) === boutiqueId : true;
+                        const matchesStore = storeId ? resolveStoreId(item.sourceStoreId) === storeId : true;
+                        if (!matchesBoutique || !matchesStore) return false;
+                        if (!normalized) return true;
+                        const haystack = [
+                            getShopItemDisplayName(item),
+                            getShopItemPackagingLabel(item),
+                            item.variantCode,
+                            item.sourceName,
+                            item.name,
+                            item.id
+                        ].map(normalizeString).join(' ');
+                        return haystack.includes(normalized);
+                    })
+                    .sort((a, b) => getShopItemDisplayName(a).localeCompare(getShopItemDisplayName(b)))
+                    .map(item => {
+                        const availability = getRestockAvailability(item);
+                        const isDisabled = !availability.sourceProduct || availability.maxPackages <= 0;
+                        return {
+                            value: item.id,
+                            title: getShopItemDisplayName(item),
+                            meta: getShopItemPackagingLabel(item),
+                            description: isDisabled
+                                ? (!availability.sourceProduct ? 'Source magasin introuvable.' : 'Aucun stock magasin disponible pour ce réapprovisionnement.')
+                                : `Disponible boutique: ${parseNonNegativeInteger(item.quantityInShop, 0)} · Max réappro: ${availability.maxPackages}`,
+                            badge: isDisabled ? 'Indisponible' : `Max ${availability.maxPackages}`,
+                            badgeClasses: isDisabled ? 'bg-rose-50 text-rose-700' : 'bg-cyan-50 text-cyan-700',
+                            disabled: isDisabled,
+                            displayLabel: `${getShopItemDisplayName(item)} · ${getShopItemPackagingLabel(item)}`
+                        };
+                    });
+            }
+
+            function getTraceabilityProductComboboxItems(search = '') {
+                return getTraceabilityProducts(search).map(product => {
+                    const rawStoreId = product.storeId || UNASSIGNED_STORE_ID;
+                    const storeLabel = rawStoreId === UNASSIGNED_STORE_ID
+                        ? 'Non assigné'
+                        : getTraceabilityStoreLabel(resolveStoreId(rawStoreId));
+                    return {
+                        value: product.id,
+                        title: product.name || 'Produit sans nom',
+                        meta: product.baseCode || product.sku || product.id || '—',
+                        description: product.description || '',
+                        badge: storeLabel || 'Magasin',
+                        badgeClasses: 'bg-sky-50 text-sky-700',
+                        displayLabel: storeLabel ? `${product.name} · ${storeLabel}` : (product.name || 'Produit')
+                    };
+                });
+            }
+
+            function getProductComboboxConfig(key) {
+                const configs = {
+                    entry: {
+                        combobox: entryProductCombobox,
+                        input: entryProductSearchInput,
+                        toggle: entryProductToggleButton,
+                        dropdown: entryProductDropdown,
+                        options: entryProductOptions,
+                        empty: entryProductEmpty,
+                        select: entryProductSelect,
+                        getItems: () => getEntryProductComboboxItems(productComboboxStates.entry.query)
+                    },
+                    exit: {
+                        combobox: exitProductCombobox,
+                        input: exitProductSearchInput,
+                        toggle: exitProductToggleButton,
+                        dropdown: exitProductDropdown,
+                        options: exitProductOptions,
+                        empty: exitProductEmpty,
+                        select: exitProductSelect,
+                        getItems: () => getExitProductComboboxItems(productComboboxStates.exit.query)
+                    },
+                    restock: {
+                        combobox: restockProductCombobox,
+                        input: restockProductSearchInput,
+                        toggle: restockProductToggleButton,
+                        dropdown: restockProductDropdown,
+                        options: restockProductOptions,
+                        empty: restockProductEmpty,
+                        select: restockProductSelect,
+                        getItems: () => getRestockProductComboboxItems(productComboboxStates.restock.query)
+                    },
+                    traceability: {
+                        combobox: traceabilityProductCombobox,
+                        input: traceabilityProductSearch,
+                        toggle: traceabilityProductToggle,
+                        dropdown: traceabilityProductDropdown,
+                        options: traceabilityProductOptions,
+                        empty: traceabilityProductEmpty,
+                        select: traceabilityProductSelect,
+                        getItems: () => getTraceabilityProductComboboxItems(productComboboxStates.traceability.query)
+                    }
+                };
+                return configs[key] || null;
+            }
+
+            function getProductComboboxSelectionLabel(key, value) {
+                if (!value) return '';
+                if (key === 'entry') {
+                    const product = getEntryProductById(value);
+                    return product ? getTransferProductDisplayLabel(product) : '';
+                }
+                if (key === 'exit') {
+                    const product = getActiveStoreProductById(value);
+                    return product ? getTransferProductDisplayLabel(product) : '';
+                }
+                if (key === 'restock') {
+                    const item = appData.shopStock?.[value];
+                    return item ? `${getShopItemDisplayName(item)} · ${getShopItemPackagingLabel(item)}` : '';
+                }
+                if (key === 'traceability') {
+                    const product = appData.storeProducts?.[value];
+                    if (!product) return '';
+                    const rawStoreId = product.storeId || UNASSIGNED_STORE_ID;
+                    const storeLabel = rawStoreId === UNASSIGNED_STORE_ID
+                        ? 'Non assigné'
+                        : getTraceabilityStoreLabel(resolveStoreId(rawStoreId));
+                    return storeLabel ? `${product.name || 'Produit'} · ${storeLabel}` : (product.name || 'Produit');
+                }
+                return '';
+            }
+
+            function closeProductCombobox(key, { restoreSelection = false } = {}) {
+                const config = getProductComboboxConfig(key);
+                if (!config) return;
+                productComboboxStates[key].isOpen = false;
+                if (config.dropdown) config.dropdown.classList.add('hidden');
+                if (config.toggle) config.toggle.setAttribute('aria-expanded', 'false');
+                if (restoreSelection && config.input) {
+                    const selectedLabel = getProductComboboxSelectionLabel(key, config.select?.value || '');
+                    productComboboxStates[key].query = '';
+                    config.input.value = selectedLabel || '';
+                }
+            }
+
+            function openProductCombobox(key) {
+                const config = getProductComboboxConfig(key);
+                if (!config) return;
+                productComboboxStates[key].isOpen = true;
+                if (config.dropdown) config.dropdown.classList.remove('hidden');
+                if (config.toggle) config.toggle.setAttribute('aria-expanded', 'true');
+            }
+
+            function renderProductCombobox(key) {
+                const config = getProductComboboxConfig(key);
+                if (!config?.options || !config.empty || !config.select) return;
+                const items = config.getItems();
+                const selectedValue = config.select.value || '';
+                config.options.innerHTML = items.map(item => buildProductComboboxOptionMarkup(item, selectedValue)).join('');
+                config.options.classList.toggle('hidden', items.length === 0);
+                config.empty.classList.toggle('hidden', items.length > 0);
+            }
+
+            function syncProductComboboxInput(key) {
+                const config = getProductComboboxConfig(key);
+                if (!config?.input || !config?.select) return;
+                if (productComboboxStates[key].query) return;
+                config.input.value = getProductComboboxSelectionLabel(key, config.select.value || '');
+            }
+
+            function setProductComboboxSelection(key, value, { closeDropdown = true } = {}) {
+                const config = getProductComboboxConfig(key);
+                if (!config?.select) return;
+                config.select.value = value || '';
+                productComboboxStates[key].query = '';
+                syncProductComboboxInput(key);
+                renderProductCombobox(key);
+                config.select.dispatchEvent(new Event('change'));
+                if (closeDropdown) {
+                    closeProductCombobox(key);
+                }
+            }
+
+            function closeOtherProductComboboxes(activeKey = null) {
+                Object.keys(productComboboxStates).forEach(key => {
+                    if (key === activeKey || !productComboboxStates[key].isOpen) return;
+                    closeProductCombobox(key, { restoreSelection: true });
+                });
+            }
+
+            function bindProductCombobox(key) {
+                const config = getProductComboboxConfig(key);
+                if (!config?.input || !config.toggle || !config.options || !config.select) return;
+
+                config.input.addEventListener('input', () => {
+                    const selectedValue = config.select.value || '';
+                    const selectedLabel = getProductComboboxSelectionLabel(key, selectedValue);
+                    const typedValue = config.input.value || '';
+                    productComboboxStates[key].query = typedValue;
+                    if (key === 'traceability') {
+                        traceabilitySearchQuery = typedValue;
+                    }
+                    if (selectedValue && normalizeString(typedValue) !== normalizeString(selectedLabel)) {
+                        config.select.value = '';
+                        config.select.dispatchEvent(new Event('change'));
+                    }
+                    closeOtherProductComboboxes(key);
+                    openProductCombobox(key);
+                    renderProductCombobox(key);
+                });
+
+                config.input.addEventListener('focus', () => {
+                    closeOtherProductComboboxes(key);
+                    openProductCombobox(key);
+                    renderProductCombobox(key);
+                });
+
+                config.input.addEventListener('keydown', (event) => {
+                    if (event.key === 'Escape') {
+                        event.preventDefault();
+                        closeProductCombobox(key, { restoreSelection: true });
+                        config.input.blur();
+                        return;
+                    }
+                    if (event.key === 'Enter' && productComboboxStates[key].isOpen) {
+                        const firstOption = config.options.querySelector('[data-product-option]:not([disabled])');
+                        if (firstOption) {
+                            event.preventDefault();
+                            setProductComboboxSelection(key, firstOption.dataset.productOption);
+                        }
+                    }
+                });
+
+                config.toggle.addEventListener('click', () => {
+                    if (productComboboxStates[key].isOpen) {
+                        closeProductCombobox(key, { restoreSelection: true });
+                    } else {
+                        closeOtherProductComboboxes(key);
+                        config.input.focus();
+                        openProductCombobox(key);
+                        renderProductCombobox(key);
+                    }
+                });
+
+                config.options.addEventListener('click', (event) => {
+                    const option = event.target.closest('[data-product-option]');
+                    if (!option || option.hasAttribute('disabled')) return;
+                    setProductComboboxSelection(key, option.dataset.productOption);
+                });
             }
 
             function resetTransferPackagingInputs() {
@@ -11490,17 +12038,6 @@
             function populateStoreProductSelects() {
                 const activeProducts = getActiveStoreProducts();
                 const entryProducts = getEntrySelectableProducts();
-                const transferSearch = normalizeString(transferProductSearchInput?.value);
-
-                const matchesTransferProductSearch = (product) => {
-                    if (!transferSearch) return true;
-                    const name = normalizeString(product?.name);
-                    const code = normalizeString(product?.baseCode || product?.sku || product?.id);
-                    const description = normalizeString(product?.description);
-                    return name.includes(transferSearch)
-                        || code.includes(transferSearch)
-                        || description.includes(transferSearch);
-                };
 
                 const fillSelect = (select, products, showAssignmentHint = false, disableOutOfStock = false) => {
                     if (!select) return;
@@ -11508,21 +12045,11 @@
                     const previousValue = select.value;
                     select.innerHTML = '';
                     select.appendChild(firstOption.cloneNode(true));
-                    const filteredProducts = select === transferProductSelect
-                        ? products.filter(matchesTransferProductSearch)
-                        : products;
-                    if (!filteredProducts.length) {
-                        if (select === transferProductSelect && transferSearch) {
-                            const emptyOption = document.createElement('option');
-                            emptyOption.value = '';
-                            emptyOption.textContent = 'Aucun article correspondant.';
-                            emptyOption.disabled = true;
-                            select.appendChild(emptyOption);
-                        }
+                    if (!products.length) {
                         select.value = '';
                         return;
                     }
-                    filteredProducts.forEach(product => {
+                    products.forEach(product => {
                         const rawStoreId = product.storeId;
                         const isUnassigned = rawStoreId === UNASSIGNED_STORE_ID;
                         const qty = Number(product.quantityInStore) || 0;
@@ -11536,7 +12063,7 @@
                         }
                         select.appendChild(option);
                     });
-                    const nextSelectionStillAvailable = filteredProducts.some(product => product.id === previousValue);
+                    const nextSelectionStillAvailable = products.some(product => product.id === previousValue);
                     select.value = nextSelectionStillAvailable ? previousValue : '';
                 };
 
@@ -11550,9 +12077,18 @@
                 if (exitProductSelect && exitProductSelect.value) {
                     updateExitProductInfo(getActiveStoreProductById(exitProductSelect.value));
                 }
+                syncProductComboboxInput('entry');
+                syncProductComboboxInput('exit');
+                renderProductCombobox('entry');
+                renderProductCombobox('exit');
                 if (transferProductSelect && transferProductSelect.selectedOptions.length && transferProductSelect.selectedOptions[0]?.disabled) {
                     transferProductSelect.value = '';
                 }
+                const selectedTransferProduct = transferProductSelect?.value ? getActiveStoreProductById(transferProductSelect.value) : null;
+                if (!transferProductSearchQuery && transferProductSearchInput) {
+                    transferProductSearchInput.value = selectedTransferProduct ? getTransferProductDisplayLabel(selectedTransferProduct) : '';
+                }
+                renderTransferProductDropdown();
                 updateTransferPackagingUI();
             }
 
@@ -11613,6 +12149,9 @@
                 if (entryError) entryError.classList.add('hidden');
                 if (entryProductSelectRow) entryProductSelectRow.classList.toggle('hidden', !!productId);
                 if (entryProductSelect) entryProductSelect.value = productId || '';
+                productComboboxStates.entry.query = '';
+                syncProductComboboxInput('entry');
+                renderProductCombobox('entry');
                 updateEntryProductInfo(productId ? getEntryProductById(productId) : null);
                 renderSupplierSelect();
                 entryModal.classList.remove('hidden');
@@ -11628,6 +12167,9 @@
                 if (exitError) exitError.classList.add('hidden');
                 if (exitProductSelectRow) exitProductSelectRow.classList.toggle('hidden', !!productId);
                 if (exitProductSelect) exitProductSelect.value = productId || '';
+                productComboboxStates.exit.query = '';
+                syncProductComboboxInput('exit');
+                renderProductCombobox('exit');
                 updateExitProductInfo(productId ? getActiveStoreProductById(productId) : null);
                 exitModal.classList.remove('hidden');
             }
@@ -11659,6 +12201,8 @@
                 if (restockProductSelect && restockProductSelect.selectedOptions.length && restockProductSelect.selectedOptions[0]?.disabled) {
                     restockProductSelect.value = '';
                 }
+                syncProductComboboxInput('restock');
+                renderProductCombobox('restock');
                 updateRestockFormState();
             }
 
@@ -13881,13 +14425,23 @@
                     const rawStoreId = product.storeId || UNASSIGNED_STORE_ID;
                     const resolvedStoreId = rawStoreId === UNASSIGNED_STORE_ID ? UNASSIGNED_STORE_ID : resolveStoreId(rawStoreId);
                     if (rawStoreId !== UNASSIGNED_STORE_ID && allowedStores.size && !allowedStores.has(resolvedStoreId)) return false;
-                    if (normalized && !normalizeString(product.name || '').includes(normalized)) return false;
+                    if (normalized) {
+                        const haystack = [
+                            product.name,
+                            product.baseCode,
+                            product.sku,
+                            product.description,
+                            product.id
+                        ].map(normalizeString).join(' ');
+                        if (!haystack.includes(normalized)) return false;
+                    }
                     return true;
                 }).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
             }
 
             function renderTraceabilityProductOptions() {
                 if (!traceabilityProductSelect) return;
+                traceabilitySearchQuery = productComboboxStates.traceability.query;
                 const products = getTraceabilityProducts(traceabilitySearchQuery);
                 const currentSelection = traceabilityProductSelect.value || traceabilitySelectedProductId;
                 traceabilityProductSelect.innerHTML = '<option value="">Sélectionner un produit</option>';
@@ -13908,6 +14462,8 @@
                 }
                 traceabilityProductSelect.disabled = products.length === 0;
                 traceabilitySelectedProductId = traceabilityProductSelect.value || '';
+                syncProductComboboxInput('traceability');
+                renderProductCombobox('traceability');
             }
 
             function getTraceabilityDotClass(label = '') {
@@ -14875,6 +15431,12 @@
                 traceabilityViewMode = 'timeline';
                 traceabilitySelectedProductId = '';
                 traceabilitySearchQuery = '';
+                Object.keys(productComboboxStates).forEach(key => {
+                    productComboboxStates[key].query = '';
+                    productComboboxStates[key].isOpen = false;
+                });
+                transferProductSearchQuery = '';
+                isTransferProductDropdownOpen = false;
             }
 
             function updateUI() {
@@ -17317,14 +17879,10 @@
                     input.addEventListener('input', renderShopMovements);
                     input.addEventListener('change', renderShopMovements);
                 });
-            if (traceabilityProductSearch) {
-                traceabilityProductSearch.addEventListener('input', () => {
-                    traceabilitySearchQuery = traceabilityProductSearch.value || '';
-                    renderTraceabilityPage();
-                });
-            }
             if (traceabilityProductSelect) {
                 traceabilityProductSelect.addEventListener('change', () => {
+                    syncProductComboboxInput('traceability');
+                    renderProductCombobox('traceability');
                     traceabilitySelectedProductId = traceabilityProductSelect.value || '';
                     renderTraceabilityPage();
                 });
@@ -18607,6 +19165,8 @@
                     await update(ref(db), updates);
                     showSuccessToast("Transfert envoyé pour validation.");
                     transferForm.reset();
+                    transferProductSearchQuery = '';
+                    closeTransferProductDropdown();
                     transferModal.classList.add('hidden');
                 } catch (err) {
                     console.error(err);
@@ -18865,6 +19425,7 @@
                 }
                 transferModal.classList.remove('hidden');
                 transferForm.reset();
+                transferProductSearchQuery = '';
                 if (transferProductSearchInput) transferProductSearchInput.value = '';
                 populateStoreProductSelects();
                 resetTransferPackagingInputs();
@@ -18872,12 +19433,17 @@
                 updatePricingAccessState();
                 seedDefaultTransferBreakdown();
                 updateTransferPackagingUI();
+                closeTransferProductDropdown();
             });
             if (openRestockModalButton) openRestockModalButton.addEventListener('click', () => {
                 restockModal.classList.remove('hidden');
                 restockForm.reset();
+                productComboboxStates.restock.query = '';
                 renderRestockBoutiqueSelect();
                 populateShopProductSelects();
+                syncProductComboboxInput('restock');
+                renderProductCombobox('restock');
+                closeProductCombobox('restock');
                 restockSourceInfo.classList.add('hidden');
                 if (restockCartonEquivalent) restockCartonEquivalent.value = '—';
                 if (restockStockWarning) restockStockWarning.classList.add('hidden');
@@ -18888,16 +19454,47 @@
             if (closeNewProductModalButton) closeNewProductModalButton.addEventListener('click', () => newProductModal.classList.add('hidden'));
             if (closePricePackagingModalButton) closePricePackagingModalButton.addEventListener('click', closePricePackagingModal);
             if (pricePackagingCancelButton) pricePackagingCancelButton.addEventListener('click', closePricePackagingModal);
-            if (closeEntryModalButton) closeEntryModalButton.addEventListener('click', () => entryModal.classList.add('hidden'));
-            if (closeExitModalButton) closeExitModalButton.addEventListener('click', () => exitModal.classList.add('hidden'));
-            if (entryCancelButton) entryCancelButton.addEventListener('click', () => entryModal.classList.add('hidden'));
-            if (exitCancelButton) exitCancelButton.addEventListener('click', () => exitModal.classList.add('hidden'));
+            if (closeEntryModalButton) closeEntryModalButton.addEventListener('click', () => {
+                closeProductCombobox('entry', { restoreSelection: true });
+                entryModal.classList.add('hidden');
+            });
+            if (closeExitModalButton) closeExitModalButton.addEventListener('click', () => {
+                closeProductCombobox('exit', { restoreSelection: true });
+                exitModal.classList.add('hidden');
+            });
+            if (entryCancelButton) entryCancelButton.addEventListener('click', () => {
+                closeProductCombobox('entry', { restoreSelection: true });
+                entryModal.classList.add('hidden');
+            });
+            if (exitCancelButton) exitCancelButton.addEventListener('click', () => {
+                closeProductCombobox('exit', { restoreSelection: true });
+                exitModal.classList.add('hidden');
+            });
             if (closeSupplierModalButton) closeSupplierModalButton.addEventListener('click', () => supplierModal.classList.add('hidden'));
             if (supplierCancelButton) supplierCancelButton.addEventListener('click', () => supplierModal.classList.add('hidden'));
             if (closeSupplierPaymentModalButton) closeSupplierPaymentModalButton.addEventListener('click', closeSupplierPaymentModal);
             if (supplierPaymentCancelButton) supplierPaymentCancelButton.addEventListener('click', closeSupplierPaymentModal);
-            if (closeTransferModalButton) closeTransferModalButton.addEventListener('click', () => transferModal.classList.add('hidden'));
-            if (closeRestockModalButton) closeRestockModalButton.addEventListener('click', () => restockModal.classList.add('hidden'));
+            if (closeTransferModalButton) closeTransferModalButton.addEventListener('click', () => {
+                closeTransferProductDropdown({ restoreSelection: true });
+                transferModal.classList.add('hidden');
+            });
+            if (closeRestockModalButton) closeRestockModalButton.addEventListener('click', () => {
+                closeProductCombobox('restock', { restoreSelection: true });
+                restockModal.classList.add('hidden');
+            });
+            document.addEventListener('click', (event) => {
+                if (!isTransferProductDropdownOpen) return;
+                if (transferProductCombobox?.contains(event.target)) return;
+                closeTransferProductDropdown({ restoreSelection: true });
+            });
+            document.addEventListener('click', (event) => {
+                ['entry', 'exit', 'restock', 'traceability'].forEach(key => {
+                    if (!productComboboxStates[key].isOpen) return;
+                    const config = getProductComboboxConfig(key);
+                    if (config?.combobox?.contains(event.target)) return;
+                    closeProductCombobox(key, { restoreSelection: true });
+                });
+            });
             if (newProductAddPackagingButton) {
                 newProductAddPackagingButton.addEventListener('click', () => {
                     const nextEntries = collectPackagingEditorEntries(newProductPackagingsList);
@@ -18944,13 +19541,22 @@
                 });
             }
 
+            bindProductCombobox('entry');
+            bindProductCombobox('exit');
+            bindProductCombobox('restock');
+            bindProductCombobox('traceability');
+
             if (entryProductSelect) {
                 entryProductSelect.addEventListener('change', () => {
+                    syncProductComboboxInput('entry');
+                    renderProductCombobox('entry');
                     updateEntryProductInfo(getEntryProductById(entryProductSelect.value));
                 });
             }
             if (exitProductSelect) {
                 exitProductSelect.addEventListener('change', () => {
+                    syncProductComboboxInput('exit');
+                    renderProductCombobox('exit');
                     updateExitProductInfo(getActiveStoreProductById(exitProductSelect.value));
                 });
             }
@@ -19016,6 +19622,10 @@
                     if (m === pricePackagingModal) {
                         closePricePackagingModal();
                     } else {
+                        if (m === entryModal) closeProductCombobox('entry', { restoreSelection: true });
+                        if (m === exitModal) closeProductCombobox('exit', { restoreSelection: true });
+                        if (m === transferModal) closeTransferProductDropdown({ restoreSelection: true });
+                        if (m === restockModal) closeProductCombobox('restock', { restoreSelection: true });
                         m.classList.add('hidden');
                     }
                 });
@@ -19029,7 +19639,51 @@
             });
             if (transferProductSearchInput) {
                 transferProductSearchInput.addEventListener('input', () => {
-                    populateStoreProductSelects();
+                    const selectedProduct = transferProductSelect?.value ? getActiveStoreProductById(transferProductSelect.value) : null;
+                    if (selectedProduct && normalizeString(transferProductSearchInput.value) !== normalizeString(getTransferProductDisplayLabel(selectedProduct))) {
+                        transferProductSelect.value = '';
+                        updateTransferPackagingUI();
+                    }
+                    transferProductSearchQuery = transferProductSearchInput.value;
+                    openTransferProductDropdown();
+                    renderTransferProductDropdown();
+                });
+                transferProductSearchInput.addEventListener('focus', () => {
+                    openTransferProductDropdown();
+                    renderTransferProductDropdown();
+                });
+                transferProductSearchInput.addEventListener('keydown', (event) => {
+                    if (event.key === 'Escape') {
+                        event.preventDefault();
+                        closeTransferProductDropdown({ restoreSelection: true });
+                        transferProductSearchInput.blur();
+                        return;
+                    }
+                    if (event.key === 'Enter' && isTransferProductDropdownOpen) {
+                        const firstOption = transferProductOptions?.querySelector('[data-transfer-product-option]:not([disabled])');
+                        if (firstOption) {
+                            event.preventDefault();
+                            setTransferProductSelection(firstOption.dataset.transferProductOption);
+                        }
+                    }
+                });
+            }
+            if (transferProductToggleButton) {
+                transferProductToggleButton.addEventListener('click', () => {
+                    if (isTransferProductDropdownOpen) {
+                        closeTransferProductDropdown({ restoreSelection: true });
+                    } else {
+                        if (transferProductSearchInput) transferProductSearchInput.focus();
+                        openTransferProductDropdown();
+                        renderTransferProductDropdown();
+                    }
+                });
+            }
+            if (transferProductOptions) {
+                transferProductOptions.addEventListener('click', (event) => {
+                    const option = event.target.closest('[data-transfer-product-option]');
+                    if (!option || option.hasAttribute('disabled')) return;
+                    setTransferProductSelection(option.dataset.transferProductOption);
                 });
             }
             if (transferForm?.['transfer-quantity']) {
@@ -19045,10 +19699,13 @@
             }
 
             if (restockProductSelect) restockProductSelect.addEventListener('change', () => {
+                syncProductComboboxInput('restock');
+                renderProductCombobox('restock');
                 updateRestockFormState();
             });
             if (restockBoutiqueSelect) {
                 restockBoutiqueSelect.addEventListener('change', () => {
+                    productComboboxStates.restock.query = '';
                     populateShopProductSelects();
                     updateRestockFormState();
                 });
