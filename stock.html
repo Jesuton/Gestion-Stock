@@ -3365,6 +3365,8 @@
                 <div class="space-y-5 px-6 py-6 sm:px-7 sm:py-7">
                     <div>
                         <label for="transfer-product-select" class="block text-sm font-semibold text-slate-700">Article source *</label>
+                        <input type="text" id="transfer-product-search" placeholder="Rechercher un article par nom, code ou description..."
+                            class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
                         <select id="transfer-product-select"
                             class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400"
                             required>
@@ -4511,6 +4513,7 @@
             const transferModal = document.getElementById('transfer-modal');
             const closeTransferModalButton = document.getElementById('close-transfer-modal-button');
             const transferForm = document.getElementById('transfer-form');
+            const transferProductSearchInput = document.getElementById('transfer-product-search');
             const transferProductSelect = document.getElementById('transfer-product-select');
             const transferBoutiqueSelect = document.getElementById('transfer-boutique-select');
             const transferPackagingPanel = document.getElementById('transfer-packaging-panel');
@@ -5659,7 +5662,6 @@
             function updateTransferPackagingUI() {
                 const sourceProduct = transferProductSelect ? getActiveStoreProductById(transferProductSelect.value) : null;
                 const quantityInput = transferForm?.['transfer-quantity'];
-                const sourceCartons = parseNonNegativeInteger(quantityInput?.value, 0);
                 const showPanel = !!sourceProduct;
                 if (transferPackagingPanel) transferPackagingPanel.classList.toggle('hidden', !showPanel);
                 if (!sourceProduct) {
@@ -5675,11 +5677,20 @@
                 const sourcePackaging = getPrimaryPackaging(sourceProduct);
                 const unitsPerCarton = getUnitsPerCarton(sourceProduct);
                 const availableCartons = parseNonNegativeInteger(sourceProduct.quantityInStore, 0);
+                let sourceCartons = parseNonNegativeInteger(quantityInput?.value, 0);
                 if (quantityInput) {
                     quantityInput.disabled = availableCartons <= 0;
                     if (availableCartons > 0) {
                         quantityInput.setAttribute('max', String(availableCartons));
+                        if (sourceCartons <= 0) {
+                            sourceCartons = 1;
+                            quantityInput.value = '1';
+                        } else if (sourceCartons > availableCartons) {
+                            sourceCartons = availableCartons;
+                            quantityInput.value = String(availableCartons);
+                        }
                     } else {
+                        sourceCartons = 0;
                         quantityInput.value = '';
                         quantityInput.removeAttribute('max');
                     }
@@ -8674,9 +8685,6 @@
                     if (productBaseUnitLabelInput && !productBaseUnitLabelInput.value) productBaseUnitLabelInput.value = 'Unité';
                     if (productCurrencyInput && !productCurrencyInput.value) productCurrencyInput.value = 'CFA';
                 }
-                if (transferSourceInfo && !canEdit) {
-                    transferSourceInfo.classList.add('hidden');
-                }
                 renderCategoryManagement();
             }
 
@@ -11482,14 +11490,39 @@
             function populateStoreProductSelects() {
                 const activeProducts = getActiveStoreProducts();
                 const entryProducts = getEntrySelectableProducts();
+                const transferSearch = normalizeString(transferProductSearchInput?.value);
+
+                const matchesTransferProductSearch = (product) => {
+                    if (!transferSearch) return true;
+                    const name = normalizeString(product?.name);
+                    const code = normalizeString(product?.baseCode || product?.sku || product?.id);
+                    const description = normalizeString(product?.description);
+                    return name.includes(transferSearch)
+                        || code.includes(transferSearch)
+                        || description.includes(transferSearch);
+                };
 
                 const fillSelect = (select, products, showAssignmentHint = false, disableOutOfStock = false) => {
                     if (!select) return;
                     const firstOption = select.options[0];
+                    const previousValue = select.value;
                     select.innerHTML = '';
                     select.appendChild(firstOption.cloneNode(true));
-                    if (!products.length) return;
-                    products.forEach(product => {
+                    const filteredProducts = select === transferProductSelect
+                        ? products.filter(matchesTransferProductSearch)
+                        : products;
+                    if (!filteredProducts.length) {
+                        if (select === transferProductSelect && transferSearch) {
+                            const emptyOption = document.createElement('option');
+                            emptyOption.value = '';
+                            emptyOption.textContent = 'Aucun article correspondant.';
+                            emptyOption.disabled = true;
+                            select.appendChild(emptyOption);
+                        }
+                        select.value = '';
+                        return;
+                    }
+                    filteredProducts.forEach(product => {
                         const rawStoreId = product.storeId;
                         const isUnassigned = rawStoreId === UNASSIGNED_STORE_ID;
                         const qty = Number(product.quantityInStore) || 0;
@@ -11503,6 +11536,8 @@
                         }
                         select.appendChild(option);
                     });
+                    const nextSelectionStillAvailable = filteredProducts.some(product => product.id === previousValue);
+                    select.value = nextSelectionStillAvailable ? previousValue : '';
                 };
 
                 fillSelect(entryProductSelect, entryProducts, true);
@@ -18830,9 +18865,10 @@
                 }
                 transferModal.classList.remove('hidden');
                 transferForm.reset();
+                if (transferProductSearchInput) transferProductSearchInput.value = '';
+                populateStoreProductSelects();
                 resetTransferPackagingInputs();
                 renderTransferBoutiqueSelect();
-                transferSourceInfo.classList.add('hidden');
                 updatePricingAccessState();
                 seedDefaultTransferBreakdown();
                 updateTransferPackagingUI();
@@ -18987,11 +19023,15 @@
 
             // Select Interaction (Info display in modals)
             if (transferProductSelect) transferProductSelect.addEventListener('change', () => {
-                const p = getActiveStoreProductById(transferProductSelect.value);
                 updatePricingAccessState();
                 seedDefaultTransferBreakdown();
                 updateTransferPackagingUI();
             });
+            if (transferProductSearchInput) {
+                transferProductSearchInput.addEventListener('input', () => {
+                    populateStoreProductSelects();
+                });
+            }
             if (transferForm?.['transfer-quantity']) {
                 transferForm['transfer-quantity'].addEventListener('input', () => {
                     seedDefaultTransferBreakdown();
