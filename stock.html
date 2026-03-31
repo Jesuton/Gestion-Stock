@@ -5000,6 +5000,7 @@
                 const storeId = getActiveStoreId();
                 if (!storeId) return [];
                 return Object.values(appData.storeProducts || {}).filter(product => {
+                    if (!isProductPricingComplete(product)) return false;
                     const rawStoreId = product.storeId;
                     if (rawStoreId === UNASSIGNED_STORE_ID) return true;
                     return resolveStoreId(rawStoreId) === storeId;
@@ -5745,7 +5746,7 @@
 
             function renderTransferProductDropdown() {
                 if (!transferProductOptions || !transferProductEmpty) return;
-                const products = getActiveStoreProducts();
+                const products = getActiveStoreProducts().filter(product => isProductPricingComplete(product));
                 const query = normalizeString(transferProductSearchQuery);
                 const filteredProducts = products.filter(product => {
                     if (!query) return true;
@@ -5866,6 +5867,7 @@
             function getExitProductComboboxItems(search = '') {
                 const normalized = normalizeString(search);
                 return getActiveStoreProducts()
+                    .filter(product => isProductPricingComplete(product))
                     .filter(product => {
                         if (!normalized) return true;
                         const haystack = [
@@ -5901,6 +5903,8 @@
                         const matchesBoutique = boutiqueId ? resolveBoutiqueId(item.boutiqueId) === boutiqueId : true;
                         const matchesStore = storeId ? resolveStoreId(item.sourceStoreId) === storeId : true;
                         if (!matchesBoutique || !matchesStore) return false;
+                        const sourceProduct = appData.storeProducts?.[item.sourceProductId];
+                        if (!isProductPricingComplete(sourceProduct)) return false;
                         if (!normalized) return true;
                         const haystack = [
                             getShopItemDisplayName(item),
@@ -6323,12 +6327,13 @@
 
             function getRestockAvailability(shopItem) {
                 const sourceProduct = shopItem ? appData.storeProducts?.[shopItem.sourceProductId] : null;
+                const pricingReadyProduct = sourceProduct && isProductPricingComplete(sourceProduct) ? sourceProduct : null;
                 const sourceStoreId = resolveStoreId(shopItem?.sourceStoreId);
                 const activeStoreId = getActiveStoreId();
-                const resolvedSourceProduct = sourceProduct &&
-                    (!sourceStoreId || resolveStoreId(sourceProduct.storeId) === sourceStoreId) &&
-                    (!activeStoreId || resolveStoreId(sourceProduct.storeId) === activeStoreId)
-                    ? sourceProduct
+                const resolvedSourceProduct = pricingReadyProduct &&
+                    (!sourceStoreId || resolveStoreId(pricingReadyProduct.storeId) === sourceStoreId) &&
+                    (!activeStoreId || resolveStoreId(pricingReadyProduct.storeId) === activeStoreId)
+                    ? pricingReadyProduct
                     : null;
                 const packageType = shopItem?.packagingType || shopItem?.packageCode || 'detail';
                 const packageUnits = Number(shopItem?.unitsPerPackage) || (resolvedSourceProduct ? getPackageUnits(resolvedSourceProduct, packageType) : 1);
@@ -9211,6 +9216,7 @@
 
             function updatePricingAccessState() {
                 const canEdit = canManagePricing();
+                const canRegister = canRegisterProductDraft();
                 const toggleInput = (input, enabled = canEdit) => {
                     if (!input) return;
                     input.disabled = !enabled;
@@ -9219,11 +9225,11 @@
                     input.classList.toggle('cursor-not-allowed', !enabled);
                     input.title = enabled ? '' : 'Réservé aux managers';
                 };
-                toggleInput(productBaseCodeInput);
-                toggleInput(productBaseUnitLabelInput);
-                toggleInput(productCurrencyInput);
+                toggleInput(productBaseCodeInput, canRegister);
+                toggleInput(productBaseUnitLabelInput, canRegister);
+                toggleInput(productCurrencyInput, canRegister);
                 toggleInput(productCategorySelect, canManageCategories());
-                if (newProductAddPackagingButton) newProductAddPackagingButton.disabled = !canEdit;
+                if (newProductAddPackagingButton) newProductAddPackagingButton.disabled = !canRegister;
                 if (pricePackagingAddButton) pricePackagingAddButton.disabled = !canEdit;
                 if (pricePackagingSaveButton) pricePackagingSaveButton.disabled = !canEdit;
                 if (openPriceProductModalButton) openPriceProductModalButton.style.display = canEdit ? '' : 'none';
@@ -9244,6 +9250,56 @@
 
             function canManagePricing() {
                 return hasPermission('Tableau des prix');
+            }
+
+            function canRegisterProductDraft() {
+                return hasPermission('Mon Magasin') || canManagePricing();
+            }
+
+            const PRICING_STATUS_PENDING = 'pending';
+            const PRICING_STATUS_ACTIVE = 'active';
+
+            function normalizePricingStatus(status) {
+                const normalized = (status || '').toString().trim().toLowerCase();
+                if (normalized === PRICING_STATUS_PENDING || normalized === PRICING_STATUS_ACTIVE) return normalized;
+                return '';
+            }
+
+            function computeProductPricingComplete(product) {
+                if (!product) return false;
+                const currency = (product.currency || '').toString().trim();
+                if (!currency) return false;
+                const primary = getPrimaryPackaging(product);
+                if (!primary) return false;
+                const hasPurchase = primary.purchaseCost !== null && Number.isFinite(Number(primary.purchaseCost));
+                const hasStore = primary.storePrice !== null && Number.isFinite(Number(primary.storePrice));
+                const hasShop = primary.shopPrice !== null && Number.isFinite(Number(primary.shopPrice));
+                return hasPurchase && hasStore && hasShop;
+            }
+
+            function getProductPricingStatus(product) {
+                const explicit = normalizePricingStatus(product?.pricingStatus);
+                if (explicit) return explicit;
+                return computeProductPricingComplete(product) ? PRICING_STATUS_ACTIVE : PRICING_STATUS_PENDING;
+            }
+
+            function isProductPricingComplete(product) {
+                return getProductPricingStatus(product) === PRICING_STATUS_ACTIVE;
+            }
+
+            function stripLegacyPriceFields(fields = {}) {
+                const stripped = { ...fields };
+                [
+                    'purchaseCost',
+                    'storeSellingPrice',
+                    'boutiqueSellingPrice',
+                    'boutiquePriceLot12',
+                    'boutiquePriceLot6',
+                    'boutiquePriceUnit'
+                ].forEach(key => {
+                    delete stripped[key];
+                });
+                return stripped;
             }
 
             function getStoreSellingPrice(product) {
@@ -9288,9 +9344,9 @@
                     code: 'CTN',
                     label: 'Conditionnement principal',
                     unitCount: 1,
-                    purchaseCost: 0,
-                    storePrice: 0,
-                    shopPrice: 0,
+                    purchaseCost: null,
+                    storePrice: null,
+                    shopPrice: null,
                     allowPurchase: true,
                     allowTransfer: true,
                     allowSell: true,
@@ -12035,7 +12091,7 @@
             }
 
             function populateStoreProductSelects() {
-                const activeProducts = getActiveStoreProducts();
+                const activeProducts = getActiveStoreProducts().filter(product => isProductPricingComplete(product));
                 const entryProducts = getEntrySelectableProducts();
 
                 const fillSelect = (select, products, showAssignmentHint = false, disableOutOfStock = false) => {
@@ -12179,7 +12235,9 @@
                 const products = Object.values(appData.shopStock || {}).filter(item => {
                     const matchesBoutique = boutiqueId ? resolveBoutiqueId(item.boutiqueId) === boutiqueId : true;
                     const matchesStore = storeId ? resolveStoreId(item.sourceStoreId) === storeId : true;
-                    return matchesBoutique && matchesStore;
+                    if (!matchesBoutique || !matchesStore) return false;
+                    const sourceProduct = appData.storeProducts?.[item.sourceProductId];
+                    return isProductPricingComplete(sourceProduct);
                 });
                 const selects = [restockProductSelect];
                 selects.forEach(select => {
@@ -12312,6 +12370,10 @@
                     const packagings = getProductPackagings(product);
                     const primaryPackaging = getPrimaryPackaging(product);
                     const currency = (product.currency || 'CFA').toString().toUpperCase();
+                    const pricingStatus = getProductPricingStatus(product);
+                    const pricingBadge = pricingStatus === PRICING_STATUS_PENDING
+                        ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">Prix à définir</span>'
+                        : '';
                     const canEditCategory = canManageCategories();
                     const categoryOptions = getCategoryOptionsHtml(product.categoryId || '');
                     const categoryDisabled = canEditCategory ? '' : 'disabled';
@@ -12330,7 +12392,12 @@
                         : 'Aucun conditionnement';
                     return `
                         <tr class="hover:bg-gray-50" data-price-row="${product.id}">
-                            <td class="px-4 py-3 text-sm font-semibold text-gray-900">${product.name || ''}</td>
+                            <td class="px-4 py-3 text-sm font-semibold text-gray-900">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span>${product.name || ''}</span>
+                                    ${pricingBadge}
+                                </div>
+                            </td>
                             <td class="px-4 py-3">
                                 <input type="text" value="${baseCode}" maxlength="24"
                                     data-price-field="baseProductCode"
@@ -12410,6 +12477,16 @@
                     return;
                 }
 
+                const pricingSnapshot = {
+                    currency,
+                    baseProductCode,
+                    baseUnitLabel,
+                    packagings: packagingValidation.packagings
+                };
+                const pricingStatus = computeProductPricingComplete(pricingSnapshot)
+                    ? PRICING_STATUS_ACTIVE
+                    : PRICING_STATUS_PENDING;
+
                 if (!confirm("Confirmer la mise à jour des prix pour ce produit ?")) {
                     return;
                 }
@@ -12421,6 +12498,7 @@
                 updates[`${dbBasePath}/storeProducts/${productId}/currency`] = currency;
                 updates[`${dbBasePath}/storeProducts/${productId}/categoryId`] = categoryId || null;
                 updates[`${dbBasePath}/storeProducts/${productId}/packagings`] = packagingValidation.packagings;
+                updates[`${dbBasePath}/storeProducts/${productId}/pricingStatus`] = pricingStatus;
                 Object.entries(legacyFields).forEach(([key, value]) => {
                     updates[`${dbBasePath}/storeProducts/${productId}/${key}`] = value;
                 });
@@ -12592,6 +12670,7 @@
                         updates[`${dbBasePath}/storeProducts/${product.id}/boutiqueSellingPrice`] = boutiquePrice;
                         updates[`${dbBasePath}/storeProducts/${product.id}/currency`] = currency;
                         updates[`${dbBasePath}/storeProducts/${product.id}/categoryId`] = categoryId || null;
+                        updates[`${dbBasePath}/storeProducts/${product.id}/pricingStatus`] = PRICING_STATUS_ACTIVE;
                         updates[`${dbBasePath}/storeProducts/${product.id}/updatedAt`] = now;
 
                         const shopItems = Object.values(appData.shopStock || {}).filter(item => item.sourceProductId === product.id);
@@ -12616,6 +12695,7 @@
                         boutiqueSellingPrice: boutiquePrice,
                         currency,
                         categoryId: categoryId || null,
+                        pricingStatus: PRICING_STATUS_ACTIVE,
                         quantityInStore: 0,
                         createdAt: now,
                         updatedAt: now,
@@ -15558,6 +15638,9 @@
                 const purchaseChecked = packaging.allowPurchase ? 'checked' : '';
                 const transferChecked = packaging.allowTransfer ? 'checked' : '';
                 const sellChecked = packaging.allowSell ? 'checked' : '';
+                const pricingLocked = !canManagePricing();
+                const priceInputClass = pricingLocked ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : '';
+                const priceDisabled = pricingLocked ? 'disabled' : '';
                 const safeId = escapeHtml(packaging.id || createPackagingId());
                 return `
                     <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm" data-packaging-row="${safeId}">
@@ -15580,17 +15663,17 @@
                             <label class="block">
                                 <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Achat</span>
                                 <input type="number" min="0" step="0.01" value="${packaging.purchaseCost ?? ''}" data-packaging-field="purchaseCost"
-                                    class="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-cyan-500 focus:border-cyan-500" />
+                                    class="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-cyan-500 focus:border-cyan-500 ${priceInputClass}" ${priceDisabled} />
                             </label>
                             <label class="block">
                                 <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Magasin</span>
                                 <input type="number" min="0" step="0.01" value="${packaging.storePrice ?? ''}" data-packaging-field="storePrice"
-                                    class="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-cyan-500 focus:border-cyan-500" />
+                                    class="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-cyan-500 focus:border-cyan-500 ${priceInputClass}" ${priceDisabled} />
                             </label>
                             <label class="block">
                                 <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Boutique</span>
                                 <input type="number" min="0" step="0.01" value="${packaging.shopPrice ?? ''}" data-packaging-field="shopPrice"
-                                    class="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-cyan-500 focus:border-cyan-500" />
+                                    class="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-cyan-500 focus:border-cyan-500 ${priceInputClass}" ${priceDisabled} />
                             </label>
                             <div class="flex items-start justify-end">
                                 <button type="button" data-packaging-remove class="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-red-200 text-red-500 hover:bg-red-50">
@@ -15725,6 +15808,15 @@
                 const currency = ((row?.querySelector('[data-price-field="currency"]')?.value) || product.currency || 'CFA').trim().toUpperCase();
                 const rawCategoryId = row?.querySelector('[data-price-field="categoryId"]')?.value || product.categoryId || '';
                 const categoryId = canManageCategories() ? rawCategoryId : (product.categoryId || '');
+                const pricingSnapshot = {
+                    currency,
+                    baseProductCode,
+                    baseUnitLabel,
+                    packagings: validation.packagings
+                };
+                const pricingStatus = computeProductPricingComplete(pricingSnapshot)
+                    ? PRICING_STATUS_ACTIVE
+                    : PRICING_STATUS_PENDING;
                 const now = new Date().toISOString();
                 const updates = {};
                 updates[`${dbBasePath}/storeProducts/${activePricePackagingProductId}/baseUnitLabel`] = baseUnitLabel;
@@ -15732,6 +15824,7 @@
                 updates[`${dbBasePath}/storeProducts/${activePricePackagingProductId}/currency`] = currency;
                 updates[`${dbBasePath}/storeProducts/${activePricePackagingProductId}/categoryId`] = categoryId || null;
                 updates[`${dbBasePath}/storeProducts/${activePricePackagingProductId}/packagings`] = validation.packagings;
+                updates[`${dbBasePath}/storeProducts/${activePricePackagingProductId}/pricingStatus`] = pricingStatus;
                 Object.entries(legacyFields).forEach(([key, value]) => {
                     updates[`${dbBasePath}/storeProducts/${activePricePackagingProductId}/${key}`] = value;
                 });
@@ -15950,7 +16043,11 @@
                     categoriesSet.add(formatCategoryLabel(category.name));
                 });
                 Object.values(appData.shopStock || {})
-                    .filter(item => !activeBoutique || resolveBoutiqueId(item.boutiqueId) === activeBoutique)
+                    .filter(item => {
+                        if (activeBoutique && resolveBoutiqueId(item.boutiqueId) !== activeBoutique) return false;
+                        const sourceProduct = appData.storeProducts?.[item.sourceProductId];
+                        return isProductPricingComplete(sourceProduct);
+                    })
                     .map(getShopItemCategory)
                     .forEach(categoryName => categoriesSet.add(categoryName));
                 const categories = [...categoriesSet].sort((a, b) => a.localeCompare(b));
@@ -15972,6 +16069,8 @@
                 const normalizedSearch = normalizeString(searchTerm);
                 const activeBoutique = getActiveBoutiqueId();
                 const stock = Object.values(appData.shopStock || {}).filter(item => {
+                    const sourceProduct = appData.storeProducts?.[item.sourceProductId];
+                    if (!isProductPricingComplete(sourceProduct)) return false;
                     const name = normalizeString(`${item.name || ''} ${item.sourceName || ''}`);
                     const category = normalizeString(getShopItemCategory(item));
                     const matchesSearch = !normalizedSearch || name.includes(normalizedSearch) || category.includes(normalizedSearch);
@@ -18537,10 +18636,7 @@
                     showSuccessToast('Veuillez créer ou sélectionner un magasin.');
                     return;
                 }
-                if (!canManagePricing()) {
-                    showSuccessToast("Accès refusé pour ajouter un produit.");
-                    return;
-                }
+                const canEditPricing = canManagePricing();
                 const name = newProductForm['product-name'].value;
                 const baseProductCode = (productBaseCodeInput?.value || '').trim().toUpperCase();
                 const baseUnitLabel = (productBaseUnitLabelInput?.value || DEFAULT_BASE_UNIT_LABEL).trim();
@@ -18568,7 +18664,16 @@
                     showSuccessToast("Veuillez renseigner une devise.");
                     return;
                 }
-                const legacyFields = buildLegacyFieldsFromPackagings(packagingValidation.packagings);
+                const baseLegacyFields = buildLegacyFieldsFromPackagings(packagingValidation.packagings);
+                const legacyFields = canEditPricing ? baseLegacyFields : stripLegacyPriceFields(baseLegacyFields);
+                const pricingSnapshot = {
+                    currency,
+                    baseProductCode,
+                    baseUnitLabel,
+                    packagings: packagingValidation.packagings
+                };
+                const pricingComplete = canEditPricing && computeProductPricingComplete(pricingSnapshot);
+                const pricingStatus = pricingComplete ? PRICING_STATUS_ACTIVE : PRICING_STATUS_PENDING;
 
                 try {
                     if (newProductSubmitButton) newProductSubmitButton.disabled = true;
@@ -18580,6 +18685,10 @@
                     );
 
                     if (existingProduct) {
+                        if (!canEditPricing) {
+                            showSuccessToast("Produit déjà enregistré. Un manager doit finaliser les prix.");
+                            return;
+                        }
                         const updates = {};
                         const now = new Date().toISOString();
                         updates[`${dbBasePath}/storeProducts/${existingProduct.id}/baseProductCode`] = baseProductCode;
@@ -18587,6 +18696,7 @@
                         updates[`${dbBasePath}/storeProducts/${existingProduct.id}/packagings`] = packagingValidation.packagings;
                         updates[`${dbBasePath}/storeProducts/${existingProduct.id}/currency`] = currency;
                         updates[`${dbBasePath}/storeProducts/${existingProduct.id}/categoryId`] = categoryId || null;
+                        updates[`${dbBasePath}/storeProducts/${existingProduct.id}/pricingStatus`] = pricingStatus;
                         Object.entries(legacyFields).forEach(([key, value]) => {
                             updates[`${dbBasePath}/storeProducts/${existingProduct.id}/${key}`] = value;
                         });
@@ -18630,6 +18740,7 @@
                             packagings: packagingValidation.packagings,
                             currency,
                             categoryId: categoryId || null,
+                            pricingStatus,
                             ...legacyFields,
                             quantityInStore: 0,
                             createdAt: new Date().toISOString(),
@@ -18637,7 +18748,9 @@
                             storeId: UNASSIGNED_STORE_ID
                         };
                         await set(newRef, newProd);
-                        showSuccessToast("Produit ajouté dans le tableau des prix.");
+                        showSuccessToast(pricingStatus === PRICING_STATUS_PENDING
+                            ? "Produit enregistré. Un manager doit définir les prix."
+                            : "Produit ajouté dans le tableau des prix.");
                     }
 
                     newProductForm.reset();
@@ -19059,6 +19172,10 @@
                     showTransferError('Veuillez sélectionner une boutique.');
                     return;
                 }
+                if (sourceProd && !isProductPricingComplete(sourceProd)) {
+                    showTransferError("Prix du produit en attente. Un manager doit finaliser le tableau des prix.");
+                    return;
+                }
                 if (!sourceProd || qty > sourceProd.quantityInStore) {
                     showTransferError("Stock magasin insuffisant pour ce transfert.");
                     return;
@@ -19181,6 +19298,10 @@
                 const sourceProd = appData.storeProducts[shopProd.sourceProductId];
                 if (!sourceProd) {
                     showSuccessToast("Produit source introuvable pour ce réappro.");
+                    return;
+                }
+                if (!isProductPricingComplete(sourceProd)) {
+                    showRestockError("Prix du produit en attente. Un manager doit finaliser le tableau des prix.");
                     return;
                 }
                 if (sourceStoreId && resolveStoreId(sourceProd.storeId) !== sourceStoreId) {
@@ -19353,8 +19474,21 @@
                     showSuccessToast('Veuillez créer ou sélectionner un magasin.');
                     return;
                 }
-                populateStoreProductSelects();
-                openEntryModalForProduct();
+                newProductModal.classList.remove('hidden');
+                newProductForm.reset();
+                renderProductCategorySelect('');
+                if (productBaseUnitLabelInput) productBaseUnitLabelInput.value = DEFAULT_BASE_UNIT_LABEL;
+                renderPackagingEditorList(newProductPackagingsList, [
+                    buildPackagingDraft({
+                        code: 'CTN',
+                        label: 'Conditionnement principal',
+                        unitCount: 1,
+                        allowPurchase: true,
+                        allowTransfer: true,
+                        allowSell: true
+                    })
+                ], 'new-product');
+                updatePricingAccessState();
             });
             if (openPriceProductModalButton) openPriceProductModalButton.addEventListener('click', () => {
                 if (!getActiveStoreId()) {
