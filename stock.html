@@ -3158,6 +3158,11 @@
                             class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400" />
                     </div>
                     <div>
+                        <label for="entry-delivery-name" class="block text-sm font-medium text-gray-700">Livreur (optionnel)</label>
+                        <input type="text" id="entry-delivery-name" placeholder="Nom du livreur"
+                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400" />
+                    </div>
+                    <div>
                         <label for="entry-comment" class="block text-sm font-medium text-gray-700">Commentaire</label>
                         <textarea id="entry-comment" placeholder="Motif de l'entrée..." rows="3"
                             class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400"></textarea>
@@ -3402,6 +3407,11 @@
                                     required>
                             </div>
                         </div>
+                    </div>
+                    <div>
+                        <label for="exit-delivery-name" class="block text-sm font-medium text-gray-700">Livreur (optionnel)</label>
+                        <input type="text" id="exit-delivery-name" placeholder="Nom du livreur"
+                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400" />
                     </div>
                     <div>
                         <label for="exit-comment" class="block text-sm font-medium text-gray-700">Commentaire</label>
@@ -19194,6 +19204,7 @@
                 }
                 const qty = parseInt(entryForm['entry-quantity'].value, 10);
                 const comment = entryForm['entry-comment'].value;
+                const deliveryName = (entryForm['entry-delivery-name']?.value || '').trim();
                 const description = entryDescriptionInput ? entryDescriptionInput.value.trim() : '';
                 const expirationDate = entryExpirationDateInput ? entryExpirationDateInput.value : '';
                 const isNewMode = entryMode === 'new';
@@ -19347,6 +19358,7 @@
                         quantityChange: qty,
                         oldStock: baseStock,
                         newStock,
+                        deliveryName,
                         comment,
                         expirationDate,
                         date: new Date().toISOString(),
@@ -19372,6 +19384,7 @@
                         total: invoiceBaseTotal,
                         paidAmount: 0,
                         status: 'open',
+                        deliveryName,
                         storeId: storeId,
                         currency: invoiceCurrency,
                         date: new Date().toISOString()
@@ -19402,6 +19415,7 @@
                 const pid = exitProductSelect.value;
                 const qty = parseInt(exitForm['exit-quantity'].value, 10);
                 const comment = exitForm['exit-comment'].value;
+                const deliveryName = (exitForm['exit-delivery-name']?.value || '').trim();
                 const customerName = exitCustomerNameInput ? exitCustomerNameInput.value.trim() : '';
                 const customerEmail = exitCustomerEmailInput ? exitCustomerEmailInput.value.trim() : '';
                 const customerPhone = exitCustomerPhoneInput ? exitCustomerPhoneInput.value.trim() : '';
@@ -19451,6 +19465,7 @@
                         quantityChange: qty,
                         oldStock: prod.quantityInStore,
                         newStock,
+                        deliveryName,
                         comment: comment ? `Sortie en attente - ${comment}` : "Sortie en attente",
                         date: { ".sv": "timestamp" },
                         status: EXIT_STATUS_PENDING,
@@ -19468,6 +19483,7 @@
                         customerName,
                         customerEmail,
                         customerPhone,
+                        deliveryName,
                         status: EXIT_STATUS_PENDING,
                         requestedAt: now,
                         requestedByName: currentUserData?.fullName || currentUser.email || '',
@@ -19494,6 +19510,7 @@
                         customerName,
                         customerPhone,
                         customerEmail,
+                        deliveryName,
                         comment: comment || 'Vente directe magasin',
                         paymentStatus: 'store_validation',
                         validationStatus: 'pending',
