@@ -5249,12 +5249,11 @@
             function renderSuppliersList() {
                 if (!suppliersList) return;
                 const suppliers = getSuppliersSorted();
+                const normalizedSearch = normalizeString(supplierSearchQuery);
                 const filtered = suppliers.filter(supplier => {
-                    if (!supplierSearchQuery) return true;
-                    const term = supplierSearchQuery.toLowerCase();
-                    return (supplier.name || '').toLowerCase().includes(term)
-                        || (supplier.email || '').toLowerCase().includes(term)
-                        || (supplier.phone || '').toLowerCase().includes(term);
+                    if (!normalizedSearch) return true;
+                    const label = normalizeString(`${supplier.name || ''} ${supplier.email || ''} ${supplier.phone || ''}`);
+                    return label.includes(normalizedSearch);
                 });
 
                 if (suppliersCount) suppliersCount.textContent = `${suppliers.length}`;
@@ -10937,10 +10936,10 @@
 
             function filterChatBySearch(chat, query) {
                 if (!query) return true;
-                const term = query.toLowerCase();
-                const name = getChatDisplayName(chat).toLowerCase();
+                const term = normalizeString(query);
+                const name = normalizeString(getChatDisplayName(chat));
                 if (name.includes(term)) return true;
-                const members = getChatMemberIds(chat).map(getMemberLabel).join(' ').toLowerCase();
+                const members = normalizeString(getChatMemberIds(chat).map(getMemberLabel).join(' '));
                 return members.includes(term);
             }
 
@@ -11015,9 +11014,9 @@
                 const messages = Object.values(messagesMap)
                     .filter(message => {
                         if (!chatMessageSearchQuery) return true;
-                        const term = chatMessageSearchQuery.toLowerCase();
-                        const content = (message.text || '').toLowerCase();
-                        const attachmentName = (message.attachment?.name || '').toLowerCase();
+                        const term = normalizeString(chatMessageSearchQuery);
+                        const content = normalizeString(message.text || '');
+                        const attachmentName = normalizeString(message.attachment?.name || '');
                         return content.includes(term) || attachmentName.includes(term);
                     })
                     .sort((a, b) => normalizeChatTimestamp(a.createdAt) - normalizeChatTimestamp(b.createdAt));
@@ -12446,10 +12445,12 @@
                     return;
                 }
                 const products = getActiveStoreProducts();
-                const normalizedSearch = searchTerm.toLowerCase();
-                const filteredProducts = products.filter(product =>
-                    product.name?.toLowerCase().includes(normalizedSearch) || product.description?.toLowerCase().includes(normalizedSearch)
-                );
+                const normalizedSearch = normalizeString(searchTerm);
+                const filteredProducts = products.filter(product => {
+                    if (!normalizedSearch) return true;
+                    const label = normalizeString(`${product.name || ''} ${product.description || ''}`);
+                    return label.includes(normalizedSearch);
+                });
 
                 if (filteredProducts.length > 0) {
                     storeProductsPlaceholder.classList.add('hidden');
@@ -13942,11 +13943,12 @@
 
             function renderShopStock(searchTerm = '') {
                 const stock = appData.shopStock || {};
-                const normalizedSearch = searchTerm.toLowerCase();
+                const normalizedSearch = normalizeString(searchTerm);
                 const activeBoutique = getActiveBoutiqueId();
                 const filteredStock = Object.values(stock).filter(item => {
                     const matchesBoutique = activeBoutique ? resolveBoutiqueId(item.boutiqueId) === activeBoutique : true;
-                    const label = `${item.name || ''} ${item.sourceName || ''}`.toLowerCase();
+                    if (!normalizedSearch) return matchesBoutique;
+                    const label = normalizeString(`${item.name || ''} ${item.sourceName || ''}`);
                     return matchesBoutique && label.includes(normalizedSearch);
                 });
 
@@ -18217,6 +18219,16 @@
             if (salesProductSearch) salesProductSearch.addEventListener('input', () => {
                 renderSalesProducts(salesProductSearch.value);
             });
+            if (storeSearchInput) {
+                storeSearchInput.addEventListener('input', () => {
+                    renderStoreProducts(storeSearchInput.value);
+                });
+            }
+            if (shopSearchInput) {
+                shopSearchInput.addEventListener('input', () => {
+                    renderShopStock(shopSearchInput.value);
+                });
+            }
             if (dashboardAdminMemberSelect) {
                 dashboardAdminMemberSelect.addEventListener('change', () => {
                     if (dashboardAdminPromoteButton) {
