@@ -5035,13 +5035,14 @@
             }
 
             function getEntrySelectableProducts() {
-                const storeId = getActiveStoreId();
-                if (!storeId) return [];
+                const allowedStoreIds = new Set(getAccessibleStoreIds());
                 return Object.values(appData.storeProducts || {}).filter(product => {
-                    if (!isProductPricingComplete(product)) return false;
                     const rawStoreId = product.storeId;
                     if (rawStoreId === UNASSIGNED_STORE_ID) return true;
-                    return resolveStoreId(rawStoreId) === storeId;
+                    const storeId = resolveStoreId(rawStoreId);
+                    if (!storeId) return false;
+                    if (allowedStoreIds.size && !allowedStoreIds.has(storeId)) return false;
+                    return true;
                 });
             }
 
@@ -5050,9 +5051,11 @@
                 if (!product) return null;
                 const rawStoreId = product.storeId;
                 if (rawStoreId === UNASSIGNED_STORE_ID) return product;
-                const storeId = getActiveStoreId();
+                const storeId = resolveStoreId(rawStoreId);
                 if (!storeId) return null;
-                return resolveStoreId(rawStoreId) === storeId ? product : null;
+                const allowedStoreIds = new Set(getAccessibleStoreIds());
+                if (allowedStoreIds.size && !allowedStoreIds.has(storeId)) return null;
+                return product;
             }
 
             function renderStoreSelectors() {
@@ -5765,6 +5768,22 @@
                 return code ? `${name} · ${code}` : name;
             }
 
+            function getEntryProductDisplayLabel(product) {
+                if (!product) return '';
+                const baseLabel = getTransferProductDisplayLabel(product);
+                const rawStoreId = product.storeId;
+                if (rawStoreId === UNASSIGNED_STORE_ID) {
+                    return `${baseLabel} · Non assigné`;
+                }
+                const storeId = resolveStoreId(rawStoreId);
+                const storeName = storeId ? (getStoreName(storeId) || DEFAULT_STORE_NAME) : '';
+                const activeStoreId = getActiveStoreId();
+                if (storeName && storeId && activeStoreId && storeId !== activeStoreId) {
+                    return `${baseLabel} · ${storeName}`;
+                }
+                return baseLabel;
+            }
+
             function closeTransferProductDropdown({ restoreSelection = false } = {}) {
                 isTransferProductDropdownOpen = false;
                 if (transferProductDropdown) transferProductDropdown.classList.add('hidden');
@@ -5874,6 +5893,7 @@
 
             function getEntryProductComboboxItems(search = '') {
                 const normalized = normalizeString(search);
+                const activeStoreId = getActiveStoreId();
                 return getEntrySelectableProducts()
                     .filter(product => {
                         if (!normalized) return true;
@@ -5886,18 +5906,35 @@
                         ].map(normalizeString).join(' ');
                         return haystack.includes(normalized);
                     })
-                    .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+                    .sort((a, b) => {
+                        const rank = product => {
+                            if (product.storeId === UNASSIGNED_STORE_ID) return 1;
+                            const storeId = resolveStoreId(product.storeId);
+                            if (storeId && activeStoreId && storeId === activeStoreId) return 0;
+                            return 2;
+                        };
+                        const rankDiff = rank(a) - rank(b);
+                        if (rankDiff !== 0) return rankDiff;
+                        return (a.name || '').localeCompare(b.name || '');
+                    })
                     .map(product => {
                         const qty = parseNonNegativeInteger(product.quantityInStore, 0);
                         const isUnassigned = product.storeId === UNASSIGNED_STORE_ID;
+                        const resolvedStoreId = isUnassigned ? null : resolveStoreId(product.storeId);
+                        const storeLabel = resolvedStoreId ? (getStoreName(resolvedStoreId) || DEFAULT_STORE_NAME) : '';
+                        const isOtherStore = resolvedStoreId && activeStoreId && resolvedStoreId !== activeStoreId;
                         return {
                             value: product.id,
                             title: product.name || 'Produit sans nom',
                             meta: product.baseCode || product.sku || product.id || '—',
-                            description: product.description || (isUnassigned ? 'Produit non encore assigné au magasin.' : ''),
-                            badge: isUnassigned ? 'Non assigné' : `Stock ${qty}`,
-                            badgeClasses: isUnassigned ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700',
-                            displayLabel: getTransferProductDisplayLabel(product)
+                            description: isOtherStore
+                                ? `Magasin: ${storeLabel || 'Autre magasin'}`
+                                : (product.description || (isUnassigned ? 'Produit non encore assigné au magasin.' : '')),
+                            badge: isUnassigned ? 'Non assigné' : (isOtherStore ? (storeLabel || 'Autre magasin') : `Stock ${qty}`),
+                            badgeClasses: isUnassigned
+                                ? 'bg-amber-50 text-amber-700'
+                                : (isOtherStore ? 'bg-slate-100 text-slate-600' : 'bg-emerald-50 text-emerald-700'),
+                            displayLabel: getEntryProductDisplayLabel(product)
                         };
                     });
             }
@@ -6041,7 +6078,7 @@
                 if (!value) return '';
                 if (key === 'entry') {
                     const product = getEntryProductById(value);
-                    return product ? getTransferProductDisplayLabel(product) : '';
+                    return product ? getEntryProductDisplayLabel(product) : '';
                 }
                 if (key === 'exit') {
                     const product = getActiveStoreProductById(value);
@@ -12163,12 +12200,18 @@
                     products.forEach(product => {
                         const rawStoreId = product.storeId;
                         const isUnassigned = rawStoreId === UNASSIGNED_STORE_ID;
+                        const resolvedStoreId = isUnassigned ? null : resolveStoreId(rawStoreId);
+                        const storeLabel = resolvedStoreId ? (getStoreName(resolvedStoreId) || DEFAULT_STORE_NAME) : '';
+                        const activeStore = getActiveStoreId();
+                        const isOtherStore = resolvedStoreId && activeStore && resolvedStoreId !== activeStore;
                         const qty = Number(product.quantityInStore) || 0;
                         const option = document.createElement('option');
                         option.value = product.id;
                         option.disabled = disableOutOfStock && qty <= 0;
                         if (showAssignmentHint && isUnassigned) {
                             option.textContent = `${product.name} (Non assigné${option.disabled ? ' · Rupture' : ''})`;
+                        } else if (showAssignmentHint && isOtherStore) {
+                            option.textContent = `${product.name} (${storeLabel || 'Autre magasin'})`;
                         } else {
                             option.textContent = `${product.name} (Actuellement : ${qty}${option.disabled ? ' · Rupture' : ''})`;
                         }
@@ -12214,9 +12257,20 @@
                 }
                 entryProductInfo.classList.remove('hidden');
                 entryProductName.textContent = product.name || '—';
-                const isUnassigned = product.storeId === UNASSIGNED_STORE_ID;
+                const rawStoreId = product.storeId;
+                const isUnassigned = rawStoreId === UNASSIGNED_STORE_ID;
+                const resolvedStoreId = isUnassigned ? null : resolveStoreId(rawStoreId);
+                const storeLabel = resolvedStoreId ? (getStoreName(resolvedStoreId) || DEFAULT_STORE_NAME) : '';
+                const activeStoreId = getActiveStoreId();
+                const isOtherStore = resolvedStoreId && activeStoreId && resolvedStoreId !== activeStoreId;
                 const stockValue = Number(product.quantityInStore) || 0;
-                entryProductStock.textContent = isUnassigned ? `${stockValue} (Non assigné)` : `${stockValue}`;
+                if (isUnassigned) {
+                    entryProductStock.textContent = `${stockValue} (Non assigné)`;
+                } else if (isOtherStore) {
+                    entryProductStock.textContent = `${stockValue} (${storeLabel || 'Autre magasin'})`;
+                } else {
+                    entryProductStock.textContent = `${stockValue}`;
+                }
                 if (entryDescriptionInput) entryDescriptionInput.value = product.description || '';
             }
 
@@ -12921,11 +12975,20 @@
                 }
 
                 const entryProducts = getEntrySelectableProducts();
-                const productsIndex = buildProductNameIndex(entryProducts);
+                const activeProducts = entryProducts.filter(product => resolveStoreId(product.storeId) === storeId);
+                const unassignedProducts = entryProducts.filter(product => product.storeId === UNASSIGNED_STORE_ID);
+                const otherProducts = entryProducts.filter(product => {
+                    const resolvedStoreId = resolveStoreId(product.storeId);
+                    return product.storeId !== UNASSIGNED_STORE_ID && resolvedStoreId && resolvedStoreId !== storeId;
+                });
+                const activeProductsIndex = buildProductNameIndex(activeProducts);
+                const unassignedProductsIndex = buildProductNameIndex(unassignedProducts);
+                const otherProductsIndex = buildProductNameIndex(otherProducts);
                 const suppliersIndex = buildSupplierNameIndex();
                 const updates = {};
                 const errors = [];
                 const stockTracker = new Map();
+                const cloneTracker = new Map();
                 const now = new Date().toISOString();
                 let imported = 0;
 
@@ -12939,8 +13002,10 @@
                         continue;
                     }
                     const normalizedName = normalizeString(rawName);
-                    const matches = productsIndex.get(normalizedName) || [];
-                    if (!matches.length) {
+                    const matches = activeProductsIndex.get(normalizedName) || [];
+                    const unassignedMatches = unassignedProductsIndex.get(normalizedName) || [];
+                    const otherMatches = otherProductsIndex.get(normalizedName) || [];
+                    if (!matches.length && !unassignedMatches.length && !otherMatches.length) {
                         errors.push(`Ligne ${lineNumber}: produit "${rawName}" introuvable dans le tableau des prix.`);
                         continue;
                     }
@@ -12948,7 +13013,16 @@
                         errors.push(`Ligne ${lineNumber}: nom du produit ambigu (${rawName}).`);
                         continue;
                     }
-                    const product = matches[0];
+                    if (!matches.length && unassignedMatches.length > 1) {
+                        errors.push(`Ligne ${lineNumber}: nom du produit ambigu (${rawName}).`);
+                        continue;
+                    }
+                    if (!matches.length && !unassignedMatches.length && otherMatches.length > 1) {
+                        errors.push(`Ligne ${lineNumber}: nom du produit ambigu (${rawName}).`);
+                        continue;
+                    }
+                    let product = matches[0] || unassignedMatches[0] || otherMatches[0];
+                    const shouldClone = !matches.length && !unassignedMatches.length && !!product;
                     const qty = parseCsvNumber(row[idxQuantity]);
                     if (!Number.isFinite(qty) || qty <= 0 || !Number.isInteger(qty)) {
                         errors.push(`Ligne ${lineNumber}: quantité invalide.`);
@@ -12972,6 +13046,26 @@
                     if (!Number.isFinite(purchaseCost) || !Number.isFinite(storePrice) || !Number.isFinite(boutiquePrice)) {
                         errors.push(`Ligne ${lineNumber}: prix non définis pour "${rawName}".`);
                         continue;
+                    }
+
+                    if (shouldClone && product) {
+                        if (cloneTracker.has(product.id)) {
+                            product = cloneTracker.get(product.id);
+                        } else {
+                            const cloneId = push(ref(db, `${dbBasePath}/storeProducts`)).key;
+                            const clone = {
+                                ...product,
+                                id: cloneId,
+                                storeId,
+                                quantityInStore: 0,
+                                createdAt: now,
+                                updatedAt: now
+                            };
+                            delete clone.expirationDate;
+                            updates[`${dbBasePath}/storeProducts/${cloneId}`] = clone;
+                            cloneTracker.set(product.id, clone);
+                            product = clone;
+                        }
                     }
 
                     const isUnassigned = product.storeId === UNASSIGNED_STORE_ID;
@@ -19105,6 +19199,7 @@
                 const isNewMode = entryMode === 'new';
                 let pid = entryProductSelect ? entryProductSelect.value : '';
                 let prod = null;
+                let clonePayload = null;
 
                 if (isNewMode) {
                     if (!canRegisterProductDraft()) {
@@ -19169,6 +19264,43 @@
                     }
                 } else {
                     prod = getEntryProductById(pid);
+                    if (prod) {
+                        const rawStoreId = prod.storeId || UNASSIGNED_STORE_ID;
+                        const resolvedStoreId = rawStoreId === UNASSIGNED_STORE_ID ? null : resolveStoreId(rawStoreId);
+                        const isOtherStore = resolvedStoreId && resolvedStoreId !== storeId;
+                        if (isOtherStore) {
+                            const normalizedName = normalizeString(prod.name || '');
+                            const existingInStore = Object.values(appData.storeProducts || {}).find(product =>
+                                normalizeString(product.name || '') === normalizedName &&
+                                resolveStoreId(product.storeId) === storeId
+                            );
+                            const existingUnassigned = Object.values(appData.storeProducts || {}).find(product =>
+                                normalizeString(product.name || '') === normalizedName &&
+                                product.storeId === UNASSIGNED_STORE_ID
+                            );
+                            if (existingInStore) {
+                                pid = existingInStore.id;
+                                prod = existingInStore;
+                            } else if (existingUnassigned) {
+                                pid = existingUnassigned.id;
+                                prod = existingUnassigned;
+                            } else {
+                                const now = new Date().toISOString();
+                                const cloneId = push(ref(db, `${dbBasePath}/storeProducts`)).key;
+                                clonePayload = {
+                                    ...prod,
+                                    id: cloneId,
+                                    storeId,
+                                    quantityInStore: 0,
+                                    createdAt: now,
+                                    updatedAt: now
+                                };
+                                delete clonePayload.expirationDate;
+                                pid = cloneId;
+                                prod = clonePayload;
+                            }
+                        }
+                    }
                 }
 
                 if (!prod || qty <= 0) return;
@@ -19189,6 +19321,9 @@
                     const baseStock = isUnassigned ? 0 : currentStock;
                     const newStock = baseStock + qty;
                     const updates = {};
+                    if (clonePayload) {
+                        updates[`${dbBasePath}/storeProducts/${clonePayload.id}`] = clonePayload;
+                    }
                     updates[`${dbBasePath}/storeProducts/${pid}/quantityInStore`] = newStock;
                     if (isUnassigned) {
                         updates[`${dbBasePath}/storeProducts/${pid}/storeId`] = storeId;
