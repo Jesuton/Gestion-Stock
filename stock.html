@@ -8910,7 +8910,26 @@
                                     <span class="font-semibold text-gray-900">${customer.name || 'Client'}</span>
                                     ${customer.email ? `<span class="text-xs text-gray-400">· ${customer.email}</span>` : ''}
                                 </div>
-                                ${pending.comment ? `<p class="mt-2 text-xs text-gray-500">Commentaire: ${pending.comment}</p>` : ''}
+                                <div class="mt-2 flex items-start gap-2" id="pending-comment-display-${pending.id}">
+                                    ${pending.comment ? `<p class="flex-1 text-xs text-gray-500 italic">💬 ${pending.comment}</p>` : `<p class="flex-1 text-xs text-gray-400 italic">Aucun commentaire</p>`}
+                                    <button type="button" data-pending-edit-comment="${pending.id}"
+                                        title="Modifier le commentaire"
+                                        class="flex-shrink-0 text-gray-400 hover:text-cyan-600 transition-colors">
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 11l6.536-6.536a2 2 0 012.828 0l.172.172a2 2 0 010 2.828L12 14H9v-3z" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div class="mt-2 hidden items-center gap-2" id="pending-comment-edit-${pending.id}">
+                                    <input type="text" id="pending-comment-input-${pending.id}"
+                                        value="${(pending.comment || '').replace(/"/g, '&quot;')}"
+                                        placeholder="Commentaire..."
+                                        class="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-cyan-400 focus:outline-none" />
+                                    <button type="button" data-pending-save-comment="${pending.id}"
+                                        class="text-xs font-semibold px-2 py-1.5 rounded-lg bg-cyan-500 text-white hover:bg-cyan-600">OK</button>
+                                    <button type="button" data-pending-cancel-comment="${pending.id}"
+                                        class="text-xs font-semibold px-2 py-1.5 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200">✕</button>
+                                </div>
                                 <div class="mt-4 space-y-3">
                                     ${itemsHtml}
                                 </div>
@@ -8932,6 +8951,13 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                         </svg>
                                         Valider la vente
+                                    </button>
+                                    <button type="button" data-pending-resume="${pending.id}"
+                                        class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-cyan-500 text-white font-semibold hover:bg-cyan-600">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                        Modifier
                                     </button>
                                     <button type="button" data-pending-cancel="${pending.id}"
                                         class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700">
@@ -9666,6 +9692,16 @@
             function getPackageSellingPrice(product, packageRef = null) {
                 const packaging = findPackagingByRef(product, packageRef);
                 if (packaging && Number.isFinite(Number(packaging.shopPrice))) return Number(packaging.shopPrice);
+                const packagings = getProductPackagings(product);
+                if (packaging && packagings.length) {
+                    const reference = packagings.find(item => Number.isFinite(Number(item.shopPrice)) && Number(item.unitCount) > 0);
+                    if (reference) {
+                        const base = Number(reference.shopPrice);
+                        const units = Number(packaging.unitCount) || 1;
+                        const refUnits = Number(reference.unitCount) || 1;
+                        return roundAmount((base / refUnits) * units);
+                    }
+                }
                 if (packageRef === 'carton') return getBoutiqueSellingPrice(product);
                 if (packageRef === 'lot12') {
                     const price = Number(product?.boutiquePriceLot12);
@@ -9677,6 +9713,14 @@
                 }
                 const price = Number(product?.boutiquePriceUnit);
                 return Number.isFinite(price) ? price : NaN;
+            }
+
+            function getShopItemEffectiveSellingPrice(item, sourceProduct = null) {
+                const direct = Number(item?.sellingPrice);
+                if (Number.isFinite(direct) && direct > 0) return direct;
+                const product = sourceProduct || appData.storeProducts?.[item?.sourceProductId];
+                const packageRef = item?.packagingType || item?.packageCode || 'detail';
+                return getPackageSellingPrice(product, packageRef);
             }
 
             function isPackageTypeAvailable(product, packageRef, usage = 'transfer') {
@@ -13962,9 +14006,7 @@
                         const isLowStock = item.quantityInShop <= item.alertThreshold;
                         const sourceProduct = appData.storeProducts[item.sourceProductId];
                         const currency = sourceProduct?.currency || 'CFA';
-                        const sellingPrice = Number.isFinite(Number(item.sellingPrice))
-                            ? Number(item.sellingPrice)
-                            : getBoutiqueSellingPrice(sourceProduct);
+                        const sellingPrice = getShopItemEffectiveSellingPrice(item, sourceProduct);
                         const hasPrice = Number.isFinite(sellingPrice);
                         const priceDisplay = hasPrice ? formatCurrency(sellingPrice, currency) : '<span class="text-gray-400">—</span>';
                         const deleteButtonHtml = canDelete
@@ -16357,9 +16399,7 @@
                 salesProductsContainer.innerHTML = displayItems.map(item => {
                     const sourceProduct = appData.storeProducts[item.sourceProductId];
                     const currency = sourceProduct?.currency || 'CFA';
-                    const sellingPrice = Number.isFinite(Number(item.sellingPrice))
-                        ? Number(item.sellingPrice)
-                        : getBoutiqueSellingPrice(sourceProduct);
+                    const sellingPrice = getShopItemEffectiveSellingPrice(item, sourceProduct);
                     const hasPrice = Number.isFinite(sellingPrice);
                     const category = getShopItemCategory(item);
                     const isLowStock = item.quantityInShop <= (item.alertThreshold || 5);
@@ -16443,9 +16483,7 @@
                 } else {
                     const currency = appData.storeProducts[shopProduct.sourceProductId]?.currency || 'CFA';
                     const sourceProduct = appData.storeProducts[shopProduct.sourceProductId];
-                    const sellingPrice = Number.isFinite(Number(shopProduct.sellingPrice))
-                        ? Number(shopProduct.sellingPrice)
-                        : getBoutiqueSellingPrice(sourceProduct);
+                    const sellingPrice = getShopItemEffectiveSellingPrice(shopProduct, sourceProduct);
                     if (!Number.isFinite(sellingPrice)) {
                         showSalesErrorMessage("Prix non défini pour ce produit.");
                         return;
@@ -16765,12 +16803,13 @@
                             phone: selectedCustomer.phone || '',
                             email: selectedCustomer.email || ''
                         },
-                        items: cartItems
+                        items: cartItems.map(({ stockReservedFromPending: _, ...rest }) => rest)
                     };
 
                     if (dbBasePath) {
                         if (!currentUser) return;
                         for (const item of cartItems) {
+                            if (item.stockReservedFromPending) continue; // déjà réservé
                             const shopProduct = appData.shopStock[item.shopProductId];
                             if (!shopProduct || item.quantity > shopProduct.quantityInShop) {
                                 showSalesErrorMessage(`Stock insuffisant pour ${item.name}. Disponible: ${shopProduct?.quantityInShop || 0}`);
@@ -16786,6 +16825,7 @@
                         updates[`${dbBasePath}/pendingSales/${pendingRef.key}`] = heldSale;
 
                         cartItems.forEach(item => {
+                            if (item.stockReservedFromPending) return; // déjà réservé, pas de nouvelle déduction
                             const shopProduct = appData.shopStock[item.shopProductId];
                             const newStock = (Number(shopProduct?.quantityInShop) || 0) - item.quantity;
                             updates[`${dbBasePath}/shopStock/${item.shopProductId}/quantityInShop`] = newStock;
@@ -17477,6 +17517,113 @@
                 } catch (error) {
                     console.error(error);
                     showSalesErrorMessage("Impossible d'annuler cette vente pour le moment.");
+                }
+            }
+
+            async function resumePendingSale(pendingId) {
+                if (!pendingId) return;
+                const pendingSales = getPendingSalesList();
+                const pending = pendingSales.find(s => s.id === pendingId);
+                if (!pending) return;
+
+                const itemsLabel = (pending.items || []).map(i => i.name).join(', ');
+                const confirmMsg = `Reprendre la vente en attente${pending.comment ? ` "${pending.comment}"` : ''} pour la modifier ?\n\nArticles : ${itemsLabel || '—'}\n\nLe panier actuel sera remplacé.`;
+                if (!confirm(confirmMsg)) return;
+
+                try {
+                    // 1. Charger les articles dans cartItems
+                    //    On marque chaque article stockReservedFromPending = true
+                    //    pour que holdCart ne ré-déduise pas le stock sur ces articles
+                    cartItems = (pending.items || []).map(item => ({
+                        ...item,
+                        stockReservedFromPending: pending.stockReserved === true
+                    }));
+
+                    // 2. Restaurer le client
+                    if (pending.customer?.id && appData.customers?.[pending.customer.id]) {
+                        selectedCustomer = appData.customers[pending.customer.id];
+                    } else if (pending.customer) {
+                        // Client "anonyme" reconstitué depuis la vente en attente
+                        selectedCustomer = {
+                            id: pending.customer.id || null,
+                            fullName: pending.customer.name || 'Client',
+                            name: pending.customer.name || 'Client',
+                            phone: pending.customer.phone || '',
+                            email: pending.customer.email || ''
+                        };
+                    }
+                    updateCustomerSelectedCard();
+
+                    // 3. Restaurer le commentaire de mise en attente
+                    if (holdCommentInput) holdCommentInput.value = pending.comment || '';
+
+                    // 4. Restaurer la remise
+                    const dir = pending.adjustmentDirection || 'discount';
+                    discountDirection = dir;
+                    if (pending.discountMode && pending.discountValue) {
+                        discountMode = pending.discountMode;
+                        discountValue = pending.discountValue;
+                        if (discountMode === 'percent' && discountPercentInput) {
+                            discountPercentInput.value = String(discountValue);
+                        } else if (discountMode === 'amount' && discountAmountInput) {
+                            discountAmountInput.value = String(discountValue);
+                        }
+                    }
+                    if (discountDirectionDiscountButton && discountDirectionIncreaseButton) {
+                        if (dir === 'increase') {
+                            discountDirectionDiscountButton.classList.remove('bg-rose-500', 'text-white');
+                            discountDirectionDiscountButton.classList.add('text-gray-500');
+                            discountDirectionIncreaseButton.classList.add('bg-cyan-500', 'text-white');
+                            discountDirectionIncreaseButton.classList.remove('text-gray-500');
+                        } else {
+                            discountDirectionDiscountButton.classList.add('bg-rose-500', 'text-white');
+                            discountDirectionDiscountButton.classList.remove('text-gray-500');
+                            discountDirectionIncreaseButton.classList.remove('bg-cyan-500', 'text-white');
+                            discountDirectionIncreaseButton.classList.add('text-gray-500');
+                        }
+                    }
+
+                    // 5. Supprimer la vente en attente de Firebase
+                    //    On NE restitue PAS le stock car il reste réservé dans le panier actif
+                    if (dbBasePath) {
+                        await update(ref(db), { [`${dbBasePath}/pendingSales/${pendingId}`]: null });
+                    } else {
+                        const nextSales = pendingSales.filter(s => s.id !== pendingId);
+                        savePendingSalesToStorage(nextSales);
+                    }
+
+                    // 6. Naviguer vers Ventes et rafraîchir
+                    currentPage = 'Ventes';
+                    updateUI();
+                    renderCart();
+                    renderSalesHistory();
+                    showSuccessToast('Panier repris — vous pouvez modifier les articles.');
+                } catch (error) {
+                    console.error(error);
+                    showSalesErrorMessage("Impossible de reprendre cette vente pour le moment.");
+                }
+            }
+
+            async function updatePendingSaleComment(pendingId, newComment) {
+                if (!pendingId) return;
+                try {
+                    if (dbBasePath) {
+                        await update(ref(db), {
+                            [`${dbBasePath}/pendingSales/${pendingId}/comment`]: newComment,
+                            [`${dbBasePath}/pendingSales/${pendingId}/updatedAt`]: new Date().toISOString()
+                        });
+                    } else {
+                        const pendingSales = getPendingSalesFromStorage();
+                        const updated = pendingSales.map(s =>
+                            s.id === pendingId ? { ...s, comment: newComment, updatedAt: new Date().toISOString() } : s
+                        );
+                        savePendingSalesToStorage(updated);
+                    }
+                    renderSalesHistory();
+                    showSuccessToast('Commentaire mis à jour.');
+                } catch (error) {
+                    console.error(error);
+                    showSalesErrorMessage("Impossible de mettre à jour le commentaire.");
                 }
             }
 
@@ -18538,6 +18685,45 @@
                     const validateButton = event.target.closest('[data-pending-validate]');
                     if (validateButton) {
                         validatePendingSale(validateButton.dataset.pendingValidate);
+                        return;
+                    }
+                    const resumeButton = event.target.closest('[data-pending-resume]');
+                    if (resumeButton) {
+                        resumePendingSale(resumeButton.dataset.pendingResume);
+                        return;
+                    }
+                    const editCommentButton = event.target.closest('[data-pending-edit-comment]');
+                    if (editCommentButton) {
+                        const pendingId = editCommentButton.dataset.pendingEditComment;
+                        const displayDiv = document.getElementById(`pending-comment-display-${pendingId}`);
+                        const editDiv = document.getElementById(`pending-comment-edit-${pendingId}`);
+                        if (displayDiv && editDiv) {
+                            displayDiv.classList.add('hidden');
+                            editDiv.classList.remove('hidden');
+                            editDiv.classList.add('flex');
+                            const inp = document.getElementById(`pending-comment-input-${pendingId}`);
+                            if (inp) inp.focus();
+                        }
+                        return;
+                    }
+                    const saveCommentButton = event.target.closest('[data-pending-save-comment]');
+                    if (saveCommentButton) {
+                        const pendingId = saveCommentButton.dataset.pendingSaveComment;
+                        const inp = document.getElementById(`pending-comment-input-${pendingId}`);
+                        const newComment = inp ? inp.value.trim() : '';
+                        updatePendingSaleComment(pendingId, newComment);
+                        return;
+                    }
+                    const cancelCommentButton = event.target.closest('[data-pending-cancel-comment]');
+                    if (cancelCommentButton) {
+                        const pendingId = cancelCommentButton.dataset.pendingCancelComment;
+                        const displayDiv = document.getElementById(`pending-comment-display-${pendingId}`);
+                        const editDiv = document.getElementById(`pending-comment-edit-${pendingId}`);
+                        if (displayDiv && editDiv) {
+                            editDiv.classList.add('hidden');
+                            editDiv.classList.remove('flex');
+                            displayDiv.classList.remove('hidden');
+                        }
                         return;
                     }
                     const cancelButton = event.target.closest('[data-pending-cancel]');
