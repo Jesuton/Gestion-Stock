@@ -736,7 +736,7 @@
                                 <p id="hold-comment-error" class="text-xs text-red-500 mt-2 hidden"></p>
                             </div>
                             <div class="mt-4">
-                                <label for="pay-later-due-date" class="text-xs font-semibold text-gray-500">Date de paiement prévue (A payer plus tard) *</label>
+                                <label for="pay-later-due-date" class="text-xs font-semibold text-gray-500">Date de paiement prévue <span class="font-normal text-gray-400">(optionnelle)</span></label>
                                 <input type="date" id="pay-later-due-date"
                                     class="mt-2 w-full rounded-xl border border-gray-200 p-3 text-sm focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" />
                                 <p id="pay-later-date-error" class="text-xs text-red-500 mt-2 hidden"></p>
@@ -1085,7 +1085,14 @@
                         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
                             <div class="flex items-center justify-between">
                                 <h3 class="text-sm font-semibold text-gray-800">Factures du client</h3>
-                                <span id="customer-history-total-invoices" class="text-xs font-semibold text-gray-500">0</span>
+                                <div class="flex items-center gap-3">
+                                    <span id="customer-history-total-invoices" class="text-xs font-semibold text-gray-500">0</span>
+                                    <button id="open-customer-payment-modal-button"
+                                        class="hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors">
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                                        Enregistrer un paiement
+                                    </button>
+                                </div>
                             </div>
                             <div id="customer-history-invoices-empty"
                                 class="mt-4 flex flex-col items-center justify-center text-center text-gray-400 h-28 border border-dashed border-gray-200 rounded-xl">
@@ -1099,6 +1106,8 @@
                                             <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                                             <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Facture</th>
                                             <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
+                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payé</th>
+                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Solde</th>
                                             <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paiement</th>
                                             <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Échéance / Payé</th>
                                             <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
@@ -2342,6 +2351,72 @@
 
 
 
+            <!-- Modal : Paiement client -->
+            <div id="customer-payment-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden">
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg m-4 overflow-hidden">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                        <div>
+                            <h2 class="text-lg font-bold text-gray-900">Enregistrer un paiement</h2>
+                            <p id="customer-payment-modal-subtitle" class="text-xs text-gray-400 mt-0.5">—</p>
+                        </div>
+                        <button id="close-customer-payment-modal" class="text-gray-400 hover:text-gray-700">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+                    <div class="px-6 py-5 space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 mb-1">Facture concernée</label>
+                            <select id="customer-payment-invoice-select"
+                                class="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-emerald-400 focus:outline-none">
+                            </select>
+                        </div>
+                        <div id="customer-payment-balance-row" class="flex items-center justify-between rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 hidden">
+                            <span class="text-xs font-semibold text-amber-700">Solde restant</span>
+                            <span id="customer-payment-balance" class="text-lg font-bold text-amber-700">—</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 mb-1">Montant à payer *</label>
+                                <input type="number" id="customer-payment-amount" min="0" step="any" placeholder="0"
+                                    class="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-emerald-400 focus:outline-none" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 mb-1">Date *</label>
+                                <input type="date" id="customer-payment-date"
+                                    class="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-emerald-400 focus:outline-none" />
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 mb-1">Mode de paiement</label>
+                            <select id="customer-payment-mode"
+                                class="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-emerald-400 focus:outline-none">
+                                <option value="Espèces">Espèces</option>
+                                <option value="Mobile Money">Mobile Money</option>
+                                <option value="Virement">Virement bancaire</option>
+                                <option value="Chèque">Chèque</option>
+                                <option value="Autre">Autre</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 mb-1">Note (optionnelle)</label>
+                            <input type="text" id="customer-payment-note" placeholder="Acompte, solde final..."
+                                class="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-emerald-400 focus:outline-none" />
+                        </div>
+                        <p id="customer-payment-error" class="text-xs text-red-500 hidden"></p>
+                    </div>
+                    <div class="flex gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/60">
+                        <button id="customer-payment-submit"
+                            class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            Confirmer le paiement
+                        </button>
+                        <button id="customer-payment-cancel"
+                            class="px-4 py-3 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-100">
+                            Annuler
+                        </button>
+                    </div>
+                </div>
+            </div>
 
             <!-- Page: Paramètres -->
             <div id="page-Paramètres" class="page-content p-4 md:p-8 hidden">
@@ -4120,7 +4195,7 @@
             let currentUserData = null;
             let dbBasePath = '';
 
-            const appData = { stores: {}, boutiques: {}, categories: {}, storeProducts: {}, storeMovements: {}, shopStock: {}, shopMovements: {}, shopTransferRequests: {}, salesHistory: {}, customers: {}, suppliers: {}, supplierInvoices: {}, supplierPayments: {}, storeExitRequests: {}, pendingSales: {}, settings: {}, inventories: {} };
+            const appData = { stores: {}, boutiques: {}, categories: {}, storeProducts: {}, storeMovements: {}, shopStock: {}, shopMovements: {}, shopTransferRequests: {}, salesHistory: {}, customers: {}, suppliers: {}, supplierInvoices: {}, supplierPayments: {}, customerPayments: {}, storeExitRequests: {}, pendingSales: {}, settings: {}, inventories: {} };
             let isSidebarOpen = false;
             let isSidebarCollapsed = false;
             let isCodeLoginMode = false;
@@ -4141,8 +4216,8 @@
             const SALE_SOURCE_MIXED = 'mixed';
 
 
-            let storesListener, boutiquesListener, categoriesListener, storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, shopTransferRequestsListener, salesHistoryListener, companyMembersListener, companyCustomersListener, suppliersListener, supplierInvoicesListener, supplierPaymentsListener, storeExitRequestsListener, pendingSalesListener, settingsListener, inventoriesListener, chatListListener, chatReadsListener, chatMessagesListener;
-            let storesRef, boutiquesRef, categoriesRef, storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, shopTransferRequestsRef, salesHistoryRef, companyMembersRef, companyCustomersRef, suppliersRef, supplierInvoicesRef, supplierPaymentsRef, storeExitRequestsRef, pendingSalesRef, settingsRef, inventoriesRef, chatListRef, chatReadsRef, chatMessagesRef;
+            let storesListener, boutiquesListener, categoriesListener, storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, shopTransferRequestsListener, salesHistoryListener, companyMembersListener, companyCustomersListener, suppliersListener, supplierInvoicesListener, supplierPaymentsListener, customerPaymentsListener, storeExitRequestsListener, pendingSalesListener, settingsListener, inventoriesListener, chatListListener, chatReadsListener, chatMessagesListener;
+            let storesRef, boutiquesRef, categoriesRef, storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, shopTransferRequestsRef, salesHistoryRef, companyMembersRef, companyCustomersRef, suppliersRef, supplierInvoicesRef, supplierPaymentsRef, customerPaymentsRef, storeExitRequestsRef, pendingSalesRef, settingsRef, inventoriesRef, chatListRef, chatReadsRef, chatMessagesRef;
 
             const accessModules = [
                 'Tableau de bord',
@@ -4463,6 +4538,22 @@
             const customerHistoryPlaceholder = document.getElementById('customer-history-placeholder');
             const customerHistoryTableContainer = document.getElementById('customer-history-table-container');
             const customerHistoryTbody = document.getElementById('customer-history-tbody');
+
+            // Paiements clients
+            const openCustomerPaymentModalButton = document.getElementById('open-customer-payment-modal-button');
+            const customerPaymentModal = document.getElementById('customer-payment-modal');
+            const closeCustomerPaymentModal = document.getElementById('close-customer-payment-modal');
+            const customerPaymentCancelBtn = document.getElementById('customer-payment-cancel');
+            const customerPaymentSubmitBtn = document.getElementById('customer-payment-submit');
+            const customerPaymentInvoiceSelect = document.getElementById('customer-payment-invoice-select');
+            const customerPaymentBalanceRow = document.getElementById('customer-payment-balance-row');
+            const customerPaymentBalanceEl = document.getElementById('customer-payment-balance');
+            const customerPaymentAmountInput = document.getElementById('customer-payment-amount');
+            const customerPaymentDateInput = document.getElementById('customer-payment-date');
+            const customerPaymentModeSelect = document.getElementById('customer-payment-mode');
+            const customerPaymentNoteInput = document.getElementById('customer-payment-note');
+            const customerPaymentError = document.getElementById('customer-payment-error');
+            const customerPaymentModalSubtitle = document.getElementById('customer-payment-modal-subtitle');
 
             // Messagerie
             const chatCreateButton = document.getElementById('chat-create-button');
@@ -8046,7 +8137,11 @@
                 }
                 if (customerHistoryTotalDue) {
                     const currency = selected.currency || selected.invoices[0]?.currency || 'CFA';
-                    customerHistoryTotalDue.textContent = formatCurrency(selected.totalDue, currency);
+                    // Recalculer avec les paiements déjà enregistrés
+                    const totalActuallyDue = selected.invoices
+                        .filter(g => g.paymentStatus === 'pay_later' || g.payLater)
+                        .reduce((sum, g) => sum + getCustomerGroupBalance(g), 0);
+                    customerHistoryTotalDue.textContent = formatCurrency(totalActuallyDue, currency);
                 }
                 if (customerHistoryLastPayment) {
                     customerHistoryLastPayment.textContent = selected.lastPaymentAt ? formatDateForDisplay(selected.lastPaymentAt) : '-';
@@ -8067,37 +8162,236 @@
 
                 if (customerHistoryInvoicesEmpty) customerHistoryInvoicesEmpty.classList.add('hidden');
                 if (customerHistoryInvoicesTableContainer) customerHistoryInvoicesTableContainer.classList.remove('hidden');
+
+                // Afficher/cacher le bouton global de paiement
+                const hasOpenInvoices = invoices.some(g => (g.paymentStatus === 'pay_later' || g.payLater) && getCustomerGroupBalance(g) > 0);
+                if (openCustomerPaymentModalButton) {
+                    openCustomerPaymentModalButton.classList.toggle('hidden', !hasOpenInvoices);
+                }
+
                 if (customerHistoryInvoicesTbody) {
                     customerHistoryInvoicesTbody.innerHTML = invoices.map(group => {
                         const summary = calculateGroupSummary(group);
                         const paymentStatus = group.paymentStatus || (group.payLater ? 'pay_later' : 'paid');
                         const badge = formatPaymentStatusBadge(paymentStatus, group.payLater);
                         const isPayLater = paymentStatus === 'pay_later' || group.payLater;
+                        const alreadyPaid = getCustomerGroupPaidAmount(group.id);
+                        const balance = Math.max(0, summary.total - alreadyPaid);
+                        const currency = summary.currency || 'CFA';
                         let metaLabel = '-';
-                        if (group.paymentPaidAt || (!isPayLater && paymentStatus !== 'pending')) {
+                        if (group.paymentPaidAt || (!isPayLater && paymentStatus !== 'pending' && balance === 0)) {
                             const paidAt = group.paymentPaidAt || group.date;
                             metaLabel = `Payé le ${formatDateOnly(paidAt)}`;
                         } else if (isPayLater) {
                             metaLabel = group.paymentDueDate ? `Échéance ${formatDateOnly(group.paymentDueDate)}` : 'Échéance non définie';
                         }
+                        const paidCell = isPayLater
+                            ? `<span class="text-emerald-600 font-semibold">${formatCurrency(alreadyPaid, currency)}</span>`
+                            : `<span class="text-gray-400">—</span>`;
+                        const balanceCell = isPayLater
+                            ? (balance > 0
+                                ? `<span class="font-semibold text-amber-600">${formatCurrency(balance, currency)}</span>`
+                                : `<span class="font-semibold text-emerald-600">Soldé ✓</span>`)
+                            : `<span class="text-gray-400">—</span>`;
+                        const payBtn = (isPayLater && balance > 0)
+                            ? `<button type="button" data-pay-customer-group="${group.id}"
+                                class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-700 hover:bg-emerald-100">
+                                💳 Payer
+                              </button>`
+                            : `<button type="button" data-customer-invoice="${group.id}"
+                                class="inline-flex items-center justify-center px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50">
+                                Détails
+                              </button>`;
                         return `
                             <tr class="hover:bg-gray-50">
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(group.date)}</td>
                                 <td class="px-4 py-3 text-sm font-semibold text-gray-900">INV-${group.id.slice(-6).toUpperCase()}</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-900">${formatCurrency(summary.total, summary.currency)}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-900">${formatCurrency(summary.total, currency)}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm">${paidCell}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm">${balanceCell}</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm">
                                     <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold border ${badge.classes}">${badge.label}</span>
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${metaLabel}</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-right">
-                                    <button type="button" data-customer-invoice="${group.id}"
-                                        class="inline-flex items-center justify-center px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50">
-                                        Détails
-                                    </button>
-                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap text-right">${payBtn}</td>
                             </tr>
                         `;
                     }).join('');
+                }
+            }
+
+            // ── Paiements clients ──────────────────────────────────────────────
+
+            function getCustomerGroupPaidAmount(groupId) {
+                if (!groupId) return 0;
+                return Object.values(appData.customerPayments || {})
+                    .filter(p => p.groupId === groupId)
+                    .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+            }
+
+            function getCustomerGroupBalance(group) {
+                if (!group) return 0;
+                const summary = calculateGroupSummary(group);
+                const paid = getCustomerGroupPaidAmount(group.id);
+                return Math.max(0, summary.total - paid);
+            }
+
+            let activeCustomerPaymentCustomerKey = null;
+
+            function openCustomerPaymentModal(preselectedGroupId) {
+                if (!customerPaymentModal) return;
+                const customerKey = selectedCustomerHistoryKey;
+                if (!customerKey) return;
+                activeCustomerPaymentCustomerKey = customerKey;
+
+                // Reconstituer les groupes pay_later du client à partir des données en mémoire
+                const salesEntries = Object.values(appData.salesHistory || {});
+                const groupMap = {};
+                salesEntries.forEach(sale => {
+                    const isPayLater = sale.payLater === true || sale.paymentStatus === 'pay_later';
+                    if (!isPayLater) return;
+                    const gid = sale.saleGroupId || sale.id;
+                    if (!groupMap[gid]) {
+                        groupMap[gid] = {
+                            id: gid, date: sale.date, items: [], total: 0,
+                            paymentStatus: sale.paymentStatus || 'pay_later',
+                            payLater: true,
+                            paymentDueDate: sale.paymentDueDate || '',
+                            paymentPaidAt: sale.paymentPaidAt || '',
+                            customerId: sale.customerId || null,
+                            currency: getSaleCurrency(sale)
+                        };
+                    }
+                    groupMap[gid].total += sale.totalAmount || 0;
+                });
+
+                // Filtrer par client en cours & solde > 0
+                const openInvoices = Object.values(groupMap).filter(g => {
+                    const matchesCustomer = (g.customerId === customerKey) ||
+                        (!g.customerId && customerKey.startsWith('anon:'));
+                    if (!matchesCustomer) return false;
+                    return getCustomerGroupBalance(g) > 0 && g.paymentStatus !== 'paid';
+                });
+
+                if (!openInvoices.length) {
+                    showSuccessToast('Aucune facture ouverte pour ce client.');
+                    return;
+                }
+
+                const customerRecord = Object.values(appData.customers || {}).find(c => c.id === customerKey);
+                const customerName = customerRecord?.fullName || customerRecord?.name || '';
+                if (customerPaymentModalSubtitle) customerPaymentModalSubtitle.textContent = customerName || '—';
+
+                if (customerPaymentInvoiceSelect) {
+                    customerPaymentInvoiceSelect.innerHTML = openInvoices.map(g => {
+                        const bal = getCustomerGroupBalance(g);
+                        const summary = calculateGroupSummary(g);
+                        return `<option value="${g.id}" data-total="${summary.total}" data-balance="${bal}" data-currency="${summary.currency || 'CFA'}">INV-${g.id.slice(-6).toUpperCase()} · Solde: ${formatCurrency(bal, summary.currency)}</option>`;
+                    }).join('');
+                    if (preselectedGroupId) customerPaymentInvoiceSelect.value = preselectedGroupId;
+                }
+
+                function updateBalanceDisplay() {
+                    const opt = customerPaymentInvoiceSelect?.options[customerPaymentInvoiceSelect.selectedIndex];
+                    if (!opt) return;
+                    const bal = Number(opt.dataset.balance) || 0;
+                    const currency = opt.dataset.currency || 'CFA';
+                    if (customerPaymentBalanceEl) customerPaymentBalanceEl.textContent = formatCurrency(bal, currency);
+                    if (customerPaymentBalanceRow) customerPaymentBalanceRow.classList.remove('hidden');
+                    if (customerPaymentAmountInput && !customerPaymentAmountInput.value) customerPaymentAmountInput.value = bal;
+                }
+                updateBalanceDisplay();
+                if (customerPaymentInvoiceSelect) {
+                    customerPaymentInvoiceSelect.onchange = () => {
+                        if (customerPaymentAmountInput) customerPaymentAmountInput.value = '';
+                        updateBalanceDisplay();
+                    };
+                }
+
+                if (customerPaymentDateInput) customerPaymentDateInput.value = new Date().toISOString().slice(0, 10);
+                if (customerPaymentNoteInput) customerPaymentNoteInput.value = '';
+                if (customerPaymentModeSelect) customerPaymentModeSelect.value = 'Espèces';
+                if (customerPaymentError) customerPaymentError.classList.add('hidden');
+                customerPaymentModal.classList.remove('hidden');
+            }
+
+            function closeCustomerPaymentModalFn() {
+                if (customerPaymentModal) customerPaymentModal.classList.add('hidden');
+                if (customerPaymentInvoiceSelect) customerPaymentInvoiceSelect.onchange = null;
+                activeCustomerPaymentCustomerKey = null;
+            }
+
+            async function recordCustomerPayment() {
+                if (!currentUser || !dbBasePath) return;
+                const groupId = customerPaymentInvoiceSelect?.value;
+                if (!groupId) {
+                    if (customerPaymentError) { customerPaymentError.textContent = 'Sélectionnez une facture.'; customerPaymentError.classList.remove('hidden'); }
+                    return;
+                }
+                const amount = parseFloat(customerPaymentAmountInput?.value || '0');
+                if (!amount || amount <= 0) {
+                    if (customerPaymentError) { customerPaymentError.textContent = 'Le montant doit être supérieur à 0.'; customerPaymentError.classList.remove('hidden'); }
+                    return;
+                }
+                const opt = customerPaymentInvoiceSelect?.options[customerPaymentInvoiceSelect.selectedIndex];
+                const balance = Number(opt?.dataset.balance || 0);
+                if (amount > balance + 0.01) {
+                    if (customerPaymentError) { customerPaymentError.textContent = `Montant (${formatCurrency(amount)}) > solde restant (${formatCurrency(balance)}).`; customerPaymentError.classList.remove('hidden'); }
+                    return;
+                }
+                const date = customerPaymentDateInput?.value || new Date().toISOString().slice(0, 10);
+                const mode = customerPaymentModeSelect?.value || 'Espèces';
+                const note = customerPaymentNoteInput?.value?.trim() || '';
+                const currency = opt?.dataset.currency || 'CFA';
+                const customerKey = activeCustomerPaymentCustomerKey || selectedCustomerHistoryKey;
+                const customerRecord = Object.values(appData.customers || {}).find(c => c.id === customerKey);
+
+                if (customerPaymentSubmitBtn) { customerPaymentSubmitBtn.disabled = true; customerPaymentSubmitBtn.textContent = 'Enregistrement...'; }
+                if (customerPaymentError) customerPaymentError.classList.add('hidden');
+
+                try {
+                    const newPaymentRef = push(ref(db, `${dbBasePath}/customerPayments`));
+                    const payment = {
+                        id: newPaymentRef.key,
+                        groupId,
+                        customerId: customerRecord?.id || customerKey || '',
+                        customerName: customerRecord?.fullName || customerRecord?.name || '',
+                        amount,
+                        currency,
+                        date,
+                        mode,
+                        note,
+                        createdBy: currentUser.email || '',
+                        createdAt: Date.now()
+                    };
+                    const updates = {};
+                    updates[`${dbBasePath}/customerPayments/${newPaymentRef.key}`] = payment;
+
+                    // Auto-solde si la dette tombe à 0
+                    const newBalance = Math.max(0, balance - amount);
+                    if (newBalance <= 0.01) {
+                        const salesEntries = Object.values(appData.salesHistory || {});
+                        const now = new Date().toISOString();
+                        salesEntries.forEach(sale => {
+                            if (sale.saleGroupId === groupId || sale.id === groupId) {
+                                updates[`${dbBasePath}/salesHistory/${sale.id}/paymentStatus`] = 'paid';
+                                updates[`${dbBasePath}/salesHistory/${sale.id}/payLater`] = false;
+                                updates[`${dbBasePath}/salesHistory/${sale.id}/paymentPaidAt`] = now;
+                            }
+                        });
+                        updates[`${dbBasePath}/sales/${groupId}/paymentStatus`] = 'paid';
+                        updates[`${dbBasePath}/sales/${groupId}/payLater`] = false;
+                        updates[`${dbBasePath}/sales/${groupId}/paymentPaidAt`] = now;
+                    }
+
+                    await update(ref(db), updates);
+                    closeCustomerPaymentModalFn();
+                    showSuccessToast(`Paiement de ${formatCurrency(amount, currency)} enregistré ✓`);
+                } catch (err) {
+                    console.error('Erreur paiement client:', err);
+                    if (customerPaymentError) { customerPaymentError.textContent = "Erreur lors de l'enregistrement. Réessayez."; customerPaymentError.classList.remove('hidden'); }
+                } finally {
+                    if (customerPaymentSubmitBtn) { customerPaymentSubmitBtn.disabled = false; customerPaymentSubmitBtn.textContent = 'Confirmer le paiement'; }
                 }
             }
 
@@ -15754,6 +16048,12 @@
                 supplierPaymentsRef = ref(db, `${dbBasePath}/supplierPayments`);
                 supplierPaymentsListener = onValue(supplierPaymentsRef, onSupplierPaymentsValue);
 
+                customerPaymentsRef = ref(db, `${dbBasePath}/customerPayments`);
+                customerPaymentsListener = onValue(customerPaymentsRef, snap => {
+                    appData.customerPayments = snap.val() || {};
+                    renderSalesHistory();
+                });
+
                 inventoriesRef = ref(db, getInventoriesPath());
                 inventoriesListener = onValue(inventoriesRef, onInventoriesValue);
 
@@ -15780,13 +16080,14 @@
                 if (suppliersListener && suppliersRef) off(suppliersRef, suppliersListener);
                 if (supplierInvoicesListener && supplierInvoicesRef) off(supplierInvoicesRef, supplierInvoicesListener);
                 if (supplierPaymentsListener && supplierPaymentsRef) off(supplierPaymentsRef, supplierPaymentsListener);
+                if (customerPaymentsListener && customerPaymentsRef) off(customerPaymentsRef, customerPaymentsListener);
                 if (inventoriesListener && inventoriesRef) off(inventoriesRef, inventoriesListener);
                 if (chatListListener && chatListRef) off(chatListRef, chatListListener);
                 if (chatReadsListener && chatReadsRef) off(chatReadsRef, chatReadsListener);
                 if (chatMessagesListener && chatMessagesRef) off(chatMessagesRef, chatMessagesListener);
-                storesListener = null; boutiquesListener = null; categoriesListener = null; storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; shopTransferRequestsListener = null; salesHistoryListener = null; pendingSalesListener = null; settingsListener = null; companyMembersListener = null; companyCustomersListener = null; suppliersListener = null; supplierInvoicesListener = null; supplierPaymentsListener = null; inventoriesListener = null; chatListListener = null; chatReadsListener = null; chatMessagesListener = null;
+                storesListener = null; boutiquesListener = null; categoriesListener = null; storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; shopTransferRequestsListener = null; salesHistoryListener = null; pendingSalesListener = null; settingsListener = null; companyMembersListener = null; companyCustomersListener = null; suppliersListener = null; supplierInvoicesListener = null; supplierPaymentsListener = null; customerPaymentsListener = null; inventoriesListener = null; chatListListener = null; chatReadsListener = null; chatMessagesListener = null;
                 chatListRef = null; chatReadsRef = null; chatMessagesRef = null; inventoriesRef = null;
-                appData.stores = {}; appData.boutiques = {}; appData.categories = {}; appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.shopMovements = {}; appData.shopTransferRequests = {}; appData.salesHistory = {}; appData.customers = {}; appData.suppliers = {}; appData.supplierInvoices = {}; appData.supplierPayments = {}; appData.storeExitRequests = {}; appData.pendingSales = {}; appData.settings = {}; appData.inventories = {};
+                appData.stores = {}; appData.boutiques = {}; appData.categories = {}; appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.shopMovements = {}; appData.shopTransferRequests = {}; appData.salesHistory = {}; appData.customers = {}; appData.suppliers = {}; appData.supplierInvoices = {}; appData.supplierPayments = {}; appData.customerPayments = {}; appData.storeExitRequests = {}; appData.pendingSales = {}; appData.settings = {}; appData.inventories = {};
                 inventoriesPathSuffix = 'inventories';
                 selectedCustomer = null;
                 customerOptionLookup = {};
@@ -16881,14 +17182,6 @@
                     return;
                 }
                 const payLaterDueDate = payLater ? (payLaterDueDateInput?.value || '').trim() : '';
-                if (payLater && !payLaterDueDate) {
-                    if (payLaterDueDateError) {
-                        payLaterDueDateError.textContent = "La date de paiement prévue est requise.";
-                        payLaterDueDateError.classList.remove('hidden');
-                    }
-                    showSalesErrorMessage("Veuillez renseigner la date prévue de paiement.");
-                    return;
-                }
                 if (payLaterDueDateError) payLaterDueDateError.classList.add('hidden');
 
                 const summary = calculateCartSummary();
@@ -18480,6 +18773,10 @@
             if (generateInvoiceButton) generateInvoiceButton.addEventListener('click', generateInvoiceFromCart);
             if (payLaterButton) payLaterButton.addEventListener('click', markPayLaterFromCart);
             if (holdCartButton) holdCartButton.addEventListener('click', holdCart);
+            if (payLaterDueDateInput) {
+                // Griser les dates passées : min = aujourd'hui
+                payLaterDueDateInput.min = new Date().toISOString().split('T')[0];
+            }
             if (salesHistoryTabCompleted) {
                 salesHistoryTabCompleted.addEventListener('click', () => {
                     salesHistoryTab = 'completed';
@@ -18617,10 +18914,35 @@
             }
             if (customerHistoryInvoicesTbody) {
                 customerHistoryInvoicesTbody.addEventListener('click', (event) => {
-                    const button = event.target.closest('[data-customer-invoice]');
-                    if (!button) return;
-                    const groupId = button.dataset.customerInvoice;
-                    if (groupId) openSalesDetailModal(groupId);
+                    const detailBtn = event.target.closest('[data-customer-invoice]');
+                    if (detailBtn) {
+                        const groupId = detailBtn.dataset.customerInvoice;
+                        if (groupId) openSalesDetailModal(groupId);
+                        return;
+                    }
+                    const payBtn = event.target.closest('[data-pay-customer-group]');
+                    if (payBtn) {
+                        const groupId = payBtn.dataset.payCustomerGroup;
+                        openCustomerPaymentModal(groupId);
+                        return;
+                    }
+                });
+            }
+            if (openCustomerPaymentModalButton) {
+                openCustomerPaymentModalButton.addEventListener('click', () => openCustomerPaymentModal());
+            }
+            if (closeCustomerPaymentModal) {
+                closeCustomerPaymentModal.addEventListener('click', closeCustomerPaymentModalFn);
+            }
+            if (customerPaymentCancelBtn) {
+                customerPaymentCancelBtn.addEventListener('click', closeCustomerPaymentModalFn);
+            }
+            if (customerPaymentSubmitBtn) {
+                customerPaymentSubmitBtn.addEventListener('click', recordCustomerPayment);
+            }
+            if (customerPaymentModal) {
+                customerPaymentModal.addEventListener('click', (e) => {
+                    if (e.target === customerPaymentModal) closeCustomerPaymentModalFn();
                 });
             }
             if (salesHistoryList) {
