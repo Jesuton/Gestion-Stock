@@ -1046,71 +1046,71 @@
                         </select>
                     </div>
 
-                    <div id="sales-history-customers-section" class="hidden space-y-4">
+                    <div id="sales-history-customers-section" class="hidden space-y-3">
+
+                        <!-- ── Sélection client ─────────────────────────────── -->
                         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-                            <div class="flex flex-col lg:flex-row gap-4">
-                                <div class="flex-1">
-                                    <p class="text-sm font-semibold text-gray-800">Clients</p>
-                                    <p class="text-xs text-gray-400 mt-1">Utilisez la recherche pour filtrer les clients.</p>
-                                    <div id="customer-history-list" class="mt-4 space-y-2 max-h-64 overflow-y-auto pr-1"></div>
-                                    <div id="customer-history-list-empty" class="mt-4 text-sm text-gray-400 hidden">Aucun client trouvé.</div>
-                                </div>
-                                <div class="lg:w-80">
-                                    <label class="text-xs font-semibold text-gray-500">Client sélectionné</label>
-                                    <select id="customer-history-select"
-                                        class="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:ring-cyan-500 focus:border-cyan-500">
-                                    </select>
-                                    <div class="mt-3 rounded-xl bg-gray-50 border border-gray-100 p-3">
-                                        <p id="customer-history-contact" class="text-xs text-gray-500">—</p>
-                                    </div>
-                                </div>
+                            <!-- Barre contact client sélectionné -->
+                            <div id="customer-selected-info-bar" class="hidden mb-3 flex items-center gap-2.5 px-3 py-2 rounded-xl bg-cyan-50 border border-cyan-100">
+                                <svg class="w-4 h-4 text-cyan-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
+                                <p id="customer-history-contact" class="text-xs text-gray-700 flex-1 min-w-0 truncate">—</p>
+                            </div>
+                            <!-- Contact vide (fallback when nothing selected) -->
+                            <p id="customer-history-contact-empty" class="hidden mb-3 text-xs text-gray-400 italic pl-1">Sélectionnez un client dans la liste.</p>
+
+                            <!-- Liste clients scrollable -->
+                            <div id="customer-history-list" class="space-y-1.5 max-h-44 sm:max-h-60 overflow-y-auto pr-1"></div>
+                            <div id="customer-history-list-empty" class="text-sm text-gray-400 text-center py-6 hidden">Aucun client trouvé.</div>
+
+                            <!-- Select caché — utilisé par le JS pour la gestion de la valeur -->
+                            <select id="customer-history-select" class="sr-only" aria-hidden="true"></select>
+                        </div>
+
+                        <!-- ── Stats compactes ────────────────────────────────── -->
+                        <div class="grid grid-cols-3 gap-2">
+                            <div class="rounded-xl border border-gray-100 bg-white px-3 py-2.5 shadow-sm">
+                                <p class="text-[10px] uppercase tracking-wide text-gray-400 font-medium leading-tight">Facturé</p>
+                                <p id="customer-history-total-sales" class="text-sm sm:text-base font-bold text-gray-900 mt-0.5 truncate">0</p>
+                            </div>
+                            <div class="rounded-xl border border-amber-100 bg-amber-50 px-3 py-2.5 shadow-sm">
+                                <p class="text-[10px] uppercase tracking-wide text-amber-500 font-medium leading-tight">Dû</p>
+                                <p id="customer-history-total-due" class="text-sm sm:text-base font-bold text-amber-600 mt-0.5 truncate">0</p>
+                            </div>
+                            <div class="rounded-xl border border-gray-100 bg-white px-3 py-2.5 shadow-sm">
+                                <p class="text-[10px] uppercase tracking-wide text-gray-400 font-medium leading-tight">Der. Pmt</p>
+                                <p id="customer-history-last-payment" class="text-xs sm:text-sm font-semibold text-gray-900 mt-0.5 truncate">-</p>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-                                <p class="text-xs uppercase text-gray-400">Total facturé</p>
-                                <p id="customer-history-total-sales" class="text-2xl font-semibold text-gray-900">0 FCFA</p>
-                            </div>
-                            <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-                                <p class="text-xs uppercase text-gray-400">Total dû</p>
-                                <p id="customer-history-total-due" class="text-2xl font-semibold text-amber-600">0 FCFA</p>
-                            </div>
-                            <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-                                <p class="text-xs uppercase text-gray-400">Dernier paiement</p>
-                                <p id="customer-history-last-payment" class="text-sm font-semibold text-gray-900">-</p>
-                            </div>
-                        </div>
-
-                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-                            <div class="flex items-center justify-between">
-                                <h3 class="text-sm font-semibold text-gray-800">Factures du client</h3>
-                                <div class="flex items-center gap-3">
-                                    <span id="customer-history-total-invoices" class="text-xs font-semibold text-gray-500">0</span>
-                                    <button id="open-customer-payment-modal-button"
-                                        class="hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors">
-                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
-                                        Enregistrer un paiement
-                                    </button>
+                        <!-- ── Factures ────────────────────────────────────────── -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div class="flex items-center justify-between gap-2 px-4 py-3 border-b border-gray-100">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <h3 class="text-sm font-semibold text-gray-800 whitespace-nowrap">Factures</h3>
+                                    <span id="customer-history-total-invoices" class="px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">0</span>
                                 </div>
+                                <button id="open-customer-payment-modal-button"
+                                    class="hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors whitespace-nowrap shrink-0">
+                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                                    Payer
+                                </button>
                             </div>
                             <div id="customer-history-invoices-empty"
-                                class="mt-4 flex flex-col items-center justify-center text-center text-gray-400 h-28 border border-dashed border-gray-200 rounded-xl">
+                                class="flex flex-col items-center justify-center text-center text-gray-400 h-20 text-sm">
                                 Aucune facture pour ce client.
                             </div>
-                            <div id="customer-history-invoices-table-container"
-                                class="hidden mt-4 overflow-x-auto rounded-xl border border-gray-200">
-                                <table class="min-w-full bg-white divide-y divide-gray-200">
+                            <div id="customer-history-invoices-table-container" class="hidden overflow-x-auto">
+                                <table class="min-w-full bg-white divide-y divide-gray-200 text-sm">
                                     <thead class="bg-gray-50">
                                         <tr>
-                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Facture</th>
-                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
-                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payé</th>
-                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Solde</th>
-                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paiement</th>
-                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Échéance / Payé</th>
-                                            <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                            <th scope="col" class="px-3 py-2.5 text-left text-xs font-medium text-gray-500 uppercase hidden sm:table-cell">Date</th>
+                                            <th scope="col" class="px-3 py-2.5 text-left text-xs font-medium text-gray-500 uppercase">Facture</th>
+                                            <th scope="col" class="px-3 py-2.5 text-left text-xs font-medium text-gray-500 uppercase">Montant</th>
+                                            <th scope="col" class="px-3 py-2.5 text-left text-xs font-medium text-gray-500 uppercase hidden sm:table-cell">Payé</th>
+                                            <th scope="col" class="px-3 py-2.5 text-left text-xs font-medium text-gray-500 uppercase">Solde</th>
+                                            <th scope="col" class="px-3 py-2.5 text-left text-xs font-medium text-gray-500 uppercase hidden md:table-cell">Statut</th>
+                                            <th scope="col" class="px-3 py-2.5 text-left text-xs font-medium text-gray-500 uppercase hidden md:table-cell">Échéance</th>
+                                            <th scope="col" class="px-3 py-2.5 text-right text-xs font-medium text-gray-500 uppercase">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody id="customer-history-invoices-tbody" class="divide-y divide-gray-200">
@@ -4247,6 +4247,7 @@
             let isTaxEnabled = true;
             let activeSalesDetailId = null;
             let selectedCustomerHistoryKey = null;
+            let currentCustomerOpenInvoices = []; // factures pay_later ouvertes du client affiché
             let activeStoreId = null;
             let defaultStoreId = null;
             let activeBoutiqueId = null;
@@ -4512,6 +4513,7 @@
             const customerHistoryListEmpty = document.getElementById('customer-history-list-empty');
             const customerHistorySelect = document.getElementById('customer-history-select');
             const customerHistoryContact = document.getElementById('customer-history-contact');
+            const customerSelectedInfoBar = document.getElementById('customer-selected-info-bar');
             const customerHistoryTotalSales = document.getElementById('customer-history-total-sales');
             const customerHistoryTotalDue = document.getElementById('customer-history-total-due');
             const customerHistoryLastPayment = document.getElementById('customer-history-last-payment');
@@ -6367,7 +6369,7 @@
                                 ${escapeHtml(packaging.label)}
                             </label>
                             <p class="mt-1 text-[11px] text-slate-400">${packaging.unitCount} unité(s) · ${escapeHtml(getPackageVariantCode(product, packaging.code))}</p>
-                            <input type="number" id="transfer-breakdown-${packaging.code}" value="${plan?.breakdown?.[packaging.code] || 0}" min="0" step="1"
+                            <input type="number" id="transfer-breakdown-${packaging.code}" value="${plan?.breakdown?.[packaging.code] || 0}" min="0" max="${Math.max(Math.floor((plan?.totalUnits || 0) / Math.max(packaging.unitCount, 1)), 0)}" step="1"
                                 data-transfer-package-ref="${packaging.code}"
                                 class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
                         </div>
@@ -8164,7 +8166,8 @@
                 if (customerHistoryInvoicesTableContainer) customerHistoryInvoicesTableContainer.classList.remove('hidden');
 
                 // Afficher/cacher le bouton global de paiement
-                const hasOpenInvoices = invoices.some(g => (g.paymentStatus === 'pay_later' || g.payLater) && getCustomerGroupBalance(g) > 0);
+                currentCustomerOpenInvoices = invoices.filter(g => (g.paymentStatus === 'pay_later' || g.payLater) && getCustomerGroupBalance(g) > 0);
+                const hasOpenInvoices = currentCustomerOpenInvoices.length > 0;
                 if (openCustomerPaymentModalButton) {
                     openCustomerPaymentModalButton.classList.toggle('hidden', !hasOpenInvoices);
                 }
@@ -8204,16 +8207,16 @@
                               </button>`;
                         return `
                             <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(group.date)}</td>
-                                <td class="px-4 py-3 text-sm font-semibold text-gray-900">INV-${group.id.slice(-6).toUpperCase()}</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-900">${formatCurrency(summary.total, currency)}</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm">${paidCell}</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm">${balanceCell}</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm">
-                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold border ${badge.classes}">${badge.label}</span>
+                                <td class="px-3 py-2.5 whitespace-nowrap text-xs text-gray-500 hidden sm:table-cell">${formatDateForDisplay(group.date)}</td>
+                                <td class="px-3 py-2.5 text-xs font-semibold text-gray-900">INV-${group.id.slice(-6).toUpperCase()}</td>
+                                <td class="px-3 py-2.5 whitespace-nowrap text-xs font-semibold text-gray-900">${formatCurrency(summary.total, currency)}</td>
+                                <td class="px-3 py-2.5 whitespace-nowrap text-xs hidden sm:table-cell">${paidCell}</td>
+                                <td class="px-3 py-2.5 whitespace-nowrap text-xs">${balanceCell}</td>
+                                <td class="px-3 py-2.5 whitespace-nowrap text-xs hidden md:table-cell">
+                                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold border ${badge.classes}">${badge.label}</span>
                                 </td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${metaLabel}</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-right">${payBtn}</td>
+                                <td class="px-3 py-2.5 whitespace-nowrap text-xs text-gray-500 hidden md:table-cell">${metaLabel}</td>
+                                <td class="px-3 py-2.5 whitespace-nowrap text-right">${payBtn}</td>
                             </tr>
                         `;
                     }).join('');
@@ -8240,53 +8243,34 @@
 
             function openCustomerPaymentModal(preselectedGroupId) {
                 if (!customerPaymentModal) return;
-                const customerKey = selectedCustomerHistoryKey;
-                if (!customerKey) return;
-                activeCustomerPaymentCustomerKey = customerKey;
+                if (!selectedCustomerHistoryKey) return;
+                activeCustomerPaymentCustomerKey = selectedCustomerHistoryKey;
 
-                // Reconstituer les groupes pay_later du client à partir des données en mémoire
-                const salesEntries = Object.values(appData.salesHistory || {});
-                const groupMap = {};
-                salesEntries.forEach(sale => {
-                    const isPayLater = sale.payLater === true || sale.paymentStatus === 'pay_later';
-                    if (!isPayLater) return;
-                    const gid = sale.saleGroupId || sale.id;
-                    if (!groupMap[gid]) {
-                        groupMap[gid] = {
-                            id: gid, date: sale.date, items: [], total: 0,
-                            paymentStatus: sale.paymentStatus || 'pay_later',
-                            payLater: true,
-                            paymentDueDate: sale.paymentDueDate || '',
-                            paymentPaidAt: sale.paymentPaidAt || '',
-                            customerId: sale.customerId || null,
-                            currency: getSaleCurrency(sale)
-                        };
-                    }
-                    groupMap[gid].total += sale.totalAmount || 0;
-                });
+                // Utiliser directement les factures calculées au moment du rendu
+                let openInvoices = currentCustomerOpenInvoices.slice(); // copie
 
-                // Filtrer par client en cours & solde > 0
-                const openInvoices = Object.values(groupMap).filter(g => {
-                    const matchesCustomer = (g.customerId === customerKey) ||
-                        (!g.customerId && customerKey.startsWith('anon:'));
-                    if (!matchesCustomer) return false;
-                    return getCustomerGroupBalance(g) > 0 && g.paymentStatus !== 'paid';
-                });
+                // Si on vient d'un bouton "Payer" sur une ligne spécifique, trier cette facture en premier
+                if (preselectedGroupId) {
+                    openInvoices.sort((a, b) => (a.id === preselectedGroupId ? -1 : b.id === preselectedGroupId ? 1 : 0));
+                }
 
                 if (!openInvoices.length) {
                     showSuccessToast('Aucune facture ouverte pour ce client.');
                     return;
                 }
 
-                const customerRecord = Object.values(appData.customers || {}).find(c => c.id === customerKey);
-                const customerName = customerRecord?.fullName || customerRecord?.name || '';
-                if (customerPaymentModalSubtitle) customerPaymentModalSubtitle.textContent = customerName || '—';
+                // Sous-titre du modal avec le nom du client
+                const customerRecord = Object.values(appData.customers || {}).find(c => c.id === selectedCustomerHistoryKey);
+                if (customerPaymentModalSubtitle) {
+                    customerPaymentModalSubtitle.textContent = customerRecord?.fullName || customerRecord?.name || '—';
+                }
 
+                // Remplir la liste des factures
                 if (customerPaymentInvoiceSelect) {
                     customerPaymentInvoiceSelect.innerHTML = openInvoices.map(g => {
                         const bal = getCustomerGroupBalance(g);
                         const summary = calculateGroupSummary(g);
-                        return `<option value="${g.id}" data-total="${summary.total}" data-balance="${bal}" data-currency="${summary.currency || 'CFA'}">INV-${g.id.slice(-6).toUpperCase()} · Solde: ${formatCurrency(bal, summary.currency)}</option>`;
+                        return `<option value="${g.id}" data-balance="${bal}" data-currency="${summary.currency || 'CFA'}">INV-${g.id.slice(-6).toUpperCase()} — Solde: ${formatCurrency(bal, summary.currency)}</option>`;
                     }).join('');
                     if (preselectedGroupId) customerPaymentInvoiceSelect.value = preselectedGroupId;
                 }
@@ -8298,7 +8282,7 @@
                     const currency = opt.dataset.currency || 'CFA';
                     if (customerPaymentBalanceEl) customerPaymentBalanceEl.textContent = formatCurrency(bal, currency);
                     if (customerPaymentBalanceRow) customerPaymentBalanceRow.classList.remove('hidden');
-                    if (customerPaymentAmountInput && !customerPaymentAmountInput.value) customerPaymentAmountInput.value = bal;
+                    if (customerPaymentAmountInput) customerPaymentAmountInput.value = bal;
                 }
                 updateBalanceDisplay();
                 if (customerPaymentInvoiceSelect) {
@@ -10095,13 +10079,19 @@
                     : null;
                 const breakdown = {};
                 let fixedUnits = 0;
+                let remainingUnitsBudget = totalUnits;
 
                 transferablePackagings.forEach(packaging => {
                     const ref = packaging.code;
                     if (autoFillPackaging && ref === autoFillPackaging.code) return;
-                    const qty = parseNonNegativeInteger(rawBreakdown?.[ref], 0);
+                    const requestedQty = parseNonNegativeInteger(rawBreakdown?.[ref], 0);
+                    const maxQty = packaging.unitCount > 0
+                        ? Math.floor(remainingUnitsBudget / packaging.unitCount)
+                        : 0;
+                    const qty = Math.min(requestedQty, Math.max(maxQty, 0));
                     breakdown[ref] = qty;
                     fixedUnits += qty * packaging.unitCount;
+                    remainingUnitsBudget -= qty * packaging.unitCount;
                 });
 
                 const remainingUnits = totalUnits - fixedUnits;
