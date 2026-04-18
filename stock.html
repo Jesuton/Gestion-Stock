@@ -3989,6 +3989,18 @@
                     </div>
                 </div>
 
+                <div id="sales-detail-corrections-section" class="hidden">
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-900">Corrections liées</h3>
+                            <p class="text-xs text-gray-500 mt-1">La vente d'origine reste inchangée, les corrections sont tracées séparément.</p>
+                        </div>
+                        <span id="sales-detail-corrections-count"
+                            class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">0</span>
+                    </div>
+                    <div id="sales-detail-corrections-list" class="mt-3 space-y-3"></div>
+                </div>
+
                     <div class="bg-blue-50 rounded-2xl p-4 space-y-2">
                         <div class="flex items-center justify-between text-sm text-gray-600">
                             <span>Sous-total</span>
@@ -4009,6 +4021,13 @@
                     </div>
 
                 <div class="flex flex-col sm:flex-row gap-3">
+                    <button id="sales-detail-correct" type="button"
+                        class="hidden flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Déclarer une correction
+                    </button>
                     <button id="sales-detail-print" type="button"
                         class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -4024,6 +4043,85 @@
                         Envoyer par email
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="sales-correction-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-6 m-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-900">Déclarer une correction</h2>
+                    <p id="sales-correction-modal-subtitle" class="text-sm text-gray-500 mt-1">—</p>
+                </div>
+                <button id="close-sales-correction-modal-button" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="sales-correction-type" class="text-sm font-medium text-gray-600">Type de correction</label>
+                    <select id="sales-correction-type"
+                        class="mt-2 w-full rounded-xl border border-gray-200 px-3 py-3 text-sm text-gray-700 focus:ring-amber-400 focus:border-amber-400">
+                        <option value="wrong_product">Mauvais produit</option>
+                        <option value="wrong_price">Mauvais prix</option>
+                        <option value="discount_abuse">Remise abusive</option>
+                        <option value="wrong_quantity">Quantité incorrecte</option>
+                        <option value="full_cancel">Annulation</option>
+                        <option value="other">Autre</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="sales-correction-replacement-invoice" class="text-sm font-medium text-gray-600">Facture de remplacement</label>
+                    <input type="text" id="sales-correction-replacement-invoice" placeholder="Ex: INV-AB12CD"
+                        class="mt-2 w-full rounded-xl border border-gray-200 px-3 py-3 text-sm text-gray-700 focus:ring-amber-400 focus:border-amber-400" />
+                </div>
+                <div>
+                    <label for="sales-correction-cash-impact" class="text-sm font-medium text-gray-600">Impact caisse</label>
+                    <input type="number" id="sales-correction-cash-impact" step="1" placeholder="Ex: -500"
+                        class="mt-2 w-full rounded-xl border border-gray-200 px-3 py-3 text-sm text-gray-700 focus:ring-amber-400 focus:border-amber-400" />
+                    <p class="mt-1 text-xs text-gray-400">Négatif = trop encaissé, positif = montant complémentaire attendu.</p>
+                </div>
+                <div>
+                    <label for="sales-correction-stock-impact" class="text-sm font-medium text-gray-600">Impact stock</label>
+                    <select id="sales-correction-stock-impact"
+                        class="mt-2 w-full rounded-xl border border-gray-200 px-3 py-3 text-sm text-gray-700 focus:ring-amber-400 focus:border-amber-400">
+                        <option value="review_required">Ajustement stock à vérifier</option>
+                        <option value="none">Aucun impact stock</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2">
+                    <label for="sales-correction-reason" class="text-sm font-medium text-gray-600">Motif *</label>
+                    <textarea id="sales-correction-reason" rows="3" placeholder="Expliquez précisément ce qui doit être corrigé."
+                        class="mt-2 w-full rounded-xl border border-gray-200 px-3 py-3 text-sm text-gray-700 focus:ring-amber-400 focus:border-amber-400"></textarea>
+                </div>
+                <div class="md:col-span-2">
+                    <label for="sales-correction-note" class="text-sm font-medium text-gray-600">Notes internes</label>
+                    <textarea id="sales-correction-note" rows="3" placeholder="Ex: le client est reparti avec la bonne facture, vérifier la caisse."
+                        class="mt-2 w-full rounded-xl border border-gray-200 px-3 py-3 text-sm text-gray-700 focus:ring-amber-400 focus:border-amber-400"></textarea>
+                </div>
+            </div>
+
+            <div class="mt-4 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                Cette action n'efface pas la vente d'origine. Elle ajoute une trace liée à la transaction pour audit.
+            </div>
+            <p id="sales-correction-error" class="mt-3 text-sm text-red-500 hidden"></p>
+
+            <div class="mt-6 flex flex-col sm:flex-row gap-3">
+                <button id="sales-correction-submit" type="button"
+                    class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Enregistrer la correction
+                </button>
+                <button id="sales-correction-cancel" type="button"
+                    class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50">
+                    Annuler
+                </button>
             </div>
         </div>
     </div>
@@ -4226,7 +4324,7 @@
             let currentUserData = null;
             let dbBasePath = '';
 
-            const appData = { stores: {}, boutiques: {}, categories: {}, storeProducts: {}, storeMovements: {}, shopStock: {}, shopMovements: {}, shopTransferRequests: {}, salesHistory: {}, customers: {}, suppliers: {}, supplierInvoices: {}, supplierPayments: {}, customerPayments: {}, storeExitRequests: {}, pendingSales: {}, settings: {}, inventories: {} };
+            const appData = { stores: {}, boutiques: {}, categories: {}, storeProducts: {}, storeMovements: {}, shopStock: {}, shopMovements: {}, shopTransferRequests: {}, salesHistory: {}, saleCorrections: {}, customers: {}, suppliers: {}, supplierInvoices: {}, supplierPayments: {}, customerPayments: {}, storeExitRequests: {}, pendingSales: {}, settings: {}, inventories: {} };
             let isSidebarOpen = false;
             let isSidebarCollapsed = false;
             let isCodeLoginMode = false;
@@ -4247,8 +4345,8 @@
             const SALE_SOURCE_MIXED = 'mixed';
 
 
-            let storesListener, boutiquesListener, categoriesListener, storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, shopTransferRequestsListener, salesHistoryListener, companyMembersListener, companyCustomersListener, suppliersListener, supplierInvoicesListener, supplierPaymentsListener, customerPaymentsListener, storeExitRequestsListener, pendingSalesListener, settingsListener, inventoriesListener, chatListListener, chatReadsListener, chatMessagesListener;
-            let storesRef, boutiquesRef, categoriesRef, storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, shopTransferRequestsRef, salesHistoryRef, companyMembersRef, companyCustomersRef, suppliersRef, supplierInvoicesRef, supplierPaymentsRef, customerPaymentsRef, storeExitRequestsRef, pendingSalesRef, settingsRef, inventoriesRef, chatListRef, chatReadsRef, chatMessagesRef;
+            let storesListener, boutiquesListener, categoriesListener, storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, shopTransferRequestsListener, salesHistoryListener, saleCorrectionsListener, companyMembersListener, companyCustomersListener, suppliersListener, supplierInvoicesListener, supplierPaymentsListener, customerPaymentsListener, storeExitRequestsListener, pendingSalesListener, settingsListener, inventoriesListener, chatListListener, chatReadsListener, chatMessagesListener;
+            let storesRef, boutiquesRef, categoriesRef, storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, shopTransferRequestsRef, salesHistoryRef, saleCorrectionsRef, companyMembersRef, companyCustomersRef, suppliersRef, supplierInvoicesRef, supplierPaymentsRef, customerPaymentsRef, storeExitRequestsRef, pendingSalesRef, settingsRef, inventoriesRef, chatListRef, chatReadsRef, chatMessagesRef;
 
             const accessModules = [
                 'Tableau de bord',
@@ -4277,6 +4375,7 @@
             let salesHistoryDateFilterValue = 'all';
             let isTaxEnabled = true;
             let activeSalesDetailId = null;
+            let activeSalesCorrectionGroupId = null;
             let selectedCustomerHistoryKey = null;
             let currentCustomerOpenInvoices = []; // factures pay_later ouvertes du client affiché
             let activeStoreId = null;
@@ -4882,6 +4981,9 @@
             const salesDetailProducts = document.getElementById('sales-detail-products');
             const salesDetailCommentSection = document.getElementById('sales-detail-comment-section');
             const salesDetailComment = document.getElementById('sales-detail-comment');
+            const salesDetailCorrectionsSection = document.getElementById('sales-detail-corrections-section');
+            const salesDetailCorrectionsCount = document.getElementById('sales-detail-corrections-count');
+            const salesDetailCorrectionsList = document.getElementById('sales-detail-corrections-list');
             const salesDetailSubtotal = document.getElementById('sales-detail-subtotal');
             const salesDetailTaxRow = document.getElementById('sales-detail-tax-row');
             const salesDetailTax = document.getElementById('sales-detail-tax');
@@ -4889,8 +4991,21 @@
             const salesDetailDiscountLabel = document.getElementById('sales-detail-discount-label');
             const salesDetailDiscount = document.getElementById('sales-detail-discount');
             const salesDetailTotal = document.getElementById('sales-detail-total');
+            const salesDetailCorrect = document.getElementById('sales-detail-correct');
             const salesDetailPrint = document.getElementById('sales-detail-print');
             const salesDetailEmail = document.getElementById('sales-detail-email');
+            const salesCorrectionModal = document.getElementById('sales-correction-modal');
+            const closeSalesCorrectionModalButton = document.getElementById('close-sales-correction-modal-button');
+            const salesCorrectionModalSubtitle = document.getElementById('sales-correction-modal-subtitle');
+            const salesCorrectionTypeSelect = document.getElementById('sales-correction-type');
+            const salesCorrectionReplacementInvoiceInput = document.getElementById('sales-correction-replacement-invoice');
+            const salesCorrectionCashImpactInput = document.getElementById('sales-correction-cash-impact');
+            const salesCorrectionStockImpactSelect = document.getElementById('sales-correction-stock-impact');
+            const salesCorrectionReasonInput = document.getElementById('sales-correction-reason');
+            const salesCorrectionNoteInput = document.getElementById('sales-correction-note');
+            const salesCorrectionError = document.getElementById('sales-correction-error');
+            const salesCorrectionSubmit = document.getElementById('sales-correction-submit');
+            const salesCorrectionCancel = document.getElementById('sales-correction-cancel');
             const supplierInvoiceDetailModal = document.getElementById('supplier-invoice-detail-modal');
             const closeSupplierInvoiceDetailModalButton = document.getElementById('close-supplier-invoice-detail-modal-button');
             const supplierInvoiceDetailTitle = document.getElementById('supplier-invoice-detail-title');
@@ -7146,6 +7261,40 @@
                 return isStoreFlag ? `${baseLabel} Magasin` : baseLabel;
             }
 
+            function canManageSaleCorrections() {
+                const role = getCurrentUserRole();
+                return role === 'admin' || role === 'manager';
+            }
+
+            function getCorrectionTypeLabel(type) {
+                const normalized = (type || '').toString().trim().toLowerCase();
+                if (normalized === 'wrong_product') return 'Mauvais produit';
+                if (normalized === 'wrong_price') return 'Mauvais prix';
+                if (normalized === 'discount_abuse') return 'Remise abusive';
+                if (normalized === 'wrong_quantity') return 'Quantité incorrecte';
+                if (normalized === 'full_cancel') return 'Annulation';
+                return 'Autre correction';
+            }
+
+            function getSaleInvoiceLabel(groupId) {
+                if (!groupId) return 'INV-—';
+                return `INV-${String(groupId).slice(-6).toUpperCase()}`;
+            }
+
+            function getSaleCorrectionsByGroupId(groupId) {
+                if (!groupId) return [];
+                return Object.values(appData.saleCorrections || {})
+                    .filter(correction => (correction.sourceGroupId || correction.groupId || correction.saleGroupId) === groupId)
+                    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+            }
+
+            function getCorrectionCashImpactLabel(correction, currency = 'CFA') {
+                const amount = Number(correction?.cashImpactAmount || 0);
+                if (amount === 0) return 'Aucun impact caisse';
+                const prefix = amount > 0 ? '+' : '';
+                return `Impact caisse ${prefix}${formatCurrency(amount, currency)}`;
+            }
+
             function isStoreValidationPending(sale) {
                 if (!sale) return false;
                 if (sale.validationStatus === 'rejected' || sale.paymentStatus === 'rejected') return false;
@@ -7431,7 +7580,11 @@
                             adjustmentDirection: 'discount',
                             discountMode: null,
                             discountValue: 0,
-                            discountAmount: null
+                            discountAmount: null,
+                            corrections: [],
+                            correctionCount: 0,
+                            latestCorrection: null,
+                            correctionStatus: ''
                         };
                     }
                     const group = groups[groupId];
@@ -7496,7 +7649,18 @@
                     group.storeFlag = group.hasStoreSource && !group.hasShopSource;
                 });
 
-                return Object.values(groups).sort((a, b) => new Date(b.date) - new Date(a.date));
+                return Object.values(groups)
+                    .map(group => {
+                        const corrections = getSaleCorrectionsByGroupId(group.id);
+                        return {
+                            ...group,
+                            corrections,
+                            correctionCount: corrections.length,
+                            latestCorrection: corrections[0] || null,
+                            correctionStatus: corrections.length ? 'corrected' : ''
+                        };
+                    })
+                    .sort((a, b) => new Date(b.date) - new Date(a.date));
             }
 
             const PENDING_SALES_STORAGE_KEY = 'stockpilot-held-cart';
@@ -8598,6 +8762,7 @@
                         group.sellerName,
                         group.items.map(item => item.name).join(' '),
                         (group.comments || []).join(' '),
+                        (group.corrections || []).map(correction => `${getCorrectionTypeLabel(correction.type)} ${correction.reason || ''} ${correction.note || ''}`).join(' '),
                         sourceLabel,
                         boutiqueLabel
                     ];
@@ -9015,6 +9180,17 @@
                         const boutiqueHtml = boutiqueLabel
                             ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-cyan-50 text-cyan-700">Boutique: ${boutiqueLabel}</span>`
                             : '';
+                        const correctionBadgeHtml = group.correctionCount > 0
+                            ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">Corrigée (${group.correctionCount})</span>`
+                            : '';
+                        const latestCorrectionHtml = group.latestCorrection
+                            ? `
+                                <div class="mt-3 rounded-xl border border-amber-100 bg-amber-50/70 px-3 py-2 text-xs text-amber-800">
+                                    <span class="font-semibold">${escapeHtml(getCorrectionTypeLabel(group.latestCorrection.type))}</span>
+                                    · ${escapeHtml(group.latestCorrection.reason || 'Correction enregistrée')}
+                                </div>
+                            `
+                            : '';
                         const markPaidButtonHtml = isPayLater ? `
                             <button type="button" data-history-action="mark-paid" data-history-id="${group.id}"
                                 class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700">
@@ -9032,6 +9208,15 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                                 Annuler
+                            </button>
+                        ` : '';
+                        const correctButtonHtml = canManageSaleCorrections() ? `
+                            <button type="button" data-history-action="correct" data-history-id="${group.id}"
+                                class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                                Corriger
                             </button>
                         ` : '';
                         const detailsButtonHtml = `
@@ -9056,6 +9241,7 @@
                                             <div class="flex items-center gap-2 flex-wrap">
                                                 <p class="font-semibold text-gray-900">INV-${group.id.slice(-6).toUpperCase()}</p>
                                                 ${statusHtml}
+                                                ${correctionBadgeHtml}
                                                 ${sourceHtml}
                                                 ${boutiqueHtml}
                                             </div>
@@ -9082,6 +9268,7 @@
                                     <div class="mt-4 space-y-3">
                                         ${itemsHtml}
                                     </div>
+                                    ${latestCorrectionHtml}
                                     <div class="mt-4 space-y-2 border-t border-gray-100 pt-4">
                                         <div class="flex items-center justify-between text-sm text-gray-600">
                                             <span>Sous-total</span>
@@ -9095,6 +9282,7 @@
                                     </div>
                                     <div class="mt-4 flex flex-col md:flex-row gap-3">
                                         ${markPaidButtonHtml}
+                                        ${correctButtonHtml}
                                         ${detailsButtonHtml}
                                         ${cancelButtonHtml}
                                         ${isPayLater ? '' : `
@@ -9423,11 +9611,15 @@
                         paymentPaidAt: sale.paymentPaidAt || '',
                         discountMode: sale.discountMode || sale.discountType || null,
                         discountValue: sale.discountValue ?? sale.discountPercent ?? sale.discountAmountValue ?? sale.discountAmount ?? 0,
-                        discountAmount: sale.discountAmount ?? null
+                        discountAmount: sale.discountAmount ?? null,
+                        corrections: getSaleCorrectionsByGroupId(sale.saleGroupId || sale.id || groupId)
                     };
+                    group.correctionCount = group.corrections.length;
+                    group.latestCorrection = group.corrections[0] || null;
+                    group.correctionStatus = group.corrections.length ? 'corrected' : '';
                 }
 
-                activeSalesDetailId = groupId;
+                activeSalesDetailId = group.id || groupId;
                 const customerName = group.customerName || (group.customerId && appData.customers?.[group.customerId]?.fullName) || 'Client comptoir';
                 const customerEmail = group.customerEmail || (group.customerId && appData.customers?.[group.customerId]?.email) || 'Email non renseigné';
                 const sellerName = group.sellerName || 'Non renseigné';
@@ -9450,6 +9642,35 @@
                     : (group.comment || '').toString().trim();
                 const sourceLabel = formatSaleSourceBadge(group.saleSource)?.label || 'Boutique';
                 const boutiqueLabel = getGroupBoutiqueLabel(group);
+                const corrections = Array.isArray(group.corrections) ? group.corrections : [];
+                const correctionsHtml = corrections.map(correction => {
+                    const createdAt = correction.createdAt ? formatDateForDisplay(correction.createdAt) : 'Date inconnue';
+                    const createdBy = correction.createdByName || correction.createdByEmail || 'Utilisateur inconnu';
+                    const reason = correction.reason ? escapeHtml(correction.reason) : 'Aucun motif';
+                    const noteHtml = correction.note
+                        ? `<p class="mt-2 text-xs text-gray-500">${escapeHtml(correction.note)}</p>`
+                        : '';
+                    const replacementHtml = correction.replacementInvoice
+                        ? `<p class="mt-2 text-xs text-cyan-700 font-semibold">Facture liée: ${escapeHtml(correction.replacementInvoice)}</p>`
+                        : '';
+                    const stockImpactLabel = correction.stockImpact === 'none' ? 'Aucun impact stock' : 'Ajustement stock à vérifier';
+                    return `
+                        <div class="rounded-2xl border border-amber-100 bg-amber-50/60 p-4">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">${escapeHtml(getCorrectionTypeLabel(correction.type))}</span>
+                                <span class="text-xs text-gray-500">${createdAt}</span>
+                            </div>
+                            <p class="mt-2 text-sm font-semibold text-gray-900">${reason}</p>
+                            <div class="mt-2 flex flex-wrap gap-2 text-xs text-gray-600">
+                                <span class="px-2 py-1 rounded-lg bg-white border border-amber-100">${escapeHtml(getCorrectionCashImpactLabel(correction, group.currency || 'CFA'))}</span>
+                                <span class="px-2 py-1 rounded-lg bg-white border border-amber-100">${escapeHtml(stockImpactLabel)}</span>
+                            </div>
+                            ${replacementHtml}
+                            ${noteHtml}
+                            <p class="mt-2 text-xs text-gray-500">Enregistrée par ${escapeHtml(createdBy)}</p>
+                        </div>
+                    `;
+                }).join('');
 
                 if (salesDetailTitle) salesDetailTitle.textContent = `Détails de la vente INV-${group.id.slice(-6).toUpperCase()}`;
                 if (salesDetailCustomerName) salesDetailCustomerName.textContent = customerName;
@@ -9477,6 +9698,9 @@
                 if (salesDetailProducts) salesDetailProducts.innerHTML = itemsHtml;
                 if (salesDetailComment) salesDetailComment.textContent = commentText;
                 if (salesDetailCommentSection) salesDetailCommentSection.classList.toggle('hidden', !commentText);
+                if (salesDetailCorrectionsCount) salesDetailCorrectionsCount.textContent = `${corrections.length}`;
+                if (salesDetailCorrectionsList) salesDetailCorrectionsList.innerHTML = correctionsHtml;
+                if (salesDetailCorrectionsSection) salesDetailCorrectionsSection.classList.toggle('hidden', corrections.length === 0);
                 if (salesDetailSubtotal) salesDetailSubtotal.textContent = formatCurrency(summary.subtotal, summary.currency);
                 if (salesDetailTax) salesDetailTax.textContent = formatCurrency(summary.tax, summary.currency);
                 if (salesDetailDiscount) {
@@ -9489,6 +9713,7 @@
                 if (salesDetailDiscountRow) salesDetailDiscountRow.classList.toggle('hidden', !(summary.discountAmount > 0));
                 if (salesDetailTotal) salesDetailTotal.textContent = formatCurrency(summary.total, summary.currency);
                 if (salesDetailTaxRow) salesDetailTaxRow.classList.toggle('hidden', !isTaxEnabled);
+                if (salesDetailCorrect) salesDetailCorrect.classList.toggle('hidden', !canManageSaleCorrections() || group.paymentStatus === 'pending' || group.paymentStatus === 'store_validation');
 
                 salesDetailModal.classList.remove('hidden');
             }
@@ -9497,6 +9722,140 @@
                 if (!salesDetailModal) return;
                 salesDetailModal.classList.add('hidden');
                 activeSalesDetailId = null;
+            }
+
+            function closeSalesCorrectionModal() {
+                if (salesCorrectionModal) salesCorrectionModal.classList.add('hidden');
+                if (salesCorrectionError) salesCorrectionError.classList.add('hidden');
+                if (salesCorrectionTypeSelect) salesCorrectionTypeSelect.value = 'wrong_product';
+                if (salesCorrectionReplacementInvoiceInput) salesCorrectionReplacementInvoiceInput.value = '';
+                if (salesCorrectionCashImpactInput) salesCorrectionCashImpactInput.value = '';
+                if (salesCorrectionStockImpactSelect) salesCorrectionStockImpactSelect.value = 'review_required';
+                if (salesCorrectionReasonInput) salesCorrectionReasonInput.value = '';
+                if (salesCorrectionNoteInput) salesCorrectionNoteInput.value = '';
+                activeSalesCorrectionGroupId = null;
+            }
+
+            function openSalesCorrectionModal(groupId) {
+                if (!salesCorrectionModal || !groupId) return;
+                if (!canManageSaleCorrections()) {
+                    showSalesErrorMessage("Seuls les admins et managers peuvent enregistrer une correction.");
+                    return;
+                }
+                const groups = buildSalesHistoryGroups();
+                const group = groups.find(item => item.id === groupId);
+                if (!group) {
+                    showSalesErrorMessage("Impossible de trouver cette vente.");
+                    return;
+                }
+                activeSalesCorrectionGroupId = group.id;
+                if (salesCorrectionModalSubtitle) {
+                    const customerLabel = group.customerName || 'Client comptoir';
+                    salesCorrectionModalSubtitle.textContent = `${getSaleInvoiceLabel(group.id)} · ${customerLabel}`;
+                }
+                if (salesCorrectionError) salesCorrectionError.classList.add('hidden');
+                if (salesCorrectionTypeSelect) salesCorrectionTypeSelect.value = group.correctionCount > 0 ? 'other' : 'wrong_product';
+                if (salesCorrectionReplacementInvoiceInput) salesCorrectionReplacementInvoiceInput.value = '';
+                if (salesCorrectionCashImpactInput) salesCorrectionCashImpactInput.value = '';
+                if (salesCorrectionStockImpactSelect) salesCorrectionStockImpactSelect.value = 'review_required';
+                if (salesCorrectionReasonInput) salesCorrectionReasonInput.value = '';
+                if (salesCorrectionNoteInput) salesCorrectionNoteInput.value = '';
+                salesCorrectionModal.classList.remove('hidden');
+            }
+
+            async function submitSalesCorrection() {
+                if (!dbBasePath || !currentUser || !activeSalesCorrectionGroupId) return;
+                if (!canManageSaleCorrections()) {
+                    showSalesErrorMessage("Seuls les admins et managers peuvent enregistrer une correction.");
+                    return;
+                }
+
+                const groups = buildSalesHistoryGroups();
+                const group = groups.find(item => item.id === activeSalesCorrectionGroupId);
+                if (!group) {
+                    if (salesCorrectionError) {
+                        salesCorrectionError.textContent = "Impossible de retrouver la vente.";
+                        salesCorrectionError.classList.remove('hidden');
+                    }
+                    return;
+                }
+
+                const type = salesCorrectionTypeSelect?.value || 'other';
+                const reason = (salesCorrectionReasonInput?.value || '').trim();
+                const note = (salesCorrectionNoteInput?.value || '').trim();
+                const replacementInvoice = (salesCorrectionReplacementInvoiceInput?.value || '').trim();
+                const stockImpact = salesCorrectionStockImpactSelect?.value || 'review_required';
+                const cashImpactAmount = Number(salesCorrectionCashImpactInput?.value || 0);
+
+                if (!reason) {
+                    if (salesCorrectionError) {
+                        salesCorrectionError.textContent = "Le motif est obligatoire.";
+                        salesCorrectionError.classList.remove('hidden');
+                    }
+                    return;
+                }
+
+                if (salesCorrectionSubmit) {
+                    salesCorrectionSubmit.disabled = true;
+                    salesCorrectionSubmit.textContent = 'Enregistrement...';
+                }
+                if (salesCorrectionError) salesCorrectionError.classList.add('hidden');
+
+                try {
+                    const now = new Date().toISOString();
+                    const correctionRef = push(ref(db, `${dbBasePath}/saleCorrections`));
+                    const relatedSales = Object.values(appData.salesHistory || {}).filter(sale => (sale.saleGroupId || sale.id) === group.id);
+                    const updates = {};
+                    const payload = {
+                        id: correctionRef.key,
+                        sourceGroupId: group.id,
+                        sourceInvoiceLabel: getSaleInvoiceLabel(group.id),
+                        sourceSaleIds: relatedSales.map(sale => sale.id),
+                        sourceCustomerId: group.customerId || null,
+                        sourceCustomerName: group.customerName || '',
+                        sourcePaymentStatus: group.paymentStatus || '',
+                        type,
+                        reason,
+                        note,
+                        replacementInvoice,
+                        stockImpact,
+                        cashImpactAmount,
+                        currency: group.currency || 'CFA',
+                        status: 'logged',
+                        createdAt: now,
+                        createdByEmail: currentUser.email || '',
+                        createdByName: currentUserData?.fullName || currentUser.email || '',
+                        createdByRole: getCurrentUserRole()
+                    };
+                    updates[`${dbBasePath}/saleCorrections/${correctionRef.key}`] = payload;
+                    relatedSales.forEach(sale => {
+                        updates[`${dbBasePath}/salesHistory/${sale.id}/correctionStatus`] = 'corrected';
+                        updates[`${dbBasePath}/salesHistory/${sale.id}/latestCorrectionId`] = correctionRef.key;
+                        updates[`${dbBasePath}/salesHistory/${sale.id}/latestCorrectionType`] = type;
+                        updates[`${dbBasePath}/salesHistory/${sale.id}/latestCorrectionAt`] = now;
+                    });
+                    updates[`${dbBasePath}/sales/${group.id}/correctionStatus`] = 'corrected';
+                    updates[`${dbBasePath}/sales/${group.id}/latestCorrectionId`] = correctionRef.key;
+                    updates[`${dbBasePath}/sales/${group.id}/latestCorrectionType`] = type;
+                    updates[`${dbBasePath}/sales/${group.id}/latestCorrectionAt`] = now;
+
+                    await update(ref(db), updates);
+
+                    closeSalesCorrectionModal();
+                    if (activeSalesDetailId === group.id) openSalesDetailModal(group.id);
+                    showSuccessToast(`Correction liée à ${getSaleInvoiceLabel(group.id)} enregistrée.`);
+                } catch (error) {
+                    console.error(error);
+                    if (salesCorrectionError) {
+                        salesCorrectionError.textContent = "Impossible d'enregistrer la correction pour le moment.";
+                        salesCorrectionError.classList.remove('hidden');
+                    }
+                } finally {
+                    if (salesCorrectionSubmit) {
+                        salesCorrectionSubmit.disabled = false;
+                        salesCorrectionSubmit.textContent = 'Enregistrer la correction';
+                    }
+                }
             }
 
             function openSupplierInvoiceDetailModal(paymentId) {
@@ -16072,6 +16431,14 @@
                 renderTraceabilityPage();
             }
 
+            function onSaleCorrectionsValue(snapshot) {
+                appData.saleCorrections = snapshot.val() || {};
+                renderSalesHistory();
+                if (activeSalesDetailId) {
+                    openSalesDetailModal(activeSalesDetailId);
+                }
+            }
+
             function onPendingSalesValue(snapshot) {
                 appData.pendingSales = snapshot.val() || {};
                 renderSalesHistory();
@@ -16178,6 +16545,9 @@
                 salesHistoryRef = ref(db, `${dbBasePath}/salesHistory`);
                 salesHistoryListener = onValue(salesHistoryRef, onSalesHistoryValue);
 
+                saleCorrectionsRef = ref(db, `${dbBasePath}/saleCorrections`);
+                saleCorrectionsListener = onValue(saleCorrectionsRef, onSaleCorrectionsValue);
+
                 pendingSalesRef = ref(db, `${dbBasePath}/pendingSales`);
                 pendingSalesListener = onValue(pendingSalesRef, onPendingSalesValue);
 
@@ -16224,6 +16594,7 @@
                 if (shopMovementsListener && shopMovementsRef) off(shopMovementsRef, shopMovementsListener);
                 if (shopTransferRequestsListener && shopTransferRequestsRef) off(shopTransferRequestsRef, shopTransferRequestsListener);
                 if (salesHistoryListener && salesHistoryRef) off(salesHistoryRef, salesHistoryListener);
+                if (saleCorrectionsListener && saleCorrectionsRef) off(saleCorrectionsRef, saleCorrectionsListener);
                 if (pendingSalesListener && pendingSalesRef) off(pendingSalesRef, pendingSalesListener);
                 if (settingsListener && settingsRef) off(settingsRef, settingsListener);
                 if (companyMembersListener && companyMembersRef) off(companyMembersRef, companyMembersListener);
@@ -16236,9 +16607,9 @@
                 if (chatListListener && chatListRef) off(chatListRef, chatListListener);
                 if (chatReadsListener && chatReadsRef) off(chatReadsRef, chatReadsListener);
                 if (chatMessagesListener && chatMessagesRef) off(chatMessagesRef, chatMessagesListener);
-                storesListener = null; boutiquesListener = null; categoriesListener = null; storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; shopTransferRequestsListener = null; salesHistoryListener = null; pendingSalesListener = null; settingsListener = null; companyMembersListener = null; companyCustomersListener = null; suppliersListener = null; supplierInvoicesListener = null; supplierPaymentsListener = null; customerPaymentsListener = null; inventoriesListener = null; chatListListener = null; chatReadsListener = null; chatMessagesListener = null;
-                chatListRef = null; chatReadsRef = null; chatMessagesRef = null; inventoriesRef = null;
-                appData.stores = {}; appData.boutiques = {}; appData.categories = {}; appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.shopMovements = {}; appData.shopTransferRequests = {}; appData.salesHistory = {}; appData.customers = {}; appData.suppliers = {}; appData.supplierInvoices = {}; appData.supplierPayments = {}; appData.customerPayments = {}; appData.storeExitRequests = {}; appData.pendingSales = {}; appData.settings = {}; appData.inventories = {};
+                storesListener = null; boutiquesListener = null; categoriesListener = null; storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; shopTransferRequestsListener = null; salesHistoryListener = null; saleCorrectionsListener = null; pendingSalesListener = null; settingsListener = null; companyMembersListener = null; companyCustomersListener = null; suppliersListener = null; supplierInvoicesListener = null; supplierPaymentsListener = null; customerPaymentsListener = null; inventoriesListener = null; chatListListener = null; chatReadsListener = null; chatMessagesListener = null;
+                chatListRef = null; chatReadsRef = null; chatMessagesRef = null; inventoriesRef = null; saleCorrectionsRef = null;
+                appData.stores = {}; appData.boutiques = {}; appData.categories = {}; appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.shopMovements = {}; appData.shopTransferRequests = {}; appData.salesHistory = {}; appData.saleCorrections = {}; appData.customers = {}; appData.suppliers = {}; appData.supplierInvoices = {}; appData.supplierPayments = {}; appData.customerPayments = {}; appData.storeExitRequests = {}; appData.pendingSales = {}; appData.settings = {}; appData.inventories = {};
                 inventoriesPathSuffix = 'inventories';
                 selectedCustomer = null;
                 customerOptionLookup = {};
@@ -19181,6 +19552,10 @@
                             cancelSalesGroup(groupId);
                             return;
                         }
+                        if (action === 'correct') {
+                            openSalesCorrectionModal(groupId);
+                            return;
+                        }
                         if (action === 'print') {
                             generateReceiptFromGroup(groupId);
                             return;
@@ -19395,6 +19770,11 @@
                     if (event.target === salesDetailModal) closeSalesDetailModal();
                 });
             }
+            if (salesDetailCorrect) {
+                salesDetailCorrect.addEventListener('click', () => {
+                    if (activeSalesDetailId) openSalesCorrectionModal(activeSalesDetailId);
+                });
+            }
             if (salesDetailPrint) {
                 salesDetailPrint.addEventListener('click', () => {
                     if (activeSalesDetailId) generateReceiptFromGroup(activeSalesDetailId);
@@ -19404,6 +19784,20 @@
                 salesDetailEmail.addEventListener('click', () => {
                     showSuccessToast('Email envoyé (simulation).');
                 });
+            }
+            if (closeSalesCorrectionModalButton) {
+                closeSalesCorrectionModalButton.addEventListener('click', closeSalesCorrectionModal);
+            }
+            if (salesCorrectionCancel) {
+                salesCorrectionCancel.addEventListener('click', closeSalesCorrectionModal);
+            }
+            if (salesCorrectionModal) {
+                salesCorrectionModal.addEventListener('click', (event) => {
+                    if (event.target === salesCorrectionModal) closeSalesCorrectionModal();
+                });
+            }
+            if (salesCorrectionSubmit) {
+                salesCorrectionSubmit.addEventListener('click', submitSalesCorrection);
             }
             if (closeSupplierInvoiceDetailModalButton) {
                 closeSupplierInvoiceDetailModalButton.addEventListener('click', closeSupplierInvoiceDetailModal);
