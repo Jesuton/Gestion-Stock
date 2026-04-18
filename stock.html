@@ -3518,7 +3518,7 @@
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-600">Magasin vers boutique</p>
                     <h2 class="mt-2 text-2xl font-bold text-slate-900">Transférer un article</h2>
-                    <p class="mt-1 text-sm text-slate-500">Le magasin sort son conditionnement source. La boutique reçoit le conditionnement choisi ici.</p>
+                    <p class="mt-1 text-sm text-slate-500">Choisissez ce qui sort du magasin, puis indiquez simplement sous quelle forme la boutique doit le recevoir.</p>
                 </div>
                 <button id="close-transfer-modal-button" class="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -3570,13 +3570,13 @@
                     </div>
 
                     <p class="text-xs leading-5 text-slate-500">
-                        Le stock magasin reste sur son conditionnement source. Le split vers la boutique se fait ici, selon les formats définis dans le tableau des prix.
+                        Le magasin sort un format principal. La boutique peut ensuite recevoir cette même quantité en gros, en détail, ou dans un mélange des deux.
                     </p>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-                            <label for="transfer-quantity" class="block text-sm font-semibold text-slate-700">Quantité source à transférer *</label>
-                            <p class="mt-1 text-xs text-slate-500">Impossible d'envoyer plus que le stock magasin réel du conditionnement principal.</p>
+                            <label for="transfer-quantity" class="block text-sm font-semibold text-slate-700">Combien de formats sortent du magasin ? *</label>
+                            <p class="mt-1 text-xs text-slate-500">Exemple : 1 tonne, 2 cartons, 5 sacs. La limite suit le stock disponible du format source.</p>
                             <input type="number" id="transfer-quantity" placeholder="1" min="1"
                                 class="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                                 required>
@@ -3592,8 +3592,8 @@
                     <div id="transfer-packaging-panel" class="hidden rounded-[24px] border border-cyan-100 bg-gradient-to-br from-slate-50 via-white to-cyan-50/60 p-4 sm:p-5 space-y-5 shadow-inner">
                         <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                             <div>
-                                <p class="text-sm font-semibold text-slate-900">Répartition vers la boutique</p>
-                                <p class="mt-1 text-xs leading-5 text-slate-500">Définissez le mix boutique. Le reste est affecté automatiquement au plus petit conditionnement autorisé.</p>
+                                <p class="text-sm font-semibold text-slate-900">Ce que la boutique doit recevoir</p>
+                                <p class="mt-1 text-xs leading-5 text-slate-500">Indiquez ce qui arrive en boutique. Le reste est complété automatiquement sur le plus petit format autorisé.</p>
                             </div>
                             <span class="inline-flex items-center rounded-full border border-cyan-200 bg-white px-3 py-1 text-[11px] font-semibold text-cyan-700 shadow-sm">
                                 Calcul en temps réel
@@ -3602,21 +3602,27 @@
 
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
                             <div class="rounded-2xl border border-white bg-white/90 p-3 shadow-sm">
-                                <p class="text-[11px] uppercase tracking-wide text-slate-400">Source magasin</p>
+                                <p class="text-[11px] uppercase tracking-wide text-slate-400">Format qui sort du magasin</p>
                                 <p id="transfer-source-package-display" class="mt-2 text-sm font-bold text-slate-900">—</p>
                             </div>
                             <div class="rounded-2xl border border-white bg-white/90 p-3 shadow-sm">
-                                <p class="text-[11px] uppercase tracking-wide text-slate-400">Unités / source</p>
+                                <p class="text-[11px] uppercase tracking-wide text-slate-400">Contenu d'un format</p>
                                 <p id="transfer-units-per-carton-display" class="mt-2 text-lg font-bold text-slate-900">—</p>
                             </div>
                             <div class="rounded-2xl border border-white bg-white/90 p-3 shadow-sm">
-                                <p class="text-[11px] uppercase tracking-wide text-slate-400">Total disponible</p>
+                                <p class="text-[11px] uppercase tracking-wide text-slate-400">Total a repartir</p>
                                 <p id="transfer-total-units-display" class="mt-2 text-lg font-bold text-slate-900">0 unité</p>
                             </div>
                         </div>
 
+                        <div class="rounded-2xl border border-cyan-100 bg-cyan-50/80 p-3 shadow-sm">
+                            <p class="text-[11px] uppercase tracking-wide text-cyan-700">Resume simple</p>
+                            <p id="transfer-simple-summary" class="mt-2 text-sm font-semibold leading-6 text-slate-900">Sélectionnez un article pour commencer.</p>
+                            <p id="transfer-simple-detail" class="mt-1 text-xs leading-5 text-slate-500"></p>
+                        </div>
+
                         <div class="rounded-2xl border border-white bg-white/90 p-3 shadow-sm">
-                            <p class="text-[11px] uppercase tracking-wide text-slate-400">Répartition finale</p>
+                            <p class="text-[11px] uppercase tracking-wide text-slate-400">La boutique recevra</p>
                             <p id="transfer-breakdown-summary" class="mt-2 text-sm font-semibold leading-5 text-slate-900">Aucune</p>
                         </div>
 
@@ -3624,11 +3630,11 @@
                         </div>
 
                         <div class="rounded-2xl border border-slate-200 bg-white/80 p-3">
-                            <label for="transfer-breakdown-auto-fill" class="block text-xs font-semibold uppercase tracking-wide text-slate-500">Reste automatique</label>
+                            <label for="transfer-breakdown-auto-fill" class="block text-xs font-semibold uppercase tracking-wide text-slate-500">Complement automatique</label>
                             <input type="text" id="transfer-breakdown-auto-fill" value="—" readonly
                                 class="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-slate-600 cursor-not-allowed">
                         </div>
-                        <p id="transfer-breakdown-hint" class="rounded-2xl border border-dashed border-cyan-200 bg-white/70 px-4 py-3 text-xs leading-5 text-slate-500">Le reste est automatiquement affecté au plus petit conditionnement de transfert disponible.</p>
+                        <p id="transfer-breakdown-hint" class="rounded-2xl border border-dashed border-cyan-200 bg-white/70 px-4 py-3 text-xs leading-5 text-slate-500">Remplissez seulement ce que vous voulez envoyer en boutique. Le reste se complete automatiquement sans depasser la quantite choisie en haut.</p>
                     </div>
 
                     <div id="transfer-stock-warning"
@@ -4781,6 +4787,8 @@
             const transferSourcePackageDisplay = document.getElementById('transfer-source-package-display');
             const transferUnitsPerCartonDisplay = document.getElementById('transfer-units-per-carton-display');
             const transferTotalUnitsDisplay = document.getElementById('transfer-total-units-display');
+            const transferSimpleSummary = document.getElementById('transfer-simple-summary');
+            const transferSimpleDetail = document.getElementById('transfer-simple-detail');
             const transferBreakdownSummary = document.getElementById('transfer-breakdown-summary');
             const transferBreakdownHint = document.getElementById('transfer-breakdown-hint');
             const transferBreakdownList = document.getElementById('transfer-breakdown-list');
@@ -5865,9 +5873,7 @@
 
             function getTransferProductDisplayLabel(product) {
                 if (!product) return '';
-                const name = product.name || 'Produit sans nom';
-                const code = product.baseCode || product.sku || product.id || '';
-                return code ? `${name} · ${code}` : name;
+                return product.name || 'Produit sans nom';
             }
 
             function getEntryProductDisplayLabel(product) {
@@ -6336,6 +6342,8 @@
                 if (transferTotalUnitsDisplay) transferTotalUnitsDisplay.textContent = '0 unité';
                 if (transferUnitsPerCartonDisplay) transferUnitsPerCartonDisplay.textContent = '—';
                 if (transferSourcePackageDisplay) transferSourcePackageDisplay.textContent = '—';
+                if (transferSimpleSummary) transferSimpleSummary.textContent = 'Sélectionnez un article pour commencer.';
+                if (transferSimpleDetail) transferSimpleDetail.textContent = '';
                 if (transferStockWarning) transferStockWarning.classList.add('hidden');
                 if (transferError) transferError.classList.add('hidden');
                 if (transferSubmitButton) transferSubmitButton.disabled = true;
@@ -6368,7 +6376,7 @@
                             <label class="block text-xs font-semibold uppercase tracking-wide text-slate-500" for="transfer-breakdown-${packaging.code}">
                                 ${escapeHtml(packaging.label)}
                             </label>
-                            <p class="mt-1 text-[11px] text-slate-400">${packaging.unitCount} unité(s) · ${escapeHtml(getPackageVariantCode(product, packaging.code))}</p>
+                            <p class="mt-1 text-[11px] text-slate-400">1 ${escapeHtml(packaging.label.toLowerCase())} = ${packaging.unitCount} unité(s) · max pour cet envoi : ${Math.max(Math.floor((plan?.totalUnits || 0) / Math.max(packaging.unitCount, 1)), 0)}</p>
                             <input type="number" id="transfer-breakdown-${packaging.code}" value="${plan?.breakdown?.[packaging.code] || 0}" min="0" max="${Math.max(Math.floor((plan?.totalUnits || 0) / Math.max(packaging.unitCount, 1)), 0)}" step="1"
                                 data-transfer-package-ref="${packaging.code}"
                                 class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
@@ -6441,18 +6449,31 @@
                 if (transferBreakdownAutoFillInput) transferBreakdownAutoFillInput.value = autoFillSummary;
                 if (transferSourcePackageDisplay) {
                     transferSourcePackageDisplay.textContent = sourcePackaging
-                        ? `${sourcePackaging.label} · ${getPackageVariantCode(sourceProduct, sourcePackaging.code)}`
+                        ? formatPackagingWithUnits(sourceProduct, sourcePackaging.code)
                         : '—';
                 }
                 if (transferUnitsPerCartonDisplay) transferUnitsPerCartonDisplay.textContent = `${unitsPerCarton} unité(s)`;
-                if (transferTotalUnitsDisplay) transferTotalUnitsDisplay.textContent = `${resolvedPlan.totalUnits} unité(s)`;
+                if (transferTotalUnitsDisplay) transferTotalUnitsDisplay.textContent = `${resolvedPlan.totalUnits} unité(s) a envoyer`;
+                if (transferSimpleSummary) {
+                    const sourceLabel = sourcePackaging?.label?.toLowerCase() || 'format';
+                    const targetSummary = resolvedPlan.summary !== 'Aucune' ? resolvedPlan.summary : 'aucune repartition pour le moment';
+                    transferSimpleSummary.textContent = effectiveSourceCartons > 0
+                        ? `Vous sortez ${effectiveSourceCartons} ${sourceLabel}${effectiveSourceCartons > 1 ? 's' : ''} du magasin. La boutique recevra : ${targetSummary}.`
+                        : 'Saisissez une quantite a envoyer depuis le magasin.';
+                }
+                if (transferSimpleDetail) {
+                    const autoFillLabel = resolvedPlan.autoFillPackagingLabel ? resolvedPlan.autoFillPackagingLabel.toLowerCase() : '';
+                    transferSimpleDetail.textContent = effectiveSourceCartons > 0
+                        ? `Le total de cet envoi correspond a ${resolvedPlan.totalUnits} unite(s). ${autoFillLabel ? `Le reste non saisi est complete automatiquement en ${autoFillLabel}.` : ''}`.trim()
+                        : '';
+                }
                 if (transferBreakdownSummary) transferBreakdownSummary.textContent = resolvedPlan.summary;
 
                 if (transferBreakdownHint) {
                     if (!resolvedPlan.autoFillPackagingLabel) {
-                        transferBreakdownHint.textContent = "Aucun conditionnement transférable n'est défini pour ce produit.";
+                        transferBreakdownHint.textContent = "Aucun format boutique n'est encore autorise pour ce produit. Completez d'abord le tableau des prix.";
                     } else {
-                        transferBreakdownHint.textContent = `Le reste est automatiquement affecté à ${resolvedPlan.autoFillPackagingLabel.toLowerCase()}.`;
+                        transferBreakdownHint.textContent = `Vous pouvez remplir seulement les formats que vous voulez. Le reste sera complete automatiquement en ${resolvedPlan.autoFillPackagingLabel.toLowerCase()}.`;
                     }
                 }
 
@@ -6461,13 +6482,13 @@
                     if (availableCartons <= 0) {
                         warning = "Aucun stock disponible dans le magasin pour ce produit.";
                     } else if (sourceCartons > availableCartons) {
-                        warning = `Cette valeur doit être inférieure ou égale à ${availableCartons} ${sourcePackaging?.label?.toLowerCase() || 'source'}(s).`;
+                        warning = `Vous ne pouvez pas sortir plus de ${availableCartons} ${sourcePackaging?.label?.toLowerCase() || 'format'}(s) du magasin pour cet article.`;
                     } else if (resolvedPlan.isOverflow) {
-                        warning = "La répartition dépasse le contenu total du stock source.";
+                        warning = "La quantite saisie pour la boutique depasse ce que vous avez choisi de sortir du magasin.";
                     } else if (!resolvedPlan.isValid) {
                         warning = resolvedPlan.autoFillPackagingLabel
-                            ? `Le reste ne peut pas être réparti proprement en ${resolvedPlan.autoFillPackagingLabel.toLowerCase()}.`
-                            : "Aucun conditionnement de transfert disponible pour finaliser la répartition.";
+                            ? `Le reste de cet envoi ne peut pas etre complete proprement en ${resolvedPlan.autoFillPackagingLabel.toLowerCase()}. Ajustez les quantites boutique.`
+                            : "Aucun format boutique disponible pour finaliser cet envoi.";
                     }
                     if (warning) {
                         transferStockWarning.classList.remove('hidden');
@@ -10040,6 +10061,12 @@
                 const normalizedQty = Math.abs(Number(quantity) || 0);
                 const safeLabel = (label || DEFAULT_BASE_UNIT_LABEL).toString().trim() || DEFAULT_BASE_UNIT_LABEL;
                 return `${normalizedQty} ${safeLabel}`;
+            }
+
+            function formatPackagingWithUnits(product, packageRef = null) {
+                const packaging = findPackagingByRef(product, packageRef);
+                if (!packaging) return 'Conditionnement';
+                return `${packaging.label} (${packaging.unitCount} unité(s))`;
             }
 
             function getStoreStockBaseUnits(product) {
@@ -20074,16 +20101,16 @@
                 const sourcePackageRef = sourcePackaging?.code || null;
                 const plan = computeTransferPackagingPlan(sourceProd, qty, collectTransferBreakdownValues());
                 if (!plan.totalUnits || !plan.targets.length) {
-                    showTransferError("Définissez une répartition valide pour la boutique.");
+                    showTransferError("Indiquez ce que la boutique doit recevoir avant d'envoyer ce transfert.");
                     return;
                 }
                 if (!plan.isValid) {
-                    showTransferError("La répartition ne correspond pas au contenu du stock source.");
+                    showTransferError("La repartition boutique ne correspond pas a la quantite sortie du magasin.");
                     return;
                 }
                 const invalidTarget = plan.targets.find(target => !Number.isFinite(target.sellingPrice) || target.sellingPrice < 0);
                 if (invalidTarget) {
-                    showTransferError(`Prix boutique non défini pour ${invalidTarget.code}.`);
+                    showTransferError(`Le prix boutique n'est pas encore defini pour le format ${invalidTarget.label || 'selectionne'}.`);
                     return;
                 }
 
