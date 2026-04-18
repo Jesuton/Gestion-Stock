@@ -3060,7 +3060,7 @@
                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                             <div>
                                 <h3 class="text-base font-semibold text-gray-900">Conditionnements</h3>
-                                <p class="text-sm text-gray-500 mt-1">Définissez librement les formats de réception, transfert et vente du produit.</p>
+                                <p class="text-sm text-gray-500 mt-1">Créez ici les formats du produit : gros, demi-gros, détail. Chaque format peut avoir son prix et son nom d'affichage en boutique.</p>
                             </div>
                             <button type="button" id="new-product-add-packaging-button"
                                 class="inline-flex items-center justify-center px-4 py-2 rounded-xl border border-cyan-200 text-cyan-700 font-semibold hover:bg-cyan-50">
@@ -3084,7 +3084,7 @@
             <div class="flex justify-between items-center gap-4">
                 <div>
                     <h2 id="price-packaging-title" class="text-xl font-bold text-gray-800">Conditionnements produit</h2>
-                    <p class="text-sm text-gray-500 mt-1">Configurez les formats commerciaux et leurs règles d'usage.</p>
+                    <p class="text-sm text-gray-500 mt-1">Configurez des formats simples a comprendre : nom du format, quantite contenue, prix, et nom affiche en boutique.</p>
                 </div>
                 <button id="close-price-packaging-modal-button" class="text-gray-400 hover:text-gray-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -9770,6 +9770,7 @@
                     id: createPackagingId(),
                     code: 'CTN',
                     label: 'Conditionnement principal',
+                    shopDisplayName: '',
                     unitCount: 1,
                     purchaseCost: null,
                     storePrice: null,
@@ -9787,6 +9788,7 @@
                 const unitCount = parseInt(entry.unitCount ?? entry.unitsPerPackage ?? entry.quantityInBaseUnit, 10);
                 const code = sanitizePackagingCode(entry.code, `PKG${index + 1}`);
                 const label = (entry.label || entry.name || entry.displayName || '').toString().trim() || `Conditionnement ${index + 1}`;
+                const shopDisplayName = (entry.shopDisplayName || entry.shopLabel || '').toString().trim();
                 const purchaseCost = parseOptionalMoney(entry.purchaseCost);
                 const storePrice = parseOptionalMoney(entry.storePrice);
                 const shopPrice = parseOptionalMoney(entry.shopPrice ?? entry.sellingPrice);
@@ -9794,6 +9796,7 @@
                     id: entry.id || createPackagingId(),
                     code,
                     label,
+                    shopDisplayName,
                     unitCount: Number.isFinite(unitCount) && unitCount > 0 ? unitCount : 1,
                     purchaseCost: purchaseCost === null ? null : purchaseCost,
                     storePrice: storePrice === null ? null : storePrice,
@@ -9984,8 +9987,18 @@
                 return `${getPackagePrefix(packageRef, product)}_${getBaseProductCode(product)}`;
             }
 
+            function getPackageShopDisplayName(product, packageRef = null) {
+                const productName = (product?.name || 'Produit').toString().trim() || 'Produit';
+                const packaging = findPackagingByRef(product, packageRef);
+                const custom = (packaging?.shopDisplayName || '').toString().trim();
+                if (custom) return custom;
+                const label = (packaging?.label || '').toString().trim();
+                if (!label || normalizeString(label) === normalizeString(productName)) return productName;
+                return `${productName} - ${label}`;
+            }
+
             function getPackageDisplayName(product, packageRef = null) {
-                return `${getPackageVariantCode(product, packageRef)} · ${product?.name || 'Produit'}`;
+                return getPackageShopDisplayName(product, packageRef);
             }
 
             function getPackageSellingPrice(product, packageRef = null) {
@@ -10180,6 +10193,11 @@
             }
 
             function getShopItemDisplayName(item) {
+                const directDisplayName = (item?.displayName || item?.shopDisplayName || '').toString().trim();
+                if (directDisplayName) return directDisplayName;
+                const packageLabel = (item?.packageLabel || '').toString().trim();
+                const sourceNameLabel = (item?.sourceName || '').toString().trim();
+                if (sourceNameLabel && packageLabel) return `${sourceNameLabel} - ${packageLabel}`;
                 const variantCode = item?.variantCode || item?.name || 'Produit';
                 const sourceName = item?.sourceName || '';
                 return sourceName && variantCode !== sourceName
@@ -13100,6 +13118,7 @@
                     updates[`${dbBasePath}/shopStock/${item.id}/sellingPrice`] = Number.isFinite(nextSellingPrice) ? nextSellingPrice : (Number(item.sellingPrice) || 0);
                     updates[`${dbBasePath}/shopStock/${item.id}/purchaseCost`] = Number.isFinite(nextPurchaseCost) ? nextPurchaseCost : (Number(item.purchaseCost) || 0);
                     updates[`${dbBasePath}/shopStock/${item.id}/categoryId`] = categoryId || null;
+                    updates[`${dbBasePath}/shopStock/${item.id}/displayName`] = getPackageDisplayName(productSnapshot, packageType);
                     updates[`${dbBasePath}/shopStock/${item.id}/variantCode`] = getPackageVariantCode(productSnapshot, packageType);
                     updates[`${dbBasePath}/shopStock/${item.id}/name`] = getPackageVariantCode(productSnapshot, packageType);
                     updates[`${dbBasePath}/shopStock/${item.id}/sourceName`] = appData.storeProducts?.[productId]?.name || '';
@@ -14303,7 +14322,7 @@
                 const filteredStock = Object.values(stock).filter(item => {
                     const matchesBoutique = activeBoutique ? resolveBoutiqueId(item.boutiqueId) === activeBoutique : true;
                     if (!normalizedSearch) return matchesBoutique;
-                    const label = normalizeString(`${item.name || ''} ${item.sourceName || ''}`);
+                    const label = normalizeString(`${item.displayName || ''} ${item.name || ''} ${item.sourceName || ''}`);
                     return matchesBoutique && label.includes(normalizedSearch);
                 });
 
@@ -15794,6 +15813,7 @@
                             sourceStoreId: storeId,
                             boutiqueId,
                             boutiqueName,
+                            displayName: getPackageDisplayName(sourceProd, packageType),
                             name: target.code || getPackageVariantCode(sourceProd, packageType),
                             sourceName: request.sourceProductName || sourceProd.name,
                             variantCode: target.code || getPackageVariantCode(sourceProd, packageType),
@@ -16267,34 +16287,39 @@
                 const safeId = escapeHtml(packaging.id || createPackagingId());
                 return `
                     <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm" data-packaging-row="${safeId}">
-                        <div class="grid grid-cols-1 xl:grid-cols-[1.2fr_1.4fr_0.8fr_1fr_1fr_1fr_auto] gap-3">
+                        <div class="grid grid-cols-1 xl:grid-cols-[1fr_1.2fr_1.4fr_0.9fr_1fr_1fr_1fr_auto] gap-3">
                             <label class="block">
-                                <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Code</span>
+                                <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Code interne</span>
                                 <input type="text" value="${escapeHtml(packaging.code || '')}" data-packaging-field="code"
-                                    class="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm uppercase tracking-wider focus:ring-cyan-500 focus:border-cyan-500" />
+                                    class="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm uppercase tracking-wider focus:ring-cyan-500 focus:border-cyan-500" placeholder="Optionnel" />
                             </label>
                             <label class="block">
-                                <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Libellé</span>
+                                <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Nom du format</span>
                                 <input type="text" value="${escapeHtml(packaging.label || '')}" data-packaging-field="label"
-                                    class="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-cyan-500 focus:border-cyan-500" />
+                                    class="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-cyan-500 focus:border-cyan-500" placeholder="Ex: Carton, Sachet, Detail" />
                             </label>
                             <label class="block">
-                                <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Qté base</span>
+                                <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Nom affiche en boutique</span>
+                                <input type="text" value="${escapeHtml(packaging.shopDisplayName || '')}" data-packaging-field="shopDisplayName"
+                                    class="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-cyan-500 focus:border-cyan-500" placeholder="Optionnel, ex: Ciment detail" />
+                            </label>
+                            <label class="block">
+                                <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Contient</span>
                                 <input type="number" min="1" step="1" value="${escapeHtml(String(packaging.unitCount || 1))}" data-packaging-field="unitCount"
                                     class="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-cyan-500 focus:border-cyan-500" />
                             </label>
                             <label class="block">
-                                <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Achat</span>
+                                <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Prix achat</span>
                                 <input type="number" min="0" step="0.01" value="${packaging.purchaseCost ?? ''}" data-packaging-field="purchaseCost"
                                     class="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-cyan-500 focus:border-cyan-500 ${priceInputClass}" ${priceDisabled} />
                             </label>
                             <label class="block">
-                                <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Magasin</span>
+                                <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Prix magasin</span>
                                 <input type="number" min="0" step="0.01" value="${packaging.storePrice ?? ''}" data-packaging-field="storePrice"
                                     class="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-cyan-500 focus:border-cyan-500 ${priceInputClass}" ${priceDisabled} />
                             </label>
                             <label class="block">
-                                <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Boutique</span>
+                                <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Prix boutique</span>
                                 <input type="number" min="0" step="0.01" value="${packaging.shopPrice ?? ''}" data-packaging-field="shopPrice"
                                     class="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-cyan-500 focus:border-cyan-500 ${priceInputClass}" ${priceDisabled} />
                             </label>
@@ -16321,7 +16346,7 @@
                             </label>
                             <input type="hidden" data-packaging-field="allowStore" value="true" />
                             <input type="hidden" data-packaging-field="id" value="${safeId}" />
-                            <span class="text-xs text-gray-400 self-center">${scope === 'price-modal' ? 'Les mouvements utiliseront plus tard ces règles.' : 'Définissez les formats disponibles dès la création.'}</span>
+                            <span class="text-xs text-gray-400 self-center">${scope === 'price-modal' ? 'Si le nom boutique est vide, l affichage utilisera : Nom produit - Nom du format.' : 'Definissez ici les formats et les noms visibles en boutique.'}</span>
                         </div>
                     </div>
                 `;
@@ -16339,6 +16364,7 @@
                     id: row.querySelector('[data-packaging-field="id"]')?.value || createPackagingId(),
                     code: row.querySelector('[data-packaging-field="code"]')?.value || `PKG${index + 1}`,
                     label: row.querySelector('[data-packaging-field="label"]')?.value || '',
+                    shopDisplayName: row.querySelector('[data-packaging-field="shopDisplayName"]')?.value || '',
                     unitCount: row.querySelector('[data-packaging-field="unitCount"]')?.value || '1',
                     purchaseCost: row.querySelector('[data-packaging-field="purchaseCost"]')?.value ?? '',
                     storePrice: row.querySelector('[data-packaging-field="storePrice"]')?.value ?? '',
@@ -16475,6 +16501,7 @@
                     updates[`${dbBasePath}/shopStock/${item.id}/sellingPrice`] = Number.isFinite(nextSellingPrice) ? nextSellingPrice : (Number(item.sellingPrice) || 0);
                     updates[`${dbBasePath}/shopStock/${item.id}/purchaseCost`] = Number.isFinite(nextPurchaseCost) ? nextPurchaseCost : (Number(item.purchaseCost) || 0);
                     updates[`${dbBasePath}/shopStock/${item.id}/categoryId`] = categoryId || null;
+                    updates[`${dbBasePath}/shopStock/${item.id}/displayName`] = getPackageDisplayName(productSnapshot, packageType);
                     updates[`${dbBasePath}/shopStock/${item.id}/variantCode`] = getPackageVariantCode(productSnapshot, packageType);
                     updates[`${dbBasePath}/shopStock/${item.id}/name`] = getPackageVariantCode(productSnapshot, packageType);
                     updates[`${dbBasePath}/shopStock/${item.id}/sourceName`] = product.name || '';
@@ -16695,7 +16722,7 @@
                 const normalizedSearch = normalizeString(searchTerm);
                 const activeBoutique = getActiveBoutiqueId();
                 const stock = Object.values(appData.shopStock || {}).filter(item => {
-                    const name = normalizeString(`${item.name || ''} ${item.sourceName || ''}`);
+                    const name = normalizeString(`${item.displayName || ''} ${item.name || ''} ${item.sourceName || ''}`);
                     const category = normalizeString(getShopItemCategory(item));
                     const matchesSearch = !normalizedSearch || name.includes(normalizedSearch) || category.includes(normalizedSearch);
                     const matchesCategory = selectedSalesCategory === 'Tous' || getShopItemCategory(item) === selectedSalesCategory;
@@ -19513,13 +19540,14 @@
                                 ...legacyFields
                             };
                             const nextSellingPrice = getPackageSellingPrice(sourceSnapshot, packageType);
-                            const nextPurchaseCost = getPackagePurchaseCost(sourceSnapshot, packageType);
-                            updates[`${dbBasePath}/shopStock/${item.id}/sellingPrice`] = Number.isFinite(nextSellingPrice) ? nextSellingPrice : (Number(item.sellingPrice) || 0);
-                            updates[`${dbBasePath}/shopStock/${item.id}/purchaseCost`] = Number.isFinite(nextPurchaseCost) ? nextPurchaseCost : (Number(item.purchaseCost) || 0);
-                            updates[`${dbBasePath}/shopStock/${item.id}/categoryId`] = categoryId || null;
-                            updates[`${dbBasePath}/shopStock/${item.id}/variantCode`] = getPackageVariantCode(sourceSnapshot, packageType);
-                            updates[`${dbBasePath}/shopStock/${item.id}/name`] = getPackageVariantCode(sourceSnapshot, packageType);
-                            updates[`${dbBasePath}/shopStock/${item.id}/sourceName`] = existingProduct.name || '';
+                    const nextPurchaseCost = getPackagePurchaseCost(sourceSnapshot, packageType);
+                    updates[`${dbBasePath}/shopStock/${item.id}/sellingPrice`] = Number.isFinite(nextSellingPrice) ? nextSellingPrice : (Number(item.sellingPrice) || 0);
+                    updates[`${dbBasePath}/shopStock/${item.id}/purchaseCost`] = Number.isFinite(nextPurchaseCost) ? nextPurchaseCost : (Number(item.purchaseCost) || 0);
+                    updates[`${dbBasePath}/shopStock/${item.id}/categoryId`] = categoryId || null;
+                    updates[`${dbBasePath}/shopStock/${item.id}/displayName`] = getPackageDisplayName(sourceSnapshot, packageType);
+                    updates[`${dbBasePath}/shopStock/${item.id}/variantCode`] = getPackageVariantCode(sourceSnapshot, packageType);
+                    updates[`${dbBasePath}/shopStock/${item.id}/name`] = getPackageVariantCode(sourceSnapshot, packageType);
+                    updates[`${dbBasePath}/shopStock/${item.id}/sourceName`] = existingProduct.name || '';
                             updates[`${dbBasePath}/shopStock/${item.id}/packageCode`] = getPackageRef(sourceSnapshot, packageType);
                             updates[`${dbBasePath}/shopStock/${item.id}/packageLabel`] = getPackageLabel(packageType, sourceSnapshot);
                             updates[`${dbBasePath}/shopStock/${item.id}/baseUnitLabel`] = baseUnitLabel;
