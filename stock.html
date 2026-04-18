@@ -756,23 +756,43 @@
                                 </div>
                                 <div class="rounded-xl border border-gray-200 bg-white p-3">
                                     <div class="flex items-center justify-between gap-2">
-                                        <p id="discount-panel-title" class="text-xs font-semibold text-gray-500">Ajustement</p>
+                                        <p id="discount-panel-title" class="text-xs font-semibold text-gray-500">Ajustement rapide</p>
                                         <button type="button" id="discount-approval-trigger"
                                             class="hidden text-[11px] font-semibold text-amber-600 hover:text-amber-700">Valider</button>
                                     </div>
                                     <p id="discount-approval-hint" class="hidden mt-1 text-[11px] text-amber-600">Validation admin/manager requise.</p>
                                     <p id="discount-approval-status" class="hidden mt-1 text-[11px] text-emerald-600"></p>
-                                    <div id="discount-direction-toggle" class="mt-2 inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
-                                        <button type="button" id="discount-direction-discount"
+                                    <div id="discount-direction-toggle" class="mt-3 inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
+                                        <button type="button" id="discount-direction-discount" data-discount-quick-control
                                             class="rounded-md px-3 py-1.5 text-xs font-semibold bg-rose-500 text-white">
                                             Réduction
                                         </button>
-                                        <button type="button" id="discount-direction-increase"
+                                        <button type="button" id="discount-direction-increase" data-discount-quick-control
                                             class="rounded-md px-3 py-1.5 text-xs font-semibold text-gray-500 hover:text-gray-700">
                                             Augmentation
                                         </button>
                                     </div>
-                                    <div id="discount-approval-inline" class="hidden mt-2 rounded-lg border border-amber-200 bg-amber-50/40 p-2">
+                                    <div class="mt-3">
+                                        <label for="discount-final-total-input" id="discount-final-total-label" class="text-xs font-semibold text-gray-500">Total à payer</label>
+                                        <input id="discount-final-total-input" type="number" min="0" step="1" data-discount-quick-control
+                                            placeholder="0"
+                                            class="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-right tabular-nums text-gray-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" />
+                                        <p id="discount-final-total-hint" class="mt-2 text-[11px] text-gray-400">Tapez le montant convenu. L'ajustement se calcule automatiquement.</p>
+                                    </div>
+                                    <div id="discount-quick-presets" class="mt-3 grid grid-cols-2 sm:grid-cols-5 gap-2">
+                                        <button type="button" data-discount-preset="100" data-discount-quick-control
+                                            class="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50">-100</button>
+                                        <button type="button" data-discount-preset="500" data-discount-quick-control
+                                            class="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50">-500</button>
+                                        <button type="button" data-discount-preset="1000" data-discount-quick-control
+                                            class="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50">-1000</button>
+                                        <button type="button" data-discount-preset="2000" data-discount-quick-control
+                                            class="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50">-2000</button>
+                                        <button type="button" id="discount-reset-button" data-discount-quick-control
+                                            class="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50">Prix normal</button>
+                                    </div>
+                                    <p id="discount-quick-summary" class="mt-3 text-[11px] text-gray-500">Ajoutez un article pour appliquer un ajustement.</p>
+                                    <div id="discount-approval-inline" class="hidden mt-3 rounded-lg border border-amber-200 bg-amber-50/40 p-2">
                                         <label class="text-[11px] font-semibold text-amber-700" for="discount-approval-inline-code">Code de validation</label>
                                         <div class="mt-1 flex items-center gap-2">
                                             <input type="text" id="discount-approval-inline-code" placeholder="Ex: Z4T7-9Q3S"
@@ -782,21 +802,26 @@
                                         </div>
                                         <p id="discount-approval-inline-error" class="text-[11px] text-red-500 mt-1 hidden"></p>
                                     </div>
-                                    <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                        <label data-discount-input-wrapper class="relative flex items-center rounded-lg border border-gray-200 px-3 py-2">
-                                            <span class="absolute left-3 text-xs font-semibold text-gray-400">% </span>
-                                            <input id="discount-percent-input" type="number" min="0" max="100" step="0.1"
-                                                placeholder="0"
-                                                class="w-full bg-transparent text-sm text-gray-700 focus:outline-none pl-5 text-right tabular-nums" />
-                                        </label>
-                                        <label data-discount-input-wrapper class="relative flex items-center rounded-lg border border-gray-200 px-3 py-2">
-                                            <span class="absolute left-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Montant</span>
-                                            <input id="discount-amount-input" type="number" min="0" step="1"
-                                                placeholder="0"
-                                                class="w-full bg-transparent text-sm text-gray-700 focus:outline-none pl-20 text-right tabular-nums" />
-                                        </label>
-                                    </div>
-                                    <p class="text-[11px] text-gray-400 mt-2">Renseignez un seul champ.</p>
+                                    <details id="discount-advanced-panel" class="mt-3 rounded-lg border border-gray-200 bg-gray-50/70">
+                                        <summary class="cursor-pointer list-none px-3 py-2 text-xs font-semibold text-gray-600">Options avancées</summary>
+                                        <div class="border-t border-gray-200 px-3 py-3">
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                <label data-discount-input-wrapper class="relative flex items-center rounded-lg border border-gray-200 bg-white px-3 py-2">
+                                                    <span class="absolute left-3 text-xs font-semibold text-gray-400">% </span>
+                                                    <input id="discount-percent-input" type="number" min="0" max="100" step="0.1"
+                                                        placeholder="0"
+                                                        class="w-full bg-transparent text-sm text-gray-700 focus:outline-none pl-5 text-right tabular-nums" />
+                                                </label>
+                                                <label data-discount-input-wrapper class="relative flex items-center rounded-lg border border-gray-200 bg-white px-3 py-2">
+                                                    <span class="absolute left-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Montant</span>
+                                                    <input id="discount-amount-input" type="number" min="0" step="1"
+                                                        placeholder="0"
+                                                        class="w-full bg-transparent text-sm text-gray-700 focus:outline-none pl-20 text-right tabular-nums" />
+                                                </label>
+                                            </div>
+                                            <p class="text-[11px] text-gray-400 mt-2">Renseignez un seul champ.</p>
+                                        </div>
+                                    </details>
                                 </div>
                                 <div class="flex items-center justify-between text-sm text-gray-600">
                                     <span>Sous-total</span>
@@ -4613,6 +4638,11 @@
             const discountPanelTitle = document.getElementById('discount-panel-title');
             const discountDirectionDiscountButton = document.getElementById('discount-direction-discount');
             const discountDirectionIncreaseButton = document.getElementById('discount-direction-increase');
+            const discountFinalTotalLabel = document.getElementById('discount-final-total-label');
+            const discountFinalTotalInput = document.getElementById('discount-final-total-input');
+            const discountFinalTotalHint = document.getElementById('discount-final-total-hint');
+            const discountQuickSummary = document.getElementById('discount-quick-summary');
+            const discountResetButton = document.getElementById('discount-reset-button');
             const discountPercentInput = document.getElementById('discount-percent-input');
             const discountAmountInput = document.getElementById('discount-amount-input');
             const discountApprovalTrigger = document.getElementById('discount-approval-trigger');
@@ -4628,6 +4658,7 @@
             const discountApprovalInlineCode = document.getElementById('discount-approval-inline-code');
             const discountApprovalInlineConfirm = document.getElementById('discount-approval-inline-confirm');
             const discountApprovalInlineError = document.getElementById('discount-approval-inline-error');
+            const discountPresetButtons = Array.from(document.querySelectorAll('[data-discount-preset]'));
             const validateCartButton = document.getElementById('validate-cart-button');
             const generateInvoiceButton = document.getElementById('generate-invoice-button');
             const payLaterButton = document.getElementById('pay-later-button');
@@ -7558,6 +7589,17 @@
                 return Number.isFinite(parsed) ? parsed : 0;
             }
 
+            function formatInputNumber(value) {
+                const numericValue = roundAmount(Number(value) || 0);
+                if (!numericValue) return '';
+                if (Number.isInteger(numericValue)) return String(numericValue);
+                return numericValue.toFixed(2).replace(/\.?0+$/, '');
+            }
+
+            function formatPresetAmount(value) {
+                return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(Number(value) || 0);
+            }
+
             function normalizeDiscountDirection(directionRaw) {
                 const normalized = (directionRaw || '').toString().trim().toLowerCase();
                 if (['increase', 'markup', 'augmentation', 'majoration', 'up'].includes(normalized)) return 'increase';
@@ -7724,22 +7766,93 @@
             }
 
             function setDiscountInputsLocked(locked) {
-                [discountPercentInput, discountAmountInput].forEach(input => {
+                const shouldDisable = locked || !cartItems.length;
+                [discountPercentInput, discountAmountInput, discountFinalTotalInput].forEach(input => {
                     if (!input) return;
-                    input.disabled = locked;
-                    input.classList.toggle('cursor-not-allowed', locked);
-                    input.classList.toggle('text-gray-400', locked);
-                    input.classList.toggle('opacity-60', locked);
+                    input.disabled = shouldDisable;
+                    input.classList.toggle('cursor-not-allowed', shouldDisable);
+                    input.classList.toggle('text-gray-400', shouldDisable);
+                    input.classList.toggle('opacity-60', shouldDisable);
+                });
+                document.querySelectorAll('[data-discount-quick-control]').forEach(control => {
+                    if ('disabled' in control) control.disabled = shouldDisable;
+                    control.classList.toggle('cursor-not-allowed', shouldDisable);
+                    control.classList.toggle('opacity-60', shouldDisable);
                 });
                 document.querySelectorAll('[data-discount-input-wrapper]').forEach(wrapper => {
-                    wrapper.classList.toggle('bg-gray-50', locked);
-                    wrapper.classList.toggle('border-gray-300', locked);
+                    wrapper.classList.toggle('bg-gray-50', shouldDisable);
+                    wrapper.classList.toggle('border-gray-300', shouldDisable);
                 });
+            }
+
+            function calculateCartBaseSummary() {
+                const subtotal = calculateCartTotal();
+                const currency = cartItems[0]?.currency || 'CFA';
+                return calculateSummaryTotals(subtotal, currency, { direction: 'discount', mode: null, value: 0 });
+            }
+
+            function syncDiscountInputFields(summary = null) {
+                if (discountPercentInput && document.activeElement !== discountPercentInput) {
+                    discountPercentInput.value = discountMode === 'percent' && discountValue > 0
+                        ? formatInputNumber(discountValue)
+                        : '';
+                }
+                if (discountAmountInput && document.activeElement !== discountAmountInput) {
+                    discountAmountInput.value = discountMode === 'amount' && discountValue > 0
+                        ? formatInputNumber(discountValue)
+                        : '';
+                }
+                if (discountFinalTotalInput && document.activeElement !== discountFinalTotalInput) {
+                    if (!cartItems.length) {
+                        discountFinalTotalInput.value = '';
+                    } else {
+                        const effectiveSummary = summary || calculateCartSummary();
+                        discountFinalTotalInput.value = formatInputNumber(effectiveSummary.total);
+                    }
+                }
+            }
+
+            function updateDiscountQuickControls(summary = null) {
+                const hasItems = cartItems.length > 0;
+                const effectiveSummary = summary || (hasItems ? calculateCartSummary() : null);
+                const baseSummary = hasItems ? calculateCartBaseSummary() : null;
+                const direction = normalizeDiscountDirection(discountDirection);
+
+                if (discountPanelTitle) {
+                    discountPanelTitle.textContent = hasItems
+                        ? `Ajustement rapide (${getAdjustmentLabel(direction, true)})`
+                        : 'Ajustement rapide';
+                }
+                if (discountFinalTotalLabel) {
+                    discountFinalTotalLabel.textContent = direction === 'increase' ? 'Total final' : 'Total à payer';
+                }
+                if (discountFinalTotalHint) {
+                    discountFinalTotalHint.textContent = direction === 'increase'
+                        ? "Tapez le total final. L'augmentation est calculée automatiquement."
+                        : "Tapez le montant convenu. La réduction est calculée automatiquement.";
+                }
+                discountPresetButtons.forEach(button => {
+                    const amount = parseNumericInput(button.dataset.discountPreset);
+                    button.textContent = `${direction === 'increase' ? '+' : '-'}${formatPresetAmount(amount)}`;
+                });
+                if (discountQuickSummary) {
+                    if (!hasItems || !effectiveSummary || !baseSummary) {
+                        discountQuickSummary.textContent = 'Ajoutez un article pour appliquer un ajustement.';
+                    } else if (effectiveSummary.discountAmount > 0) {
+                        discountQuickSummary.textContent =
+                            `Prix normal: ${formatCurrency(baseSummary.totalBeforeDiscount, baseSummary.currency)} · ` +
+                            `${direction === 'increase' ? 'Majoration' : 'Réduction'}: ${formatCurrency(effectiveSummary.discountAmount, effectiveSummary.currency)} · ` +
+                            `Total final: ${formatCurrency(effectiveSummary.total, effectiveSummary.currency)}`;
+                    } else {
+                        discountQuickSummary.textContent =
+                            `Prix normal: ${formatCurrency(baseSummary.totalBeforeDiscount, baseSummary.currency)} · Aucun ajustement.`;
+                    }
+                }
+                syncDiscountInputFields(effectiveSummary || null);
             }
 
             function updateAdjustmentDirectionUI() {
                 const direction = normalizeDiscountDirection(discountDirection);
-                if (discountPanelTitle) discountPanelTitle.textContent = `Ajustement (${getAdjustmentLabel(direction, true)})`;
                 if (cartDiscountLabel) cartDiscountLabel.textContent = getAdjustmentLabel(direction, true);
 
                 const toggleButtonState = (button, active, activeClasses) => {
@@ -7754,6 +7867,7 @@
 
                 toggleButtonState(discountDirectionDiscountButton, direction === 'discount', ['bg-rose-500']);
                 toggleButtonState(discountDirectionIncreaseButton, direction === 'increase', ['bg-emerald-500']);
+                updateDiscountQuickControls();
             }
 
             function setDiscountDirection(direction) {
@@ -16928,9 +17042,9 @@
                 discountDirection = 'discount';
                 discountMode = null;
                 discountValue = 0;
-                if (discountPercentInput) discountPercentInput.value = '';
-                if (discountAmountInput) discountAmountInput.value = '';
                 clearDiscountApproval();
+                syncDiscountInputFields();
+                updateDiscountQuickControls();
             }
 
             function handleDiscountInputChange(mode, inputElement, otherInput) {
@@ -16943,6 +17057,58 @@
                     inputElement.value = normalized.value ? String(normalized.value) : '';
                     if (otherInput) otherInput.value = '';
                 } else if (discountMode === mode) {
+                    discountMode = null;
+                    discountValue = 0;
+                }
+                renderCart();
+                updateDiscountApprovalUI();
+            }
+
+            function applyQuickDiscountAmount(amount) {
+                if (!cartItems.length) return;
+                const safeAmount = Math.max(0, parseNumericInput(amount));
+                if (safeAmount > 0) {
+                    discountMode = 'amount';
+                    discountValue = safeAmount;
+                } else {
+                    discountMode = null;
+                    discountValue = 0;
+                }
+                renderCart();
+                updateDiscountApprovalUI();
+            }
+
+            function handleDiscountFinalTotalChange() {
+                if (!discountFinalTotalInput) return;
+                if (!cartItems.length) {
+                    discountFinalTotalInput.value = '';
+                    return;
+                }
+                const rawValue = discountFinalTotalInput.value;
+                if (!rawValue || !String(rawValue).trim()) {
+                    discountMode = null;
+                    discountValue = 0;
+                    renderCart();
+                    updateDiscountApprovalUI();
+                    return;
+                }
+
+                const baseSummary = calculateCartBaseSummary();
+                const targetTotal = Math.max(0, parseNumericInput(rawValue));
+                const nextDirection = targetTotal > baseSummary.totalBeforeDiscount
+                    ? 'increase'
+                    : 'discount';
+
+                if (nextDirection !== discountDirection) {
+                    discountDirection = nextDirection;
+                    clearDiscountApproval();
+                }
+
+                const delta = Math.abs(baseSummary.totalBeforeDiscount - targetTotal);
+                if (delta > 0) {
+                    discountMode = 'amount';
+                    discountValue = delta;
+                } else {
                     discountMode = null;
                     discountValue = 0;
                 }
@@ -17038,6 +17204,8 @@
                         holdCartButton.disabled = true;
                         holdCartButton.title = 'Ajoutez des articles pour mettre en attente';
                     }
+                    updateDiscountQuickControls();
+                    updateDiscountApprovalUI();
                     return;
                 }
 
@@ -17100,6 +17268,7 @@
                 }
                 if (cartDiscountRow) cartDiscountRow.classList.toggle('hidden', !(summary.discountAmount > 0));
                 if (cartTotal) cartTotal.textContent = formatCurrency(summary.total, summary.currency);
+                updateDiscountQuickControls(summary);
                 updateDiscountApprovalUI();
             }
 
@@ -17895,30 +18064,16 @@
                     if (holdCommentInput) holdCommentInput.value = pending.comment || '';
 
                     // 4. Restaurer la remise
-                    const dir = pending.adjustmentDirection || 'discount';
+                    const dir = normalizeDiscountDirection(pending.adjustmentDirection || 'discount');
                     discountDirection = dir;
+                    discountMode = null;
+                    discountValue = 0;
                     if (pending.discountMode && pending.discountValue) {
                         discountMode = pending.discountMode;
                         discountValue = pending.discountValue;
-                        if (discountMode === 'percent' && discountPercentInput) {
-                            discountPercentInput.value = String(discountValue);
-                        } else if (discountMode === 'amount' && discountAmountInput) {
-                            discountAmountInput.value = String(discountValue);
-                        }
                     }
-                    if (discountDirectionDiscountButton && discountDirectionIncreaseButton) {
-                        if (dir === 'increase') {
-                            discountDirectionDiscountButton.classList.remove('bg-rose-500', 'text-white');
-                            discountDirectionDiscountButton.classList.add('text-gray-500');
-                            discountDirectionIncreaseButton.classList.add('bg-cyan-500', 'text-white');
-                            discountDirectionIncreaseButton.classList.remove('text-gray-500');
-                        } else {
-                            discountDirectionDiscountButton.classList.add('bg-rose-500', 'text-white');
-                            discountDirectionDiscountButton.classList.remove('text-gray-500');
-                            discountDirectionIncreaseButton.classList.remove('bg-cyan-500', 'text-white');
-                            discountDirectionIncreaseButton.classList.add('text-gray-500');
-                        }
-                    }
+                    updateAdjustmentDirectionUI();
+                    syncDiscountInputFields();
 
                     // 5. Supprimer la vente en attente de Firebase
                     //    On NE restitue PAS le stock car il reste réservé dans le panier actif
@@ -19112,6 +19267,25 @@
                     setTaxEnabled(event.target.checked);
                 });
             }
+            if (discountFinalTotalInput) {
+                discountFinalTotalInput.addEventListener('input', () => {
+                    handleDiscountFinalTotalChange();
+                });
+            }
+            if (discountResetButton) {
+                discountResetButton.addEventListener('click', () => {
+                    discountMode = null;
+                    discountValue = 0;
+                    renderCart();
+                    updateDiscountApprovalUI();
+                });
+            }
+            discountPresetButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const amount = parseNumericInput(button.dataset.discountPreset);
+                    applyQuickDiscountAmount(amount);
+                });
+            });
             if (discountPercentInput) {
                 discountPercentInput.addEventListener('input', () => {
                     handleDiscountInputChange('percent', discountPercentInput, discountAmountInput);
