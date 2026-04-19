@@ -4363,6 +4363,7 @@
             let activeSalesDetailId = null;
             let activeSalesCorrectionGroupId = null;
             let selectedCustomerHistoryKey = null;
+            let currentCustomerHistoryEntry = null;
             let currentCustomerOpenInvoices = []; // factures pay_later ouvertes du client affiché
             let activeStoreId = null;
             let defaultStoreId = null;
@@ -4630,6 +4631,7 @@
             const customerHistorySelect = document.getElementById('customer-history-select');
             const customerHistoryContact = document.getElementById('customer-history-contact');
             const customerSelectedInfoBar = document.getElementById('customer-selected-info-bar');
+            const customerHistoryContactEmpty = document.getElementById('customer-history-contact-empty');
             const customerHistoryTotalSales = document.getElementById('customer-history-total-sales');
             const customerHistoryTotalDue = document.getElementById('customer-history-total-due');
             const customerHistoryLastPayment = document.getElementById('customer-history-last-payment');
@@ -8271,7 +8273,7 @@
 
             function buildPayLaterReminders(groups = []) {
                 return groups
-                    .filter(group => (group.paymentStatus === 'pay_later' || group.payLater) && group.paymentDueDate)
+                    .filter(group => (group.paymentStatus === 'pay_later' || group.payLater) && group.paymentDueDate && getCustomerGroupBalance(group) > 0)
                     .map(group => ({
                         group,
                         daysLeft: getDaysUntil(group.paymentDueDate)
@@ -8338,9 +8340,10 @@
                     entry.totalSales += summary.total;
 
                     const isPayLater = group.paymentStatus === 'pay_later' || group.payLater;
-                    if (isPayLater) entry.totalDue += summary.total;
+                    if (isPayLater) entry.totalDue += getCustomerGroupBalance(group);
 
-                    const paidAt = group.paymentPaidAt || (!isPayLater && group.paymentStatus !== 'pending' ? group.date : '');
+                    const latestPayment = getCustomerGroupLastPayment(group.id);
+                    const paidAt = latestPayment?.date || group.paymentPaidAt || (!isPayLater && group.paymentStatus !== 'pending' ? group.date : '');
                     if (paidAt && (!entry.lastPaymentAt || new Date(paidAt) > new Date(entry.lastPaymentAt))) {
                         entry.lastPaymentAt = paidAt;
                     }
@@ -8373,6 +8376,9 @@
                     if (entry.email) contactParts.push(entry.email);
                     if (entry.phone) contactParts.push(entry.phone);
                     const contactLabel = contactParts.length ? contactParts.join(' · ') : 'Coordonnées non renseignées';
+                    const dueLabel = entry.totalDue > 0
+                        ? `<span class="inline-flex items-center px-2 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-semibold">${formatCurrency(entry.totalDue, entry.currency || 'CFA')}</span>`
+                        : `<span class="text-xs font-semibold text-gray-500">${entry.invoices.length} facture${entry.invoices.length > 1 ? 's' : ''}</span>`;
                     return `
                         <button type="button" data-customer-history-id="${entry.id}"
                             class="w-full text-left p-3 rounded-xl border ${isSelected ? 'border-cyan-300 bg-cyan-50/40' : 'border-gray-200 hover:border-cyan-200 hover:bg-cyan-50/20'} transition">
@@ -8381,7 +8387,7 @@
                                     <p class="text-sm font-semibold text-gray-900">${entry.name}</p>
                                     <p class="text-xs text-gray-500 mt-1">${contactLabel}</p>
                                 </div>
-                                <span class="text-xs font-semibold text-gray-500">${entry.invoices.length} facture${entry.invoices.length > 1 ? 's' : ''}</span>
+                                ${dueLabel}
                             </div>
                         </button>
                     `;
@@ -8390,7 +8396,11 @@
                 const availableForSelect = filteredCustomers.length ? filteredCustomers : customersData;
                 if (!availableForSelect.length) {
                     customerHistorySelect.innerHTML = '<option value="">Aucun client</option>';
+                    currentCustomerHistoryEntry = null;
+                    currentCustomerOpenInvoices = [];
                     if (customerHistoryContact) customerHistoryContact.textContent = '—';
+                    if (customerHistoryContactEmpty) customerHistoryContactEmpty.classList.remove('hidden');
+                    if (customerSelectedInfoBar) customerSelectedInfoBar.classList.add('hidden');
                     if (customerHistoryTotalSales) customerHistoryTotalSales.textContent = formatCurrency(0);
                     if (customerHistoryTotalDue) customerHistoryTotalDue.textContent = formatCurrency(0);
                     if (customerHistoryLastPayment) customerHistoryLastPayment.textContent = '-';
@@ -8416,11 +8426,14 @@
 
                 const selected = customersData.find(entry => entry.id === selectedCustomerHistoryKey) || availableForSelect[0];
                 if (!selected) return;
+                currentCustomerHistoryEntry = selected;
 
                 const contactParts = [];
                 if (selected.email) contactParts.push(selected.email);
                 if (selected.phone) contactParts.push(selected.phone);
                 if (customerHistoryContact) customerHistoryContact.textContent = contactParts.length ? contactParts.join(' · ') : 'Coordonnées non renseignées';
+                if (customerSelectedInfoBar) customerSelectedInfoBar.classList.remove('hidden');
+                if (customerHistoryContactEmpty) customerHistoryContactEmpty.classList.add('hidden');
 
                 if (customerHistoryTotalSales) {
                     const currency = selected.currency || selected.invoices[0]?.currency || 'CFA';
@@ -8437,6 +8450,10 @@
                 if (customerHistoryLastPayment) {
                     customerHistoryLastPayment.textContent = selected.lastPaymentAt ? formatDateForDisplay(selected.lastPaymentAt) : '-';
                 }
+
+                currentCustomerOpenInvoices = selected.invoices
+                    .filter(g => (g.paymentStatus === 'pay_later' || g.payLater) && getCustomerGroupBalance(g) > 0)
+                    .sort((a, b) => new Date(b.date) - new Date(a.date));
 
                 const invoices = selected.invoices
                     .filter(group => isDateInFilter(group.date, salesHistoryDateFilterValue))
@@ -8455,7 +8472,6 @@
                 if (customerHistoryInvoicesTableContainer) customerHistoryInvoicesTableContainer.classList.remove('hidden');
 
                 // Afficher/cacher le bouton global de paiement
-                currentCustomerOpenInvoices = invoices.filter(g => (g.paymentStatus === 'pay_later' || g.payLater) && getCustomerGroupBalance(g) > 0);
                 const hasOpenInvoices = currentCustomerOpenInvoices.length > 0;
                 if (openCustomerPaymentModalButton) {
                     openCustomerPaymentModalButton.classList.toggle('hidden', !hasOpenInvoices);
@@ -8465,13 +8481,18 @@
                     customerHistoryInvoicesTbody.innerHTML = invoices.map(group => {
                         const summary = calculateGroupSummary(group);
                         const paymentStatus = group.paymentStatus || (group.payLater ? 'pay_later' : 'paid');
-                        const badge = formatPaymentStatusBadge(paymentStatus, group.payLater);
                         const isPayLater = paymentStatus === 'pay_later' || group.payLater;
                         const alreadyPaid = getCustomerGroupPaidAmount(group.id);
                         const balance = Math.max(0, summary.total - alreadyPaid);
+                        const lastPayment = getCustomerGroupLastPayment(group.id);
                         const currency = summary.currency || 'CFA';
+                        const badge = (isPayLater && alreadyPaid > 0 && balance > 0)
+                            ? { label: 'Paiement partiel', classes: 'bg-cyan-50 text-cyan-700 border-cyan-200' }
+                            : formatPaymentStatusBadge(paymentStatus, group.payLater);
                         let metaLabel = '-';
-                        if (group.paymentPaidAt || (!isPayLater && paymentStatus !== 'pending' && balance === 0)) {
+                        if (lastPayment?.date) {
+                            metaLabel = `Dernier paiement ${formatDateOnly(lastPayment.date)}`;
+                        } else if (group.paymentPaidAt || (!isPayLater && paymentStatus !== 'pending' && balance === 0)) {
                             const paidAt = group.paymentPaidAt || group.date;
                             metaLabel = `Payé le ${formatDateOnly(paidAt)}`;
                         } else if (isPayLater) {
@@ -8521,6 +8542,13 @@
                     .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
             }
 
+            function getCustomerGroupLastPayment(groupId) {
+                if (!groupId) return null;
+                return Object.values(appData.customerPayments || {})
+                    .filter(payment => payment.groupId === groupId)
+                    .sort((a, b) => new Date(b.date || b.createdAt || 0) - new Date(a.date || a.createdAt || 0))[0] || null;
+            }
+
             function getCustomerGroupBalance(group) {
                 if (!group) return 0;
                 const summary = calculateGroupSummary(group);
@@ -8528,15 +8556,39 @@
                 return Math.max(0, summary.total - paid);
             }
 
+            function getCustomerHistoryKeyForGroup(group) {
+                if (!group) return null;
+                if (group.customerId) return group.customerId;
+                const customerRecord = group.customerId ? appData.customers?.[group.customerId] : null;
+                const name = group.customerName || customerRecord?.fullName || customerRecord?.name || '';
+                const email = group.customerEmail || customerRecord?.email || '';
+                const phone = group.customerPhone || customerRecord?.phone || '';
+                return (name || email || phone)
+                    ? `anon:${normalizeString(name)}|${normalizeString(email)}|${normalizePhone(phone)}`
+                    : null;
+            }
+
             let activeCustomerPaymentCustomerKey = null;
 
             function openCustomerPaymentModal(preselectedGroupId) {
                 if (!customerPaymentModal) return;
+                if (!selectedCustomerHistoryKey && preselectedGroupId) {
+                    const group = buildSalesHistoryGroups().find(item => item.id === preselectedGroupId);
+                    const groupCustomerKey = getCustomerHistoryKeyForGroup(group);
+                    if (groupCustomerKey) selectedCustomerHistoryKey = groupCustomerKey;
+                }
                 if (!selectedCustomerHistoryKey) return;
                 activeCustomerPaymentCustomerKey = selectedCustomerHistoryKey;
 
-                // Utiliser directement les factures calculées au moment du rendu
-                let openInvoices = currentCustomerOpenInvoices.slice(); // copie
+                let openInvoices = [];
+                if (currentCustomerHistoryEntry?.id === selectedCustomerHistoryKey && currentCustomerOpenInvoices.length) {
+                    openInvoices = currentCustomerOpenInvoices.slice();
+                } else {
+                    openInvoices = buildSalesHistoryGroups()
+                        .filter(group => getCustomerHistoryKeyForGroup(group) === selectedCustomerHistoryKey)
+                        .filter(group => (group.paymentStatus === 'pay_later' || group.payLater) && getCustomerGroupBalance(group) > 0)
+                        .sort((a, b) => new Date(b.date) - new Date(a.date));
+                }
 
                 // Si on vient d'un bouton "Payer" sur une ligne spécifique, trier cette facture en premier
                 if (preselectedGroupId) {
@@ -8549,7 +8601,16 @@
                 }
 
                 // Sous-titre du modal avec le nom du client
-                const customerRecord = Object.values(appData.customers || {}).find(c => c.id === selectedCustomerHistoryKey);
+                const customerRecord = (currentCustomerHistoryEntry?.id === selectedCustomerHistoryKey ? currentCustomerHistoryEntry : null)
+                    || Object.values(appData.customers || {}).find(c => c.id === selectedCustomerHistoryKey)
+                    || (openInvoices[0]
+                        ? {
+                            fullName: openInvoices[0].customerName || 'Client',
+                            email: openInvoices[0].customerEmail || '',
+                            phone: openInvoices[0].customerPhone || ''
+                        }
+                        : null)
+                    || null;
                 if (customerPaymentModalSubtitle) {
                     customerPaymentModalSubtitle.textContent = customerRecord?.fullName || customerRecord?.name || '—';
                 }
@@ -8617,7 +8678,18 @@
                 const note = customerPaymentNoteInput?.value?.trim() || '';
                 const currency = opt?.dataset.currency || 'CFA';
                 const customerKey = activeCustomerPaymentCustomerKey || selectedCustomerHistoryKey;
-                const customerRecord = Object.values(appData.customers || {}).find(c => c.id === customerKey);
+                const invoiceGroup = buildSalesHistoryGroups().find(group => group.id === groupId);
+                const customerRecord = (currentCustomerHistoryEntry?.id === customerKey ? currentCustomerHistoryEntry : null)
+                    || Object.values(appData.customers || {}).find(c => c.id === customerKey)
+                    || (invoiceGroup
+                        ? {
+                            customerId: invoiceGroup.customerId || '',
+                            fullName: invoiceGroup.customerName || 'Client',
+                            email: invoiceGroup.customerEmail || '',
+                            phone: invoiceGroup.customerPhone || ''
+                        }
+                        : null)
+                    || null;
 
                 if (customerPaymentSubmitBtn) { customerPaymentSubmitBtn.disabled = true; customerPaymentSubmitBtn.textContent = 'Enregistrement...'; }
                 if (customerPaymentError) customerPaymentError.classList.add('hidden');
@@ -8627,7 +8699,7 @@
                     const payment = {
                         id: newPaymentRef.key,
                         groupId,
-                        customerId: customerRecord?.id || customerKey || '',
+                        customerId: customerRecord?.customerId || customerRecord?.id || customerKey || '',
                         customerName: customerRecord?.fullName || customerRecord?.name || '',
                         amount,
                         currency,
@@ -8659,6 +8731,10 @@
 
                     await update(ref(db), updates);
                     closeCustomerPaymentModalFn();
+                    renderSalesHistory();
+                    if (activeSalesDetailId === groupId) {
+                        openSalesDetailModal(groupId);
+                    }
                     showSuccessToast(`Paiement de ${formatCurrency(amount, currency)} enregistré ✓`);
                 } catch (err) {
                     console.error('Erreur paiement client:', err);
@@ -8702,6 +8778,7 @@
                         if (group.customerPhone) contactParts.push(group.customerPhone);
                         const contactLabel = contactParts.length ? contactParts.join(' · ') : '-';
                         const summary = calculateGroupSummary(group);
+                        const remainingDue = getCustomerGroupBalance(group);
                         const badge = formatReminderBadge(item.daysLeft);
                         const dueLabel = formatDateOnly(group.paymentDueDate);
                         return `
@@ -8711,14 +8788,20 @@
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-900">${customerLabel}</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">INV-${group.id.slice(-6).toUpperCase()}</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-amber-700">${formatCurrency(summary.total, summary.currency)}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-amber-700">${formatCurrency(remainingDue, summary.currency)}</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">${dueLabel}</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${contactLabel}</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-right">
-                                    <button type="button" data-reminder-id="${group.id}"
+                                    <div class="inline-flex items-center gap-2">
+                                        <button type="button" data-reminder-pay="${group.id}"
+                                            class="inline-flex items-center justify-center px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-700 hover:bg-emerald-100">
+                                            💳 Payer
+                                        </button>
+                                        <button type="button" data-reminder-id="${group.id}"
                                         class="inline-flex items-center justify-center px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50">
-                                        Détails
-                                    </button>
+                                            Détails
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         `;
@@ -8815,7 +8898,7 @@
                     || 'CFA';
                 const revenueGroups = filteredGroups.filter(group => group.paymentStatus !== 'pending');
                 const totalRevenue = revenueGroups.reduce((sum, group) => sum + calculateGroupSummary(group).total, 0);
-                const payLaterTotal = payLaterGroups.reduce((sum, group) => sum + calculateGroupSummary(group).total, 0);
+                const payLaterTotal = payLaterGroups.reduce((sum, group) => sum + getCustomerGroupBalance(group), 0);
 
                 if (salesHistoryCompletedCount) salesHistoryCompletedCount.textContent = completedCount;
                 if (salesHistoryPendingCount) salesHistoryPendingCount.textContent = pendingCount;
@@ -9124,7 +9207,10 @@
                         const customerEmail = group.customerEmail || (group.customerId && appData.customers?.[group.customerId]?.email) || '';
                         const itemsCount = group.items.reduce((sum, item) => sum + item.quantity, 0);
                         const isPayLater = group.paymentStatus === 'pay_later' || group.payLater;
-                    const summary = calculateGroupSummary(group);
+                        const summary = calculateGroupSummary(group);
+                        const alreadyPaid = isPayLater ? getCustomerGroupPaidAmount(group.id) : summary.total;
+                        const balance = isPayLater ? getCustomerGroupBalance(group) : 0;
+                        const isPartiallyPaid = isPayLater && alreadyPaid > 0 && balance > 0;
                         const { dateLabel, timeLabel } = formatHistoryDateParts(group.date);
                         const itemsHtml = group.items.map(item => {
                             const unitPrice = item.price || (item.total / Math.max(item.quantity, 1));
@@ -9159,8 +9245,9 @@
                         const statusLabel = isPayLater
                             ? formatStoreFlagLabel('A payer plus tard', isStoreFlagged)
                             : formatStoreFlagLabel('Complétée', isStoreFlagged);
+                        const payLaterStatusLabel = isPartiallyPaid ? 'Paiement partiel' : statusLabel;
                         const statusHtml = isPayLater
-                            ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-700">${statusLabel}</span>`
+                            ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold ${isPartiallyPaid ? 'bg-cyan-50 text-cyan-700 border border-cyan-200' : 'bg-purple-100 text-purple-700'}">${payLaterStatusLabel}</span>`
                             : `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-50 text-green-700">${statusLabel}</span>`;
                         const sourceBadge = formatSaleSourceBadge(group.saleSource);
                         const sourceHtml = sourceBadge
@@ -9181,13 +9268,29 @@
                                 </div>
                             `
                             : '';
-                        const markPaidButtonHtml = isPayLater ? `
-                            <button type="button" data-history-action="mark-paid" data-history-id="${group.id}"
-                                class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700">
+                        const paymentProgressHtml = isPayLater ? `
+                            <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div class="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+                                    <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Facture</p>
+                                    <p class="mt-1 text-sm font-semibold text-gray-900">${formatCurrency(summary.total, summary.currency)}</p>
+                                </div>
+                                <div class="rounded-xl border border-emerald-100 bg-emerald-50/60 px-4 py-3">
+                                    <p class="text-[11px] font-semibold uppercase tracking-wide text-emerald-600">Payé</p>
+                                    <p class="mt-1 text-sm font-semibold text-emerald-700">${formatCurrency(alreadyPaid, summary.currency)}</p>
+                                </div>
+                                <div class="rounded-xl border border-amber-100 bg-amber-50/70 px-4 py-3">
+                                    <p class="text-[11px] font-semibold uppercase tracking-wide text-amber-600">Reste</p>
+                                    <p class="mt-1 text-sm font-semibold text-amber-700">${formatCurrency(balance, summary.currency)}</p>
+                                </div>
+                            </div>
+                        ` : '';
+                        const collectPaymentButtonHtml = isPayLater ? `
+                            <button type="button" data-history-action="collect-payment" data-history-id="${group.id}"
+                                class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a5 5 0 00-10 0v2m-2 0h14l-1 10H6L5 9z" />
                                 </svg>
-                                Marquer comme payé
+                                Enregistrer un paiement
                             </button>
                         ` : '';
                         const canCancel = getCurrentUserRole() === 'admin';
@@ -9258,6 +9361,7 @@
                                     <div class="mt-4 space-y-3">
                                         ${itemsHtml}
                                     </div>
+                                    ${paymentProgressHtml}
                                     ${latestCorrectionHtml}
                                     <div class="mt-4 space-y-2 border-t border-gray-100 pt-4">
                                         <div class="flex items-center justify-between text-sm text-gray-600">
@@ -9271,7 +9375,7 @@
                                         </div>
                                     </div>
                                     <div class="mt-4 flex flex-col md:flex-row gap-3">
-                                        ${markPaidButtonHtml}
+                                        ${collectPaymentButtonHtml}
                                         ${correctButtonHtml}
                                         ${detailsButtonHtml}
                                         ${cancelButtonHtml}
@@ -19517,6 +19621,15 @@
                             openSalesDetailModal(groupId);
                             return;
                         }
+                        if (action === 'collect-payment') {
+                            const group = buildSalesHistoryGroups().find(item => item.id === groupId);
+                            const customerKey = getCustomerHistoryKeyForGroup(group);
+                            if (customerKey) {
+                                selectedCustomerHistoryKey = customerKey;
+                            }
+                            openCustomerPaymentModal(groupId);
+                            return;
+                        }
                         if (action === 'mark-paid') {
                             markPayLaterAsPaid(groupId);
                             return;
@@ -19607,6 +19720,18 @@
             }
             if (salesHistoryRemindersTbody) {
                 salesHistoryRemindersTbody.addEventListener('click', (event) => {
+                    const payButton = event.target.closest('[data-reminder-pay]');
+                    if (payButton) {
+                        const groupId = payButton.dataset.reminderPay;
+                        if (!groupId) return;
+                        const group = buildSalesHistoryGroups().find(item => item.id === groupId);
+                        const customerKey = getCustomerHistoryKeyForGroup(group);
+                        if (customerKey) {
+                            selectedCustomerHistoryKey = customerKey;
+                        }
+                        openCustomerPaymentModal(groupId);
+                        return;
+                    }
                     const button = event.target.closest('[data-reminder-id]');
                     if (!button) return;
                     const groupId = button.dataset.reminderId;
