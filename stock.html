@@ -4130,9 +4130,14 @@
                 <div>
                     <label class="text-xs font-semibold text-gray-500" for="loss-product-search">Produit</label>
                     <div class="relative mt-1.5">
-                        <input type="text" id="loss-product-search" placeholder="Rechercher un produit…" autocomplete="off"
-                            class="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400"/>
-                        <div id="loss-product-dropdown" class="absolute z-10 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-44 overflow-y-auto hidden"></div>
+                        <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
+                            </svg>
+                        </div>
+                        <input type="text" id="loss-product-search" placeholder="Tapez pour rechercher ou cliquez pour tout voir…" autocomplete="off"
+                            class="w-full rounded-xl border border-gray-200 pl-9 pr-3 py-2.5 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400"/>
+                        <div id="loss-product-dropdown" class="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-56 overflow-y-auto hidden"></div>
                     </div>
                     <input type="hidden" id="loss-product-id">
                 </div>
@@ -11946,30 +11951,86 @@
             function lossGetSourceProducts() {
                 const source = document.querySelector('input[name="loss-source"]:checked')?.value || 'magasin';
                 if (source === 'magasin') {
-                    return Object.values(appData.storeProducts || {}).filter(p => (p.quantity || 0) > 0);
+                    // Tous les produits, pas seulement ceux en stock
+                    return Object.values(appData.storeProducts || {});
                 } else {
                     const boutiqueId = document.getElementById('loss-boutique-select')?.value;
                     return Object.values(appData.shopStock || {}).filter(p => {
-                        if (boutiqueId && p.boutiqueId !== boutiqueId) return false;
-                        return (p.quantity || 0) > 0;
+                        if (!boutiqueId) return true;
+                        // Compatibilité : certains items utilisent boutiqueId directement
+                        return (p.boutiqueId === boutiqueId) ||
+                               (resolveBoutiqueId && resolveBoutiqueId(p.boutiqueId) === boutiqueId);
                     });
                 }
             }
 
             function lossRenderProductDropdown(query) {
                 const dd = document.getElementById('loss-product-dropdown');
-                const products = lossGetSourceProducts().filter(p => {
-                    const name = (p.name || '').toLowerCase();
-                    return !query || name.includes(query.toLowerCase());
-                }).slice(0, 12);
+                if (!dd) return;
 
-                if (!products.length) { dd.classList.add('hidden'); return; }
-                dd.innerHTML = products.map(p => `
-                    <button type="button" class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors"
-                        data-loss-product-id="${p.id}" data-loss-product-name="${p.name || ''}">
-                        <span class="font-medium">${p.name || '—'}</span>
-                        <span class="ml-2 text-xs text-gray-400">Stock: ${p.quantity || 0}</span>
-                    </button>`).join('');
+                const q = (query || '').toLowerCase().trim();
+                const source = document.querySelector('input[name="loss-source"]:checked')?.value || 'magasin';
+
+                let products = lossGetSourceProducts().filter(p => {
+                    if (!q) return true;
+                    const name = (p.name || '').toLowerCase();
+                    const ref  = (p.reference || p.sku || '').toLowerCase();
+                    return name.includes(q) || ref.includes(q);
+                });
+
+                // Tri : d'abord les produits qui ont du stock, ensuite par nom
+                products.sort((a, b) => {
+                    const aqty = a.quantity || 0;
+                    const bqty = b.quantity || 0;
+                    if (bqty > 0 && aqty === 0) return 1;
+                    if (aqty > 0 && bqty === 0) return -1;
+                    return (a.name || '').localeCompare(b.name || '', 'fr');
+                });
+
+                const shown = products.slice(0, 15);
+
+                if (!products.length) {
+                    dd.innerHTML = `<div class="px-4 py-5 text-center">
+                        <svg class="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <p class="text-sm text-gray-400">Aucun produit trouvé${q ? ` pour « ${q} »` : ''}</p>
+                        ${source === 'boutique' ? '<p class="text-xs text-gray-300 mt-1">Essayez de changer la boutique sélectionnée</p>' : ''}
+                    </div>`;
+                    dd.classList.remove('hidden');
+                    return;
+                }
+
+                const totalLabel = products.length > 15 ? `<p class="text-xs text-gray-400 px-3 py-1.5 border-b border-gray-100">${products.length} produits — affichage des 15 premiers</p>` : '';
+
+                dd.innerHTML = totalLabel + shown.map(p => {
+                    const qty = p.quantity || 0;
+                    const hasStock = qty > 0;
+                    const stockColor = qty === 0 ? 'text-red-400 bg-red-50' :
+                                       qty <= 5  ? 'text-orange-500 bg-orange-50' : 'text-emerald-600 bg-emerald-50';
+                    const stockIcon = qty === 0
+                        ? '<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>'
+                        : '<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>';
+                    const upc = p.unitsPerCarton || 1;
+                    const cartonInfo = upc > 1 ? `<span class="text-gray-300">·</span> <span class="text-gray-400">${upc}u/carton</span>` : '';
+                    const price = p.purchasePrice || p.sellingPrice || 0;
+                    const priceInfo = price > 0 ? `<span class="text-gray-300">·</span> <span class="text-gray-400">${price.toLocaleString('fr-FR')} FCFA</span>` : '';
+                    const disabledAttr = !hasStock ? 'data-loss-no-stock="1"' : '';
+                    return `<button type="button" class="w-full text-left px-3 py-2.5 flex items-center gap-3 hover:bg-red-50 transition-colors group border-b border-gray-50 last:border-0"
+                        data-loss-product-id="${p.id}" data-loss-product-name="${p.name || ''}" ${disabledAttr}>
+                        <div class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 text-gray-400 group-hover:bg-red-100 transition-colors">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-semibold text-gray-800 group-hover:text-red-700 truncate">${p.name || '—'}</p>
+                            <div class="flex items-center gap-1.5 mt-0.5">
+                                ${cartonInfo} ${priceInfo}
+                            </div>
+                        </div>
+                        <span class="flex-shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${stockColor}">
+                            ${stockIcon} ${qty}
+                        </span>
+                    </button>`;
+                }).join('');
+
                 dd.classList.remove('hidden');
             }
 
@@ -12187,6 +12248,7 @@
                     // Reset produit
                     document.getElementById('loss-product-search').value = '';
                     document.getElementById('loss-product-id').value = '';
+                    document.getElementById('loss-product-dropdown').classList.add('hidden');
                     document.getElementById('loss-lot-wrap').classList.add('hidden');
                     document.getElementById('loss-unit-wrap').classList.add('hidden');
                     document.getElementById('loss-qty-wrap').classList.add('hidden');
@@ -12195,12 +12257,16 @@
                     document.getElementById('loss-value-wrap').classList.add('hidden');
                     document.getElementById('loss-auth-wrap').classList.add('hidden');
                     document.getElementById('loss-modal-confirm').disabled = true;
+                    // Réafficher le dropdown avec les produits de la nouvelle source
+                    setTimeout(() => lossRenderProductDropdown(''), 50);
                 }));
 
                 // Boutique change
                 document.getElementById('loss-boutique-select')?.addEventListener('change', () => {
                     document.getElementById('loss-product-search').value = '';
                     document.getElementById('loss-product-id').value = '';
+                    // Rafraîchir le dropdown avec les produits de la boutique sélectionnée
+                    lossRenderProductDropdown('');
                 });
 
                 // Produit search
@@ -12208,6 +12274,23 @@
                 const dropdown = document.getElementById('loss-product-dropdown');
                 searchInput?.addEventListener('input', e => lossRenderProductDropdown(e.target.value));
                 searchInput?.addEventListener('focus', e => lossRenderProductDropdown(e.target.value));
+                // Touche Escape pour fermer, flèches pour naviguer
+                searchInput?.addEventListener('keydown', e => {
+                    if (e.key === 'Escape') { dropdown?.classList.add('hidden'); searchInput.blur(); }
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        const first = dropdown?.querySelector('button[data-loss-product-id]');
+                        if (first) first.focus();
+                    }
+                });
+                dropdown?.addEventListener('keydown', e => {
+                    const btns = [...(dropdown?.querySelectorAll('button[data-loss-product-id]') || [])];
+                    const idx = btns.indexOf(document.activeElement);
+                    if (e.key === 'ArrowDown' && idx < btns.length - 1) { e.preventDefault(); btns[idx + 1]?.focus(); }
+                    if (e.key === 'ArrowUp') { e.preventDefault(); idx > 0 ? btns[idx - 1]?.focus() : searchInput?.focus(); }
+                    if (e.key === 'Escape') { dropdown?.classList.add('hidden'); searchInput?.focus(); }
+                    if (e.key === 'Enter' && idx >= 0) { e.preventDefault(); btns[idx]?.click(); }
+                });
                 document.addEventListener('click', e => {
                     if (!searchInput?.contains(e.target) && !dropdown?.contains(e.target)) {
                         dropdown?.classList.add('hidden');
