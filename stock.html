@@ -3729,6 +3729,11 @@
                         <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
                             <label for="transfer-quantity" class="block text-sm font-semibold text-slate-700">Combien de formats sortent du magasin ? *</label>
                             <p class="mt-1 text-xs text-slate-500">Exemple : 1 tonne, 2 cartons, 5 sacs. La limite suit le stock disponible du format source.</p>
+                            <!-- Bandeau stock disponible en magasin -->
+                            <div id="transfer-stock-info" class="hidden mt-2 flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2">
+                                <svg class="w-4 h-4 text-blue-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                                <p class="text-xs text-blue-700">Stock magasin : <span id="transfer-stock-info-value" class="font-bold">0</span> <span id="transfer-stock-info-unit" class="font-medium">carton(s)</span> disponible(s)</p>
+                            </div>
                             <input type="number" id="transfer-quantity" placeholder="1" min="1"
                                 class="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                                 required>
@@ -5069,6 +5074,9 @@
             const transferBreakdownList = document.getElementById('transfer-breakdown-list');
             const transferBreakdownAutoFillInput = document.getElementById('transfer-breakdown-auto-fill');
             const transferStockWarning = document.getElementById('transfer-stock-warning');
+            const transferStockInfo = document.getElementById('transfer-stock-info');
+            const transferStockInfoValue = document.getElementById('transfer-stock-info-value');
+            const transferStockInfoUnit = document.getElementById('transfer-stock-info-unit');
             const transferError = document.getElementById('transfer-error');
             const transferSubmitButton = document.getElementById('transfer-submit-button');
 
@@ -6662,17 +6670,31 @@
                     : null);
                 transferBreakdownList.innerHTML = packagings
                     .filter(packaging => packaging.code !== autoFillCode)
-                    .map(packaging => `
+                    .map(packaging => {
+                        const maxQty = Math.max(Math.floor((plan?.totalUnits || 0) / Math.max(packaging.unitCount, 1)), 0);
+                        const curVal = plan?.breakdown?.[packaging.code] || 0;
+                        return `
                         <div class="rounded-2xl border border-slate-200 bg-white/80 p-3">
                             <label class="block text-xs font-semibold uppercase tracking-wide text-slate-500" for="transfer-breakdown-${packaging.code}">
                                 ${escapeHtml(packaging.label)}
                             </label>
-                            <p class="mt-1 text-[11px] text-slate-400">1 ${escapeHtml(packaging.label.toLowerCase())} = ${packaging.unitCount} unité(s) · max pour cet envoi : ${Math.max(Math.floor((plan?.totalUnits || 0) / Math.max(packaging.unitCount, 1)), 0)}</p>
-                            <input type="number" id="transfer-breakdown-${packaging.code}" value="${plan?.breakdown?.[packaging.code] || 0}" min="0" max="${Math.max(Math.floor((plan?.totalUnits || 0) / Math.max(packaging.unitCount, 1)), 0)}" step="1"
-                                data-transfer-package-ref="${packaging.code}"
-                                class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
-                        </div>
-                    `).join('');
+                            <p class="mt-1 text-[11px] text-slate-400">1 ${escapeHtml(packaging.label.toLowerCase())} = ${packaging.unitCount} unité(s) · max : <span class="font-semibold text-slate-600">${maxQty}</span></p>
+                            <div class="mt-2 flex items-center gap-2">
+                                <button type="button"
+                                    data-transfer-stepper-dec="${packaging.code}"
+                                    class="w-9 h-9 shrink-0 flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 text-lg font-bold hover:bg-slate-100 hover:border-slate-300 transition disabled:opacity-40"
+                                    ${curVal <= 0 ? 'disabled' : ''}>−</button>
+                                <input type="number" id="transfer-breakdown-${packaging.code}"
+                                    value="${curVal}" min="0" max="${maxQty}" step="1"
+                                    data-transfer-package-ref="${packaging.code}"
+                                    class="w-full h-9 rounded-xl border border-slate-200 bg-white px-3 text-center text-slate-800 text-sm font-semibold shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
+                                <button type="button"
+                                    data-transfer-stepper-inc="${packaging.code}"
+                                    class="w-9 h-9 shrink-0 flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 text-lg font-bold hover:bg-slate-100 hover:border-slate-300 transition disabled:opacity-40"
+                                    ${curVal >= maxQty ? 'disabled' : ''}>+</button>
+                            </div>
+                        </div>`;
+                    }).join('');
             }
 
             function seedDefaultTransferBreakdown() {
@@ -6699,6 +6721,7 @@
                 const quantityInput = transferForm?.['transfer-quantity'];
                 const showPanel = !!sourceProduct;
                 if (transferPackagingPanel) transferPackagingPanel.classList.toggle('hidden', !showPanel);
+                if (transferStockInfo) transferStockInfo.classList.toggle('hidden', !showPanel);
                 if (!sourceProduct) {
                     resetTransferPackagingInputs();
                     if (quantityInput) {
@@ -6712,6 +6735,28 @@
                 const sourcePackaging = getPrimaryPackaging(sourceProduct);
                 const unitsPerCarton = getUnitsPerCarton(sourceProduct);
                 const availableCartons = parseNonNegativeInteger(sourceProduct.quantityInStore, 0);
+                // Mise à jour du bandeau stock magasin
+                if (transferStockInfoValue) transferStockInfoValue.textContent = availableCartons;
+                if (transferStockInfoUnit) {
+                    const pkgLabel = sourcePackaging?.label || 'carton(s)';
+                    transferStockInfoUnit.textContent = pkgLabel.toLowerCase() + (availableCartons > 1 ? 's' : '');
+                }
+                if (transferStockInfo) {
+                    transferStockInfo.classList.toggle('border-amber-200', availableCartons === 0);
+                    transferStockInfo.classList.toggle('bg-amber-50', availableCartons === 0);
+                    transferStockInfo.classList.toggle('border-blue-100', availableCartons > 0);
+                    transferStockInfo.classList.toggle('bg-blue-50', availableCartons > 0);
+                    const icon = transferStockInfo.querySelector('svg');
+                    if (icon) {
+                        icon.classList.toggle('text-amber-500', availableCartons === 0);
+                        icon.classList.toggle('text-blue-500', availableCartons > 0);
+                    }
+                    const text = transferStockInfo.querySelector('p');
+                    if (text) {
+                        text.classList.toggle('text-amber-700', availableCartons === 0);
+                        text.classList.toggle('text-blue-700', availableCartons > 0);
+                    }
+                }
                 let sourceCartons = parseNonNegativeInteger(quantityInput?.value, 0);
                 if (quantityInput) {
                     quantityInput.disabled = availableCartons <= 0;
@@ -22921,6 +22966,26 @@
             }
             if (transferBreakdownList) {
                 transferBreakdownList.addEventListener('input', () => {
+                    updateTransferPackagingUI();
+                });
+                transferBreakdownList.addEventListener('click', (e) => {
+                    const decBtn = e.target.closest('[data-transfer-stepper-dec]');
+                    const incBtn = e.target.closest('[data-transfer-stepper-inc]');
+                    const code = decBtn?.dataset?.transferStepperDec || incBtn?.dataset?.transferStepperInc;
+                    if (!code) return;
+                    const input = transferBreakdownList.querySelector(`[data-transfer-package-ref="${code}"]`);
+                    if (!input) return;
+                    const cur = parseInt(input.value, 10) || 0;
+                    const max = parseInt(input.max, 10);
+                    const min = parseInt(input.min, 10) || 0;
+                    let next = decBtn ? cur - 1 : cur + 1;
+                    next = Math.max(min, isNaN(max) ? next : Math.min(max, next));
+                    input.value = next;
+                    // Update disabled states
+                    const dec = transferBreakdownList.querySelector(`[data-transfer-stepper-dec="${code}"]`);
+                    const inc = transferBreakdownList.querySelector(`[data-transfer-stepper-inc="${code}"]`);
+                    if (dec) dec.disabled = next <= min;
+                    if (inc) inc.disabled = !isNaN(max) && next >= max;
                     updateTransferPackagingUI();
                 });
             }
