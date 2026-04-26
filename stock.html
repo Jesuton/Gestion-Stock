@@ -4215,6 +4215,7 @@
                     Annuler
                 </button>
                 <button id="loss-modal-confirm" type="button" disabled
+                    onclick="submitLossDeclaration()"
                     class="flex-1 rounded-xl bg-red-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
                     Confirmer la perte
                 </button>
@@ -12084,6 +12085,10 @@
                     }
                 }
                 wrap.classList.remove('hidden');
+                // Force la sélection de la première option si rien n'est sélectionné
+                if (sel && !sel.value && sel.options.length > 0) {
+                    sel.selectedIndex = 0;
+                }
                 lossOnLotChange();
             }
 
@@ -12137,7 +12142,14 @@
                 const btn = document.getElementById('loss-modal-confirm');
                 if (!btn) return;
                 const hasProduct = !!document.getElementById('loss-product-id').value;
-                const hasLot = !!document.getElementById('loss-lot-select').value;
+
+                // Si le select n'a qu'une option (auto-peuplé), on la considère sélectionnée
+                const lotSel = document.getElementById('loss-lot-select');
+                if (lotSel && !lotSel.value && lotSel.options.length > 0 && lotSel.options[0].value) {
+                    lotSel.value = lotSel.options[0].value;
+                }
+                const hasLot = !!(lotSel && lotSel.value);
+
                 const hasQty = (parseInt(document.getElementById('loss-quantity').value) || 0) > 0;
                 btn.disabled = !(hasProduct && hasLot && hasQty && lossModalApproval);
             }
@@ -12151,8 +12163,11 @@
                 const source = document.querySelector('input[name="loss-source"]:checked')?.value || 'magasin';
                 const boutiqueId = source === 'boutique' ? (document.getElementById('loss-boutique-select')?.value || null) : null;
                 const productId = document.getElementById('loss-product-id').value;
-                const lotId = document.getElementById('loss-lot-select').value;
-                const opt = document.getElementById('loss-lot-select').selectedOptions[0];
+                const lotSel = document.getElementById('loss-lot-select');
+                // Fallback : prendre la première option disponible si rien n'est sélectionné
+                if (lotSel && !lotSel.value && lotSel.options.length > 0) lotSel.selectedIndex = 0;
+                const lotId = lotSel?.value || productId;
+                const opt = lotSel?.selectedOptions[0];
                 const unit = document.querySelector('input[name="loss-unit"]:checked')?.value || 'units';
                 const qty = parseInt(document.getElementById('loss-quantity').value) || 0;
                 const upc = parseInt(opt?.dataset.upc) || 1;
