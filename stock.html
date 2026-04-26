@@ -23126,29 +23126,57 @@
             updateCustomerHistoryVisibility();
             renderSalesHistory();
 
-            // ─── Effacement automatique au focus — champs numériques ─────────────
-            // Chrome et Safari ignorent .select() sur input[type="number"].
-            // Solution pro : vider le champ au focus → l'utilisateur tape directement.
-            // Si rien n'est tapé (simple clic puis tab/clic ailleurs), la valeur
-            // précédente est silencieusement restaurée.
+            // ─── Saisie directe sur tous les champs numériques ───────────────────
+            // select() ne fonctionne PAS sur type="number" dans Chrome/Safari.
+            // Solution définitive : on passe temporairement en type="text" au focus
+            // (select() fonctionne sur text), on sélectionne tout → l'utilisateur
+            // tape directement pour remplacer. Au blur on reparse + remet type="number".
             document.addEventListener('focusin', (e) => {
                 const el = e.target;
                 if (el.tagName !== 'INPUT' || el.type !== 'number') return;
                 if (el.readOnly || el.disabled) return;
-                el.dataset.preEditVal = el.value;
-                el.value = '';
-            });
+                // Sauvegarder les attributs de contrainte
+                el.dataset._numMin  = el.min;
+                el.dataset._numMax  = el.max;
+                el.dataset._numStep = el.step;
+                el.dataset._numVal  = el.value;
+                // Passer en text → select() devient fonctionnel
+                el.type = 'text';
+                el.select();
+            }, true);
+
             document.addEventListener('focusout', (e) => {
                 const el = e.target;
-                if (el.tagName !== 'INPUT' || el.type !== 'number') return;
-                if (el.readOnly || el.disabled) return;
-                // Rien tapé → restaurer l'ancienne valeur sans déclencher d'événement
-                if (el.value === '' && el.dataset.preEditVal !== undefined) {
-                    el.value = el.dataset.preEditVal;
+                // Reconnaître les inputs qu'on a convertis (ils ont nos data attrs)
+                if (el.tagName !== 'INPUT' || el.dataset._numVal === undefined) return;
+                const raw = el.value.trim().replace(',', '.');
+                let num = parseFloat(raw);
+                // Si l'utilisateur n'a rien tapé ou a tapé quelque chose d'invalide,
+                // restaurer l'ancienne valeur
+                if (isNaN(num) || raw === '') {
+                    num = parseFloat(el.dataset._numVal) || 0;
                 }
-                delete el.dataset.preEditVal;
-            });
-            // ────────────────────────────────────────────────────────────────────
+                // Appliquer min/max
+                const minV = parseFloat(el.dataset._numMin);
+                const maxV = parseFloat(el.dataset._numMax);
+                if (!isNaN(minV)) num = Math.max(minV, num);
+                if (!isNaN(maxV)) num = Math.min(maxV, num);
+                // Remettre en type number avec la valeur finale
+                el.type = 'number';
+                el.min  = el.dataset._numMin;
+                el.max  = el.dataset._numMax;
+                el.step = el.dataset._numStep;
+                el.value = num;
+                // Nettoyer
+                delete el.dataset._numMin;
+                delete el.dataset._numMax;
+                delete el.dataset._numStep;
+                delete el.dataset._numVal;
+                // Notifier les listeners existants
+                el.dispatchEvent(new Event('input',  { bubbles: true }));
+                el.dispatchEvent(new Event('change', { bubbles: true }));
+            }, true);
+            // ─────────────────────────────────────────────────────────────────────
         });
     </script>
 </body>
