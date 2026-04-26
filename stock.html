@@ -514,6 +514,29 @@
                     </div>
                 </div>
 
+                <!-- Carte Pertes (admin/manager uniquement) -->
+                <div id="dashboard-loss-card" class="hidden mt-4 bg-white rounded-2xl border border-red-100 p-5 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-red-50 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Pertes ce mois</p>
+                            <p id="stat-monthly-losses" class="text-2xl font-bold text-red-600 mt-1">0 FCFA</p>
+                            <p id="stat-monthly-losses-count" class="text-xs text-gray-400 mt-1">0 déclaration ce mois</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="openLossModal()"
+                        class="flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition-colors">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Déclarer une perte
+                    </button>
+                </div>
+
                 <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-6">
                     <div class="xl:col-span-2 bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -652,6 +675,13 @@
                                         <option value="">Chargement...</option>
                                     </select>
                                 </div>
+                                <button id="open-loss-modal" type="button"
+                                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-50 text-red-600 border border-red-200 text-xs font-semibold hover:bg-red-100 active:scale-95 transition-all">
+                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                    Déclarer une perte
+                                </button>
                             </div>
                         </div>
                             <div class="mt-4 relative">
@@ -907,8 +937,49 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- ── Panneau historique des pertes (admin/manager) ───── -->
+                <div id="losses-history-section" class="hidden mt-6">
+                    <details class="bg-white rounded-2xl border border-red-100 shadow-sm group">
+                        <summary class="flex items-center justify-between px-6 py-4 cursor-pointer list-none select-none hover:bg-red-50 transition-colors rounded-2xl">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-800">Historique des pertes</p>
+                                    <p id="losses-history-badge" class="text-xs text-red-600 mt-0.5">—</p>
+                                </div>
+                            </div>
+                            <svg class="w-4 h-4 text-gray-400 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </summary>
+                        <div class="px-6 pb-6">
+                            <div class="overflow-x-auto rounded-xl border border-gray-100 mt-2">
+                                <table class="min-w-full text-sm">
+                                    <thead class="bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                        <tr>
+                                            <th class="px-3 py-2.5 text-left">Date</th>
+                                            <th class="px-3 py-2.5 text-left">Source</th>
+                                            <th class="px-3 py-2.5 text-left">Produit</th>
+                                            <th class="px-3 py-2.5 text-left">Quantité</th>
+                                            <th class="px-3 py-2.5 text-left">Motif</th>
+                                            <th class="px-3 py-2.5 text-left">Valeur</th>
+                                            <th class="px-3 py-2.5 text-left">Déclaré par</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="losses-history-tbody"></tbody>
+                                </table>
+                            </div>
+                            <p id="losses-history-empty" class="text-sm text-gray-400 text-center py-6">Aucune perte déclarée.</p>
+                        </div>
+                    </details>
+                </div>
             </div>
+
             <!-- Page: Historique des ventes -->
+
             <div id="page-Historique-des-ventes" class="page-content p-4 md:p-8 hidden">
                 <div class="flex flex-col gap-6">
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -4012,7 +4083,142 @@
         </div>
     </div>
 
+    <!-- Modal: Déclaration de perte -->
+    <div id="loss-declaration-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg m-4 flex flex-col max-h-[92vh]">
+            <!-- En-tête -->
+            <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100 flex-shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-gray-900">Déclarer une perte</h3>
+                        <p class="text-xs text-gray-500 mt-0.5">La perte sera déduite du stock immédiatement.</p>
+                    </div>
+                </div>
+                <button id="loss-modal-close" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <!-- Corps scrollable -->
+            <div class="overflow-y-auto px-6 py-4 space-y-4 flex-1">
+                <!-- Source -->
+                <div>
+                    <p class="text-xs font-semibold text-gray-500 mb-2">Source de la perte</p>
+                    <div class="flex gap-2">
+                        <label class="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-200 cursor-pointer hover:border-red-300 transition-colors has-[:checked]:border-red-400 has-[:checked]:bg-red-50">
+                            <input type="radio" name="loss-source" value="magasin" id="loss-source-magasin" class="accent-red-500" checked>
+                            <span class="text-sm font-medium text-gray-700">Magasin</span>
+                        </label>
+                        <label class="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-200 cursor-pointer hover:border-red-300 transition-colors has-[:checked]:border-red-400 has-[:checked]:bg-red-50">
+                            <input type="radio" name="loss-source" value="boutique" id="loss-source-boutique" class="accent-red-500">
+                            <span class="text-sm font-medium text-gray-700">Boutique</span>
+                        </label>
+                    </div>
+                </div>
+                <!-- Sélecteur boutique (conditionnel) -->
+                <div id="loss-boutique-selector-wrap" class="hidden">
+                    <label class="text-xs font-semibold text-gray-500" for="loss-boutique-select">Boutique concernée</label>
+                    <select id="loss-boutique-select" class="mt-1.5 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400">
+                        <option value="">Sélectionner une boutique…</option>
+                    </select>
+                </div>
+                <!-- Produit -->
+                <div>
+                    <label class="text-xs font-semibold text-gray-500" for="loss-product-search">Produit</label>
+                    <div class="relative mt-1.5">
+                        <input type="text" id="loss-product-search" placeholder="Rechercher un produit…" autocomplete="off"
+                            class="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400"/>
+                        <div id="loss-product-dropdown" class="absolute z-10 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-44 overflow-y-auto hidden"></div>
+                    </div>
+                    <input type="hidden" id="loss-product-id">
+                </div>
+                <!-- Lot -->
+                <div id="loss-lot-wrap" class="hidden">
+                    <label class="text-xs font-semibold text-gray-500" for="loss-lot-select">Lot / Réception</label>
+                    <select id="loss-lot-select" class="mt-1.5 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400">
+                        <option value="">Sélectionner un lot…</option>
+                    </select>
+                </div>
+                <!-- Unité de perte -->
+                <div id="loss-unit-wrap" class="hidden">
+                    <p class="text-xs font-semibold text-gray-500 mb-2">Unité de perte</p>
+                    <div class="flex gap-2">
+                        <label class="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-200 cursor-pointer hover:border-red-300 transition-colors has-[:checked]:border-red-400 has-[:checked]:bg-red-50">
+                            <input type="radio" name="loss-unit" value="units" id="loss-unit-units" class="accent-red-500" checked>
+                            <span class="text-sm font-medium text-gray-700">Unités</span>
+                        </label>
+                        <label id="loss-unit-cartons-label" class="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-200 cursor-pointer hover:border-red-300 transition-colors has-[:checked]:border-red-400 has-[:checked]:bg-red-50">
+                            <input type="radio" name="loss-unit" value="cartons" id="loss-unit-cartons" class="accent-red-500">
+                            <span id="loss-unit-carton-label-text" class="text-sm font-medium text-gray-700">Cartons</span>
+                        </label>
+                    </div>
+                </div>
+                <!-- Quantité -->
+                <div id="loss-qty-wrap" class="hidden">
+                    <label class="text-xs font-semibold text-gray-500" for="loss-quantity">Quantité perdue <span id="loss-qty-max-hint" class="font-normal text-gray-400"></span></label>
+                    <input type="number" id="loss-quantity" min="1" value="1"
+                        class="mt-1.5 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400"/>
+                </div>
+                <!-- Motif -->
+                <div id="loss-reason-wrap" class="hidden">
+                    <label class="text-xs font-semibold text-gray-500" for="loss-reason">Motif de la perte</label>
+                    <select id="loss-reason" class="mt-1.5 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400">
+                        <option value="expired">🕐 Périmé</option>
+                        <option value="damaged">💥 Abîmé / Cassé</option>
+                        <option value="stolen">🔒 Vol</option>
+                        <option value="transit">🚚 Perte en transit</option>
+                        <option value="other">📝 Autre</option>
+                    </select>
+                </div>
+                <!-- Note -->
+                <div id="loss-note-wrap" class="hidden">
+                    <label class="text-xs font-semibold text-gray-500" for="loss-note">Note (optionnel)</label>
+                    <textarea id="loss-note" rows="2" placeholder="Détails supplémentaires…"
+                        class="mt-1.5 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400 resize-none"></textarea>
+                </div>
+                <!-- Valeur estimée -->
+                <div id="loss-value-wrap" class="hidden">
+                    <div class="rounded-xl bg-red-50 border border-red-100 px-4 py-3 flex items-center justify-between">
+                        <span class="text-xs font-semibold text-red-700">Valeur estimée de la perte</span>
+                        <span id="loss-estimated-value" class="text-sm font-bold text-red-700">—</span>
+                    </div>
+                </div>
+                <!-- Autorisation manager -->
+                <div id="loss-auth-wrap" class="hidden">
+                    <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 space-y-2">
+                        <p class="text-xs font-semibold text-amber-700">Autorisation requise</p>
+                        <p id="loss-auth-auto" class="text-xs text-emerald-600 hidden"></p>
+                        <div id="loss-auth-code-wrap" class="flex gap-2">
+                            <input type="text" id="loss-auth-code" placeholder="Code manager…"
+                                class="flex-1 rounded-lg border border-amber-300 px-3 py-2 text-xs uppercase tracking-widest focus:ring-2 focus:ring-amber-400 focus:border-amber-400"/>
+                            <button type="button" id="loss-auth-verify"
+                                class="px-3 py-2 rounded-lg bg-amber-500 text-white text-xs font-semibold hover:bg-amber-600 transition-colors">Vérifier</button>
+                        </div>
+                        <p id="loss-auth-error" class="text-xs text-red-500 hidden"></p>
+                        <p id="loss-auth-ok" class="text-xs text-emerald-600 font-semibold hidden"></p>
+                    </div>
+                </div>
+            </div>
+            <!-- Pied -->
+            <div class="flex gap-3 px-6 py-4 border-t border-gray-100 flex-shrink-0">
+                <button id="loss-modal-cancel" type="button"
+                    class="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
+                    Annuler
+                </button>
+                <button id="loss-modal-confirm" type="button" disabled
+                    class="flex-1 rounded-xl bg-red-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                    Confirmer la perte
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Nouvelle conversation -->
+
     <div id="chat-create-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 m-4">
             <div class="flex items-center justify-between mb-4">
@@ -4442,7 +4648,7 @@
             let currentUserData = null;
             let dbBasePath = '';
 
-            const appData = { stores: {}, boutiques: {}, categories: {}, storeProducts: {}, storeMovements: {}, shopStock: {}, shopMovements: {}, shopTransferRequests: {}, salesHistory: {}, saleCorrections: {}, customers: {}, suppliers: {}, supplierInvoices: {}, supplierPayments: {}, customerPayments: {}, storeExitRequests: {}, pendingSales: {}, settings: {}, inventories: {} };
+            const appData = { stores: {}, boutiques: {}, categories: {}, storeProducts: {}, storeMovements: {}, shopStock: {}, shopMovements: {}, shopTransferRequests: {}, salesHistory: {}, saleCorrections: {}, customers: {}, suppliers: {}, supplierInvoices: {}, supplierPayments: {}, customerPayments: {}, storeExitRequests: {}, pendingSales: {}, settings: {}, inventories: {}, losses: {} };
             let isSidebarOpen = false;
             let isSidebarCollapsed = false;
             let isCodeLoginMode = false;
@@ -11591,7 +11797,471 @@
                 updateUI();
             }
 
+            // ================================================================
+            // === MODULE PERTES =============================================
+            // ================================================================
+
+            let lossesRef = null;
+            let lossesListener = null;
+            let lossModalApproval = null; // { byId, byName, byRole, approvedAt }
+
+            // ── Helpers ────────────────────────────────────────────────────
+            function calculateMonthlyLossValue(month, year) {
+                const now = new Date();
+                const m = month !== undefined ? month : now.getMonth();
+                const y = year  !== undefined ? year  : now.getFullYear();
+                return Object.values(appData.losses || {}).reduce((sum, loss) => {
+                    const d = new Date(loss.declaredAt || 0);
+                    if (d.getMonth() === m && d.getFullYear() === y) {
+                        sum += (loss.estimatedValue || 0);
+                    }
+                    return sum;
+                }, 0);
+            }
+
+            function getLossReasonLabel(code) {
+                const map = { expired: 'Périmé', damaged: 'Abîmé/Cassé', stolen: 'Vol', transit: 'Transit', other: 'Autre' };
+                return map[code] || code;
+            }
+
+            // ── Historique des pertes (panneau dans Ventes) ────────────────
+            function renderLossesHistory() {
+                const wrap = document.getElementById('losses-history-section');
+                if (!wrap) return;
+                const role = getCurrentUserRole();
+                const canView = (role === 'admin' || role === 'manager');
+                wrap.classList.toggle('hidden', !canView);
+                if (!canView) return;
+
+                const losses = Object.values(appData.losses || {})
+                    .sort((a, b) => new Date(b.declaredAt) - new Date(a.declaredAt));
+
+                const tbody = document.getElementById('losses-history-tbody');
+                const empty = document.getElementById('losses-history-empty');
+                const badge = document.getElementById('losses-history-badge');
+
+                // Badge — pertes du mois en cours
+                const now = new Date();
+                const monthLosses = losses.filter(l => {
+                    const d = new Date(l.declaredAt || 0);
+                    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                });
+                if (badge) {
+                    const total = monthLosses.reduce((s, l) => s + (l.estimatedValue || 0), 0);
+                    badge.textContent = `${monthLosses.length} perte${monthLosses.length !== 1 ? 's' : ''} · ${formatCurrency(total)}`;
+                }
+
+                if (!tbody) return;
+                if (!losses.length) {
+                    tbody.innerHTML = '';
+                    if (empty) empty.classList.remove('hidden');
+                    return;
+                }
+                if (empty) empty.classList.add('hidden');
+
+                tbody.innerHTML = losses.slice(0, 50).map(loss => {
+                    const date = new Date(loss.declaredAt || 0).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+                    const source = loss.source === 'boutique' ? '🏪 Boutique' : '🏭 Magasin';
+                    const prodName = appData.storeProducts?.[loss.productId]?.name || loss.productName || '—';
+                    const qty = loss.unit === 'cartons'
+                        ? `${loss.quantity} carton${loss.quantity > 1 ? 's' : ''}`
+                        : `${loss.quantity} unité${loss.quantity > 1 ? 's' : ''}`;
+                    const motif = getLossReasonLabel(loss.reason);
+                    const val = formatCurrency(loss.estimatedValue || 0);
+                    const by = loss.declaredByName || '—';
+                    return `<tr class="border-t border-gray-100 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                        <td class="px-3 py-2.5 text-gray-500 whitespace-nowrap">${date}</td>
+                        <td class="px-3 py-2.5 whitespace-nowrap">${source}</td>
+                        <td class="px-3 py-2.5 font-medium">${prodName}</td>
+                        <td class="px-3 py-2.5 whitespace-nowrap">${qty}</td>
+                        <td class="px-3 py-2.5 whitespace-nowrap"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700">${motif}</span></td>
+                        <td class="px-3 py-2.5 font-semibold text-red-600 whitespace-nowrap">${val}</td>
+                        <td class="px-3 py-2.5 text-gray-500 whitespace-nowrap">${by}</td>
+                    </tr>`;
+                }).join('');
+            }
+
+            // ── Modal : ouverture / fermeture ──────────────────────────────
+            function openLossModal() {
+                lossModalApproval = null;
+                // Reset champs
+                document.getElementById('loss-source-magasin').checked = true;
+                document.getElementById('loss-boutique-selector-wrap').classList.add('hidden');
+                document.getElementById('loss-product-search').value = '';
+                document.getElementById('loss-product-id').value = '';
+                document.getElementById('loss-product-dropdown').classList.add('hidden');
+                document.getElementById('loss-lot-wrap').classList.add('hidden');
+                document.getElementById('loss-unit-wrap').classList.add('hidden');
+                document.getElementById('loss-qty-wrap').classList.add('hidden');
+                document.getElementById('loss-reason-wrap').classList.add('hidden');
+                document.getElementById('loss-note-wrap').classList.add('hidden');
+                document.getElementById('loss-value-wrap').classList.add('hidden');
+                document.getElementById('loss-auth-wrap').classList.add('hidden');
+                document.getElementById('loss-quantity').value = 1;
+                document.getElementById('loss-note').value = '';
+                document.getElementById('loss-auth-code').value = '';
+                document.getElementById('loss-auth-error').classList.add('hidden');
+                document.getElementById('loss-auth-ok').classList.add('hidden');
+                document.getElementById('loss-modal-confirm').disabled = true;
+                document.getElementById('loss-unit-units').checked = true;
+
+                // Pré-remplir boutiques
+                lossPopulateBoutiqueSelect();
+                // Gérer autorisation auto (admin/manager)
+                lossCheckAutoAuth();
+
+                document.getElementById('loss-declaration-modal').classList.remove('hidden');
+            }
+
+            function closeLossModal() {
+                document.getElementById('loss-declaration-modal').classList.add('hidden');
+                lossModalApproval = null;
+            }
+
+            function lossPopulateBoutiqueSelect() {
+                const sel = document.getElementById('loss-boutique-select');
+                if (!sel) return;
+                const boutiques = Object.values(appData.boutiques || {});
+                sel.innerHTML = '<option value="">Sélectionner une boutique…</option>' +
+                    boutiques.map(b => `<option value="${b.id}">${b.name || b.id}</option>`).join('');
+            }
+
+            function lossCheckAutoAuth() {
+                const role = getCurrentUserRole();
+                const autoEl = document.getElementById('loss-auth-auto');
+                const codeWrap = document.getElementById('loss-auth-code-wrap');
+                if (role === 'admin' || role === 'manager') {
+                    const name = currentUserData?.fullName || currentUser?.email || role;
+                    lossModalApproval = { byId: currentUser?.uid, byName: name, byRole: role, approvedAt: new Date().toISOString() };
+                    if (autoEl) { autoEl.textContent = `✓ Autorisé automatiquement (${name} · ${role})`; autoEl.classList.remove('hidden'); }
+                    if (codeWrap) codeWrap.classList.add('hidden');
+                    updateLossConfirmButton();
+                } else {
+                    if (autoEl) autoEl.classList.add('hidden');
+                    if (codeWrap) codeWrap.classList.remove('hidden');
+                }
+            }
+
+            // ── Produit : combobox ─────────────────────────────────────────
+            function lossGetSourceProducts() {
+                const source = document.querySelector('input[name="loss-source"]:checked')?.value || 'magasin';
+                if (source === 'magasin') {
+                    return Object.values(appData.storeProducts || {}).filter(p => (p.quantity || 0) > 0);
+                } else {
+                    const boutiqueId = document.getElementById('loss-boutique-select')?.value;
+                    return Object.values(appData.shopStock || {}).filter(p => {
+                        if (boutiqueId && p.boutiqueId !== boutiqueId) return false;
+                        return (p.quantity || 0) > 0;
+                    });
+                }
+            }
+
+            function lossRenderProductDropdown(query) {
+                const dd = document.getElementById('loss-product-dropdown');
+                const products = lossGetSourceProducts().filter(p => {
+                    const name = (p.name || '').toLowerCase();
+                    return !query || name.includes(query.toLowerCase());
+                }).slice(0, 12);
+
+                if (!products.length) { dd.classList.add('hidden'); return; }
+                dd.innerHTML = products.map(p => `
+                    <button type="button" class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors"
+                        data-loss-product-id="${p.id}" data-loss-product-name="${p.name || ''}">
+                        <span class="font-medium">${p.name || '—'}</span>
+                        <span class="ml-2 text-xs text-gray-400">Stock: ${p.quantity || 0}</span>
+                    </button>`).join('');
+                dd.classList.remove('hidden');
+            }
+
+            function lossSelectProduct(productId, productName) {
+                document.getElementById('loss-product-id').value = productId;
+                document.getElementById('loss-product-search').value = productName;
+                document.getElementById('loss-product-dropdown').classList.add('hidden');
+                lossLoadLots(productId);
+            }
+
+            // ── Lots ───────────────────────────────────────────────────────
+            function lossLoadLots(productId) {
+                const source = document.querySelector('input[name="loss-source"]:checked')?.value || 'magasin';
+                const sel = document.getElementById('loss-lot-select');
+                const wrap = document.getElementById('loss-lot-wrap');
+
+                if (source === 'magasin') {
+                    // Pour le magasin, les mouvements d'entrée servent de "lots"
+                    const entries = Object.values(appData.storeMovements || {})
+                        .filter(m => m.productId === productId && m.type === 'entry' && (m.quantity || 0) > 0)
+                        .sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
+
+                    if (!entries.length) {
+                        // Fallback : produit direct
+                        const prod = appData.storeProducts?.[productId];
+                        if (prod) {
+                            sel.innerHTML = `<option value="${productId}" data-qty="${prod.quantity}" data-cost="${prod.purchasePrice || 0}" data-upc="${prod.unitsPerCarton || 1}">Stock principal (${prod.quantity} unités)</option>`;
+                            wrap.classList.remove('hidden');
+                            lossOnLotChange();
+                        }
+                        return;
+                    }
+
+                    sel.innerHTML = entries.map(m => {
+                        const prod = appData.storeProducts?.[productId];
+                        const cost = prod?.purchasePrice || 0;
+                        const upc = prod?.unitsPerCarton || 1;
+                        const date = new Date(m.date || m.createdAt || 0).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+                        return `<option value="${m.id}" data-qty="${prod?.quantity || 0}" data-cost="${cost}" data-upc="${upc}">Entrée ${date} (${prod?.quantity || 0} en stock)</option>`;
+                    }).join('');
+                } else {
+                    // Boutique : produit shopStock direct
+                    const shopItem = Object.values(appData.shopStock || {}).find(p => p.id === productId || p.sourceProductId === productId);
+                    if (shopItem) {
+                        const storeProduct = appData.storeProducts?.[shopItem.sourceProductId];
+                        const cost = storeProduct?.purchasePrice || 0;
+                        const upc = storeProduct?.unitsPerCarton || 1;
+                        sel.innerHTML = `<option value="${shopItem.id}" data-qty="${shopItem.quantity || 0}" data-cost="${cost}" data-upc="${upc}">Stock boutique (${shopItem.quantity || 0} unités)</option>`;
+                    } else {
+                        sel.innerHTML = '<option value="">Aucun lot disponible</option>';
+                    }
+                }
+                wrap.classList.remove('hidden');
+                lossOnLotChange();
+            }
+
+            function lossOnLotChange() {
+                const opt = document.getElementById('loss-lot-select').selectedOptions[0];
+                if (!opt || !opt.value) return;
+                const qty = parseInt(opt.dataset.qty) || 0;
+                const upc = parseInt(opt.dataset.upc) || 1;
+
+                // Unités
+                const unitWrap = document.getElementById('loss-unit-wrap');
+                unitWrap.classList.remove('hidden');
+                const cartonLabel = document.getElementById('loss-unit-carton-label-text');
+                if (cartonLabel) cartonLabel.textContent = `Cartons (${upc} u/carton)`;
+                // Si upc=1 cacher l'option carton
+                document.getElementById('loss-unit-cartons-label').classList.toggle('hidden', upc <= 1);
+                if (upc <= 1) document.getElementById('loss-unit-units').checked = true;
+
+                // Quantité
+                const qtyInput = document.getElementById('loss-quantity');
+                qtyInput.max = qty;
+                const hintEl = document.getElementById('loss-qty-max-hint');
+                if (hintEl) hintEl.textContent = `(max ${qty})`;
+                document.getElementById('loss-qty-wrap').classList.remove('hidden');
+
+                // Motif + note
+                document.getElementById('loss-reason-wrap').classList.remove('hidden');
+                document.getElementById('loss-note-wrap').classList.remove('hidden');
+                document.getElementById('loss-value-wrap').classList.remove('hidden');
+                document.getElementById('loss-auth-wrap').classList.remove('hidden');
+
+                lossCheckAutoAuth();
+                lossUpdateEstimatedValue();
+            }
+
+            function lossUpdateEstimatedValue() {
+                const opt = document.getElementById('loss-lot-select').selectedOptions[0];
+                if (!opt) return;
+                const cost = parseFloat(opt.dataset.cost) || 0;
+                const upc  = parseInt(opt.dataset.upc) || 1;
+                const qty  = parseInt(document.getElementById('loss-quantity').value) || 0;
+                const unit = document.querySelector('input[name="loss-unit"]:checked')?.value || 'units';
+                const totalUnits = unit === 'cartons' ? qty * upc : qty;
+                const value = totalUnits * cost;
+                const valEl = document.getElementById('loss-estimated-value');
+                if (valEl) valEl.textContent = cost > 0 ? formatCurrency(value) : 'Non définie (coût inconnu)';
+                return value;
+            }
+
+            function updateLossConfirmButton() {
+                const btn = document.getElementById('loss-modal-confirm');
+                if (!btn) return;
+                const hasProduct = !!document.getElementById('loss-product-id').value;
+                const hasLot = !!document.getElementById('loss-lot-select').value;
+                const hasQty = (parseInt(document.getElementById('loss-quantity').value) || 0) > 0;
+                btn.disabled = !(hasProduct && hasLot && hasQty && lossModalApproval);
+            }
+
+            // ── Soumission ─────────────────────────────────────────────────
+            async function submitLossDeclaration() {
+                const btn = document.getElementById('loss-modal-confirm');
+                if (!btn || btn.disabled) return;
+                if (!lossModalApproval) return;
+
+                const source = document.querySelector('input[name="loss-source"]:checked')?.value || 'magasin';
+                const boutiqueId = source === 'boutique' ? (document.getElementById('loss-boutique-select')?.value || null) : null;
+                const productId = document.getElementById('loss-product-id').value;
+                const lotId = document.getElementById('loss-lot-select').value;
+                const opt = document.getElementById('loss-lot-select').selectedOptions[0];
+                const unit = document.querySelector('input[name="loss-unit"]:checked')?.value || 'units';
+                const qty = parseInt(document.getElementById('loss-quantity').value) || 0;
+                const upc = parseInt(opt?.dataset.upc) || 1;
+                const cost = parseFloat(opt?.dataset.cost) || 0;
+                const reason = document.getElementById('loss-reason').value;
+                const note = document.getElementById('loss-note').value.trim();
+                const totalUnits = unit === 'cartons' ? qty * upc : qty;
+                const estimatedValue = totalUnits * cost;
+
+                const prodName = appData.storeProducts?.[productId]?.name
+                    || Object.values(appData.shopStock || {}).find(p => p.id === productId)?.name
+                    || '';
+
+                const lossData = {
+                    source, boutiqueId: boutiqueId || null,
+                    productId, productName: prodName,
+                    lotId, unit, quantity: qty, reason, note,
+                    estimatedValue: Math.round(estimatedValue),
+                    currency: 'CFA',
+                    approvedBy: lossModalApproval,
+                    declaredBy: currentUser?.uid || null,
+                    declaredByName: currentUserData?.fullName || currentUser?.email || '—',
+                    declaredAt: new Date().toISOString()
+                };
+
+                btn.disabled = true;
+                btn.textContent = 'Enregistrement…';
+
+                try {
+                    const { push, ref: fbRef, update } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js');
+                    const lossKey = push(fbRef(db, `${dbBasePath}/losses`)).key;
+                    const updates = {};
+                    updates[`${dbBasePath}/losses/${lossKey}`] = lossData;
+
+                    // Réduire le stock
+                    if (source === 'magasin') {
+                        const prod = appData.storeProducts?.[productId];
+                        if (prod) {
+                            const newQty = Math.max(0, (prod.quantity || 0) - totalUnits);
+                            updates[`${dbBasePath}/storeProducts/${productId}/quantity`] = newQty;
+                        }
+                    } else {
+                        const shopItem = Object.values(appData.shopStock || {}).find(p => p.id === lotId || p.id === productId);
+                        if (shopItem) {
+                            const newQty = Math.max(0, (shopItem.quantity || 0) - totalUnits);
+                            updates[`${dbBasePath}/shopStock/${shopItem.id}/quantity`] = newQty;
+                        }
+                    }
+
+                    await update(fbRef(db), updates);
+                    closeLossModal();
+                    showToast && showToast(`Perte de ${totalUnits} unité(s) enregistrée.`, 'success');
+                } catch (err) {
+                    console.error('[Loss] Erreur:', err);
+                    btn.disabled = false;
+                    btn.textContent = 'Confirmer la perte';
+                    showToast && showToast('Erreur lors de l\'enregistrement.', 'error');
+                }
+            }
+
+            // ── Carte dashboard ────────────────────────────────────────────
+            function renderLossDashboardCard() {
+                const card = document.getElementById('dashboard-loss-card');
+                if (!card) return;
+                const role = getCurrentUserRole();
+                card.classList.toggle('hidden', role !== 'admin' && role !== 'manager');
+                const total = calculateMonthlyLossValue();
+                const el = document.getElementById('stat-monthly-losses');
+                if (el) el.textContent = formatCurrency(total);
+                const count = Object.values(appData.losses || {}).filter(l => {
+                    const now = new Date(); const d = new Date(l.declaredAt || 0);
+                    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                }).length;
+                const countEl = document.getElementById('stat-monthly-losses-count');
+                if (countEl) countEl.textContent = `${count} déclaration${count !== 1 ? 's' : ''} ce mois`;
+            }
+
+            // ── Wiring des événements du modal ────────────────────────────
+            document.addEventListener('DOMContentLoaded', () => {}, false); // guard
+            (function wireLossModalEvents() {
+                // Ouvrir/fermer
+                document.getElementById('open-loss-modal')?.addEventListener('click', openLossModal);
+                document.getElementById('loss-modal-close')?.addEventListener('click', closeLossModal);
+                document.getElementById('loss-modal-cancel')?.addEventListener('click', closeLossModal);
+                document.getElementById('loss-declaration-modal')?.addEventListener('click', e => {
+                    if (e.target === e.currentTarget) closeLossModal();
+                });
+
+                // Source radio
+                document.querySelectorAll('input[name="loss-source"]').forEach(r => r.addEventListener('change', () => {
+                    const isBoutique = r.value === 'boutique' && r.checked;
+                    document.getElementById('loss-boutique-selector-wrap').classList.toggle('hidden', !isBoutique);
+                    // Reset produit
+                    document.getElementById('loss-product-search').value = '';
+                    document.getElementById('loss-product-id').value = '';
+                    document.getElementById('loss-lot-wrap').classList.add('hidden');
+                    document.getElementById('loss-unit-wrap').classList.add('hidden');
+                    document.getElementById('loss-qty-wrap').classList.add('hidden');
+                    document.getElementById('loss-reason-wrap').classList.add('hidden');
+                    document.getElementById('loss-note-wrap').classList.add('hidden');
+                    document.getElementById('loss-value-wrap').classList.add('hidden');
+                    document.getElementById('loss-auth-wrap').classList.add('hidden');
+                    document.getElementById('loss-modal-confirm').disabled = true;
+                }));
+
+                // Boutique change
+                document.getElementById('loss-boutique-select')?.addEventListener('change', () => {
+                    document.getElementById('loss-product-search').value = '';
+                    document.getElementById('loss-product-id').value = '';
+                });
+
+                // Produit search
+                const searchInput = document.getElementById('loss-product-search');
+                const dropdown = document.getElementById('loss-product-dropdown');
+                searchInput?.addEventListener('input', e => lossRenderProductDropdown(e.target.value));
+                searchInput?.addEventListener('focus', e => lossRenderProductDropdown(e.target.value));
+                document.addEventListener('click', e => {
+                    if (!searchInput?.contains(e.target) && !dropdown?.contains(e.target)) {
+                        dropdown?.classList.add('hidden');
+                    }
+                });
+                dropdown?.addEventListener('click', e => {
+                    const btn = e.target.closest('[data-loss-product-id]');
+                    if (btn) lossSelectProduct(btn.dataset.lossProductId, btn.dataset.lossProductName);
+                });
+
+                // Lot change
+                document.getElementById('loss-lot-select')?.addEventListener('change', lossOnLotChange);
+
+                // Unité change
+                document.querySelectorAll('input[name="loss-unit"]').forEach(r => r.addEventListener('change', () => {
+                    lossUpdateEstimatedValue();
+                    updateLossConfirmButton();
+                }));
+
+                // Quantité change
+                document.getElementById('loss-quantity')?.addEventListener('input', () => {
+                    lossUpdateEstimatedValue();
+                    updateLossConfirmButton();
+                });
+
+                // Auth : vérifier code
+                document.getElementById('loss-auth-verify')?.addEventListener('click', () => {
+                    const code = document.getElementById('loss-auth-code').value.trim();
+                    const errEl = document.getElementById('loss-auth-error');
+                    const okEl  = document.getElementById('loss-auth-ok');
+                    errEl.classList.add('hidden');
+                    okEl.classList.add('hidden');
+                    const approver = findDiscountApproverByCode(code);
+                    if (!approver) {
+                        errEl.textContent = 'Code invalide ou non reconnu.';
+                        errEl.classList.remove('hidden');
+                        lossModalApproval = null;
+                    } else {
+                        lossModalApproval = approver;
+                        okEl.textContent = `✓ Autorisé par ${approver.byName}`;
+                        okEl.classList.remove('hidden');
+                    }
+                    updateLossConfirmButton();
+                });
+                document.getElementById('loss-auth-code')?.addEventListener('keydown', e => {
+                    if (e.key === 'Enter') document.getElementById('loss-auth-verify')?.click();
+                });
+
+                // Confirmer
+                document.getElementById('loss-modal-confirm')?.addEventListener('click', submitLossDeclaration);
+            })();
+
             // === DASHBOARD FUNCTIONS ===
+
 
             /**
              * Met à jour toutes les statistiques du tableau de bord
@@ -11600,6 +12270,7 @@
                 if (!isAuthenticated || !dbBasePath) return;
 
                 updateDashboardTimestamp();
+                renderLossDashboardCard();
 
                 const monthlyRevenueSummary = calculateMonthlyRevenueSummary();
                 const statRevenue = document.getElementById('stat-monthly-revenue');
@@ -12219,6 +12890,9 @@
                         }
                     }
                 });
+
+                // Déduire la valeur des pertes du mois
+                profit -= calculateMonthlyLossValue(currentMonth, currentYear);
 
                 return Math.round(profit);
             }
@@ -17514,6 +18188,13 @@
                 inventoriesRef = ref(db, getInventoriesPath());
                 inventoriesListener = onValue(inventoriesRef, onInventoriesValue);
 
+                lossesRef = ref(db, `${dbBasePath}/losses`);
+                lossesListener = onValue(lossesRef, (snap) => {
+                    appData.losses = snap.val() || {};
+                    renderLossesHistory();
+                    updateDashboardStats();
+                });
+
                 setupChatListeners();
 
                 migrateLocalPendingSales();
@@ -17540,12 +18221,13 @@
                 if (supplierPaymentsListener && supplierPaymentsRef) off(supplierPaymentsRef, supplierPaymentsListener);
                 if (customerPaymentsListener && customerPaymentsRef) off(customerPaymentsRef, customerPaymentsListener);
                 if (inventoriesListener && inventoriesRef) off(inventoriesRef, inventoriesListener);
+                if (lossesListener && lossesRef) off(lossesRef, lossesListener);
                 if (chatListListener && chatListRef) off(chatListRef, chatListListener);
                 if (chatReadsListener && chatReadsRef) off(chatReadsRef, chatReadsListener);
                 if (chatMessagesListener && chatMessagesRef) off(chatMessagesRef, chatMessagesListener);
-                storesListener = null; boutiquesListener = null; categoriesListener = null; storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; shopTransferRequestsListener = null; salesHistoryListener = null; saleCorrectionsListener = null; pendingSalesListener = null; settingsListener = null; companyMembersListener = null; companyCustomersListener = null; suppliersListener = null; supplierInvoicesListener = null; supplierPaymentsListener = null; customerPaymentsListener = null; inventoriesListener = null; chatListListener = null; chatReadsListener = null; chatMessagesListener = null;
+                storesListener = null; boutiquesListener = null; categoriesListener = null; storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; shopTransferRequestsListener = null; salesHistoryListener = null; saleCorrectionsListener = null; pendingSalesListener = null; settingsListener = null; companyMembersListener = null; companyCustomersListener = null; suppliersListener = null; supplierInvoicesListener = null; supplierPaymentsListener = null; customerPaymentsListener = null; inventoriesListener = null; lossesListener = null; chatListListener = null; chatReadsListener = null; chatMessagesListener = null;
                 chatListRef = null; chatReadsRef = null; chatMessagesRef = null; inventoriesRef = null; saleCorrectionsRef = null;
-                appData.stores = {}; appData.boutiques = {}; appData.categories = {}; appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.shopMovements = {}; appData.shopTransferRequests = {}; appData.salesHistory = {}; appData.saleCorrections = {}; appData.customers = {}; appData.suppliers = {}; appData.supplierInvoices = {}; appData.supplierPayments = {}; appData.customerPayments = {}; appData.storeExitRequests = {}; appData.pendingSales = {}; appData.settings = {}; appData.inventories = {};
+                appData.stores = {}; appData.boutiques = {}; appData.categories = {}; appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.shopMovements = {}; appData.shopTransferRequests = {}; appData.salesHistory = {}; appData.saleCorrections = {}; appData.customers = {}; appData.suppliers = {}; appData.supplierInvoices = {}; appData.supplierPayments = {}; appData.customerPayments = {}; appData.storeExitRequests = {}; appData.pendingSales = {}; appData.settings = {}; appData.inventories = {}; appData.losses = {};
                 inventoriesPathSuffix = 'inventories';
                 selectedCustomer = null;
                 customerOptionLookup = {};
