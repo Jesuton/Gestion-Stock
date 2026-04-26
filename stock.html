@@ -23126,20 +23126,29 @@
             updateCustomerHistoryVisibility();
             renderSalesHistory();
 
-            // ─── Sélection automatique au focus sur tous les champs numériques ──────
-            // Dès qu'un input number (ou text) reçoit le focus (clic ou tab),
-            // tout le contenu est sélectionné → on peut directement taper le nouveau
-            // nombre sans effacer manuellement l'ancienne valeur.
+            // ─── Effacement automatique au focus — champs numériques ─────────────
+            // Chrome et Safari ignorent .select() sur input[type="number"].
+            // Solution pro : vider le champ au focus → l'utilisateur tape directement.
+            // Si rien n'est tapé (simple clic puis tab/clic ailleurs), la valeur
+            // précédente est silencieusement restaurée.
             document.addEventListener('focusin', (e) => {
                 const el = e.target;
-                if (el.tagName !== 'INPUT') return;
-                if (!['number', 'text', 'search'].includes(el.type)) return;
-                // Ne pas interférer avec les champs read-only (ex: auto-fill breakdown)
-                if (el.readOnly) return;
-                // Petit délai pour laisser le navigateur finir le focus avant select()
-                requestAnimationFrame(() => el.select());
+                if (el.tagName !== 'INPUT' || el.type !== 'number') return;
+                if (el.readOnly || el.disabled) return;
+                el.dataset.preEditVal = el.value;
+                el.value = '';
             });
-            // ────────────────────────────────────────────────────────────────────────
+            document.addEventListener('focusout', (e) => {
+                const el = e.target;
+                if (el.tagName !== 'INPUT' || el.type !== 'number') return;
+                if (el.readOnly || el.disabled) return;
+                // Rien tapé → restaurer l'ancienne valeur sans déclencher d'événement
+                if (el.value === '' && el.dataset.preEditVal !== undefined) {
+                    el.value = el.dataset.preEditVal;
+                }
+                delete el.dataset.preEditVal;
+            });
+            // ────────────────────────────────────────────────────────────────────
         });
     </script>
 </body>
