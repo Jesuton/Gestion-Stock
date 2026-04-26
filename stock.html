@@ -23125,6 +23125,21 @@
             renderCart();
             updateCustomerHistoryVisibility();
             renderSalesHistory();
+
+            // ─── Sélection automatique au focus sur tous les champs numériques ──────
+            // Dès qu'un input number (ou text) reçoit le focus (clic ou tab),
+            // tout le contenu est sélectionné → on peut directement taper le nouveau
+            // nombre sans effacer manuellement l'ancienne valeur.
+            document.addEventListener('focusin', (e) => {
+                const el = e.target;
+                if (el.tagName !== 'INPUT') return;
+                if (!['number', 'text', 'search'].includes(el.type)) return;
+                // Ne pas interférer avec les champs read-only (ex: auto-fill breakdown)
+                if (el.readOnly) return;
+                // Petit délai pour laisser le navigateur finir le focus avant select()
+                requestAnimationFrame(() => el.select());
+            });
+            // ────────────────────────────────────────────────────────────────────────
         });
     </script>
 </body>
