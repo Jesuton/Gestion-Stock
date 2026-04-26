@@ -3148,6 +3148,133 @@
         </div>
     </div>
 
+    <div id="price-lot-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-6xl p-6 m-4">
+            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div>
+                    <h2 id="price-lot-title" class="text-xl font-bold text-gray-800">Lots boutique</h2>
+                    <p class="text-sm text-gray-500 mt-1">Modifiez le lot actif et le prochain lot depuis le tableau des prix.</p>
+                </div>
+                <button id="close-price-lot-modal-button" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="mt-5 grid grid-cols-1 xl:grid-cols-[280px_1fr] gap-5">
+                <div class="rounded-2xl border border-gray-200 bg-gray-50/70 p-4">
+                    <div class="flex items-center justify-between gap-3">
+                        <h3 class="text-sm font-semibold text-gray-800">Stocks boutique</h3>
+                        <span id="price-lot-shop-count" class="text-xs font-semibold text-gray-500">0</span>
+                    </div>
+                    <div id="price-lot-shop-empty" class="mt-4 text-sm text-gray-400 hidden">Aucun stock boutique pour ce produit.</div>
+                    <div id="price-lot-shop-list" class="mt-4 space-y-2 max-h-[28rem] overflow-y-auto pr-1"></div>
+                </div>
+                <div class="space-y-4">
+                    <div id="price-lot-detail-empty" class="flex items-center justify-center text-sm text-gray-400 h-48 border border-dashed border-gray-200 rounded-2xl">
+                        Sélectionnez un stock boutique pour gérer ses lots.
+                    </div>
+                    <div id="price-lot-detail" class="hidden space-y-4">
+                        <div class="rounded-2xl border border-cyan-100 bg-cyan-50/60 p-4">
+                            <p id="price-lot-detail-name" class="text-lg font-semibold text-gray-900">—</p>
+                            <p id="price-lot-detail-meta" class="mt-1 text-sm text-gray-500">—</p>
+                        </div>
+
+                        <div class="rounded-2xl border border-gray-200 bg-white p-5 space-y-4">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <div>
+                                    <h3 class="text-base font-semibold text-gray-900">Lot actif</h3>
+                                    <p id="price-lot-active-summary" class="mt-1 text-sm text-gray-500">Aucun lot actif.</p>
+                                </div>
+                                <span id="price-lot-active-badge" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-cyan-50 text-cyan-700 border border-cyan-100">—</span>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="price-lot-active-purchase" class="block text-sm font-medium text-gray-700">Prix d'achat</label>
+                                    <input type="number" id="price-lot-active-purchase" min="0" step="0.01"
+                                        class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400">
+                                    <p class="mt-1 text-xs text-gray-400">Modification réservée au gestionnaire.</p>
+                                </div>
+                                <div>
+                                    <label for="price-lot-active-selling" class="block text-sm font-medium text-gray-700">Prix de vente boutique</label>
+                                    <input type="number" id="price-lot-active-selling" min="0" step="0.01"
+                                        class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400">
+                                </div>
+                            </div>
+                            <div>
+                                <label for="price-lot-active-note" class="block text-sm font-medium text-gray-700">Note de modification</label>
+                                <textarea id="price-lot-active-note" rows="2"
+                                    class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                                    placeholder="Ex: ajustement du prix de vente du lot courant"></textarea>
+                            </div>
+                            <div class="flex justify-end">
+                                <button type="button" id="price-lot-save-active-button"
+                                    class="px-5 py-2.5 rounded-xl bg-cyan-500 text-white text-sm font-semibold hover:bg-cyan-600">
+                                    Enregistrer le lot actif
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="rounded-2xl border border-gray-200 bg-white p-5 space-y-4">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <div>
+                                    <h3 class="text-base font-semibold text-gray-900">Prochain lot</h3>
+                                    <p id="price-lot-next-summary" class="mt-1 text-sm text-gray-500">Aucun lot programmé.</p>
+                                </div>
+                                <span id="price-lot-next-badge" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200">—</span>
+                            </div>
+                            <div id="price-lot-next-empty" class="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-sm text-gray-400">
+                                Aucun lot programmé. Créez-le d'abord via un transfert ou une réception boutique, puis revenez ici pour définir son prix.
+                            </div>
+                            <div id="price-lot-next-form" class="hidden space-y-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="price-lot-next-purchase" class="block text-sm font-medium text-gray-700">Prix d'achat</label>
+                                        <input type="number" id="price-lot-next-purchase" min="0" step="0.01"
+                                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400">
+                                        <p class="mt-1 text-xs text-gray-400">Modification réservée au gestionnaire.</p>
+                                    </div>
+                                    <div>
+                                        <label for="price-lot-next-selling" class="block text-sm font-medium text-gray-700">Prix de vente boutique</label>
+                                        <input type="number" id="price-lot-next-selling" min="0" step="0.01"
+                                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400">
+                                    </div>
+                                </div>
+                                <label class="inline-flex items-start gap-3 text-sm text-gray-700">
+                                    <input type="checkbox" id="price-lot-next-validation"
+                                        class="mt-1 rounded border-gray-300 text-amber-600 focus:ring-amber-500">
+                                    <span>Demander une validation avant l'activation automatique de ce lot</span>
+                                </label>
+                                <div>
+                                    <label for="price-lot-next-note" class="block text-sm font-medium text-gray-700">Note</label>
+                                    <textarea id="price-lot-next-note" rows="2"
+                                        class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                                        placeholder="Ex: prochain prix a activer apres epuisement du lot courant"></textarea>
+                                </div>
+                                <div class="flex flex-wrap justify-end gap-3">
+                                    <button type="button" id="price-lot-cancel-next-button"
+                                        class="px-4 py-2.5 rounded-xl border border-red-200 text-red-600 text-sm font-semibold hover:bg-red-50">
+                                        Annuler le prochain lot
+                                    </button>
+                                    <button type="button" id="price-lot-validate-next-button"
+                                        class="hidden px-4 py-2.5 rounded-xl border border-emerald-200 text-emerald-700 text-sm font-semibold hover:bg-emerald-50">
+                                        Valider l'activation
+                                    </button>
+                                    <button type="button" id="price-lot-save-next-button"
+                                        class="px-5 py-2.5 rounded-xl bg-cyan-500 text-white text-sm font-semibold hover:bg-cyan-600">
+                                        Enregistrer le prochain lot
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p id="price-lot-error" class="text-sm text-red-500 hidden"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 
       MODAL "ENREGISTRER UNE ENTRÉE"
     -->
@@ -4393,6 +4520,8 @@
             let traceabilitySelectedProductId = '';
             let traceabilitySearchQuery = '';
             let activePricePackagingProductId = null;
+            let activePriceLotProductId = null;
+            let activePriceLotShopItemId = null;
             let transferProductSearchQuery = '';
             let isTransferProductDropdownOpen = false;
             const productComboboxStates = {
@@ -4780,6 +4909,34 @@
             const pricePackagingCancelButton = document.getElementById('price-packaging-cancel-button');
             const pricePackagingSaveButton = document.getElementById('price-packaging-save-button');
             const pricePackagingError = document.getElementById('price-packaging-error');
+            const priceLotModal = document.getElementById('price-lot-modal');
+            const closePriceLotModalButton = document.getElementById('close-price-lot-modal-button');
+            const priceLotTitle = document.getElementById('price-lot-title');
+            const priceLotShopCount = document.getElementById('price-lot-shop-count');
+            const priceLotShopEmpty = document.getElementById('price-lot-shop-empty');
+            const priceLotShopList = document.getElementById('price-lot-shop-list');
+            const priceLotDetailEmpty = document.getElementById('price-lot-detail-empty');
+            const priceLotDetail = document.getElementById('price-lot-detail');
+            const priceLotDetailName = document.getElementById('price-lot-detail-name');
+            const priceLotDetailMeta = document.getElementById('price-lot-detail-meta');
+            const priceLotActiveSummary = document.getElementById('price-lot-active-summary');
+            const priceLotActiveBadge = document.getElementById('price-lot-active-badge');
+            const priceLotActivePurchaseInput = document.getElementById('price-lot-active-purchase');
+            const priceLotActiveSellingInput = document.getElementById('price-lot-active-selling');
+            const priceLotActiveNoteInput = document.getElementById('price-lot-active-note');
+            const priceLotSaveActiveButton = document.getElementById('price-lot-save-active-button');
+            const priceLotNextSummary = document.getElementById('price-lot-next-summary');
+            const priceLotNextBadge = document.getElementById('price-lot-next-badge');
+            const priceLotNextEmpty = document.getElementById('price-lot-next-empty');
+            const priceLotNextForm = document.getElementById('price-lot-next-form');
+            const priceLotNextPurchaseInput = document.getElementById('price-lot-next-purchase');
+            const priceLotNextSellingInput = document.getElementById('price-lot-next-selling');
+            const priceLotNextValidationInput = document.getElementById('price-lot-next-validation');
+            const priceLotNextNoteInput = document.getElementById('price-lot-next-note');
+            const priceLotCancelNextButton = document.getElementById('price-lot-cancel-next-button');
+            const priceLotValidateNextButton = document.getElementById('price-lot-validate-next-button');
+            const priceLotSaveNextButton = document.getElementById('price-lot-save-next-button');
+            const priceLotError = document.getElementById('price-lot-error');
 
             const openEntryModalButton = document.getElementById('open-entry-modal-button');
             const entryModal = document.getElementById('entry-modal');
@@ -10220,6 +10377,9 @@
                     if (productCurrencyInput && !productCurrencyInput.value) productCurrencyInput.value = 'CFA';
                 }
                 renderCategoryManagement();
+                if (priceLotModal && !priceLotModal.classList.contains('hidden')) {
+                    renderPriceLotModal();
+                }
             }
 
             function hasPermission(permission) {
@@ -10581,6 +10741,12 @@
                 return Number.isFinite(price) ? price : NaN;
             }
 
+            const SHOP_LOT_STATUS_ACTIVE = 'active';
+            const SHOP_LOT_STATUS_SCHEDULED = 'scheduled';
+            const SHOP_LOT_STATUS_PENDING_VALIDATION = 'pending_validation';
+            const SHOP_LOT_STATUS_CLOSED = 'closed';
+            const SHOP_LOT_STATUS_CANCELLED = 'cancelled';
+
             function getLotSequenceLabel(index = 0) {
                 let value = Math.max(0, Number(index) || 0);
                 let label = '';
@@ -10591,9 +10757,35 @@
                 return label;
             }
 
+            function normalizeShopLotStatus(rawStatus = '') {
+                const status = (rawStatus || '').toString().trim().toLowerCase();
+                if ([
+                    SHOP_LOT_STATUS_ACTIVE,
+                    SHOP_LOT_STATUS_SCHEDULED,
+                    SHOP_LOT_STATUS_PENDING_VALIDATION,
+                    SHOP_LOT_STATUS_CLOSED,
+                    SHOP_LOT_STATUS_CANCELLED
+                ].includes(status)) {
+                    return status;
+                }
+                return '';
+            }
+
             function normalizeShopLotLabel(rawLabel, index = 0) {
                 const value = (rawLabel || '').toString().trim();
                 return value || `Lot ${getLotSequenceLabel(index)}`;
+            }
+
+            function getShopLotTimestamp(lot) {
+                return new Date(lot?.receivedAt || lot?.createdAt || 0).getTime() || 0;
+            }
+
+            function mergeUniqueValues(...sources) {
+                return [...new Set(
+                    sources.flatMap(source => Array.isArray(source) ? source : (source ? [source] : []))
+                        .map(value => (value || '').toString().trim())
+                        .filter(Boolean)
+                )];
             }
 
             function normalizeShopLotEntry(entry = {}, index = 0, item = null) {
@@ -10602,6 +10794,7 @@
                     entry.initialQuantity ?? entry.quantity ?? remainingQuantity,
                     remainingQuantity
                 );
+                const normalizedStatus = normalizeShopLotStatus(entry.status || entry.queueStatus);
                 return {
                     id: entry.id || createPackagingId('lot'),
                     label: normalizeShopLotLabel(entry.label, index),
@@ -10609,9 +10802,17 @@
                     initialQuantity: Math.max(initialQuantity, remainingQuantity),
                     sellingPrice: Number.isFinite(Number(entry.sellingPrice)) ? Number(entry.sellingPrice) : (Number(item?.sellingPrice) || 0),
                     purchaseCost: Number.isFinite(Number(entry.purchaseCost)) ? Number(entry.purchaseCost) : (Number(item?.purchaseCost) || 0),
+                    status: normalizedStatus,
+                    requiresActivationValidation: !!entry.requiresActivationValidation,
+                    activationMode: entry.activationMode || (normalizedStatus === SHOP_LOT_STATUS_ACTIVE ? 'immediate' : 'on_previous_empty'),
+                    notes: (entry.notes || '').toString().trim(),
                     receivedAt: entry.receivedAt || entry.createdAt || item?.updatedAt || item?.createdAt || new Date().toISOString(),
                     createdAt: entry.createdAt || entry.receivedAt || item?.createdAt || new Date().toISOString(),
+                    updatedAt: entry.updatedAt || entry.receivedAt || entry.createdAt || item?.updatedAt || item?.createdAt || new Date().toISOString(),
+                    activatedAt: entry.activatedAt || null,
+                    closedAt: entry.closedAt || null,
                     sourceRequestId: entry.sourceRequestId || null,
+                    sourceRequestIds: mergeUniqueValues(entry.sourceRequestIds, entry.sourceRequestId),
                     requestType: entry.requestType || null
                 };
             }
@@ -10626,9 +10827,24 @@
                     initialQuantity: quantity,
                     sellingPrice: item?.sellingPrice,
                     purchaseCost: item?.purchaseCost,
+                    status: SHOP_LOT_STATUS_ACTIVE,
+                    activationMode: 'immediate',
+                    activatedAt: item?.createdAt || item?.updatedAt || new Date().toISOString(),
                     receivedAt: item?.createdAt || item?.updatedAt || new Date().toISOString(),
                     createdAt: item?.createdAt || item?.updatedAt || new Date().toISOString()
                 }, 0, item);
+            }
+
+            function mergeShopLotEntries(baseLot, extraLot) {
+                if (!baseLot) return extraLot;
+                if (!extraLot) return baseLot;
+                return {
+                    ...baseLot,
+                    remainingQuantity: (Number(baseLot.remainingQuantity) || 0) + (Number(extraLot.remainingQuantity) || 0),
+                    initialQuantity: (Number(baseLot.initialQuantity) || 0) + (Number(extraLot.initialQuantity) || 0),
+                    sourceRequestIds: mergeUniqueValues(baseLot.sourceRequestIds, extraLot.sourceRequestIds, extraLot.sourceRequestId),
+                    notes: [baseLot.notes, extraLot.notes].filter(Boolean).join(' | ')
+                };
             }
 
             function reconcileShopLotQueueToQuantity(item, rawQueue = null) {
@@ -10637,59 +10853,110 @@
                     : (Array.isArray(item?.lotQueue) && item.lotQueue.length ? item.lotQueue : []);
                 let queue = sourceQueue
                     .map((entry, index) => normalizeShopLotEntry(entry, index, item))
-                    .sort((a, b) => new Date(a.receivedAt || a.createdAt || 0) - new Date(b.receivedAt || b.createdAt || 0));
+                    .sort((a, b) => getShopLotTimestamp(a) - getShopLotTimestamp(b));
                 if (!queue.length) {
                     const legacyLot = buildLegacyShopLotEntry(item);
                     if (legacyLot) queue = [legacyLot];
                 }
 
-                let totalQty = queue.reduce((sum, lot) => sum + (Number(lot.remainingQuantity) || 0), 0);
-                const targetQty = parseNonNegativeInteger(item?.quantityInShop, totalQty);
-                const delta = targetQty - totalQty;
+                let activeLot = queue.find(lot => lot.status === SHOP_LOT_STATUS_ACTIVE && (Number(lot.remainingQuantity) || 0) > 0) || null;
+                let pendingValidationLot = queue.find(lot => lot.status === SHOP_LOT_STATUS_PENDING_VALIDATION && (Number(lot.remainingQuantity) || 0) > 0) || null;
+                let scheduledLot = queue.find(lot => lot.status === SHOP_LOT_STATUS_SCHEDULED && (Number(lot.remainingQuantity) || 0) > 0) || null;
 
-                if (delta > 0) {
-                    const activeIndex = queue.findIndex(lot => (Number(lot.remainingQuantity) || 0) > 0);
-                    if (activeIndex !== -1) {
-                        queue[activeIndex].remainingQuantity += delta;
-                        queue[activeIndex].initialQuantity = Math.max(queue[activeIndex].initialQuantity || 0, queue[activeIndex].remainingQuantity);
-                    } else {
-                        queue.push(normalizeShopLotEntry({
-                            remainingQuantity: delta,
-                            initialQuantity: delta,
-                            sellingPrice: item?.sellingPrice,
-                            purchaseCost: item?.purchaseCost,
-                            receivedAt: item?.updatedAt || item?.createdAt || new Date().toISOString()
-                        }, queue.length, item));
-                    }
-                } else if (delta < 0) {
-                    let remainingToRemove = Math.abs(delta);
-                    for (let index = 0; index < queue.length && remainingToRemove > 0; index += 1) {
-                        const lotQty = Number(queue[index].remainingQuantity) || 0;
-                        if (!lotQty) continue;
-                        const quantityToRemove = Math.min(lotQty, remainingToRemove);
-                        queue[index].remainingQuantity = lotQty - quantityToRemove;
-                        remainingToRemove -= quantityToRemove;
-                    }
+                if (!activeLot && !pendingValidationLot && !scheduledLot) {
+                    activeLot = queue.find(lot => (Number(lot.remainingQuantity) || 0) > 0 && lot.status !== SHOP_LOT_STATUS_CANCELLED) || null;
                 }
 
-                queue = queue.map((lot, index) => ({
-                    ...lot,
-                    label: normalizeShopLotLabel(lot.label, index)
-                }));
+                let futureLot = pendingValidationLot || scheduledLot || null;
+                const normalizedQueue = [];
+                queue.forEach((lot, index) => {
+                    const remainingQuantity = Number(lot.remainingQuantity) || 0;
+                    let nextLot = {
+                        ...lot,
+                        label: normalizeShopLotLabel(lot.label, index)
+                    };
+                    if (nextLot.status === SHOP_LOT_STATUS_CANCELLED) {
+                        normalizedQueue.push(nextLot);
+                        return;
+                    }
+                    if (remainingQuantity <= 0) {
+                        nextLot.status = nextLot.status === SHOP_LOT_STATUS_CANCELLED ? SHOP_LOT_STATUS_CANCELLED : SHOP_LOT_STATUS_CLOSED;
+                        nextLot.closedAt = nextLot.closedAt || item?.updatedAt || new Date().toISOString();
+                        normalizedQueue.push(nextLot);
+                        return;
+                    }
+                    if (activeLot && nextLot.id === activeLot.id) {
+                        nextLot.status = SHOP_LOT_STATUS_ACTIVE;
+                        normalizedQueue.push(nextLot);
+                        return;
+                    }
+                    if (futureLot && nextLot.id === futureLot.id) {
+                        nextLot.status = futureLot.status === SHOP_LOT_STATUS_PENDING_VALIDATION
+                            ? SHOP_LOT_STATUS_PENDING_VALIDATION
+                            : SHOP_LOT_STATUS_SCHEDULED;
+                        normalizedQueue.push(nextLot);
+                        return;
+                    }
+                    if (!activeLot && !futureLot) {
+                        nextLot.status = SHOP_LOT_STATUS_ACTIVE;
+                        activeLot = nextLot;
+                        normalizedQueue.push(nextLot);
+                        return;
+                    }
+                    if (!futureLot) {
+                        nextLot.status = SHOP_LOT_STATUS_SCHEDULED;
+                        futureLot = nextLot;
+                        normalizedQueue.push(nextLot);
+                        return;
+                    }
+                    const mergedFutureLot = mergeShopLotEntries(futureLot, nextLot);
+                    futureLot.remainingQuantity = mergedFutureLot.remainingQuantity;
+                    futureLot.initialQuantity = mergedFutureLot.initialQuantity;
+                    futureLot.sourceRequestIds = mergedFutureLot.sourceRequestIds;
+                    futureLot.notes = mergedFutureLot.notes;
+                    const futureIndex = normalizedQueue.findIndex(entry => entry.id === futureLot.id);
+                    if (futureIndex !== -1) {
+                        normalizedQueue[futureIndex] = {
+                            ...normalizedQueue[futureIndex],
+                            remainingQuantity: futureLot.remainingQuantity,
+                            initialQuantity: futureLot.initialQuantity,
+                            sourceRequestIds: futureLot.sourceRequestIds,
+                            notes: futureLot.notes
+                        };
+                    }
+                });
 
-                totalQty = queue.reduce((sum, lot) => sum + (Number(lot.remainingQuantity) || 0), 0);
-                const activeLot = queue.find(lot => (Number(lot.remainingQuantity) || 0) > 0) || null;
+                activeLot = normalizedQueue.find(lot => lot.status === SHOP_LOT_STATUS_ACTIVE && (Number(lot.remainingQuantity) || 0) > 0) || null;
+                pendingValidationLot = normalizedQueue.find(lot => lot.status === SHOP_LOT_STATUS_PENDING_VALIDATION && (Number(lot.remainingQuantity) || 0) > 0) || null;
+                scheduledLot = normalizedQueue.find(lot => lot.status === SHOP_LOT_STATUS_SCHEDULED && (Number(lot.remainingQuantity) || 0) > 0) || null;
+                const queueLot = pendingValidationLot || scheduledLot || null;
+                const totalQty = normalizedQueue.reduce((sum, lot) => (
+                    lot.status === SHOP_LOT_STATUS_CANCELLED ? sum : sum + (Number(lot.remainingQuantity) || 0)
+                ), 0);
                 return {
-                    queue,
+                    queue: normalizedQueue,
                     totalQty,
                     activeLot,
-                    activeQty: Number(activeLot?.remainingQuantity) || 0
+                    activeQty: Number(activeLot?.remainingQuantity) || 0,
+                    scheduledLot,
+                    pendingValidationLot,
+                    queueLot
                 };
             }
 
             function syncShopItemLotState(item) {
                 if (!item) return null;
                 const lotState = reconcileShopLotQueueToQuantity(item);
+                const resolvedSellingPrice = Number.isFinite(Number(lotState.activeLot?.sellingPrice))
+                    ? Number(lotState.activeLot.sellingPrice)
+                    : (Number.isFinite(Number(lotState.queueLot?.sellingPrice))
+                        ? Number(lotState.queueLot.sellingPrice)
+                        : (Number(item.sellingPrice) || 0));
+                const resolvedPurchaseCost = Number.isFinite(Number(lotState.activeLot?.purchaseCost))
+                    ? Number(lotState.activeLot.purchaseCost)
+                    : (Number.isFinite(Number(lotState.queueLot?.purchaseCost))
+                        ? Number(lotState.queueLot.purchaseCost)
+                        : (Number(item.purchaseCost) || 0));
                 return {
                     ...item,
                     lotQueue: lotState.queue,
@@ -10697,13 +10964,15 @@
                     activeLotId: lotState.activeLot?.id || null,
                     activeLotLabel: lotState.activeLot?.label || '',
                     activeLotRemaining: lotState.activeQty,
-                    lotCount: lotState.queue.length,
-                    sellingPrice: Number.isFinite(Number(lotState.activeLot?.sellingPrice))
-                        ? Number(lotState.activeLot.sellingPrice)
-                        : (Number(item.sellingPrice) || 0),
-                    purchaseCost: Number.isFinite(Number(lotState.activeLot?.purchaseCost))
-                        ? Number(lotState.activeLot.purchaseCost)
-                        : (Number(item.purchaseCost) || 0)
+                    queuedLotId: lotState.queueLot?.id || null,
+                    queuedLotLabel: lotState.queueLot?.label || '',
+                    queuedLotRemaining: Number(lotState.queueLot?.remainingQuantity) || 0,
+                    queuedLotStatus: lotState.queueLot?.status || '',
+                    queuedLotRequiresValidation: !!lotState.queueLot?.requiresActivationValidation,
+                    lotCount: lotState.queue.filter(lot => lot.status !== SHOP_LOT_STATUS_CANCELLED).length,
+                    hasPendingLotValidation: !!lotState.pendingValidationLot,
+                    sellingPrice: resolvedSellingPrice,
+                    purchaseCost: resolvedPurchaseCost
                 };
             }
 
@@ -10711,22 +10980,146 @@
                 return reconcileShopLotQueueToQuantity(item).activeLot;
             }
 
+            function getShopItemNextLot(item) {
+                return reconcileShopLotQueueToQuantity(item).queueLot;
+            }
+
+            function getShopItemPendingValidationLot(item) {
+                return reconcileShopLotQueueToQuantity(item).pendingValidationLot;
+            }
+
             function getShopItemAvailableSaleQuantity(item) {
                 return reconcileShopLotQueueToQuantity(item).activeQty;
             }
 
-            function appendShopLotToItem(item, lotPayload = {}) {
+            function queueIncomingShopLot(item, lotPayload = {}) {
                 const currentItem = syncShopItemLotState(item) || item || {};
+                const quantity = parseNonNegativeInteger(lotPayload.remainingQuantity ?? lotPayload.quantity, 0);
+                if (!quantity) {
+                    return { updatedItem: currentItem, affectedLot: null, createdStatus: '' };
+                }
                 const nextQueue = [...(currentItem?.lotQueue || [])];
-                nextQueue.push(normalizeShopLotEntry({
+                const lotState = reconcileShopLotQueueToQuantity(currentItem, nextQueue);
+                const futureLot = lotState.queueLot;
+                const now = lotPayload.receivedAt || new Date().toISOString();
+                if (!lotState.activeLot && !futureLot) {
+                    const activeLot = normalizeShopLotEntry({
+                        ...lotPayload,
+                        label: lotPayload.label || `Lot ${getLotSequenceLabel(nextQueue.length)}`,
+                        remainingQuantity: quantity,
+                        initialQuantity: quantity,
+                        status: SHOP_LOT_STATUS_ACTIVE,
+                        activationMode: 'immediate',
+                        activatedAt: now,
+                        receivedAt: now
+                    }, nextQueue.length, currentItem);
+                    nextQueue.push(activeLot);
+                    return {
+                        updatedItem: syncShopItemLotState({
+                            ...currentItem,
+                            lotQueue: nextQueue,
+                            quantityInShop: (Number(currentItem?.quantityInShop) || 0) + quantity
+                        }),
+                        affectedLot: activeLot,
+                        createdStatus: SHOP_LOT_STATUS_ACTIVE
+                    };
+                }
+                if (futureLot) {
+                    const futureIndex = nextQueue.findIndex(lot => lot.id === futureLot.id);
+                    if (futureIndex !== -1) {
+                        const mergedFuture = mergeShopLotEntries(nextQueue[futureIndex], normalizeShopLotEntry({
+                            ...lotPayload,
+                            remainingQuantity: quantity,
+                            initialQuantity: quantity,
+                            status: nextQueue[futureIndex].status,
+                            receivedAt: now
+                        }, futureIndex, currentItem));
+                        nextQueue[futureIndex] = {
+                            ...nextQueue[futureIndex],
+                            remainingQuantity: mergedFuture.remainingQuantity,
+                            initialQuantity: mergedFuture.initialQuantity,
+                            sourceRequestIds: mergedFuture.sourceRequestIds,
+                            notes: mergedFuture.notes
+                        };
+                        return {
+                            updatedItem: syncShopItemLotState({
+                                ...currentItem,
+                                lotQueue: nextQueue,
+                                quantityInShop: (Number(currentItem?.quantityInShop) || 0) + quantity
+                            }),
+                            affectedLot: nextQueue[futureIndex],
+                            createdStatus: nextQueue[futureIndex].status
+                        };
+                    }
+                }
+                const scheduledLot = normalizeShopLotEntry({
                     ...lotPayload,
-                    label: lotPayload.label || `Lot ${getLotSequenceLabel(nextQueue.length)}`
-                }, nextQueue.length, currentItem));
-                return syncShopItemLotState({
-                    ...currentItem,
-                    lotQueue: nextQueue,
-                    quantityInShop: (Number(currentItem?.quantityInShop) || 0) + parseNonNegativeInteger(lotPayload.remainingQuantity ?? lotPayload.quantity, 0)
-                });
+                    label: lotPayload.label || `Lot ${getLotSequenceLabel(nextQueue.length)}`,
+                    remainingQuantity: quantity,
+                    initialQuantity: quantity,
+                    status: SHOP_LOT_STATUS_SCHEDULED,
+                    activationMode: 'on_previous_empty',
+                    receivedAt: now
+                }, nextQueue.length, currentItem);
+                nextQueue.push(scheduledLot);
+                return {
+                    updatedItem: syncShopItemLotState({
+                        ...currentItem,
+                        lotQueue: nextQueue,
+                        quantityInShop: (Number(currentItem?.quantityInShop) || 0) + quantity
+                    }),
+                    affectedLot: scheduledLot,
+                    createdStatus: SHOP_LOT_STATUS_SCHEDULED
+                };
+            }
+
+            function advanceShopLotIfNeeded(item, now = new Date().toISOString()) {
+                const currentItem = syncShopItemLotState(item);
+                const nextQueue = [...(currentItem?.lotQueue || [])];
+                const activeIndex = nextQueue.findIndex(lot => lot.status === SHOP_LOT_STATUS_ACTIVE);
+                if (activeIndex !== -1 && (Number(nextQueue[activeIndex].remainingQuantity) || 0) <= 0) {
+                    nextQueue[activeIndex] = {
+                        ...nextQueue[activeIndex],
+                        remainingQuantity: 0,
+                        status: SHOP_LOT_STATUS_CLOSED,
+                        closedAt: now
+                    };
+                }
+                const hasActiveLot = nextQueue.some(lot => lot.status === SHOP_LOT_STATUS_ACTIVE && (Number(lot.remainingQuantity) || 0) > 0);
+                let transition = null;
+                if (!hasActiveLot) {
+                    const pendingIndex = nextQueue.findIndex(lot => lot.status === SHOP_LOT_STATUS_PENDING_VALIDATION && (Number(lot.remainingQuantity) || 0) > 0);
+                    if (pendingIndex !== -1) {
+                        transition = { type: 'pending_validation', lot: nextQueue[pendingIndex] };
+                    } else {
+                        const scheduledIndex = nextQueue.findIndex(lot => lot.status === SHOP_LOT_STATUS_SCHEDULED && (Number(lot.remainingQuantity) || 0) > 0);
+                        if (scheduledIndex !== -1) {
+                            if (nextQueue[scheduledIndex].requiresActivationValidation) {
+                                nextQueue[scheduledIndex] = {
+                                    ...nextQueue[scheduledIndex],
+                                    status: SHOP_LOT_STATUS_PENDING_VALIDATION,
+                                    updatedAt: now
+                                };
+                                transition = { type: 'validation_required', lot: nextQueue[scheduledIndex] };
+                            } else {
+                                nextQueue[scheduledIndex] = {
+                                    ...nextQueue[scheduledIndex],
+                                    status: SHOP_LOT_STATUS_ACTIVE,
+                                    activatedAt: now,
+                                    updatedAt: now
+                                };
+                                transition = { type: 'activated', lot: nextQueue[scheduledIndex] };
+                            }
+                        }
+                    }
+                }
+                return {
+                    updatedItem: syncShopItemLotState({
+                        ...currentItem,
+                        lotQueue: nextQueue
+                    }),
+                    transition
+                };
             }
 
             function consumeShopLotQuantity(item, quantity, options = {}) {
@@ -10739,23 +11132,25 @@
                     ? nextQueue.findIndex(lot => lot.id === preferredLotId)
                     : -1;
                 if (targetIndex === -1 && options.allowFallbackToActive !== false) {
-                    targetIndex = nextQueue.findIndex(lot => (Number(lot.remainingQuantity) || 0) > 0);
+                    targetIndex = nextQueue.findIndex(lot => lot.status === SHOP_LOT_STATUS_ACTIVE && (Number(lot.remainingQuantity) || 0) > 0);
                 }
                 if (targetIndex === -1) return null;
                 const targetLot = nextQueue[targetIndex];
                 if ((Number(targetLot?.remainingQuantity) || 0) < safeQuantity) return null;
                 nextQueue[targetIndex] = {
                     ...targetLot,
-                    remainingQuantity: (Number(targetLot.remainingQuantity) || 0) - safeQuantity
+                    remainingQuantity: (Number(targetLot.remainingQuantity) || 0) - safeQuantity,
+                    updatedAt: new Date().toISOString()
                 };
-                const nextItem = syncShopItemLotState({
+                const advancedState = advanceShopLotIfNeeded({
                     ...currentItem,
                     lotQueue: nextQueue,
                     quantityInShop: Math.max(0, (Number(currentItem.quantityInShop) || 0) - safeQuantity)
                 });
                 return {
-                    updatedItem: nextItem,
-                    consumedLot: targetLot
+                    updatedItem: advancedState.updatedItem,
+                    consumedLot: targetLot,
+                    transition: advancedState.transition
                 };
             }
 
@@ -10779,6 +11174,7 @@
                         initialQuantity: 0,
                         sellingPrice: lotSnapshot?.sellingPrice,
                         purchaseCost: lotSnapshot?.purchaseCost,
+                        status: currentItem.activeLotId ? SHOP_LOT_STATUS_SCHEDULED : SHOP_LOT_STATUS_ACTIVE,
                         receivedAt: lotSnapshot?.receivedAt || lotSnapshot?.createdAt || new Date().toISOString()
                     }, nextQueue.length, currentItem));
                     targetIndex = nextQueue.length - 1;
@@ -10787,12 +11183,81 @@
                 nextQueue[targetIndex] = {
                     ...targetLot,
                     remainingQuantity: (Number(targetLot.remainingQuantity) || 0) + safeQuantity,
-                    initialQuantity: Math.max(Number(targetLot.initialQuantity) || 0, (Number(targetLot.remainingQuantity) || 0) + safeQuantity)
+                    initialQuantity: Math.max(Number(targetLot.initialQuantity) || 0, (Number(targetLot.remainingQuantity) || 0) + safeQuantity),
+                    status: targetLot.status === SHOP_LOT_STATUS_CLOSED && !currentItem.activeLotId
+                        ? SHOP_LOT_STATUS_ACTIVE
+                        : targetLot.status,
+                    closedAt: targetLot.status === SHOP_LOT_STATUS_CLOSED && !currentItem.activeLotId ? null : targetLot.closedAt,
+                    updatedAt: new Date().toISOString()
                 };
                 return syncShopItemLotState({
                     ...currentItem,
                     lotQueue: nextQueue,
                     quantityInShop: (Number(currentItem.quantityInShop) || 0) + safeQuantity
+                });
+            }
+
+            function updateShopLotPricing(item, lotId, payload = {}) {
+                if (!item || !lotId) return null;
+                const currentItem = syncShopItemLotState(item);
+                const nextQueue = [...(currentItem?.lotQueue || [])];
+                const targetIndex = nextQueue.findIndex(lot => lot.id === lotId);
+                if (targetIndex === -1) return null;
+                const targetLot = nextQueue[targetIndex];
+                nextQueue[targetIndex] = {
+                    ...targetLot,
+                    purchaseCost: Number.isFinite(Number(payload.purchaseCost)) ? Number(payload.purchaseCost) : Number(targetLot.purchaseCost) || 0,
+                    sellingPrice: Number.isFinite(Number(payload.sellingPrice)) ? Number(payload.sellingPrice) : Number(targetLot.sellingPrice) || 0,
+                    requiresActivationValidation: payload.requiresActivationValidation === undefined
+                        ? !!targetLot.requiresActivationValidation
+                        : !!payload.requiresActivationValidation,
+                    notes: payload.notes === undefined ? targetLot.notes : (payload.notes || '').toString().trim(),
+                    updatedAt: new Date().toISOString()
+                };
+                return syncShopItemLotState({
+                    ...currentItem,
+                    lotQueue: nextQueue
+                });
+            }
+
+            function cancelScheduledShopLot(item, lotId) {
+                if (!item || !lotId) return null;
+                const currentItem = syncShopItemLotState(item);
+                const nextQueue = [...(currentItem?.lotQueue || [])];
+                const targetIndex = nextQueue.findIndex(lot => lot.id === lotId);
+                if (targetIndex === -1) return null;
+                const targetLot = nextQueue[targetIndex];
+                if (![SHOP_LOT_STATUS_SCHEDULED, SHOP_LOT_STATUS_PENDING_VALIDATION].includes(targetLot.status)) return null;
+                const nextQuantity = Math.max(0, (Number(currentItem.quantityInShop) || 0) - (Number(targetLot.remainingQuantity) || 0));
+                nextQueue[targetIndex] = {
+                    ...targetLot,
+                    remainingQuantity: 0,
+                    status: SHOP_LOT_STATUS_CANCELLED,
+                    closedAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+                return syncShopItemLotState({
+                    ...currentItem,
+                    lotQueue: nextQueue,
+                    quantityInShop: nextQuantity
+                });
+            }
+
+            function validatePendingShopLot(item, lotId) {
+                if (!item || !lotId) return null;
+                const currentItem = syncShopItemLotState(item);
+                const nextQueue = [...(currentItem?.lotQueue || [])];
+                const targetIndex = nextQueue.findIndex(lot => lot.id === lotId && lot.status === SHOP_LOT_STATUS_PENDING_VALIDATION);
+                if (targetIndex === -1) return null;
+                nextQueue[targetIndex] = {
+                    ...nextQueue[targetIndex],
+                    status: SHOP_LOT_STATUS_ACTIVE,
+                    activatedAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+                return syncShopItemLotState({
+                    ...currentItem,
+                    lotQueue: nextQueue
                 });
             }
 
@@ -10810,6 +11275,12 @@
                 updates[`${dbBasePath}/shopStock/${shopProductId}/activeLotId`] = syncedItem.activeLotId || null;
                 updates[`${dbBasePath}/shopStock/${shopProductId}/activeLotLabel`] = syncedItem.activeLotLabel || '';
                 updates[`${dbBasePath}/shopStock/${shopProductId}/activeLotRemaining`] = syncedItem.activeLotRemaining || 0;
+                updates[`${dbBasePath}/shopStock/${shopProductId}/queuedLotId`] = syncedItem.queuedLotId || null;
+                updates[`${dbBasePath}/shopStock/${shopProductId}/queuedLotLabel`] = syncedItem.queuedLotLabel || '';
+                updates[`${dbBasePath}/shopStock/${shopProductId}/queuedLotRemaining`] = syncedItem.queuedLotRemaining || 0;
+                updates[`${dbBasePath}/shopStock/${shopProductId}/queuedLotStatus`] = syncedItem.queuedLotStatus || '';
+                updates[`${dbBasePath}/shopStock/${shopProductId}/queuedLotRequiresValidation`] = !!syncedItem.queuedLotRequiresValidation;
+                updates[`${dbBasePath}/shopStock/${shopProductId}/hasPendingLotValidation`] = !!syncedItem.hasPendingLotValidation;
                 updates[`${dbBasePath}/shopStock/${shopProductId}/lotCount`] = syncedItem.lotCount || 0;
                 if (now) {
                     updates[`${dbBasePath}/shopStock/${shopProductId}/updatedAt`] = now;
@@ -10822,11 +11293,33 @@
                 if (activeLot && Number.isFinite(Number(activeLot.sellingPrice))) {
                     return Number(activeLot.sellingPrice);
                 }
+                const nextLot = getShopItemNextLot(item);
+                if (nextLot && Number.isFinite(Number(nextLot.sellingPrice))) {
+                    return Number(nextLot.sellingPrice);
+                }
                 const direct = Number(item?.sellingPrice);
                 if (Number.isFinite(direct) && direct > 0) return direct;
                 const product = sourceProduct || appData.storeProducts?.[item?.sourceProductId];
                 const packageRef = item?.packagingType || item?.packageCode || 'detail';
                 return getPackageSellingPrice(product, packageRef);
+            }
+
+            function registerShopLotTransition(notifications = [], shopProduct, transition) {
+                if (!Array.isArray(notifications) || !shopProduct || !transition?.type) return notifications;
+                const productLabel = getShopItemDisplayName(shopProduct);
+                const lotLabel = transition.lot?.label || 'prochain lot';
+                if (transition.type === 'activated') {
+                    notifications.push(`${productLabel} : ${lotLabel} est maintenant actif.`);
+                } else if (transition.type === 'validation_required' || transition.type === 'pending_validation') {
+                    notifications.push(`${productLabel} : ${lotLabel} attend une validation avant activation.`);
+                }
+                return notifications;
+            }
+
+            function showShopLotTransitionNotifications(notifications = []) {
+                [...new Set((notifications || []).filter(Boolean))].forEach((message, index) => {
+                    setTimeout(() => showSuccessToast(message), index * 350);
+                });
             }
 
             function isPackageTypeAvailable(product, packageRef, usage = 'transfer') {
@@ -13812,6 +14305,10 @@
                             </td>
                             <td class="px-4 py-3 text-right">
                                 <div class="flex justify-end gap-2">
+                                    <button type="button" data-price-lots="${product.id}"
+                                        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-amber-200 text-amber-700 text-xs font-semibold hover:bg-amber-50">
+                                        Lots boutique
+                                    </button>
                                     <button type="button" data-price-packaging="${product.id}"
                                         class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-cyan-200 text-cyan-700 text-xs font-semibold hover:bg-cyan-50">
                                         Conditionnements
@@ -13910,8 +14407,10 @@
                     };
                     const nextSellingPrice = getPackageSellingPrice(productSnapshot, packageType);
                     const nextPurchaseCost = getPackagePurchaseCost(productSnapshot, packageType);
-                    updates[`${dbBasePath}/shopStock/${item.id}/sellingPrice`] = Number.isFinite(nextSellingPrice) ? nextSellingPrice : (Number(item.sellingPrice) || 0);
-                    updates[`${dbBasePath}/shopStock/${item.id}/purchaseCost`] = Number.isFinite(nextPurchaseCost) ? nextPurchaseCost : (Number(item.purchaseCost) || 0);
+                    if (!Array.isArray(item.lotQueue) || !item.lotQueue.length) {
+                        updates[`${dbBasePath}/shopStock/${item.id}/sellingPrice`] = Number.isFinite(nextSellingPrice) ? nextSellingPrice : (Number(item.sellingPrice) || 0);
+                        updates[`${dbBasePath}/shopStock/${item.id}/purchaseCost`] = Number.isFinite(nextPurchaseCost) ? nextPurchaseCost : (Number(item.purchaseCost) || 0);
+                    }
                     updates[`${dbBasePath}/shopStock/${item.id}/categoryId`] = categoryId || null;
                     updates[`${dbBasePath}/shopStock/${item.id}/displayName`] = getPackageDisplayName(productSnapshot, packageType);
                     updates[`${dbBasePath}/shopStock/${item.id}/variantCode`] = getPackageVariantCode(productSnapshot, packageType);
@@ -14066,8 +14565,10 @@
 
                         const shopItems = Object.values(appData.shopStock || {}).filter(item => item.sourceProductId === product.id);
                         shopItems.forEach(item => {
-                            updates[`${dbBasePath}/shopStock/${item.id}/sellingPrice`] = boutiquePrice;
-                            updates[`${dbBasePath}/shopStock/${item.id}/purchaseCost`] = purchaseCost;
+                            if (!Array.isArray(item.lotQueue) || !item.lotQueue.length) {
+                                updates[`${dbBasePath}/shopStock/${item.id}/sellingPrice`] = boutiquePrice;
+                                updates[`${dbBasePath}/shopStock/${item.id}/purchaseCost`] = purchaseCost;
+                            }
                             updates[`${dbBasePath}/shopStock/${item.id}/categoryId`] = categoryId || null;
                             updates[`${dbBasePath}/shopStock/${item.id}/updatedAt`] = now;
                         });
@@ -15130,6 +15631,7 @@
                     sortedStock.forEach(item => {
                         const lotState = reconcileShopLotQueueToQuantity(item);
                         const activeLot = lotState.activeLot;
+                        const nextLot = lotState.queueLot;
                         const totalQty = lotState.totalQty;
                         const activeQty = lotState.activeQty;
                         const isLowStock = activeQty <= item.alertThreshold;
@@ -15138,9 +15640,12 @@
                         const sellingPrice = getShopItemEffectiveSellingPrice(item, sourceProduct);
                         const hasPrice = Number.isFinite(sellingPrice);
                         const priceDisplay = hasPrice ? formatCurrency(sellingPrice, currency) : '<span class="text-gray-400">—</span>';
+                        const nextLotSummary = nextLot
+                            ? ` · prochain ${nextLot.label} (${nextLot.status === SHOP_LOT_STATUS_PENDING_VALIDATION || nextLot.requiresActivationValidation ? 'validation requise' : 'programmé'})`
+                            : '';
                         const lotSummary = activeLot
-                            ? `${activeLot.label} actif · ${activeQty} restant(s)${lotState.queue.length > 1 ? ` · total ${totalQty}` : ''}`
-                            : `Aucun lot actif${totalQty ? ` · total ${totalQty}` : ''}`;
+                            ? `${activeLot.label} actif · ${activeQty} restant(s)${lotState.queue.length > 1 ? ` · total ${totalQty}` : ''}${nextLotSummary}`
+                            : `${lotState.pendingValidationLot ? `Activation en attente · ${lotState.pendingValidationLot.label}` : 'Aucun lot actif'}${totalQty ? ` · total ${totalQty}` : ''}`;
                         const deleteButtonHtml = canDelete
                             ? `<button class="delete-icon text-gray-400 hover:text-red-500" data-type="shop" data-stock-id="${item.id}">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
@@ -15852,6 +16357,9 @@
                 renderCart();
                 renderInventoryGlobalView();
                 renderTraceabilityPage();
+                if (priceLotModal && !priceLotModal.classList.contains('hidden')) {
+                    renderPriceLotModal();
+                }
             }
 
             function renderShopMovements() {
@@ -16644,7 +17152,7 @@
                             updatedAt: now,
                             lotQueue: []
                         });
-                        const nextShopItem = appendShopLotToItem({
+                        const queuedLotResult = queueIncomingShopLot({
                             ...baseShopItem,
                             boutiqueId,
                             boutiqueName,
@@ -16661,6 +17169,7 @@
                             sourceRequestId: requestId,
                             requestType: request.requestType || 'transfer'
                         });
+                        const nextShopItem = queuedLotResult.updatedItem;
                         const shopOld = Number(baseShopItem.quantityInShop) || 0;
                         const shopNew = Number(nextShopItem.quantityInShop) || 0;
 
@@ -17365,8 +17874,10 @@
                     };
                     const nextSellingPrice = getPackageSellingPrice(productSnapshot, packageType);
                     const nextPurchaseCost = getPackagePurchaseCost(productSnapshot, packageType);
-                    updates[`${dbBasePath}/shopStock/${item.id}/sellingPrice`] = Number.isFinite(nextSellingPrice) ? nextSellingPrice : (Number(item.sellingPrice) || 0);
-                    updates[`${dbBasePath}/shopStock/${item.id}/purchaseCost`] = Number.isFinite(nextPurchaseCost) ? nextPurchaseCost : (Number(item.purchaseCost) || 0);
+                    if (!Array.isArray(item.lotQueue) || !item.lotQueue.length) {
+                        updates[`${dbBasePath}/shopStock/${item.id}/sellingPrice`] = Number.isFinite(nextSellingPrice) ? nextSellingPrice : (Number(item.sellingPrice) || 0);
+                        updates[`${dbBasePath}/shopStock/${item.id}/purchaseCost`] = Number.isFinite(nextPurchaseCost) ? nextPurchaseCost : (Number(item.purchaseCost) || 0);
+                    }
                     updates[`${dbBasePath}/shopStock/${item.id}/categoryId`] = categoryId || null;
                     updates[`${dbBasePath}/shopStock/${item.id}/displayName`] = getPackageDisplayName(productSnapshot, packageType);
                     updates[`${dbBasePath}/shopStock/${item.id}/variantCode`] = getPackageVariantCode(productSnapshot, packageType);
@@ -17392,6 +17903,422 @@
                         pricePackagingError.textContent = "Impossible d'enregistrer les conditionnements.";
                         pricePackagingError.classList.remove('hidden');
                     }
+                }
+            }
+
+            function canEditShopLotPurchaseCost() {
+                const role = getCurrentUserRole();
+                return role === 'manager';
+            }
+
+            function getPriceLotManagedShopItems(productId) {
+                const allowedBoutiques = new Set(getAccessibleBoutiqueIds());
+                return Object.values(appData.shopStock || {})
+                    .filter(item => {
+                        if (item.sourceProductId !== productId) return false;
+                        const boutiqueId = resolveBoutiqueId(item.boutiqueId);
+                        if (allowedBoutiques.size && boutiqueId && !allowedBoutiques.has(boutiqueId)) return false;
+                        return true;
+                    })
+                    .sort((a, b) => {
+                        const left = `${getBoutiqueName(resolveBoutiqueId(a.boutiqueId))} ${getShopItemDisplayName(a)}`;
+                        const right = `${getBoutiqueName(resolveBoutiqueId(b.boutiqueId))} ${getShopItemDisplayName(b)}`;
+                        return left.localeCompare(right);
+                    });
+            }
+
+            function clearPriceLotError() {
+                if (priceLotError) priceLotError.classList.add('hidden');
+            }
+
+            function showPriceLotError(message) {
+                if (!priceLotError) return;
+                priceLotError.textContent = message;
+                priceLotError.classList.remove('hidden');
+            }
+
+            function getSelectedPriceLotShopItem() {
+                if (!activePriceLotShopItemId) return null;
+                return appData.shopStock?.[activePriceLotShopItemId] || null;
+            }
+
+            function addShopLotPricingMovement(updates, shopItem, lot, actionLabel, note = '', now = new Date().toISOString(), previousValues = {}) {
+                if (!updates || !shopItem?.id || !dbBasePath) return;
+                const moveKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
+                if (!moveKey) return;
+                const details = [];
+                if (Number.isFinite(Number(previousValues.oldPurchase)) && Number.isFinite(Number(previousValues.newPurchase)) && Number(previousValues.oldPurchase) !== Number(previousValues.newPurchase)) {
+                    details.push(`achat ${Number(previousValues.oldPurchase)} -> ${Number(previousValues.newPurchase)}`);
+                }
+                if (Number.isFinite(Number(previousValues.oldSelling)) && Number.isFinite(Number(previousValues.newSelling)) && Number(previousValues.oldSelling) !== Number(previousValues.newSelling)) {
+                    details.push(`vente ${Number(previousValues.oldSelling)} -> ${Number(previousValues.newSelling)}`);
+                }
+                const commentParts = [
+                    actionLabel,
+                    lot?.label ? `lot ${lot.label}` : '',
+                    details.length ? details.join(' · ') : '',
+                    note || ''
+                ].filter(Boolean);
+                updates[`${dbBasePath}/shopMovements/${moveKey}`] = {
+                    id: moveKey,
+                    shopProductId: shopItem.id,
+                    productName: getShopItemDisplayName(shopItem),
+                    boutiqueId: resolveBoutiqueId(shopItem.boutiqueId),
+                    boutiqueName: getBoutiqueName(resolveBoutiqueId(shopItem.boutiqueId)),
+                    type: "Ajustement",
+                    quantityChange: 0,
+                    oldStock: Number(shopItem.quantityInShop) || 0,
+                    newStock: Number(shopItem.quantityInShop) || 0,
+                    comment: commentParts.join(' · '),
+                    date: { ".sv": "timestamp" },
+                    userEmail: currentUser?.email || '',
+                    userName: currentUserData?.fullName || currentUser?.email || '',
+                    status: EXIT_STATUS_APPROVED,
+                    updatedAt: now
+                };
+            }
+
+            function renderPriceLotModal() {
+                if (!priceLotModal || !priceLotShopList) return;
+                const product = appData.storeProducts?.[activePriceLotProductId];
+                const shopItems = product ? getPriceLotManagedShopItems(product.id) : [];
+                if (priceLotTitle) {
+                    priceLotTitle.textContent = `Lots boutique · ${product?.name || 'Produit'}`;
+                }
+                if (priceLotShopCount) {
+                    priceLotShopCount.textContent = `${shopItems.length}`;
+                }
+                if (priceLotShopEmpty) {
+                    priceLotShopEmpty.classList.toggle('hidden', shopItems.length > 0);
+                }
+                if (!shopItems.length) {
+                    activePriceLotShopItemId = null;
+                    priceLotShopList.innerHTML = '';
+                    if (priceLotDetail) priceLotDetail.classList.add('hidden');
+                    if (priceLotDetailEmpty) priceLotDetailEmpty.classList.remove('hidden');
+                    clearPriceLotError();
+                    return;
+                }
+
+                if (!shopItems.some(item => item.id === activePriceLotShopItemId)) {
+                    activePriceLotShopItemId = shopItems[0].id;
+                }
+
+                priceLotShopList.innerHTML = shopItems.map(item => {
+                    const syncedItem = syncShopItemLotState(item);
+                    const activeLot = getShopItemActiveLot(syncedItem);
+                    const nextLot = getShopItemNextLot(syncedItem);
+                    const isSelected = item.id === activePriceLotShopItemId;
+                    return `
+                        <button type="button" data-price-lot-select="${item.id}"
+                            class="w-full text-left rounded-2xl border px-3 py-3 transition ${isSelected ? 'border-cyan-300 bg-cyan-50 shadow-sm' : 'border-gray-200 bg-white hover:border-cyan-200 hover:bg-cyan-50/40'}">
+                            <div class="flex items-center justify-between gap-3">
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-900">${getShopItemDisplayName(item)}</p>
+                                    <p class="mt-1 text-xs text-gray-500">${escapeHtml(getBoutiqueName(resolveBoutiqueId(item.boutiqueId)) || 'Boutique')} · ${escapeHtml(getShopItemPackagingLabel(item))}</p>
+                                </div>
+                                <span class="text-xs font-semibold ${activeLot ? 'text-cyan-700' : 'text-red-500'}">${activeLot ? `${activeLot.label} actif` : 'Sans lot actif'}</span>
+                            </div>
+                            <div class="mt-2 text-[11px] text-gray-500">
+                                Total: ${Number(syncedItem.quantityInShop) || 0}
+                                ${nextLot ? ` · prochain: ${escapeHtml(nextLot.label)}` : ''}
+                            </div>
+                        </button>
+                    `;
+                }).join('');
+
+                const selectedItem = getSelectedPriceLotShopItem();
+                if (!selectedItem) {
+                    if (priceLotDetail) priceLotDetail.classList.add('hidden');
+                    if (priceLotDetailEmpty) priceLotDetailEmpty.classList.remove('hidden');
+                    return;
+                }
+
+                const syncedItem = syncShopItemLotState(selectedItem);
+                const activeLot = getShopItemActiveLot(syncedItem);
+                const nextLot = getShopItemNextLot(syncedItem);
+                const pendingLot = getShopItemPendingValidationLot(syncedItem);
+                const currency = appData.storeProducts?.[selectedItem.sourceProductId]?.currency || 'CFA';
+                if (priceLotDetail) priceLotDetail.classList.remove('hidden');
+                if (priceLotDetailEmpty) priceLotDetailEmpty.classList.add('hidden');
+                if (priceLotDetailName) priceLotDetailName.textContent = getShopItemDisplayName(selectedItem);
+                if (priceLotDetailMeta) {
+                    priceLotDetailMeta.textContent = `${getBoutiqueName(resolveBoutiqueId(selectedItem.boutiqueId)) || 'Boutique'} · ${getShopItemPackagingLabel(selectedItem)} · stock total ${Number(syncedItem.quantityInShop) || 0}`;
+                }
+                if (priceLotActiveSummary) {
+                    priceLotActiveSummary.textContent = activeLot
+                        ? `${activeLot.label} · ${Number(activeLot.remainingQuantity) || 0} restant(s) · ${formatCurrency(activeLot.sellingPrice, currency)}`
+                        : 'Aucun lot actif.';
+                }
+                if (priceLotActiveBadge) {
+                    priceLotActiveBadge.textContent = activeLot ? activeLot.label : 'Aucun';
+                }
+                if (priceLotActivePurchaseInput) {
+                    priceLotActivePurchaseInput.value = activeLot ? (Number(activeLot.purchaseCost) || 0) : '';
+                    priceLotActivePurchaseInput.disabled = !activeLot || !canEditShopLotPurchaseCost();
+                }
+                if (priceLotActiveSellingInput) {
+                    priceLotActiveSellingInput.value = activeLot ? (Number(activeLot.sellingPrice) || 0) : '';
+                    priceLotActiveSellingInput.disabled = !activeLot || !canManagePricing();
+                }
+                if (priceLotActiveNoteInput) {
+                    priceLotActiveNoteInput.value = '';
+                    priceLotActiveNoteInput.disabled = !activeLot || !canManagePricing();
+                }
+                if (priceLotSaveActiveButton) {
+                    priceLotSaveActiveButton.disabled = !activeLot || !canManagePricing();
+                }
+
+                if (priceLotNextSummary) {
+                    priceLotNextSummary.textContent = nextLot
+                        ? `${nextLot.label} · ${Number(nextLot.remainingQuantity) || 0} unité(s) · ${formatCurrency(nextLot.sellingPrice, currency)}`
+                        : 'Aucun lot programmé.';
+                }
+                if (priceLotNextBadge) {
+                    priceLotNextBadge.textContent = nextLot
+                        ? (pendingLot
+                            ? 'En attente de validation'
+                            : (nextLot.requiresActivationValidation ? 'Programmé · validation requise' : 'Programmé'))
+                        : 'Aucun';
+                }
+                if (priceLotNextEmpty) {
+                    priceLotNextEmpty.classList.toggle('hidden', !!nextLot);
+                }
+                if (priceLotNextForm) {
+                    priceLotNextForm.classList.toggle('hidden', !nextLot);
+                }
+                if (priceLotNextPurchaseInput) {
+                    priceLotNextPurchaseInput.value = nextLot ? (Number(nextLot.purchaseCost) || 0) : '';
+                    priceLotNextPurchaseInput.disabled = !nextLot || !canEditShopLotPurchaseCost();
+                }
+                if (priceLotNextSellingInput) {
+                    priceLotNextSellingInput.value = nextLot ? (Number(nextLot.sellingPrice) || 0) : '';
+                    priceLotNextSellingInput.disabled = !nextLot || !canManagePricing();
+                }
+                if (priceLotNextValidationInput) {
+                    priceLotNextValidationInput.checked = !!nextLot?.requiresActivationValidation;
+                    priceLotNextValidationInput.disabled = !nextLot || !canManagePricing() || nextLot?.status === SHOP_LOT_STATUS_PENDING_VALIDATION;
+                }
+                if (priceLotNextNoteInput) {
+                    priceLotNextNoteInput.value = nextLot?.notes || '';
+                    priceLotNextNoteInput.disabled = !nextLot || !canManagePricing();
+                }
+                if (priceLotCancelNextButton) {
+                    priceLotCancelNextButton.disabled = !nextLot || !canManagePricing();
+                }
+                if (priceLotSaveNextButton) {
+                    priceLotSaveNextButton.disabled = !nextLot || !canManagePricing();
+                }
+                if (priceLotValidateNextButton) {
+                    const showValidate = !!nextLot && nextLot.status === SHOP_LOT_STATUS_PENDING_VALIDATION;
+                    priceLotValidateNextButton.classList.toggle('hidden', !showValidate);
+                    priceLotValidateNextButton.disabled = !showValidate || !canManagePricing();
+                }
+                clearPriceLotError();
+            }
+
+            function openPriceLotModal(productId) {
+                if (!priceLotModal) return;
+                activePriceLotProductId = productId;
+                activePriceLotShopItemId = null;
+                renderPriceLotModal();
+                priceLotModal.classList.remove('hidden');
+            }
+
+            function closePriceLotModal() {
+                if (priceLotModal) priceLotModal.classList.add('hidden');
+                activePriceLotProductId = null;
+                activePriceLotShopItemId = null;
+                clearPriceLotError();
+            }
+
+            async function saveActivePriceLotChanges() {
+                if (!dbBasePath || !currentUser || !activePriceLotShopItemId) return;
+                if (!canManagePricing()) {
+                    showPriceLotError("Accès refusé pour modifier les lots.");
+                    return;
+                }
+                const shopItem = getSelectedPriceLotShopItem();
+                const activeLot = getShopItemActiveLot(shopItem);
+                if (!shopItem || !activeLot) {
+                    showPriceLotError("Aucun lot actif à modifier.");
+                    return;
+                }
+                const nextSellingPrice = Number(priceLotActiveSellingInput?.value);
+                if (!Number.isFinite(nextSellingPrice) || nextSellingPrice < 0) {
+                    showPriceLotError("Prix de vente actif invalide.");
+                    return;
+                }
+                const purchaseCostEditable = canEditShopLotPurchaseCost();
+                const nextPurchaseCost = purchaseCostEditable ? Number(priceLotActivePurchaseInput?.value) : Number(activeLot.purchaseCost) || 0;
+                if (purchaseCostEditable && (!Number.isFinite(nextPurchaseCost) || nextPurchaseCost < 0)) {
+                    showPriceLotError("Prix d'achat actif invalide.");
+                    return;
+                }
+                const note = (priceLotActiveNoteInput?.value || '').trim();
+                if (!confirm(`Confirmer la mise à jour de ${activeLot.label} ?`)) return;
+
+                const updatedItem = updateShopLotPricing(shopItem, activeLot.id, {
+                    purchaseCost: nextPurchaseCost,
+                    sellingPrice: nextSellingPrice,
+                    notes: note || activeLot.notes || ''
+                });
+                if (!updatedItem) {
+                    showPriceLotError("Impossible de mettre à jour le lot actif.");
+                    return;
+                }
+
+                const now = new Date().toISOString();
+                const updates = {};
+                applyShopItemStateToUpdates(updates, shopItem.id, updatedItem, now);
+                addShopLotPricingMovement(updates, shopItem, activeLot, 'Modification lot actif', note, now, {
+                    oldPurchase: activeLot.purchaseCost,
+                    newPurchase: nextPurchaseCost,
+                    oldSelling: activeLot.sellingPrice,
+                    newSelling: nextSellingPrice
+                });
+
+                try {
+                    await update(ref(db), updates);
+                    appData.shopStock[shopItem.id] = updatedItem;
+                    renderPriceLotModal();
+                    renderShopStock(shopSearchInput ? shopSearchInput.value : '');
+                    renderSalesProducts(salesProductSearch ? salesProductSearch.value : '');
+                    showSuccessToast(`${activeLot.label} mis à jour.`);
+                } catch (error) {
+                    console.error(error);
+                    showPriceLotError("Impossible d'enregistrer le lot actif.");
+                }
+            }
+
+            async function saveNextPriceLotChanges() {
+                if (!dbBasePath || !currentUser || !activePriceLotShopItemId) return;
+                if (!canManagePricing()) {
+                    showPriceLotError("Accès refusé pour modifier les lots.");
+                    return;
+                }
+                const shopItem = getSelectedPriceLotShopItem();
+                const nextLot = getShopItemNextLot(shopItem);
+                if (!shopItem || !nextLot) {
+                    showPriceLotError("Aucun prochain lot à modifier.");
+                    return;
+                }
+                const nextSellingPrice = Number(priceLotNextSellingInput?.value);
+                if (!Number.isFinite(nextSellingPrice) || nextSellingPrice < 0) {
+                    showPriceLotError("Prix de vente du prochain lot invalide.");
+                    return;
+                }
+                const purchaseCostEditable = canEditShopLotPurchaseCost();
+                const nextPurchaseCost = purchaseCostEditable ? Number(priceLotNextPurchaseInput?.value) : Number(nextLot.purchaseCost) || 0;
+                if (purchaseCostEditable && (!Number.isFinite(nextPurchaseCost) || nextPurchaseCost < 0)) {
+                    showPriceLotError("Prix d'achat du prochain lot invalide.");
+                    return;
+                }
+                const requiresValidation = !!priceLotNextValidationInput?.checked;
+                const note = (priceLotNextNoteInput?.value || '').trim();
+                if (!confirm(`Confirmer la mise à jour de ${nextLot.label} ?`)) return;
+
+                const updatedItem = updateShopLotPricing(shopItem, nextLot.id, {
+                    purchaseCost: nextPurchaseCost,
+                    sellingPrice: nextSellingPrice,
+                    requiresActivationValidation: requiresValidation,
+                    notes: note
+                });
+                if (!updatedItem) {
+                    showPriceLotError("Impossible de mettre à jour le prochain lot.");
+                    return;
+                }
+
+                const now = new Date().toISOString();
+                const updates = {};
+                applyShopItemStateToUpdates(updates, shopItem.id, updatedItem, now);
+                addShopLotPricingMovement(updates, shopItem, nextLot, 'Modification prochain lot', note, now, {
+                    oldPurchase: nextLot.purchaseCost,
+                    newPurchase: nextPurchaseCost,
+                    oldSelling: nextLot.sellingPrice,
+                    newSelling: nextSellingPrice
+                });
+
+                try {
+                    await update(ref(db), updates);
+                    appData.shopStock[shopItem.id] = updatedItem;
+                    renderPriceLotModal();
+                    renderShopStock(shopSearchInput ? shopSearchInput.value : '');
+                    renderSalesProducts(salesProductSearch ? salesProductSearch.value : '');
+                    showSuccessToast(`${nextLot.label} mis à jour.`);
+                } catch (error) {
+                    console.error(error);
+                    showPriceLotError("Impossible d'enregistrer le prochain lot.");
+                }
+            }
+
+            async function cancelNextPriceLotAction() {
+                if (!dbBasePath || !currentUser || !activePriceLotShopItemId) return;
+                if (!canManagePricing()) {
+                    showPriceLotError("Accès refusé pour annuler le prochain lot.");
+                    return;
+                }
+                const shopItem = getSelectedPriceLotShopItem();
+                const nextLot = getShopItemNextLot(shopItem);
+                if (!shopItem || !nextLot) {
+                    showPriceLotError("Aucun prochain lot à annuler.");
+                    return;
+                }
+                if (!confirm(`Annuler ${nextLot.label} et retirer sa quantité du stock boutique ?`)) return;
+                const updatedItem = cancelScheduledShopLot(shopItem, nextLot.id);
+                if (!updatedItem) {
+                    showPriceLotError("Impossible d'annuler ce lot.");
+                    return;
+                }
+                const now = new Date().toISOString();
+                const updates = {};
+                applyShopItemStateToUpdates(updates, shopItem.id, updatedItem, now);
+                addShopLotPricingMovement(updates, shopItem, nextLot, 'Annulation prochain lot', nextLot.notes || '', now);
+                try {
+                    await update(ref(db), updates);
+                    appData.shopStock[shopItem.id] = updatedItem;
+                    renderPriceLotModal();
+                    renderShopStock(shopSearchInput ? shopSearchInput.value : '');
+                    renderSalesProducts(salesProductSearch ? salesProductSearch.value : '');
+                    showSuccessToast(`${nextLot.label} annulé.`);
+                } catch (error) {
+                    console.error(error);
+                    showPriceLotError("Impossible d'annuler le prochain lot.");
+                }
+            }
+
+            async function validateNextPriceLotAction() {
+                if (!dbBasePath || !currentUser || !activePriceLotShopItemId) return;
+                if (!canManagePricing()) {
+                    showPriceLotError("Accès refusé pour valider ce lot.");
+                    return;
+                }
+                const shopItem = getSelectedPriceLotShopItem();
+                const nextLot = getShopItemNextLot(shopItem);
+                if (!shopItem || !nextLot || nextLot.status !== SHOP_LOT_STATUS_PENDING_VALIDATION) {
+                    showPriceLotError("Aucun lot en attente de validation.");
+                    return;
+                }
+                if (!confirm(`Activer ${nextLot.label} maintenant ?`)) return;
+                const updatedItem = validatePendingShopLot(shopItem, nextLot.id);
+                if (!updatedItem) {
+                    showPriceLotError("Impossible de valider ce lot.");
+                    return;
+                }
+                const now = new Date().toISOString();
+                const updates = {};
+                applyShopItemStateToUpdates(updates, shopItem.id, updatedItem, now);
+                addShopLotPricingMovement(updates, shopItem, nextLot, 'Validation activation lot', nextLot.notes || '', now);
+                try {
+                    await update(ref(db), updates);
+                    appData.shopStock[shopItem.id] = updatedItem;
+                    renderPriceLotModal();
+                    renderShopStock(shopSearchInput ? shopSearchInput.value : '');
+                    renderSalesProducts(salesProductSearch ? salesProductSearch.value : '');
+                    showSuccessToast(`${nextLot.label} est maintenant actif.`);
+                } catch (error) {
+                    console.error(error);
+                    showPriceLotError("Impossible de valider le lot.");
                 }
             }
 
@@ -17612,13 +18539,17 @@
                     const sourceProduct = appData.storeProducts[item.sourceProductId];
                     const currency = sourceProduct?.currency || 'CFA';
                     const activeLot = getShopItemActiveLot(item);
+                    const nextLot = getShopItemNextLot(item);
+                    const pendingLot = getShopItemPendingValidationLot(item);
                     const activeQty = getShopItemAvailableSaleQuantity(item);
                     const sellingPrice = getShopItemEffectiveSellingPrice(item, sourceProduct);
                     const hasPrice = Number.isFinite(sellingPrice);
                     const category = getShopItemCategory(item);
                     const isLowStock = activeQty <= (item.alertThreshold || 5);
-                    const isOut = activeQty <= 0;
-                    const stockLabel = isOut ? 'Rupture' : `${activeLot?.label || 'Lot actif'}: ${activeQty}`;
+                    const isOut = !activeLot || activeQty <= 0;
+                    const stockLabel = pendingLot
+                        ? 'Validation requise'
+                        : (isOut ? 'Rupture' : `${activeLot?.label || 'Lot actif'}: ${activeQty}`);
                     const stockClass = isOut
                         ? 'bg-red-100 text-red-600'
                         : isLowStock
@@ -17638,7 +18569,8 @@
                             </div>
                             <h3 class="mt-3 text-base font-semibold text-gray-900">${itemLabel}</h3>
                             <p class="mt-1 text-xs text-gray-400">${getShopItemPackagingLabel(item)} · ${Number(item.unitsPerPackage) || 1} unité(s)</p>
-                            <p class="mt-2 text-xs font-semibold text-cyan-700">${activeLot ? `${activeLot.label} · ${activeQty} restant(s)` : 'Aucun lot actif'}</p>
+                            <p class="mt-2 text-xs font-semibold text-cyan-700">${activeLot ? `${activeLot.label} · ${activeQty} restant(s)` : (pendingLot ? `${pendingLot.label} · en attente de validation` : 'Aucun lot actif')}</p>
+                            ${nextLot && !pendingLot ? `<p class="mt-1 text-[11px] text-amber-600">Prochain lot: ${escapeHtml(nextLot.label)} · ${nextLot.requiresActivationValidation ? 'validation requise' : 'activation auto'}</p>` : ''}
                             <p class="mt-2 text-lg font-bold text-cyan-600">${hasPrice ? formatCurrency(sellingPrice, currency) : '—'}</p>
                             ${actionHtml}
                         </div>
@@ -17684,6 +18616,7 @@
                 const shopProduct = appData.shopStock[shopProductId];
                 if (!shopProduct) return;
                 const activeLot = getShopItemActiveLot(shopProduct);
+                const pendingLot = getShopItemPendingValidationLot(shopProduct);
                 const productBoutiqueId = resolveBoutiqueId(shopProduct.boutiqueId);
                 const activeBoutique = getActiveBoutiqueId();
                 if (activeBoutique && productBoutiqueId && productBoutiqueId !== activeBoutique) {
@@ -17696,6 +18629,10 @@
                         showSalesErrorMessage("Le panier contient des articles d'une autre boutique.");
                         return;
                     }
+                }
+                if (pendingLot) {
+                    showSalesErrorMessage(`Le ${pendingLot.label} attend une validation avant activation.`);
+                    return;
                 }
                 if (!activeLot || getShopItemAvailableSaleQuantity(shopProduct) <= 0) {
                     showSalesErrorMessage("Stock insuffisant pour ce produit.");
@@ -18113,6 +19050,7 @@
                         }
 
                         const updates = {};
+                        const lotNotifications = [];
                         const pendingRef = push(ref(db, `${dbBasePath}/pendingSales`));
                         heldSale.id = pendingRef.key;
                         heldSale.createdBy = currentUser?.email || '';
@@ -18133,6 +19071,7 @@
                                         return;
                                     }
                                     const reservedShopProduct = applyShopItemStateToUpdates(updates, item.shopProductId, extraReservation.updatedItem);
+                                    registerShopLotTransition(lotNotifications, shopProduct, extraReservation.transition);
                                     const newStock = Number(reservedShopProduct.quantityInShop) || 0;
                                     const shopMoveKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
                                     updates[`${dbBasePath}/shopMovements/${shopMoveKey}`] = {
@@ -18192,6 +19131,7 @@
                                 return;
                             }
                             const reservedShopProduct = applyShopItemStateToUpdates(updates, item.shopProductId, lotReservation.updatedItem);
+                            registerShopLotTransition(lotNotifications, shopProduct, lotReservation.transition);
                             const newStock = Number(reservedShopProduct.quantityInShop) || 0;
                             const shopMoveKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
                             updates[`${dbBasePath}/shopMovements/${shopMoveKey}`] = {
@@ -18221,6 +19161,7 @@
                         heldSale.items = cartItems.map(({ stockReservedFromPending: _, ...rest }) => rest);
                         updates[`${dbBasePath}/pendingSales/${pendingRef.key}`] = heldSale;
                         await update(ref(db), updates);
+                        showShopLotTransitionNotifications(lotNotifications);
                     } else {
                         heldSale.id = `HOLD-${Date.now()}`;
                         heldSale.stockReserved = false;
@@ -18278,6 +19219,7 @@
                     });
 
                     const updates = {};
+                    const lotNotifications = [];
                     const now = new Date().toISOString();
                     const sellerName = currentUserData?.fullName || currentUser.email;
                     const comment = (holdCommentInput?.value || '').trim();
@@ -18337,6 +19279,7 @@
                                     throw new Error(`Stock insuffisant pour ${item.name}`);
                                 }
                                 const updatedShopProduct = applyShopItemStateToUpdates(updates, item.shopProductId, extraReservation.updatedItem, now);
+                                registerShopLotTransition(lotNotifications, shopProduct, extraReservation.transition);
                                 const shopNewStock = Number(updatedShopProduct.quantityInShop) || 0;
                                 const shopMoveKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
                                 updates[`${dbBasePath}/shopMovements/${shopMoveKey}`] = {
@@ -18393,6 +19336,7 @@
                                 throw new Error(`Stock insuffisant pour ${item.name}`);
                             }
                             const updatedShopProduct = applyShopItemStateToUpdates(updates, item.shopProductId, lotReservation.updatedItem, now);
+                            registerShopLotTransition(lotNotifications, shopProduct, lotReservation.transition);
                             const shopNewStock = Number(updatedShopProduct.quantityInShop) || 0;
                             item.lotId = lotReservation.consumedLot?.id || item.lotId || null;
                             item.lotLabel = lotReservation.consumedLot?.label || item.lotLabel || '';
@@ -18458,6 +19402,7 @@
                     }
 
                     await update(ref(db), updates);
+                    showShopLotTransitionNotifications(lotNotifications);
 
                     const invoiceData = {
                         companyName: currentUserData?.companyName || 'Mon Entreprise',
@@ -18634,6 +19579,7 @@
 
                 try {
                     const updates = {};
+                    const lotNotifications = [];
                     const now = new Date().toISOString();
 
                     for (const sale of entries) {
@@ -18821,6 +19767,7 @@
                                 throw new Error(`Stock insuffisant pour ${item.name}`);
                             }
                             const updatedShopProduct = applyShopItemStateToUpdates(updates, item.shopProductId, lotReservation.updatedItem, now);
+                            registerShopLotTransition(lotNotifications, shopProduct, lotReservation.transition);
                             const shopNewStock = Number(updatedShopProduct.quantityInShop) || 0;
                             item.lotId = lotReservation.consumedLot?.id || item.lotId || null;
                             item.lotLabel = lotReservation.consumedLot?.label || item.lotLabel || '';
@@ -18883,6 +19830,7 @@
                     }
 
                     await update(ref(db), updates);
+                    showShopLotTransitionNotifications(lotNotifications);
 
                     if (dbBasePath) {
                         await remove(ref(db, `${dbBasePath}/pendingSales/${pendingId}`));
@@ -20013,6 +20961,12 @@
             }
             if (priceTableTbody) {
                 priceTableTbody.addEventListener('click', (event) => {
+                    const lotsButton = event.target.closest('[data-price-lots]');
+                    if (lotsButton) {
+                        const productId = lotsButton.dataset.priceLots;
+                        if (productId) openPriceLotModal(productId);
+                        return;
+                    }
                     const packagingButton = event.target.closest('[data-price-packaging]');
                     if (packagingButton) {
                         const productId = packagingButton.dataset.pricePackaging;
@@ -20740,14 +21694,16 @@
                                 ...legacyFields
                             };
                             const nextSellingPrice = getPackageSellingPrice(sourceSnapshot, packageType);
-                    const nextPurchaseCost = getPackagePurchaseCost(sourceSnapshot, packageType);
-                    updates[`${dbBasePath}/shopStock/${item.id}/sellingPrice`] = Number.isFinite(nextSellingPrice) ? nextSellingPrice : (Number(item.sellingPrice) || 0);
-                    updates[`${dbBasePath}/shopStock/${item.id}/purchaseCost`] = Number.isFinite(nextPurchaseCost) ? nextPurchaseCost : (Number(item.purchaseCost) || 0);
-                    updates[`${dbBasePath}/shopStock/${item.id}/categoryId`] = categoryId || null;
-                    updates[`${dbBasePath}/shopStock/${item.id}/displayName`] = getPackageDisplayName(sourceSnapshot, packageType);
-                    updates[`${dbBasePath}/shopStock/${item.id}/variantCode`] = getPackageVariantCode(sourceSnapshot, packageType);
-                    updates[`${dbBasePath}/shopStock/${item.id}/name`] = getPackageVariantCode(sourceSnapshot, packageType);
-                    updates[`${dbBasePath}/shopStock/${item.id}/sourceName`] = existingProduct.name || '';
+                            const nextPurchaseCost = getPackagePurchaseCost(sourceSnapshot, packageType);
+                            if (!Array.isArray(item.lotQueue) || !item.lotQueue.length) {
+                                updates[`${dbBasePath}/shopStock/${item.id}/sellingPrice`] = Number.isFinite(nextSellingPrice) ? nextSellingPrice : (Number(item.sellingPrice) || 0);
+                                updates[`${dbBasePath}/shopStock/${item.id}/purchaseCost`] = Number.isFinite(nextPurchaseCost) ? nextPurchaseCost : (Number(item.purchaseCost) || 0);
+                            }
+                            updates[`${dbBasePath}/shopStock/${item.id}/categoryId`] = categoryId || null;
+                            updates[`${dbBasePath}/shopStock/${item.id}/displayName`] = getPackageDisplayName(sourceSnapshot, packageType);
+                            updates[`${dbBasePath}/shopStock/${item.id}/variantCode`] = getPackageVariantCode(sourceSnapshot, packageType);
+                            updates[`${dbBasePath}/shopStock/${item.id}/name`] = getPackageVariantCode(sourceSnapshot, packageType);
+                            updates[`${dbBasePath}/shopStock/${item.id}/sourceName`] = existingProduct.name || '';
                             updates[`${dbBasePath}/shopStock/${item.id}/packageCode`] = getPackageRef(sourceSnapshot, packageType);
                             updates[`${dbBasePath}/shopStock/${item.id}/packageLabel`] = getPackageLabel(packageType, sourceSnapshot);
                             updates[`${dbBasePath}/shopStock/${item.id}/baseUnitLabel`] = baseUnitLabel;
@@ -21488,12 +22444,8 @@
                         quantity: qty,
                         unitsPerPackage: packageUnits,
                         totalUnits: totalUnitsRequested,
-                        sellingPrice: Number.isFinite(Number(shopProd.sellingPrice))
-                            ? Number(shopProd.sellingPrice)
-                            : getPackageSellingPrice(sourceProd, packageType),
-                        purchaseCost: Number.isFinite(Number(shopProd.purchaseCost))
-                            ? Number(shopProd.purchaseCost)
-                            : getPackagePurchaseCost(sourceProd, packageType)
+                        sellingPrice: getPackageSellingPrice(sourceProd, packageType),
+                        purchaseCost: getPackagePurchaseCost(sourceProd, packageType)
                     };
                     const restockComment = `${comment} · ${sourceCartons} ${sourceVariantCode} = ${targetPackage.quantity} ${targetPackage.code}`;
 
@@ -21712,6 +22664,19 @@
             if (closeNewProductModalButton) closeNewProductModalButton.addEventListener('click', () => newProductModal.classList.add('hidden'));
             if (closePricePackagingModalButton) closePricePackagingModalButton.addEventListener('click', closePricePackagingModal);
             if (pricePackagingCancelButton) pricePackagingCancelButton.addEventListener('click', closePricePackagingModal);
+            if (closePriceLotModalButton) closePriceLotModalButton.addEventListener('click', closePriceLotModal);
+            if (priceLotSaveActiveButton) priceLotSaveActiveButton.addEventListener('click', saveActivePriceLotChanges);
+            if (priceLotSaveNextButton) priceLotSaveNextButton.addEventListener('click', saveNextPriceLotChanges);
+            if (priceLotCancelNextButton) priceLotCancelNextButton.addEventListener('click', cancelNextPriceLotAction);
+            if (priceLotValidateNextButton) priceLotValidateNextButton.addEventListener('click', validateNextPriceLotAction);
+            if (priceLotShopList) {
+                priceLotShopList.addEventListener('click', (event) => {
+                    const button = event.target.closest('[data-price-lot-select]');
+                    if (!button) return;
+                    activePriceLotShopItemId = button.dataset.priceLotSelect || null;
+                    renderPriceLotModal();
+                });
+            }
             if (closeEntryModalButton) closeEntryModalButton.addEventListener('click', () => {
                 closeProductCombobox('entry', { restoreSelection: true });
                 setEntryMode('existing');
@@ -21876,11 +22841,13 @@
             attachSupplierSignatureEvents();
 
             // Background Modal Close
-            [newProductModal, entryModal, exitModal, transferModal, restockModal, accessScopeModal, supplierPaymentModal, pricePackagingModal].forEach(m => {
+            [newProductModal, entryModal, exitModal, transferModal, restockModal, accessScopeModal, supplierPaymentModal, pricePackagingModal, priceLotModal].forEach(m => {
                 if (m) m.addEventListener('click', e => {
                     if (e.target !== m) return;
                     if (m === pricePackagingModal) {
                         closePricePackagingModal();
+                    } else if (m === priceLotModal) {
+                        closePriceLotModal();
                     } else {
                         if (m === entryModal) closeProductCombobox('entry', { restoreSelection: true });
                         if (m === exitModal) closeProductCombobox('exit', { restoreSelection: true });
