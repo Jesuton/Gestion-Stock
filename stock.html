@@ -4215,7 +4215,6 @@
                     Annuler
                 </button>
                 <button id="loss-modal-confirm" type="button" disabled
-                    onclick="submitLossDeclaration()"
                     class="flex-1 rounded-xl bg-red-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
                     Confirmer la perte
                 </button>
@@ -11868,7 +11867,7 @@
                 tbody.innerHTML = losses.slice(0, 50).map(loss => {
                     const date = new Date(loss.declaredAt || 0).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
                     const source = loss.source === 'boutique' ? '🏪 Boutique' : '🏭 Magasin';
-                    const prodName = appData.storeProducts?.[loss.productId]?.name || loss.productName || '—';
+                    const prodName = loss.productName || appData.storeProducts?.[loss.productId]?.name || '—';
                     const qty = loss.unit === 'cartons'
                         ? `${loss.quantity} carton${loss.quantity > 1 ? 's' : ''}`
                         : `${loss.quantity} unité${loss.quantity > 1 ? 's' : ''}`;
@@ -11952,10 +11951,170 @@
             // Helper : stock réel selon la source
             function lossGetItemQty(p, source) {
                 if (source === 'boutique') {
-                    // Les items shopStock utilisent quantityInShop, pas quantity
-                    return parseInt(p.quantityInShop ?? p.quantity ?? 0, 10) || 0;
+                    return parseNonNegativeInteger(syncShopItemLotState(p)?.quantityInShop, 0);
                 }
-                return parseInt(p.quantity ?? 0, 10) || 0;
+                return parseNonNegativeInteger(p?.quantityInStore, 0);
+            }
+
+            function getLossProductLabel(item, source) {
+                if (!item) return '—';
+                return source === 'boutique'
+                    ? getShopItemDisplayName(item)
+                    : ((item.name || item.displayName || '').toString().trim() || '—');
+            }
+
+            function getLossProductPackageUnits(item, source) {
+                if (!item) return 1;
+                if (source === 'boutique') {
+                    return Math.max(Number(item.unitsPerPackage) || 1, 1);
+                }
+                return Math.max(getUnitsPerCarton(item), 1);
+            }
+
+            function getLossProductPackageLabel(item, source) {
+                if (!item) return 'paquet';
+                if (source === 'boutique') {
+                    return getShopItemPackagingLabel(item) || 'paquet';
+                }
+                return getPrimaryPackaging(item)?.label || 'carton';
+            }
+
+            function getLossProductCost(item, source) {
+                if (!item) return 0;
+                if (source === 'boutique') {
+                    const syncedItem = syncShopItemLotState(item);
+                    const activeLot = getShopItemActiveLot(syncedItem);
+                    const nextLot = getShopItemNextLot(syncedItem);
+                    if (Number.isFinite(Number(activeLot?.purchaseCost))) return Number(activeLot.purchaseCost);
+                    if (Number.isFinite(Number(nextLot?.purchaseCost))) return Number(nextLot.purchaseCost);
+                    if (Number.isFinite(Number(syncedItem?.purchaseCost))) return Number(syncedItem.purchaseCost);
+                    const storeProduct = appData.storeProducts?.[item.sourceProductId];
+                    return Number.isFinite(Number(storeProduct?.purchaseCost)) ? Number(storeProduct.purchaseCost) : 0;
+                }
+                return Number.isFinite(Number(item.purchaseCost)) ? Number(item.purchaseCost) : 0;
+            }
+
+            function getLossSelectedLotOption() {
+                const select = document.getElementById('loss-lot-select');
+                return select?.selectedOptions?.[0] || null;
+            }
+
+            function getLossSelectedMode() {
+                return document.querySelector('input[name="loss-unit"]:checked')?.value || 'units';
+            }
+
+            function getLossRequestedQuantities() {
+                const opt = getLossSelectedLotOption();
+                const rawQty = parseInt(document.getElementById('loss-quantity')?.value, 10) || 0;
+                const stockPackages = parseNonNegativeInteger(opt?.dataset.qty, 0);
+                const unitsPerPackage = Math.max(parseInt(opt?.dataset.upc, 10) || 1, 1);
+                const unitMode = getLossSelectedMode();
+
+                if (!opt || !rawQty) {
+                    return {
+                        rawQty,
+                        unitMode,
+                        stockPackages,
+                        unitsPerPackage,
+                        stockChange: 0,
+                        totalUnits: 0,
+                        error: ''
+                    };
+                }
+
+                if (unitMode === 'cartons') {
+                    const stockChange = rawQty;
+                    const totalUnits = rawQty * unitsPerPackage;
+                    if (stockPackages > 0 && stockChange > stockPackages) {
+                        return {
+                            rawQty,
+                            unitMode,
+                            stockPackages,
+                            unitsPerPackage,
+                            stockChange,
+                            totalUnits,
+                            error: 'Quantité supérieure au stock disponible.'
+                        };
+                    }
+                    return {
+                        rawQty,
+                        unitMode,
+                        stockPackages,
+                        unitsPerPackage,
+                        stockChange,
+                        totalUnits,
+                        error: ''
+                    };
+                }
+
+                if (unitsPerPackage > 1 && rawQty % unitsPerPackage !== 0) {
+                    return {
+                        rawQty,
+                        unitMode,
+                        stockPackages,
+                        unitsPerPackage,
+                        stockChange: 0,
+                        totalUnits: rawQty,
+                        error: `La quantité doit être un multiple de ${unitsPerPackage} unité(s).`
+                    };
+                }
+
+                const stockChange = unitsPerPackage > 1 ? (rawQty / unitsPerPackage) : rawQty;
+                if (stockPackages > 0 && stockChange > stockPackages) {
+                    return {
+                        rawQty,
+                        unitMode,
+                        stockPackages,
+                        unitsPerPackage,
+                        stockChange,
+                        totalUnits: rawQty,
+                        error: 'Quantité supérieure au stock disponible.'
+                    };
+                }
+
+                return {
+                    rawQty,
+                    unitMode,
+                    stockPackages,
+                    unitsPerPackage,
+                    stockChange,
+                    totalUnits: rawQty,
+                    error: ''
+                };
+            }
+
+            function updateLossQuantityConstraints() {
+                const qtyInput = document.getElementById('loss-quantity');
+                const hintEl = document.getElementById('loss-qty-max-hint');
+                const opt = getLossSelectedLotOption();
+                if (!qtyInput || !hintEl || !opt) return;
+
+                const stockPackages = parseNonNegativeInteger(opt.dataset.qty, 0);
+                const unitsPerPackage = Math.max(parseInt(opt.dataset.upc, 10) || 1, 1);
+                const stockLabel = (opt.dataset.stockLabel || 'paquet').toString().trim() || 'paquet';
+                const unitMode = getLossSelectedMode();
+
+                const maxQty = unitMode === 'cartons'
+                    ? stockPackages
+                    : stockPackages * unitsPerPackage;
+
+                if (maxQty > 0) {
+                    qtyInput.max = maxQty;
+                    qtyInput.removeAttribute('data-zero-stock');
+                } else {
+                    qtyInput.removeAttribute('max');
+                    qtyInput.setAttribute('data-zero-stock', '1');
+                }
+
+                if (unitMode === 'cartons') {
+                    hintEl.textContent = maxQty > 0
+                        ? `(stock : ${maxQty} ${stockLabel}${maxQty > 1 ? 's' : ''})`
+                        : '(stock : 0 — correction possible)';
+                } else {
+                    hintEl.textContent = maxQty > 0
+                        ? `(stock : ${maxQty} unité${maxQty > 1 ? 's' : ''})`
+                        : '(stock : 0 — correction possible)';
+                }
             }
 
             function lossGetSourceProducts() {
@@ -11981,8 +12140,8 @@
 
                 let products = lossGetSourceProducts().filter(p => {
                     if (!q) return true;
-                    const name = (p.name || '').toLowerCase();
-                    const ref  = (p.reference || p.sku || '').toLowerCase();
+                    const name = getLossProductLabel(p, source).toLowerCase();
+                    const ref  = ((source === 'boutique' ? (p.variantCode || p.name) : (p.baseProductCode || p.reference || p.sku)) || '').toLowerCase();
                     return name.includes(q) || ref.includes(q);
                 });
 
@@ -11992,7 +12151,7 @@
                     const bqty = lossGetItemQty(b, source);
                     if (bqty > 0 && aqty === 0) return 1;
                     if (aqty > 0 && bqty === 0) return -1;
-                    return (a.name || '').localeCompare(b.name || '', 'fr');
+                    return getLossProductLabel(a, source).localeCompare(getLossProductLabel(b, source), 'fr');
                 });
 
                 const shown = products.slice(0, 15);
@@ -12012,23 +12171,25 @@
                 dd.innerHTML = totalLabel + shown.map(p => {
                     const qty = lossGetItemQty(p, source);
                     const hasStock = qty > 0;
+                    const displayName = getLossProductLabel(p, source);
                     const stockColor = qty === 0 ? 'text-orange-500 bg-orange-50' :
                                        qty <= 5  ? 'text-orange-500 bg-orange-50' : 'text-emerald-600 bg-emerald-50';
                     const stockIcon = qty === 0
                         ? '<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
                         : '<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>';
-                    const upc = p.unitsPerCarton || 1;
-                    const cartonInfo = upc > 1 ? `<span class="text-gray-300">·</span> <span class="text-gray-400">${upc}u/carton</span>` : '';
-                    const price = p.purchasePrice || p.sellingPrice || 0;
+                    const upc = getLossProductPackageUnits(p, source);
+                    const packageLabel = getLossProductPackageLabel(p, source);
+                    const cartonInfo = upc > 1 ? `<span class="text-gray-300">·</span> <span class="text-gray-400">${upc}u/${escapeHtml(packageLabel.toLowerCase())}</span>` : '';
+                    const price = getLossProductCost(p, source);
                     const priceInfo = price > 0 ? `<span class="text-gray-300">·</span> <span class="text-gray-400">${price.toLocaleString('fr-FR')} FCFA</span>` : '';
                     const disabledAttr = !hasStock ? 'data-loss-no-stock="1"' : '';
                     return `<button type="button" class="w-full text-left px-3 py-2.5 flex items-center gap-3 hover:bg-red-50 transition-colors group border-b border-gray-50 last:border-0"
-                        data-loss-product-id="${p.id}" data-loss-product-name="${p.name || ''}" ${disabledAttr}>
+                        data-loss-product-id="${p.id}" data-loss-product-name="${escapeHtml(displayName)}" ${disabledAttr}>
                         <div class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 text-gray-400 group-hover:bg-red-100 transition-colors">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
                         </div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-sm font-semibold text-gray-800 group-hover:text-red-700 truncate">${p.name || '—'}</p>
+                            <p class="text-sm font-semibold text-gray-800 group-hover:text-red-700 truncate">${escapeHtml(displayName)}</p>
                             <div class="flex items-center gap-1.5 mt-0.5">
                                 ${cartonInfo} ${priceInfo}
                             </div>
@@ -12054,41 +12215,38 @@
                 const source = document.querySelector('input[name="loss-source"]:checked')?.value || 'magasin';
                 const sel = document.getElementById('loss-lot-select');
                 const wrap = document.getElementById('loss-lot-wrap');
+                if (!sel || !wrap) return;
 
                 if (source === 'magasin') {
-                    // Pour le magasin, les mouvements d'entrée servent de "lots"
-                    const entries = Object.values(appData.storeMovements || {})
-                        .filter(m => m.productId === productId && m.type === 'entry' && (m.quantity || 0) > 0)
-                        .sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
-
-                    if (!entries.length) {
-                        // Fallback : produit direct
-                        const prod = appData.storeProducts?.[productId];
-                        if (prod) {
-                            sel.innerHTML = `<option value="${productId}" data-qty="${prod.quantity}" data-cost="${prod.purchasePrice || 0}" data-upc="${prod.unitsPerCarton || 1}">Stock principal (${prod.quantity} unités)</option>`;
-                            wrap.classList.remove('hidden');
-                            lossOnLotChange();
-                        }
+                    const prod = appData.storeProducts?.[productId];
+                    if (!prod) {
+                        sel.innerHTML = '<option value="">Aucun stock disponible</option>';
+                        wrap.classList.remove('hidden');
+                        updateLossQuantityConstraints();
+                        updateLossConfirmButton();
                         return;
                     }
-
-                    sel.innerHTML = entries.map(m => {
-                        const prod = appData.storeProducts?.[productId];
-                        const cost = prod?.purchasePrice || 0;
-                        const upc = prod?.unitsPerCarton || 1;
-                        const date = new Date(m.date || m.createdAt || 0).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
-                        return `<option value="${m.id}" data-qty="${prod?.quantity || 0}" data-cost="${cost}" data-upc="${upc}">Entrée ${date} (${prod?.quantity || 0} en stock)</option>`;
-                    }).join('');
+                    const stockQty = parseNonNegativeInteger(prod.quantityInStore, 0);
+                    const packageLabel = getLossProductPackageLabel(prod, source);
+                    const unitsPerPackage = getLossProductPackageUnits(prod, source);
+                    const purchaseCost = getLossProductCost(prod, source);
+                    sel.innerHTML = `<option value="${productId}" data-qty="${stockQty}" data-cost="${purchaseCost}" data-upc="${unitsPerPackage}" data-stock-label="${escapeHtml(packageLabel)}">Stock principal (${stockQty} ${escapeHtml(packageLabel.toLowerCase())}${stockQty > 1 ? 's' : ''})</option>`;
                 } else {
-                    // Boutique : produit shopStock direct — utiliser quantityInShop
-                    const shopItem = Object.values(appData.shopStock || {}).find(p => p.id === productId || p.sourceProductId === productId);
-                    if (shopItem) {
-                        const storeProduct = appData.storeProducts?.[shopItem.sourceProductId];
-                        const cost = storeProduct?.purchasePrice || 0;
-                        const upc = storeProduct?.unitsPerCarton || shopItem.unitsPerCarton || 1;
-                        // quantityInShop = stock réel de la boutique
-                        const realQty = parseInt(shopItem.quantityInShop ?? shopItem.quantity ?? 0, 10) || 0;
-                        sel.innerHTML = `<option value="${shopItem.id}" data-qty="${realQty}" data-cost="${cost}" data-upc="${upc}">Stock boutique (${realQty} unités)</option>`;
+                    const shopItem = appData.shopStock?.[productId] || null;
+                    const syncedItem = syncShopItemLotState(shopItem);
+                    const packageLabel = getLossProductPackageLabel(syncedItem, source);
+                    const unitsPerPackage = getLossProductPackageUnits(syncedItem, source);
+                    const lots = Array.isArray(syncedItem?.lotQueue)
+                        ? syncedItem.lotQueue.filter(lot => lot.status !== SHOP_LOT_STATUS_CANCELLED && (Number(lot.remainingQuantity) || 0) > 0)
+                        : [];
+                    if (lots.length) {
+                        sel.innerHTML = lots.map(lot => {
+                            const remaining = parseNonNegativeInteger(lot.remainingQuantity, 0);
+                            const statusLabel = lot.status === SHOP_LOT_STATUS_PENDING_VALIDATION
+                                ? 'validation requise'
+                                : (lot.status === SHOP_LOT_STATUS_ACTIVE ? 'actif' : 'programmé');
+                            return `<option value="${lot.id}" data-qty="${remaining}" data-cost="${Number.isFinite(Number(lot.purchaseCost)) ? Number(lot.purchaseCost) : getLossProductCost(syncedItem, source)}" data-upc="${unitsPerPackage}" data-stock-label="${escapeHtml(packageLabel)}" data-shop-product-id="${syncedItem.id}" data-lot-label="${escapeHtml(lot.label)}">${escapeHtml(lot.label)} · ${remaining} ${escapeHtml(packageLabel.toLowerCase())}${remaining > 1 ? 's' : ''} · ${statusLabel}</option>`;
+                        }).join('');
                     } else {
                         sel.innerHTML = '<option value="">Aucun lot disponible</option>';
                     }
@@ -12104,29 +12262,20 @@
             function lossOnLotChange() {
                 const opt = document.getElementById('loss-lot-select').selectedOptions[0];
                 if (!opt || !opt.value) return;
-                const qty = parseInt(opt.dataset.qty) || 0;
-                const upc = parseInt(opt.dataset.upc) || 1;
+                const upc = Math.max(parseInt(opt.dataset.upc, 10) || 1, 1);
+                const stockLabel = (opt.dataset.stockLabel || 'paquet').toString().trim() || 'paquet';
+                const source = document.querySelector('input[name="loss-source"]:checked')?.value || 'magasin';
 
                 // Unités
                 const unitWrap = document.getElementById('loss-unit-wrap');
                 unitWrap.classList.remove('hidden');
                 const cartonLabel = document.getElementById('loss-unit-carton-label-text');
-                if (cartonLabel) cartonLabel.textContent = `Cartons (${upc} u/carton)`;
-                // Si upc=1 cacher l'option carton
+                if (cartonLabel) {
+                    cartonLabel.textContent = `${source === 'magasin' ? stockLabel : stockLabel} (${upc} u/${stockLabel.toLowerCase()})`;
+                }
                 document.getElementById('loss-unit-cartons-label').classList.toggle('hidden', upc <= 1);
                 if (upc <= 1) document.getElementById('loss-unit-units').checked = true;
 
-                // Quantité — pas de max strict (on permet les corrections sur stock à 0)
-                const qtyInput = document.getElementById('loss-quantity');
-                if (qty > 0) {
-                    qtyInput.max = qty;
-                    qtyInput.removeAttribute('data-zero-stock');
-                } else {
-                    qtyInput.removeAttribute('max');
-                    qtyInput.setAttribute('data-zero-stock', '1');
-                }
-                const hintEl = document.getElementById('loss-qty-max-hint');
-                if (hintEl) hintEl.textContent = qty > 0 ? `(stock : ${qty})` : '(stock : 0 — correction possible)';
                 document.getElementById('loss-qty-wrap').classList.remove('hidden');
 
                 // Motif + note
@@ -12136,17 +12285,17 @@
                 document.getElementById('loss-auth-wrap').classList.remove('hidden');
 
                 lossCheckAutoAuth();
+                updateLossQuantityConstraints();
                 lossUpdateEstimatedValue();
+                updateLossConfirmButton();
             }
 
             function lossUpdateEstimatedValue() {
-                const opt = document.getElementById('loss-lot-select').selectedOptions[0];
+                const opt = getLossSelectedLotOption();
                 if (!opt) return;
                 const cost = parseFloat(opt.dataset.cost) || 0;
-                const upc  = parseInt(opt.dataset.upc) || 1;
-                const qty  = parseInt(document.getElementById('loss-quantity').value) || 0;
-                const unit = document.querySelector('input[name="loss-unit"]:checked')?.value || 'units';
-                const totalUnits = unit === 'cartons' ? qty * upc : qty;
+                const quantities = getLossRequestedQuantities();
+                const totalUnits = quantities.totalUnits;
                 const value = totalUnits * cost;
                 const valEl = document.getElementById('loss-estimated-value');
                 if (valEl) valEl.textContent = cost > 0 ? formatCurrency(value) : 'Non définie (coût inconnu)';
@@ -12165,8 +12314,9 @@
                 }
                 const hasLot = !!(lotSel && lotSel.value);
 
-                const hasQty = (parseInt(document.getElementById('loss-quantity').value) || 0) > 0;
-                btn.disabled = !(hasProduct && hasLot && hasQty && lossModalApproval);
+                const quantities = getLossRequestedQuantities();
+                const hasQty = quantities.rawQty > 0;
+                btn.disabled = !(hasProduct && hasLot && hasQty && lossModalApproval && !quantities.error);
             }
 
             // ── Soumission ─────────────────────────────────────────────────
@@ -12182,24 +12332,35 @@
                 // Fallback : prendre la première option disponible si rien n'est sélectionné
                 if (lotSel && !lotSel.value && lotSel.options.length > 0) lotSel.selectedIndex = 0;
                 const lotId = lotSel?.value || productId;
-                const opt = lotSel?.selectedOptions[0];
-                const unit = document.querySelector('input[name="loss-unit"]:checked')?.value || 'units';
-                const qty = parseInt(document.getElementById('loss-quantity').value) || 0;
-                const upc = parseInt(opt?.dataset.upc) || 1;
+                const opt = getLossSelectedLotOption();
+                const unit = getLossSelectedMode();
+                const qty = parseInt(document.getElementById('loss-quantity').value, 10) || 0;
                 const cost = parseFloat(opt?.dataset.cost) || 0;
                 const reason = document.getElementById('loss-reason').value;
                 const note = document.getElementById('loss-note').value.trim();
-                const totalUnits = unit === 'cartons' ? qty * upc : qty;
+                const quantities = getLossRequestedQuantities();
+                if (!productId || !opt || !qty) {
+                    showSuccessToast("Veuillez sélectionner un produit, un lot et une quantité.");
+                    return;
+                }
+                if (quantities.error) {
+                    showSuccessToast(quantities.error);
+                    return;
+                }
+                const totalUnits = quantities.totalUnits;
+                const stockChange = quantities.stockChange;
                 const estimatedValue = totalUnits * cost;
-
-                const prodName = appData.storeProducts?.[productId]?.name
-                    || Object.values(appData.shopStock || {}).find(p => p.id === productId)?.name
-                    || '';
+                const sourceProduct = source === 'magasin'
+                    ? appData.storeProducts?.[productId]
+                    : appData.shopStock?.[productId];
+                const prodName = getLossProductLabel(sourceProduct, source);
 
                 const lossData = {
                     source, boutiqueId: boutiqueId || null,
                     productId, productName: prodName,
                     lotId, unit, quantity: qty, reason, note,
+                    totalUnits,
+                    stockChange,
                     estimatedValue: Math.round(estimatedValue),
                     currency: 'CFA',
                     approvedBy: lossModalApproval,
@@ -12212,36 +12373,81 @@
                 btn.textContent = 'Enregistrement…';
 
                 try {
-                    const { push, ref: fbRef, update } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js');
-                    const lossKey = push(fbRef(db, `${dbBasePath}/losses`)).key;
+                    const lossKey = push(ref(db, `${dbBasePath}/losses`)).key;
                     const updates = {};
                     updates[`${dbBasePath}/losses/${lossKey}`] = lossData;
+                    const now = new Date().toISOString();
+                    const lotNotifications = [];
 
-                    // Réduire le stock
                     if (source === 'magasin') {
                         const prod = appData.storeProducts?.[productId];
                         if (prod) {
-                            const newQty = Math.max(0, (prod.quantity || 0) - totalUnits);
-                            updates[`${dbBasePath}/storeProducts/${productId}/quantity`] = newQty;
+                            const oldStock = Number(prod.quantityInStore) || 0;
+                            const newQty = Math.max(0, oldStock - stockChange);
+                            updates[`${dbBasePath}/storeProducts/${productId}/quantityInStore`] = newQty;
+                            updates[`${dbBasePath}/storeProducts/${productId}/updatedAt`] = now;
+                            const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
+                            updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
+                                id: moveKey,
+                                productId,
+                                productName: prod.name || prodName,
+                                storeId: resolveStoreId(prod.storeId) || getActiveStoreId(),
+                                type: "Ajustement",
+                                quantityChange: stockChange,
+                                oldStock,
+                                newStock: newQty,
+                                comment: `Déclaration de perte · ${getLossReasonLabel(reason)}${note ? ` · ${note}` : ''}`,
+                                date: { ".sv": "timestamp" },
+                                userEmail: currentUser?.email || '',
+                                userName: currentUserData?.fullName || currentUser?.email || '',
+                                status: EXIT_STATUS_APPROVED,
+                                updatedAt: now
+                            };
                         }
                     } else {
-                    // Réduire le stock boutique (quantityInShop)
-                        const shopItem = Object.values(appData.shopStock || {}).find(p => p.id === lotId || p.id === productId);
+                        const shopItem = appData.shopStock?.[productId];
                         if (shopItem) {
-                            const currentQty = parseInt(shopItem.quantityInShop ?? shopItem.quantity ?? 0, 10) || 0;
-                            const newQty = Math.max(0, currentQty - totalUnits);
-                            updates[`${dbBasePath}/shopStock/${shopItem.id}/quantityInShop`] = newQty;
+                            const reservation = consumeShopLotQuantity(shopItem, stockChange, {
+                                preferredLotId: lotId,
+                                allowFallbackToActive: false
+                            });
+                            if (!reservation) {
+                                throw new Error('Stock boutique insuffisant sur le lot sélectionné.');
+                            }
+                            const updatedShopProduct = applyShopItemStateToUpdates(updates, shopItem.id, reservation.updatedItem, now);
+                            registerShopLotTransition(lotNotifications, shopItem, reservation.transition);
+                            const oldStock = Number(shopItem.quantityInShop) || 0;
+                            const newStock = Number(updatedShopProduct.quantityInShop) || 0;
+                            const moveKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
+                            updates[`${dbBasePath}/shopMovements/${moveKey}`] = {
+                                id: moveKey,
+                                shopProductId: shopItem.id,
+                                productName: getShopItemDisplayName(shopItem),
+                                boutiqueId: resolveBoutiqueId(shopItem.boutiqueId),
+                                boutiqueName: getBoutiqueName(resolveBoutiqueId(shopItem.boutiqueId)),
+                                type: "Ajustement",
+                                quantityChange: stockChange,
+                                oldStock,
+                                newStock,
+                                comment: `Déclaration de perte · ${opt?.dataset?.lotLabel || lotId} · ${getLossReasonLabel(reason)}${note ? ` · ${note}` : ''}`,
+                                date: { ".sv": "timestamp" },
+                                userEmail: currentUser?.email || '',
+                                userName: currentUserData?.fullName || currentUser?.email || '',
+                                status: EXIT_STATUS_APPROVED,
+                                updatedAt: now
+                            };
                         }
                     }
 
-                    await update(fbRef(db), updates);
+                    await update(ref(db), updates);
                     closeLossModal();
-                    showToast && showToast(`Perte de ${totalUnits} unité(s) enregistrée.`, 'success');
+                    showSuccessToast(`Perte de ${totalUnits} unité(s) enregistrée.`);
+                    showShopLotTransitionNotifications(lotNotifications);
                 } catch (err) {
                     console.error('[Loss] Erreur:', err);
                     btn.disabled = false;
                     btn.textContent = 'Confirmer la perte';
-                    showToast && showToast('Erreur lors de l\'enregistrement.', 'error');
+                    showSuccessToast("Erreur lors de l'enregistrement de la perte.");
                 }
             }
 
@@ -12338,6 +12544,7 @@
 
                 // Unité change
                 document.querySelectorAll('input[name="loss-unit"]').forEach(r => r.addEventListener('change', () => {
+                    updateLossQuantityConstraints();
                     lossUpdateEstimatedValue();
                     updateLossConfirmButton();
                 }));
