@@ -3141,7 +3141,7 @@
                         </div>
                         <div>
                             <label for="product-base-unit-label" class="block text-sm font-medium text-gray-700">Unité de base *</label>
-                            <input type="text" id="product-base-unit-label" placeholder="Ex: unité, sac, bouteille"
+                            <input type="text" id="product-base-unit-label" list="base-unit-suggestions" placeholder="Ex: Pièce, Kg, Litre"
                                 class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
                                 required>
                         </div>
@@ -3192,9 +3192,9 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label for="price-packaging-base-unit-label" class="block text-sm font-medium text-gray-700">Unité de base *</label>
-                        <input type="text" id="price-packaging-base-unit-label"
+                        <input type="text" id="price-packaging-base-unit-label" list="base-unit-suggestions"
                             class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
-                            placeholder="Ex: unité, sac, bouteille">
+                            placeholder="Ex: Pièce, Kg, Litre">
                     </div>
                     <div class="flex items-end justify-start md:justify-end">
                         <button type="button" id="price-packaging-add-button"
@@ -3345,6 +3345,29 @@
             </div>
         </div>
     </div>
+
+    <datalist id="base-unit-suggestions">
+        <option value="Pièce"></option>
+        <option value="Kg"></option>
+        <option value="Litre"></option>
+        <option value="Mètre"></option>
+        <option value="Gramme"></option>
+        <option value="Ml"></option>
+        <option value="Personnalisée"></option>
+    </datalist>
+
+    <datalist id="packaging-label-suggestions">
+        <option value="Carton"></option>
+        <option value="Douzaine"></option>
+        <option value="Sachet"></option>
+        <option value="Kg"></option>
+        <option value="Litre"></option>
+        <option value="Paquet"></option>
+        <option value="Boîte"></option>
+        <option value="Lot"></option>
+        <option value="Palette"></option>
+        <option value="Personnalisé"></option>
+    </datalist>
 
     <!-- 
       MODAL "ENREGISTRER UNE ENTRÉE"
@@ -10713,9 +10736,34 @@
             }
 
             const DEFAULT_BASE_UNIT_LABEL = 'Unité';
+            const BASE_UNIT_SUGGESTIONS = ['Pièce', 'Kg', 'Litre', 'Mètre', 'Gramme', 'Ml', 'Personnalisée'];
+            const PACKAGING_LABEL_SUGGESTIONS = ['Carton', 'Douzaine', 'Sachet', 'Kg', 'Litre', 'Paquet', 'Boîte', 'Lot', 'Palette', 'Personnalisé'];
+            const PACKAGING_CODE_PRESETS = {
+                carton: 'CTN',
+                douzaine: 'DZN',
+                sachet: 'SCH',
+                kg: 'KG',
+                litre: 'LTR',
+                paquet: 'PQT',
+                'boîte': 'BOX',
+                boite: 'BOX',
+                lot: 'LOT',
+                palette: 'PLT',
+                'personnalisé': 'CUS',
+                personnalise: 'CUS'
+            };
 
             function createPackagingId(prefix = 'pkg') {
                 return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+            }
+
+            function normalizeSuggestionKey(value = '') {
+                return value
+                    .toString()
+                    .trim()
+                    .toLowerCase()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '');
             }
 
             function sanitizePackagingCode(rawValue, fallback = 'PKG') {
@@ -18720,8 +18768,8 @@
                             </label>
                             <label class="block">
                                 <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Nom du format</span>
-                                <input type="text" value="${escapeHtml(packaging.label || '')}" data-packaging-field="label"
-                                    class="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-cyan-500 focus:border-cyan-500" placeholder="Ex: Carton, Sachet, Detail" />
+                                <input type="text" value="${escapeHtml(packaging.label || '')}" data-packaging-field="label" list="packaging-label-suggestions"
+                                    class="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-cyan-500 focus:border-cyan-500" placeholder="Ex: Carton, Douzaine, Lot, Palette" />
                             </label>
                             <label class="block">
                                 <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Nom affiche en boutique</span>
@@ -18799,6 +18847,19 @@
                     allowSell: !!row.querySelector('[data-packaging-field="allowSell"]')?.checked,
                     allowStore: true
                 }));
+            }
+
+            function applyPackagingPresetToRow(row) {
+                if (!row) return;
+                const labelInput = row.querySelector('[data-packaging-field="label"]');
+                const codeInput = row.querySelector('[data-packaging-field="code"]');
+                if (!labelInput || !codeInput) return;
+                const presetCode = PACKAGING_CODE_PRESETS[normalizeSuggestionKey(labelInput.value)];
+                if (!presetCode) return;
+                const currentCode = (codeInput.value || '').trim().toUpperCase();
+                if (!currentCode || /^PKG\d*$/i.test(currentCode)) {
+                    codeInput.value = presetCode;
+                }
             }
 
             function validatePackagingEntries(entries = []) {
@@ -23801,6 +23862,10 @@
                     }
                     updatePricingAccessState();
                 });
+                newProductPackagingsList.addEventListener('change', (event) => {
+                    if (!event.target.matches('[data-packaging-field="label"]')) return;
+                    applyPackagingPresetToRow(event.target.closest('[data-packaging-row]'));
+                });
             }
             if (pricePackagingsList) {
                 pricePackagingsList.addEventListener('click', (event) => {
@@ -23812,6 +23877,10 @@
                         renderPackagingEditorList(pricePackagingsList, [buildPackagingDraft()], 'price-modal');
                     }
                     updatePricingAccessState();
+                });
+                pricePackagingsList.addEventListener('change', (event) => {
+                    if (!event.target.matches('[data-packaging-field="label"]')) return;
+                    applyPackagingPresetToRow(event.target.closest('[data-packaging-row]'));
                 });
             }
 
