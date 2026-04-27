@@ -6894,41 +6894,21 @@
 
             function renderTransferBreakdownInputs(product, plan = null) {
                 if (!transferBreakdownList) return;
-                const packageRefs = getAvailablePackageTypes(product, { usage: 'transfer' });
-                const packagings = packageRefs
-                    .map(ref => findPackagingByRef(product, ref))
-                    .filter(Boolean)
-                    .sort((a, b) => b.unitCount - a.unitCount);
-                const autoFillCode = plan?.autoFillPackagingCode || (packagings.length
-                    ? [...packagings].sort((a, b) => a.unitCount - b.unitCount)[0]?.code
-                    : null);
-                transferBreakdownList.innerHTML = packagings
-                    .filter(packaging => packaging.code !== autoFillCode)
-                    .map(packaging => {
-                        const maxQty = Math.max(Math.floor((plan?.totalUnits || 0) / Math.max(packaging.unitCount, 1)), 0);
-                        const curVal = plan?.breakdown?.[packaging.code] || 0;
-                        return `
-                        <div class="rounded-2xl border border-slate-200 bg-white/80 p-3">
-                            <label class="block text-xs font-semibold uppercase tracking-wide text-slate-500" for="transfer-breakdown-${packaging.code}">
-                                ${escapeHtml(packaging.label)}
-                            </label>
-                            <p class="mt-1 text-[11px] text-slate-400">1 ${escapeHtml(packaging.label.toLowerCase())} = ${packaging.unitCount} unité(s) · max : <span class="font-semibold text-slate-600">${maxQty}</span></p>
-                            <div class="mt-2 flex items-center gap-2">
-                                <button type="button"
-                                    data-transfer-stepper-dec="${packaging.code}"
-                                    class="w-9 h-9 shrink-0 flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 text-lg font-bold hover:bg-slate-100 hover:border-slate-300 transition disabled:opacity-40"
-                                    ${curVal <= 0 ? 'disabled' : ''}>−</button>
-                                <input type="number" id="transfer-breakdown-${packaging.code}"
-                                    value="${curVal}" min="0" max="${maxQty}" step="1"
-                                    data-transfer-package-ref="${packaging.code}"
-                                    class="w-full h-9 rounded-xl border border-slate-200 bg-white px-3 text-center text-slate-800 text-sm font-semibold shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
-                                <button type="button"
-                                    data-transfer-stepper-inc="${packaging.code}"
-                                    class="w-9 h-9 shrink-0 flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 text-lg font-bold hover:bg-slate-100 hover:border-slate-300 transition disabled:opacity-40"
-                                    ${curVal >= maxQty ? 'disabled' : ''}>+</button>
-                            </div>
-                        </div>`;
-                    }).join('');
+                const totalUnits = parseNonNegativeInteger(plan?.totalUnits, 0);
+                const baseUnitLabel = getProductBaseUnitLabel(product);
+                transferBreakdownList.innerHTML = `
+                    <div class="rounded-2xl border border-cyan-100 bg-cyan-50/70 p-4">
+                        <p class="text-sm font-semibold text-cyan-900">Import en bloc</p>
+                        <p class="mt-1 text-xs text-cyan-700">
+                            La boutique reçoit désormais ce produit en stock unifié.
+                        </p>
+                        <p class="mt-2 text-xs text-cyan-700">
+                            Quantité envoyée: <span class="font-semibold">${escapeHtml(formatBaseUnits(totalUnits, baseUnitLabel))}</span>
+                        </p>
+                        <p class="mt-1 text-xs text-cyan-700">
+                            Les conditionnements seront choisis uniquement au moment de la vente.
+                        </p>
+                    </div>`;
             }
 
             function seedDefaultTransferBreakdown() {
@@ -6944,8 +6924,8 @@
                     : currentValues);
                 renderTransferBreakdownInputs(sourceProduct, seedPlan);
                 if (transferBreakdownAutoFillInput) {
-                    transferBreakdownAutoFillInput.value = seedPlan.autoFillPackagingLabel
-                        ? `${seedPlan.autoFillQuantity || 0} ${seedPlan.autoFillPackagingLabel} (${seedPlan.autoFillUnits} unité(s))`
+                    transferBreakdownAutoFillInput.value = seedPlan.totalUnits > 0
+                        ? formatBaseUnits(seedPlan.totalUnits, getProductBaseUnitLabel(sourceProduct))
                         : '—';
                 }
             }
@@ -7013,8 +6993,8 @@
                 const plan = computeTransferPackagingPlan(sourceProduct, effectiveSourceCartons, collectTransferBreakdownValues());
                 renderTransferBreakdownInputs(sourceProduct, plan);
                 const resolvedPlan = computeTransferPackagingPlan(sourceProduct, effectiveSourceCartons, collectTransferBreakdownValues());
-                const autoFillSummary = resolvedPlan.autoFillPackagingLabel
-                    ? `${resolvedPlan.autoFillQuantity || 0} ${resolvedPlan.autoFillPackagingLabel} (${resolvedPlan.autoFillUnits} unité(s))`
+                const autoFillSummary = resolvedPlan.totalUnits > 0
+                    ? formatBaseUnits(resolvedPlan.totalUnits, getProductBaseUnitLabel(sourceProduct))
                     : '—';
                 if (transferBreakdownAutoFillInput) transferBreakdownAutoFillInput.value = autoFillSummary;
                 if (transferSourcePackageDisplay) {
@@ -7026,25 +7006,22 @@
                 if (transferTotalUnitsDisplay) transferTotalUnitsDisplay.textContent = `${resolvedPlan.totalUnits} unité(s) a envoyer`;
                 if (transferSimpleSummary) {
                     const sourceLabel = sourcePackaging?.label?.toLowerCase() || 'format';
-                    const targetSummary = resolvedPlan.summary !== 'Aucune' ? resolvedPlan.summary : 'aucune repartition pour le moment';
+                    const targetSummary = resolvedPlan.summary !== 'Aucune'
+                        ? resolvedPlan.summary
+                        : formatBaseUnits(0, getProductBaseUnitLabel(sourceProduct));
                     transferSimpleSummary.textContent = effectiveSourceCartons > 0
                         ? `Vous sortez ${effectiveSourceCartons} ${sourceLabel}${effectiveSourceCartons > 1 ? 's' : ''} du magasin. La boutique recevra : ${targetSummary}.`
                         : 'Saisissez une quantite a envoyer depuis le magasin.';
                 }
                 if (transferSimpleDetail) {
-                    const autoFillLabel = resolvedPlan.autoFillPackagingLabel ? resolvedPlan.autoFillPackagingLabel.toLowerCase() : '';
                     transferSimpleDetail.textContent = effectiveSourceCartons > 0
-                        ? `Le total de cet envoi correspond a ${resolvedPlan.totalUnits} unite(s). ${autoFillLabel ? `Le reste non saisi est complete automatiquement en ${autoFillLabel}.` : ''}`.trim()
+                        ? `Le stock boutique sera enregistre en unite de base. Les conditionnements seront utilises uniquement a la vente.`
                         : '';
                 }
                 if (transferBreakdownSummary) transferBreakdownSummary.textContent = resolvedPlan.summary;
 
                 if (transferBreakdownHint) {
-                    if (!resolvedPlan.autoFillPackagingLabel) {
-                        transferBreakdownHint.textContent = "Aucun format boutique n'est encore autorise pour ce produit. Completez d'abord le tableau des prix.";
-                    } else {
-                        transferBreakdownHint.textContent = `Vous pouvez remplir seulement les formats que vous voulez. Le reste sera complete automatiquement en ${resolvedPlan.autoFillPackagingLabel.toLowerCase()}.`;
-                    }
+                    transferBreakdownHint.textContent = "Aucun conditionnement n'est demande pour l'import. La conversion se fera uniquement au moment de la vente.";
                 }
 
                 if (transferStockWarning) {
@@ -7053,12 +7030,6 @@
                         warning = "Aucun stock disponible dans le magasin pour ce produit.";
                     } else if (sourceCartons > availableCartons) {
                         warning = `Vous ne pouvez pas sortir plus de ${availableCartons} ${sourcePackaging?.label?.toLowerCase() || 'format'}(s) du magasin pour cet article.`;
-                    } else if (resolvedPlan.isOverflow) {
-                        warning = "La quantite saisie pour la boutique depasse ce que vous avez choisi de sortir du magasin.";
-                    } else if (!resolvedPlan.isValid) {
-                        warning = resolvedPlan.autoFillPackagingLabel
-                            ? `Le reste de cet envoi ne peut pas etre complete proprement en ${resolvedPlan.autoFillPackagingLabel.toLowerCase()}. Ajustez les quantites boutique.`
-                            : "Aucun format boutique disponible pour finaliser cet envoi.";
                     }
                     if (warning) {
                         transferStockWarning.classList.remove('hidden');
@@ -7111,20 +7082,15 @@
                     (!activeStoreId || resolveStoreId(pricingReadyProduct.storeId) === activeStoreId)
                     ? pricingReadyProduct
                     : null;
-                const packageType = shopItem?.packagingType || shopItem?.packageCode || 'detail';
-                const packageUnits = Number(shopItem?.unitsPerPackage) || (resolvedSourceProduct ? getPackageUnits(resolvedSourceProduct, packageType) : 1);
                 const availableCartons = parseNonNegativeInteger(resolvedSourceProduct?.quantityInStore, 0);
                 const unitsPerCarton = resolvedSourceProduct ? getUnitsPerCarton(resolvedSourceProduct) : 1;
                 const availableUnits = availableCartons * unitsPerCarton;
-                const maxPackages = packageUnits > 0 ? Math.floor(availableUnits / packageUnits) : 0;
                 return {
                     sourceProduct: resolvedSourceProduct,
-                    packageType,
-                    packageUnits,
                     unitsPerCarton,
                     availableCartons,
                     availableUnits,
-                    maxPackages
+                    maxPackages: availableCartons
                 };
             }
 
@@ -7155,11 +7121,10 @@
                     return;
                 }
 
-                const { sourceProduct, packageType, packageUnits, unitsPerCarton, availableCartons, availableUnits, maxPackages } = availability;
+                const { sourceProduct, unitsPerCarton, availableCartons, availableUnits, maxPackages } = availability;
                 const sourcePackaging = getPrimaryPackaging(sourceProduct);
-                const requestedUnits = quantity * packageUnits;
-                const requestedCartons = unitsPerCarton > 0 ? (requestedUnits / unitsPerCarton) : 0;
-                const packageLabel = `${getPackageLabel(packageType, sourceProduct)} · ${packageUnits} unité(s)`;
+                const requestedUnits = quantity * unitsPerCarton;
+                const packageLabel = `${sourcePackaging?.label || 'Conditionnement principal'} · ${unitsPerCarton} unité(s)`;
                 const stockLabel = `${availableCartons} ${sourcePackaging?.label || 'source'}(s) · ${availableUnits} unité(s)`;
 
                 if (restockSourceName) restockSourceName.textContent = sourceProduct.name || 'Produit';
@@ -7167,7 +7132,7 @@
                 if (restockSourceStock) restockSourceStock.textContent = stockLabel;
                 if (restockCartonEquivalent) {
                     restockCartonEquivalent.value = quantity > 0
-                        ? `${requestedCartons.toFixed(2).replace(/\.00$/, '')} ${sourcePackaging?.label || 'source'}(s)`
+                        ? formatBaseUnits(requestedUnits, getProductBaseUnitLabel(sourceProduct))
                         : '—';
                 }
                 if (restockSourceInfo) restockSourceInfo.classList.remove('hidden');
@@ -7185,9 +7150,7 @@
                 if (maxPackages <= 0) {
                     warning = "Aucun stock magasin disponible pour ce produit.";
                 } else if (quantity > 0 && quantity > maxPackages) {
-                    warning = `Vous pouvez ajouter au maximum ${maxPackages} ${getPackageLabel(packageType, sourceProduct).toLowerCase()}(s).`;
-                } else if (quantity > 0 && requestedUnits % unitsPerCarton !== 0) {
-                    warning = "La quantité demandée ne correspond pas à un nombre entier de conditionnements source.";
+                    warning = `Vous pouvez ajouter au maximum ${maxPackages} ${sourcePackaging?.label?.toLowerCase() || 'conditionnement'}(s).`;
                 }
 
                 if (restockStockWarning) {
@@ -7203,7 +7166,7 @@
                 if (warning && maxPackages <= 0) {
                     if (restockSubmitButton) restockSubmitButton.disabled = true;
                 } else {
-                    if (restockSubmitButton) restockSubmitButton.disabled = !quantity || quantity > maxPackages || requestedUnits % unitsPerCarton !== 0;
+                    if (restockSubmitButton) restockSubmitButton.disabled = !quantity || quantity > maxPackages;
                 }
                 clearRestockError();
             }
@@ -7922,7 +7885,8 @@
                     group.items.push({
                         name: sale.productName,
                         quantity: sale.quantity || 0,
-                        total: sale.totalAmount || 0
+                        total: sale.totalAmount || 0,
+                        packageLabel: sale.packageLabel || ''
                     });
                     group.total += sale.totalAmount || 0;
                 });
@@ -7941,7 +7905,10 @@
                 if (customerHistoryTbody) {
                     customerHistoryTbody.innerHTML = groups.map(group => {
                         const itemCount = group.items.reduce((sum, item) => sum + item.quantity, 0);
-                        const itemsLabel = group.items.map(item => `${item.name} x${item.quantity}`).join(', ');
+                        const itemsLabel = group.items.map(item => {
+                            const packageSuffix = item.packageLabel ? ` (${item.packageLabel})` : '';
+                            return `${item.name}${packageSuffix} x${item.quantity}`;
+                        }).join(', ');
                         const paymentStatus = group.paymentStatus || (group.payLater ? 'pay_later' : 'paid');
                         const paymentBadge = formatPaymentStatusBadge(paymentStatus, group.payLater);
                         const isPayLater = paymentStatus === 'pay_later' || group.payLater;
@@ -8056,7 +8023,10 @@
                         name: sale.productName,
                         quantity: sale.quantity || 0,
                         price: sale.sellingPrice || 0,
-                        total: sale.totalAmount || 0
+                        total: sale.totalAmount || 0,
+                        packageLabel: sale.packageLabel || '',
+                        packageUnits: sale.packageUnits || 1,
+                        stockUnits: sale.stockUnits || sale.quantity || 0
                     });
                     group.total += sale.totalAmount || 0;
                     if (sale.comment && !group.comments.includes(sale.comment)) group.comments.push(sale.comment);
@@ -9651,6 +9621,9 @@
                         const itemsHtml = group.items.map(item => {
                             const unitPrice = item.price || (item.total / Math.max(item.quantity, 1));
                             const canRemove = isPayLater && item.saleId;
+                            const packageInfoHtml = item.packageLabel
+                                ? `<p class="text-[11px] font-semibold text-slate-500">${escapeHtml(item.packageLabel)}</p>`
+                                : '';
                             const removeButtonHtml = canRemove ? `
                                 <button type="button" data-history-item-remove="${item.saleId}" data-history-item-group="${group.id}"
                                     class="mt-1 text-xs font-semibold text-red-600 hover:text-red-700">
@@ -9661,10 +9634,13 @@
                                 <div class="flex items-center justify-between text-sm text-gray-700">
                                     <div class="flex items-center gap-3">
                                         <span class="px-2 py-0.5 rounded-lg bg-gray-100 text-xs font-semibold text-gray-500">${item.quantity}x</span>
-                                        <span class="font-semibold text-gray-900">${item.name}</span>
+                                        <div>
+                                            <span class="font-semibold text-gray-900">${item.name}</span>
+                                            ${packageInfoHtml}
+                                        </div>
                                     </div>
                                     <div class="text-right">
-                                        <p class="text-xs text-gray-500">${formatCurrency(unitPrice, group.currency)} / unité</p>
+                                        <p class="text-xs text-gray-500">${formatCurrency(unitPrice, group.currency)} / ${escapeHtml((item.packageLabel || 'unité').toLowerCase())}</p>
                                         <p class="text-sm font-semibold text-gray-900">${formatCurrency(item.total, group.currency)}</p>
                                         ${removeButtonHtml}
                                     </div>
@@ -9847,6 +9823,9 @@
                     const { dateLabel, timeLabel } = formatHistoryDateParts(group.date);
                     const itemsHtml = group.items.map(item => {
                         const unitPrice = item.price || (item.total / Math.max(item.quantity, 1));
+                        const packageInfoHtml = item.packageLabel
+                            ? `<p class="text-[11px] font-semibold text-slate-500">${escapeHtml(item.packageLabel)}</p>`
+                            : '';
                         const removeButtonHtml = item.saleId ? `
                             <button type="button" data-history-item-remove="${item.saleId}" data-history-item-group="${group.id}"
                                 class="mt-1 text-xs font-semibold text-red-600 hover:text-red-700">
@@ -9857,10 +9836,13 @@
                             <div class="flex items-center justify-between text-sm text-gray-700">
                                 <div class="flex items-center gap-3">
                                     <span class="px-2 py-0.5 rounded-lg bg-gray-100 text-xs font-semibold text-gray-500">${item.quantity}x</span>
-                                    <span class="font-semibold text-gray-900">${item.name}</span>
+                                    <div>
+                                        <span class="font-semibold text-gray-900">${item.name}</span>
+                                        ${packageInfoHtml}
+                                    </div>
                                 </div>
                                 <div class="text-right">
-                                    <p class="text-xs text-gray-500">${formatCurrency(unitPrice, group.currency)} / unité</p>
+                                    <p class="text-xs text-gray-500">${formatCurrency(unitPrice, group.currency)} / ${escapeHtml((item.packageLabel || 'unité').toLowerCase())}</p>
                                     <p class="text-sm font-semibold text-gray-900">${formatCurrency(item.total, group.currency)}</p>
                                     ${removeButtonHtml}
                                 </div>
@@ -10129,7 +10111,8 @@
                             name: sale.productName || 'Produit',
                             quantity,
                             price: unitPrice,
-                            total: totalAmount || (unitPrice * quantity)
+                            total: totalAmount || (unitPrice * quantity),
+                            packageLabel: sale.packageLabel || ''
                         }],
                         total: totalAmount || (unitPrice * quantity),
                         currency,
@@ -10156,10 +10139,14 @@
                 const summary = calculateGroupSummary(group);
                 const itemsHtml = group.items.map(item => {
                     const unitPrice = item.price || (item.total / Math.max(item.quantity, 1));
+                    const packageInfoHtml = item.packageLabel
+                        ? `<p class="text-[11px] font-semibold text-slate-500 mt-1">${escapeHtml(item.packageLabel)}</p>`
+                        : '';
                     return `
                         <div class="flex items-center justify-between bg-gray-50 rounded-2xl px-4 py-3">
                             <div>
                                 <p class="text-sm font-semibold text-gray-900">${item.name}</p>
+                                ${packageInfoHtml}
                                 <p class="text-xs text-gray-500">${item.quantity}x ${formatCurrency(unitPrice, group.currency)}</p>
                             </div>
                             <p class="text-sm font-semibold text-gray-900">${formatCurrency(item.total, group.currency)}</p>
@@ -11683,10 +11670,85 @@
             function getShopStockBaseUnits(item, sourceProduct = null) {
                 if (!item) return 0;
                 const syncedItem = syncShopItemLotState(item);
+                if (item?.stockUnitMode === 'base_unit' || item?.stockModelVersion >= 2) {
+                    return Number(syncedItem?.quantityInShop) || 0;
+                }
                 const resolvedSourceProduct = sourceProduct || appData.storeProducts?.[item.sourceProductId] || null;
                 const packageRef = item.packagingType || item.packageCode || null;
                 const unitsPerPackage = Number(item.unitsPerPackage) || getPackageUnits(resolvedSourceProduct, packageRef);
                 return (Number(syncedItem?.quantityInShop) || 0) * Math.max(unitsPerPackage, 1);
+            }
+
+            function getShopItemSourceProduct(item) {
+                return item?.sourceProductId ? (appData.storeProducts?.[item.sourceProductId] || null) : null;
+            }
+
+            function getShopItemSellPackagings(item) {
+                const sourceProduct = getShopItemSourceProduct(item);
+                const packagings = sourceProduct ? getProductPackagings(sourceProduct) : [];
+                const sellable = packagings
+                    .filter(packaging => packaging?.allowSell !== false)
+                    .sort((a, b) => (Number(b.unitCount) || 1) - (Number(a.unitCount) || 1));
+                if (sellable.length) return sellable;
+                const baseUnitLabel = sourceProduct ? getProductBaseUnitLabel(sourceProduct) : DEFAULT_BASE_UNIT_LABEL;
+                return [{
+                    id: 'detail_fallback',
+                    code: 'DTL',
+                    label: baseUnitLabel,
+                    unitCount: 1,
+                    purchaseCost: sourceProduct ? getPackagePurchaseCost(sourceProduct, 'detail') : null,
+                    shopPrice: sourceProduct ? getPackageSellingPrice(sourceProduct, 'detail') : null,
+                    allowSell: true
+                }];
+            }
+
+            function decomposeBaseUnitsByPackagings(totalUnits, packagings = []) {
+                let remaining = Math.max(0, parseNonNegativeInteger(totalUnits, 0));
+                const normalized = [...packagings]
+                    .filter(packaging => Number(packaging?.unitCount) > 0)
+                    .sort((a, b) => (Number(b.unitCount) || 1) - (Number(a.unitCount) || 1));
+                const parts = [];
+
+                normalized.forEach(packaging => {
+                    const unitCount = Number(packaging.unitCount) || 1;
+                    if (remaining < unitCount) return;
+                    const qty = Math.floor(remaining / unitCount);
+                    if (qty <= 0) return;
+                    parts.push({
+                        code: packaging.code || '',
+                        label: packaging.label || DEFAULT_BASE_UNIT_LABEL,
+                        quantity: qty,
+                        unitCount
+                    });
+                    remaining -= qty * unitCount;
+                });
+
+                if (remaining > 0) {
+                    const unitPackaging = normalized.find(packaging => Number(packaging.unitCount) === 1);
+                    parts.push({
+                        code: unitPackaging?.code || 'DTL',
+                        label: unitPackaging?.label || DEFAULT_BASE_UNIT_LABEL,
+                        quantity: remaining,
+                        unitCount: 1
+                    });
+                }
+
+                return parts;
+            }
+
+            function formatShopStockBreakdown(totalUnits, item, options = {}) {
+                const sourceProduct = getShopItemSourceProduct(item);
+                const packagings = sourceProduct ? getShopItemSellPackagings(item) : [];
+                const parts = decomposeBaseUnitsByPackagings(totalUnits, packagings);
+                if (!parts.length) {
+                    return formatBaseUnits(totalUnits, sourceProduct ? getProductBaseUnitLabel(sourceProduct) : DEFAULT_BASE_UNIT_LABEL);
+                }
+                const joiner = options.short ? ' · ' : ' · ';
+                const labels = parts.map(part => `${part.quantity} ${part.label}`);
+                const suffix = options.includeBaseTotal
+                    ? ` (${formatBaseUnits(totalUnits, sourceProduct ? getProductBaseUnitLabel(sourceProduct) : DEFAULT_BASE_UNIT_LABEL)})`
+                    : '';
+                return `${labels.join(joiner)}${suffix}`;
             }
 
             function buildPackageSummaryFromEntries(entries = []) {
@@ -11701,60 +11763,19 @@
                 const sourcePackaging = getPrimaryPackaging(product);
                 const sourceUnits = sourcePackaging?.unitCount || 1;
                 const totalUnits = sourceQty * sourceUnits;
-                const transferableRefs = getAvailablePackageTypes(product, { usage: 'transfer' });
-                const transferablePackagings = transferableRefs
-                    .map(ref => findPackagingByRef(product, ref))
-                    .filter(Boolean)
-                    .sort((a, b) => b.unitCount - a.unitCount);
-                const autoFillPackaging = transferablePackagings.length
-                    ? [...transferablePackagings].sort((a, b) => a.unitCount - b.unitCount)[0]
-                    : null;
-                const breakdown = {};
-                let fixedUnits = 0;
-                let remainingUnitsBudget = totalUnits;
-
-                transferablePackagings.forEach(packaging => {
-                    const ref = packaging.code;
-                    if (autoFillPackaging && ref === autoFillPackaging.code) return;
-                    const requestedQty = parseNonNegativeInteger(rawBreakdown?.[ref], 0);
-                    const maxQty = packaging.unitCount > 0
-                        ? Math.floor(remainingUnitsBudget / packaging.unitCount)
-                        : 0;
-                    const qty = Math.min(requestedQty, Math.max(maxQty, 0));
-                    breakdown[ref] = qty;
-                    fixedUnits += qty * packaging.unitCount;
-                    remainingUnitsBudget -= qty * packaging.unitCount;
-                });
-
-                const remainingUnits = totalUnits - fixedUnits;
-                let autoFillQty = 0;
-                let isDivisible = remainingUnits >= 0;
-                if (autoFillPackaging) {
-                    if (remainingUnits > 0) {
-                        isDivisible = remainingUnits % autoFillPackaging.unitCount === 0;
-                        autoFillQty = isDivisible ? (remainingUnits / autoFillPackaging.unitCount) : 0;
-                    }
-                    breakdown[autoFillPackaging.code] = autoFillQty;
-                }
-
-                const targets = Object.entries(breakdown)
-                    .filter(([, qty]) => qty > 0)
-                    .map(([ref, qty]) => {
-                        const packaging = findPackagingByRef(product, ref);
-                        return packaging ? {
-                            type: packaging.code,
-                            packageCode: packaging.code,
-                            label: packaging.label,
-                            code: getPackageVariantCode(product, packaging.code),
-                            displayName: getPackageDisplayName(product, packaging.code),
-                            quantity: qty,
-                            unitsPerPackage: packaging.unitCount,
-                            totalUnits: qty * packaging.unitCount,
-                            sellingPrice: getPackageSellingPrice(product, packaging.code),
-                            purchaseCost: getPackagePurchaseCost(product, packaging.code)
-                        } : null;
-                    })
-                    .filter(Boolean);
+                const baseUnitLabel = getProductBaseUnitLabel(product);
+                const targets = totalUnits > 0 ? [{
+                    type: 'detail',
+                    packageCode: 'detail',
+                    label: baseUnitLabel,
+                    code: getPackageVariantCode(product, 'detail'),
+                    displayName: product?.name || getPackageDisplayName(product, 'detail'),
+                    quantity: totalUnits,
+                    unitsPerPackage: 1,
+                    totalUnits,
+                    sellingPrice: getPackageSellingPrice(product, 'detail'),
+                    purchaseCost: getPackagePurchaseCost(product, 'detail')
+                }] : [];
 
                 return {
                     cartonQty: sourceQty,
@@ -11762,29 +11783,35 @@
                     sourcePackagingLabel: sourcePackaging?.label || 'Conditionnement principal',
                     unitsPerCarton: sourceUnits,
                     totalUnits,
-                    fixedUnits,
-                    remainingUnits,
-                    autoFillPackagingCode: autoFillPackaging?.code || null,
-                    autoFillPackagingLabel: autoFillPackaging?.label || null,
-                    autoFillUnits: autoFillPackaging?.unitCount || 1,
-                    autoFillQuantity: autoFillQty,
-                    editablePackageRefs: transferablePackagings
-                        .filter(packaging => !autoFillPackaging || packaging.code !== autoFillPackaging.code)
-                        .map(packaging => packaging.code),
-                    isOverflow: remainingUnits < 0,
-                    isValid: remainingUnits >= 0 && !!autoFillPackaging && isDivisible,
-                    breakdown,
+                    fixedUnits: totalUnits,
+                    remainingUnits: 0,
+                    autoFillPackagingCode: 'detail',
+                    autoFillPackagingLabel: baseUnitLabel,
+                    autoFillUnits: 1,
+                    autoFillQuantity: totalUnits,
+                    editablePackageRefs: [],
+                    isOverflow: false,
+                    isValid: totalUnits > 0,
+                    breakdown: { detail: totalUnits },
                     targets,
-                    summary: buildPackageSummaryFromEntries(targets)
+                    summary: formatBaseUnits(totalUnits, baseUnitLabel)
                 };
             }
 
             function getShopItemPackagingLabel(item) {
                 const sourceProduct = appData.storeProducts?.[item?.sourceProductId];
+                if (item?.stockUnitMode === 'base_unit' || item?.stockModelVersion >= 2) {
+                    const packagings = getShopItemSellPackagings(item);
+                    return packagings.map(packaging => packaging.label).join(', ');
+                }
                 return item?.packageLabel || getPackageLabel(item?.packagingType || item?.packageCode || 'detail', sourceProduct);
             }
 
             function getShopItemDisplayName(item) {
+                if (item?.stockUnitMode === 'base_unit' || item?.stockModelVersion >= 2) {
+                    const sourceProduct = getShopItemSourceProduct(item);
+                    return (item?.sourceName || sourceProduct?.name || item?.displayName || item?.name || 'Produit').toString().trim() || 'Produit';
+                }
                 const directDisplayName = (item?.displayName || item?.shopDisplayName || '').toString().trim();
                 if (directDisplayName) return directDisplayName;
                 const packageLabel = (item?.packageLabel || '').toString().trim();
@@ -15174,7 +15201,7 @@
                         option.value = product.id;
                         const isMissingSource = !availability.sourceProduct;
                         option.disabled = isMissingSource || availability.maxPackages <= 0;
-                        option.textContent = `${getShopItemDisplayName(product)} · ${getShopItemPackagingLabel(product)} (Actuellement : ${product.quantityInShop}${isMissingSource ? ' · Source magasin introuvable' : availability.maxPackages <= 0 ? ' · Rupture magasin' : ` · Max: ${availability.maxPackages}`})`;
+                        option.textContent = `${getShopItemDisplayName(product)} (Actuellement : ${formatShopStockBreakdown(getShopStockBaseUnits(product), product, { includeBaseTotal: true })}${isMissingSource ? ' · Source magasin introuvable' : availability.maxPackages <= 0 ? ' · Rupture magasin' : ` · Max: ${availability.maxPackages}`})`;
                         select.appendChild(option);
                     });
                 });
@@ -16296,6 +16323,7 @@
                     return;
                 }
                 const quantity = parseInt(sale.quantity, 10) || 0;
+                const stockUnits = parseNonNegativeInteger(sale.stockUnits, quantity);
                 if (quantity <= 0) return;
                 const movementId = sale.storeMovementId || sale.storeMovementKey || null;
                 const stockReserved = sale.stockReserved === true || !!movementId;
@@ -16721,20 +16749,20 @@
                         const lotState = reconcileShopLotQueueToQuantity(item);
                         const activeLot = lotState.activeLot;
                         const nextLot = lotState.queueLot;
-                        const totalQty = lotState.totalQty;
-                        const activeQty = lotState.activeQty;
-                        const isLowStock = activeQty <= item.alertThreshold;
                         const sourceProduct = appData.storeProducts[item.sourceProductId];
+                        const totalQty = getShopStockBaseUnits(item, sourceProduct);
+                        const activeQty = Number(lotState.activeQty) || 0;
+                        const isLowStock = totalQty <= (Number(item.alertThreshold) || 0);
                         const currency = sourceProduct?.currency || 'CFA';
-                        const sellingPrice = getShopItemEffectiveSellingPrice(item, sourceProduct);
-                        const hasPrice = Number.isFinite(sellingPrice);
-                        const priceDisplay = hasPrice ? formatCurrency(sellingPrice, currency) : '<span class="text-gray-400">—</span>';
+                        const primarySellingPrice = getPackageSellingPrice(sourceProduct, getPrimaryPackaging(sourceProduct)?.code || 'detail');
+                        const hasPrice = Number.isFinite(primarySellingPrice);
+                        const priceDisplay = hasPrice ? formatCurrency(primarySellingPrice, currency) : '<span class="text-gray-400">—</span>';
                         const nextLotSummary = nextLot
                             ? ` · prochain ${nextLot.label} (${nextLot.status === SHOP_LOT_STATUS_PENDING_VALIDATION || nextLot.requiresActivationValidation ? 'validation requise' : 'programmé'})`
                             : '';
                         const lotSummary = activeLot
-                            ? `${activeLot.label} actif · ${activeQty} restant(s)${lotState.queue.length > 1 ? ` · total ${totalQty}` : ''}${nextLotSummary}`
-                            : `${lotState.pendingValidationLot ? `Activation en attente · ${lotState.pendingValidationLot.label}` : 'Aucun lot actif'}${totalQty ? ` · total ${totalQty}` : ''}`;
+                            ? `${activeLot.label} actif · ${formatBaseUnits(activeQty, getProductBaseUnitLabel(sourceProduct))}${nextLotSummary}`
+                            : `${lotState.pendingValidationLot ? `Activation en attente · ${lotState.pendingValidationLot.label}` : 'Aucun lot actif'}${totalQty ? ` · total ${formatBaseUnits(totalQty, getProductBaseUnitLabel(sourceProduct))}` : ''}`;
                         const deleteButtonHtml = canDelete
                             ? `<button class="delete-icon text-gray-400 hover:text-red-500" data-type="shop" data-stock-id="${item.id}">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
@@ -16745,12 +16773,12 @@
                             <tr class="hover:bg-gray-50 ${isLowStock ? 'bg-red-50' : ''}">
                                 <td class="px-6 py-4 text-sm font-medium text-gray-900">
                                     <div>${itemLabel}</div>
-                                    <div class="text-xs text-gray-400">${getShopItemPackagingLabel(item)} · ${Number(item.unitsPerPackage) || 1} unité(s)</div>
+                                    <div class="text-xs text-gray-400">${getShopItemPackagingLabel(item)}</div>
                                     <div class="text-xs text-cyan-700 mt-1">${lotSummary}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${isLowStock ? 'text-red-600' : 'text-gray-700'}">
-                                    ${totalQty}
-                                    <div class="text-xs font-medium ${isLowStock ? 'text-red-500' : 'text-gray-400'}">Actif: ${activeQty}</div>
+                                    ${formatShopStockBreakdown(totalQty, item)}
+                                    <div class="text-xs font-medium ${isLowStock ? 'text-red-500' : 'text-gray-400'}">${formatBaseUnits(totalQty, getProductBaseUnitLabel(sourceProduct))}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${priceDisplay}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.alertThreshold}</td>
@@ -17467,7 +17495,7 @@
                 const filteredMovements = allMovements.filter(move => {
                     const movementBoutiqueId = resolveBoutiqueId(move.boutiqueId || appData.shopStock?.[move.shopProductId]?.boutiqueId);
                     if (activeBoutique && movementBoutiqueId !== activeBoutique) return false;
-                    const productName = move.productName || appData.shopStock?.[move.shopProductId]?.name || '';
+                    const productName = move.productName || getShopItemDisplayName(appData.shopStock?.[move.shopProductId]) || '';
                     if (!matchesTextFilter(productName, filters.product)) return false;
 
                     const typeLabel = move.type || '';
@@ -17502,9 +17530,11 @@
                     const qty = parseInt(move.quantityChange, 10) || 0;
                     const isAdjustment = move.type === 'Ajustement';
                     const changeValue = isEntry ? Math.abs(qty) : (isAdjustment ? qty : -Math.abs(qty));
-                    const changeLabel = changeValue >= 0 ? `+${Math.abs(changeValue)}` : `-${Math.abs(changeValue)}`;
+                    const shopItem = appData.shopStock?.[move.shopProductId];
+                    const quantityLabel = formatShopStockBreakdown(Math.abs(qty), shopItem);
+                    const changeLabel = `${changeValue >= 0 ? '+' : '-'}${formatShopStockBreakdown(Math.abs(changeValue), shopItem)}`;
                     const changeClass = changeValue >= 0 ? 'text-green-600' : 'text-red-600';
-                    const productName = move.productName || appData.shopStock?.[move.shopProductId]?.name || '-';
+                    const productName = move.productName || getShopItemDisplayName(appData.shopStock?.[move.shopProductId]) || '-';
                     const typeLabel = move.type || '-';
                     const userDisplay = move.userName || move.userFullName || move.userEmail || move.userId || 'N/A';
                     const storeName = getStoreName(resolveStoreId(move.storeId || appData.shopStock?.[move.shopProductId]?.sourceStoreId));
@@ -17515,14 +17545,19 @@
                     const comment = commentSuffix
                         ? (commentBase === '-' ? commentSuffix : `${commentBase} · ${commentSuffix}`)
                         : commentBase;
-                    const newStock = Number.isFinite(move.newStock) ? move.newStock : (move.newStock ?? '-');
+                    const stockLabel = Number.isFinite(Number(move.oldStock)) && Number.isFinite(Number(move.newStock))
+                        ? `${formatShopStockBreakdown(Number(move.oldStock), shopItem)} → ${formatShopStockBreakdown(Number(move.newStock), shopItem, { includeBaseTotal: true })}`
+                        : (move.newStock ?? '-');
                     const supplierLabel = move.supplierName || getSupplierName(move.supplierId) || '-';
                     return `
                             <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${productName}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${typeLabel}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${changeClass}">${changeLabel}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${newStock}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${changeClass}">${quantityLabel}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <div class="${changeClass} font-semibold">${changeLabel}</div>
+                                    <div class="text-xs text-gray-400 mt-1">${stockLabel}</div>
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${supplierLabel}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${comment}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${userDisplay}</td>
@@ -17754,7 +17789,7 @@
                 shopItems.forEach(item => {
                     if (!item.createdAt) return;
                     const boutiqueLabel = getTraceabilityBoutiqueLabel(item.boutiqueId, item.boutiqueName || 'Boutique');
-                    const packageLabel = getShopItemPackagingLabel(item);
+                    const stockLabel = formatShopStockBreakdown(Number(item.quantityInShop) || 0, item, { includeBaseTotal: true });
                     pushEvent({
                         id: `shop-created-${item.id}`,
                         date: item.createdAt,
@@ -17763,7 +17798,7 @@
                         dotClass: getTraceabilityDotClass('création'),
                         location: boutiqueLabel,
                         quantity: Number(item.quantityInShop),
-                        quantityLabel: formatPackageQuantity(item.quantityInShop, packageLabel),
+                        quantityLabel: stockLabel,
                         change: null,
                         statusLabel: '',
                         statusClass: '',
@@ -17783,7 +17818,9 @@
                     const changeValue = isEntry ? Math.abs(qty) : (isAdjustment ? qty : -Math.abs(qty));
                     const boutiqueLabel = getTraceabilityBoutiqueLabel(move.boutiqueId, move.boutiqueName || 'Boutique');
                     const userLabel = move.userName || move.userFullName || move.userEmail || move.userId || '';
-                    const packageLabel = getShopItemPackagingLabel(shopItem);
+                    const movementQtyLabel = formatShopStockBreakdown(Math.abs(qty), shopItem);
+                    const movementChangeLabel = `${changeValue > 0 ? '+' : ''}${formatShopStockBreakdown(Math.abs(changeValue), shopItem)}`;
+                    const movementStockLabel = `${formatShopStockBreakdown(Number(move.oldStock) || 0, shopItem)} → ${formatShopStockBreakdown(Number(move.newStock) || 0, shopItem)}`;
                     pushEvent({
                         id: `shop-move-${move.id}`,
                         date: move.date,
@@ -17792,12 +17829,12 @@
                         dotClass: getTraceabilityDotClass(badge.label),
                         location: boutiqueLabel,
                         quantity: Math.abs(qty),
-                        quantityLabel: formatPackageQuantity(qty, packageLabel),
+                        quantityLabel: movementQtyLabel,
                         change: changeValue,
-                        changeLabel: `${changeValue > 0 ? '+' : ''}${formatPackageQuantity(changeValue, packageLabel)}`,
+                        changeLabel: movementChangeLabel,
                         stockBefore: Number(move.oldStock),
                         stockAfter: Number(move.newStock),
-                        stockLabel: `${formatPackageQuantity(move.oldStock, packageLabel)} → ${formatPackageQuantity(move.newStock, packageLabel)}`,
+                        stockLabel: movementStockLabel,
                         statusLabel: statusBadge.label,
                         statusClass: statusBadge.classes,
                         user: userLabel,
@@ -17822,7 +17859,7 @@
                     const customerLabel = sale.customerName || '';
                     const salePackageLabel = isStoreSale
                         ? (getPrimaryPackaging(product)?.label || 'Conditionnement principal')
-                        : getShopItemPackagingLabel(appData.shopStock?.[sale.shopProductId]);
+                        : (sale.packageLabel || getShopItemPackagingLabel(appData.shopStock?.[sale.shopProductId]));
                     pushEvent({
                         id: `sale-${sale.id}`,
                         date: sale.date,
@@ -18168,7 +18205,15 @@
                         sellingPrice: Number.isFinite(Number(request.sellingPrice)) ? Number(request.sellingPrice) : getPackageSellingPrice(sourceProd, 'detail'),
                         purchaseCost: Number.isFinite(Number(request.purchaseCost)) ? Number(request.purchaseCost) : getPackagePurchaseCost(sourceProd, 'detail')
                     }];
-                if (qty <= 0 || !requestTargets.length) return;
+                    const requestedBaseUnits = parseNonNegativeInteger(
+                        request.totalUnits,
+                        requestTargets.reduce((sum, target) => {
+                            const targetQty = parseNonNegativeInteger(target?.quantity, 0);
+                            const targetUnits = Math.max(1, parseNonNegativeInteger(target?.unitsPerPackage, 1));
+                            return sum + (targetQty * targetUnits);
+                        }, 0)
+                    );
+                    if (qty <= 0 || requestedBaseUnits <= 0) return;
 
                 try {
                     const now = new Date().toISOString();
@@ -18183,130 +18228,134 @@
 
                     const shopProductIds = [];
                     const shopMovementIds = [];
-                    for (const target of requestTargets) {
-                        const packageType = target.type || target.packageCode || 'detail';
-                        const targetQty = parseInt(target.quantity, 10) || 0;
-                        if (targetQty <= 0) continue;
-                        let shopItem = null;
-                        if (requestTargets.length === 1 && request.shopProductId) {
-                            shopItem = appData.shopStock?.[request.shopProductId] || null;
+                    let shopItem = null;
+                    if (request.shopProductId) {
+                        const requestedShopItem = appData.shopStock?.[request.shopProductId] || null;
+                        if (requestedShopItem && (requestedShopItem.stockUnitMode === 'base_unit' || Number(requestedShopItem.stockModelVersion) >= 2)) {
+                            shopItem = requestedShopItem;
                         }
-                        if (!shopItem) {
-                            shopItem = Object.values(appData.shopStock || {}).find(item =>
-                                resolveStoreId(item.sourceStoreId) === storeId &&
-                                resolveBoutiqueId(item.boutiqueId) === boutiqueId &&
-                                item.sourceProductId === request.sourceProductId &&
-                                (item.packagingType || item.packageCode || 'detail') === packageType
-                            );
-                        }
-
-                        const shopId = shopItem ? shopItem.id : push(ref(db, `${dbBasePath}/shopStock`)).key;
-                        const sellingPrice = Number.isFinite(Number(target.sellingPrice))
-                            ? Number(target.sellingPrice)
-                            : getPackageSellingPrice(sourceProd, packageType);
-                        const purchaseCost = Number.isFinite(Number(target.purchaseCost))
-                            ? Number(target.purchaseCost)
-                            : getPackagePurchaseCost(sourceProd, packageType);
-                        const alertThreshold = Number.isFinite(request.alertThreshold)
-                            ? request.alertThreshold
-                            : (shopItem?.alertThreshold ?? 5);
-                        if (!shopId || !Number.isFinite(sellingPrice)) {
-                            showSuccessToast("Prix boutique non défini.");
-                            return;
-                        }
-
-                        const baseShopItem = syncShopItemLotState(shopItem || {
-                            id: shopId,
-                            sourceProductId: request.sourceProductId,
-                            sourceStoreId: storeId,
-                            boutiqueId,
-                            boutiqueName,
-                            displayName: getPackageDisplayName(sourceProd, packageType),
-                            name: target.code || getPackageVariantCode(sourceProd, packageType),
-                            sourceName: request.sourceProductName || sourceProd.name,
-                            variantCode: target.code || getPackageVariantCode(sourceProd, packageType),
-                            packagingType: packageType,
-                            packageCode: packageType,
-                            packageLabel: target.label || getPackageLabel(packageType, sourceProd),
-                            unitsPerPackage: Number(target.unitsPerPackage) || getPackageUnits(sourceProd, packageType),
-                            baseUnitLabel: getProductBaseUnitLabel(sourceProd),
-                            baseProductCode: request.baseProductCode || getBaseProductCode(sourceProd),
-                            categoryId: request.categoryId || sourceProd.categoryId || null,
-                            purchaseCost,
-                            sellingPrice,
-                            quantityInShop: 0,
-                            alertThreshold,
-                            inventory: null,
-                            createdAt: now,
-                            updatedAt: now,
-                            lotQueue: []
-                        });
-                        const queuedLotResult = queueIncomingShopLot({
-                            ...baseShopItem,
-                            boutiqueId,
-                            boutiqueName,
-                            alertThreshold,
-                            inventory: shopItem?.inventory || baseShopItem.inventory || null,
-                            updatedAt: now
-                        }, {
-                            label: `Lot ${getLotSequenceLabel((baseShopItem.lotQueue || []).length)}`,
-                            remainingQuantity: targetQty,
-                            initialQuantity: targetQty,
-                            sellingPrice,
-                            purchaseCost,
-                            receivedAt: now,
-                            sourceRequestId: requestId,
-                            requestType: request.requestType || 'transfer'
-                        });
-                        const nextShopItem = queuedLotResult.updatedItem;
-                        const shopOld = Number(baseShopItem.quantityInShop) || 0;
-                        const shopNew = Number(nextShopItem.quantityInShop) || 0;
-
-                        updates[`${dbBasePath}/shopStock/${shopId}`] = {
-                            ...nextShopItem,
-                            id: shopId,
-                            sourceProductId: request.sourceProductId,
-                            sourceStoreId: storeId,
-                            boutiqueId,
-                            boutiqueName,
-                            displayName: getPackageDisplayName(sourceProd, packageType),
-                            name: target.code || getPackageVariantCode(sourceProd, packageType),
-                            sourceName: request.sourceProductName || sourceProd.name,
-                            variantCode: target.code || getPackageVariantCode(sourceProd, packageType),
-                            packagingType: packageType,
-                            packageCode: packageType,
-                            packageLabel: target.label || getPackageLabel(packageType, sourceProd),
-                            unitsPerPackage: Number(target.unitsPerPackage) || getPackageUnits(sourceProd, packageType),
-                            baseUnitLabel: getProductBaseUnitLabel(sourceProd),
-                            baseProductCode: request.baseProductCode || getBaseProductCode(sourceProd),
-                            categoryId: request.categoryId || sourceProd.categoryId || null,
-                            alertThreshold,
-                            inventory: shopItem?.inventory || null,
-                            createdAt: shopItem ? shopItem.createdAt : now,
-                            updatedAt: now
-                        };
-
-                        const shmKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
-                        updates[`${dbBasePath}/shopMovements/${shmKey}`] = {
-                            id: shmKey,
-                            shopProductId: shopId,
-                            productName: target.code || target.displayName || request.productName || sourceProd.name,
-                            storeId,
-                            boutiqueId,
-                            boutiqueName,
-                            type: "Entrée",
-                            quantityChange: targetQty,
-                            oldStock: shopOld,
-                            newStock: shopNew,
-                            comment: request.comment || "Réception transfert magasin",
-                            date: { ".sv": "timestamp" },
-                            userEmail: currentUser.email || '',
-                            userName: currentUserData?.fullName || currentUser.email || '',
-                            status: EXIT_STATUS_APPROVED
-                        };
-                        shopProductIds.push(shopId);
-                        shopMovementIds.push(shmKey);
                     }
+                    if (!shopItem) {
+                        shopItem = Object.values(appData.shopStock || {}).find(item =>
+                            resolveStoreId(item.sourceStoreId) === storeId &&
+                            resolveBoutiqueId(item.boutiqueId) === boutiqueId &&
+                            item.sourceProductId === request.sourceProductId
+                        );
+                    }
+
+                    const shopId = shopItem ? shopItem.id : push(ref(db, `${dbBasePath}/shopStock`)).key;
+                    const sellingPrice = Number.isFinite(Number(request.sellingPrice))
+                        ? Number(request.sellingPrice)
+                        : getPackageSellingPrice(sourceProd, 'detail');
+                    const purchaseCost = Number.isFinite(Number(request.purchaseCost))
+                        ? Number(request.purchaseCost)
+                        : getPackagePurchaseCost(sourceProd, 'detail');
+                    const alertThreshold = Number.isFinite(request.alertThreshold)
+                        ? request.alertThreshold
+                        : (shopItem?.alertThreshold ?? 5);
+                    if (!shopId || !Number.isFinite(sellingPrice)) {
+                        showSuccessToast("Prix boutique non défini.");
+                        return;
+                    }
+
+                    const baseUnitLabel = getProductBaseUnitLabel(sourceProd);
+                    const baseVariantCode = request.baseProductCode || getBaseProductCode(sourceProd) || getPackageVariantCode(sourceProd, 'detail');
+                    const unifiedProductName = request.sourceProductName || request.productName || sourceProd.name;
+                    const baseShopItem = syncShopItemLotState(shopItem || {
+                        id: shopId,
+                        sourceProductId: request.sourceProductId,
+                        sourceStoreId: storeId,
+                        boutiqueId,
+                        boutiqueName,
+                        displayName: unifiedProductName,
+                        name: baseVariantCode,
+                        sourceName: unifiedProductName,
+                        variantCode: baseVariantCode,
+                        packagingType: 'detail',
+                        packageCode: 'detail',
+                        packageLabel: baseUnitLabel,
+                        unitsPerPackage: 1,
+                        baseUnitLabel,
+                        baseProductCode: baseVariantCode,
+                        categoryId: request.categoryId || sourceProd.categoryId || null,
+                        purchaseCost,
+                        sellingPrice,
+                        quantityInShop: 0,
+                        alertThreshold,
+                        inventory: null,
+                        stockUnitMode: 'base_unit',
+                        stockModelVersion: 2,
+                        createdAt: now,
+                        updatedAt: now,
+                        lotQueue: []
+                    });
+                    const queuedLotResult = queueIncomingShopLot({
+                        ...baseShopItem,
+                        boutiqueId,
+                        boutiqueName,
+                        alertThreshold,
+                        inventory: shopItem?.inventory || baseShopItem.inventory || null,
+                        updatedAt: now
+                    }, {
+                        label: `Lot ${getLotSequenceLabel((baseShopItem.lotQueue || []).length)}`,
+                        remainingQuantity: requestedBaseUnits,
+                        initialQuantity: requestedBaseUnits,
+                        sellingPrice,
+                        purchaseCost,
+                        receivedAt: now,
+                        sourceRequestId: requestId,
+                        requestType: request.requestType || 'transfer'
+                    });
+                    const nextShopItem = queuedLotResult.updatedItem;
+                    const shopOld = Number(baseShopItem.quantityInShop) || 0;
+                    const shopNew = Number(nextShopItem.quantityInShop) || 0;
+
+                    updates[`${dbBasePath}/shopStock/${shopId}`] = {
+                        ...nextShopItem,
+                        id: shopId,
+                        sourceProductId: request.sourceProductId,
+                        sourceStoreId: storeId,
+                        boutiqueId,
+                        boutiqueName,
+                        displayName: unifiedProductName,
+                        name: baseVariantCode,
+                        sourceName: unifiedProductName,
+                        variantCode: baseVariantCode,
+                        packagingType: 'detail',
+                        packageCode: 'detail',
+                        packageLabel: baseUnitLabel,
+                        unitsPerPackage: 1,
+                        baseUnitLabel,
+                        baseProductCode: baseVariantCode,
+                        categoryId: request.categoryId || sourceProd.categoryId || null,
+                        alertThreshold,
+                        inventory: shopItem?.inventory || null,
+                        stockUnitMode: 'base_unit',
+                        stockModelVersion: 2,
+                        createdAt: shopItem ? shopItem.createdAt : now,
+                        updatedAt: now
+                    };
+
+                    const shmKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
+                    updates[`${dbBasePath}/shopMovements/${shmKey}`] = {
+                        id: shmKey,
+                        shopProductId: shopId,
+                        productName: unifiedProductName,
+                        storeId,
+                        boutiqueId,
+                        boutiqueName,
+                        type: "Entrée",
+                        quantityChange: requestedBaseUnits,
+                        oldStock: shopOld,
+                        newStock: shopNew,
+                        comment: request.comment || "Réception transfert magasin",
+                        date: { ".sv": "timestamp" },
+                        userEmail: currentUser.email || '',
+                        userName: currentUserData?.fullName || currentUser.email || '',
+                        status: EXIT_STATUS_APPROVED
+                    };
+                    shopProductIds.push(shopId);
+                    shopMovementIds.push(shmKey);
 
                     if (request.storeMovementId) {
                         updates[`${dbBasePath}/storeMovements/${request.storeMovementId}/status`] = EXIT_STATUS_APPROVED;
@@ -19652,25 +19701,35 @@
                     const nextLot = getShopItemNextLot(item);
                     const pendingLot = getShopItemPendingValidationLot(item);
                     const activeQty = getShopItemAvailableSaleQuantity(item);
-                    const sellingPrice = getShopItemEffectiveSellingPrice(item, sourceProduct);
-                    const hasPrice = Number.isFinite(sellingPrice);
+                    const packagings = getShopItemSellPackagings(item);
                     const category = getShopItemCategory(item);
                     const isLowStock = activeQty <= (item.alertThreshold || 5);
                     const isOut = !activeLot || activeQty <= 0;
                     const stockLabel = pendingLot
                         ? 'Validation requise'
-                        : (isOut ? 'Rupture' : `${activeLot?.label || 'Lot actif'}: ${activeQty}`);
+                        : (isOut ? 'Rupture' : formatShopStockBreakdown(activeQty, item));
                     const stockClass = isOut
                         ? 'bg-red-100 text-red-600'
                         : isLowStock
                             ? 'bg-yellow-100 text-yellow-700'
                             : 'bg-green-100 text-green-700';
-                    const actionHtml = !hasPrice
-                        ? `<span class="text-xs font-semibold text-gray-400">Prix non défini</span>`
-                        : isOut
-                            ? `<span class="text-xs font-semibold text-gray-400">Indisponible</span>`
-                            : `<button type="button" data-add-product="${item.id}" class="mt-4 w-full px-3 py-2 text-xs font-semibold rounded-lg bg-cyan-500 text-white hover:bg-cyan-600">Ajouter</button>`;
                     const itemLabel = getShopItemDisplayName(item);
+                    const packagingButtons = packagings.map(packaging => {
+                        const unitCount = Number(packaging.unitCount) || 1;
+                        const sellingPrice = getPackageSellingPrice(sourceProduct, packaging.code);
+                        const hasPrice = Number.isFinite(sellingPrice);
+                        const canSellThisPackaging = !pendingLot && activeQty >= unitCount && hasPrice;
+                        const disabledClass = canSellThisPackaging
+                            ? 'border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100'
+                            : 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed';
+                        return `
+                            <button type="button" data-add-product="${item.id}" data-package-ref="${escapeHtml(packaging.code || 'DTL')}"
+                                class="px-3 py-2 rounded-xl border text-left transition ${disabledClass}" ${canSellThisPackaging ? '' : 'disabled'}>
+                                <span class="block text-xs font-semibold">${escapeHtml(packaging.label || getProductBaseUnitLabel(sourceProduct))}</span>
+                                <span class="mt-1 block text-[11px]">${hasPrice ? formatCurrency(sellingPrice, currency) : 'Prix non défini'} · ${unitCount} unité(s)</span>
+                            </button>
+                        `;
+                    }).join('');
                     return `
                         <div class="border border-gray-200 rounded-2xl p-4 hover:shadow-md transition ${isOut ? 'opacity-60' : ''}">
                             <div class="flex items-center justify-between gap-2">
@@ -19678,11 +19737,12 @@
                                 <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${stockClass}">${stockLabel}</span>
                             </div>
                             <h3 class="mt-3 text-base font-semibold text-gray-900">${itemLabel}</h3>
-                            <p class="mt-1 text-xs text-gray-400">${getShopItemPackagingLabel(item)} · ${Number(item.unitsPerPackage) || 1} unité(s)</p>
-                            <p class="mt-2 text-xs font-semibold text-cyan-700">${activeLot ? `${activeLot.label} · ${activeQty} restant(s)` : (pendingLot ? `${pendingLot.label} · en attente de validation` : 'Aucun lot actif')}</p>
+                            <p class="mt-1 text-xs text-gray-400">${formatShopStockBreakdown(activeQty, item, { includeBaseTotal: true })}</p>
+                            <p class="mt-2 text-xs font-semibold text-cyan-700">${activeLot ? `${activeLot.label} · ${formatBaseUnits(activeQty, getProductBaseUnitLabel(sourceProduct))}` : (pendingLot ? `${pendingLot.label} · en attente de validation` : 'Aucun lot actif')}</p>
                             ${nextLot && !pendingLot ? `<p class="mt-1 text-[11px] text-amber-600">Prochain lot: ${escapeHtml(nextLot.label)} · ${nextLot.requiresActivationValidation ? 'validation requise' : 'activation auto'}</p>` : ''}
-                            <p class="mt-2 text-lg font-bold text-cyan-600">${hasPrice ? formatCurrency(sellingPrice, currency) : '—'}</p>
-                            ${actionHtml}
+                            <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                ${packagingButtons}
+                            </div>
                         </div>
                     `;
                 }).join('');
@@ -19705,7 +19765,7 @@
                 if (!shopProduct) return Number(item?.quantity) || 0;
                 const lotState = reconcileShopLotQueueToQuantity(shopProduct);
                 const reservedQty = item.stockReservedFromPending
-                    ? (Number(item.reservedQuantity ?? item.quantity) || 0)
+                    ? (Number(item.reservedQuantity ?? item.stockUnits ?? item.quantity) || 0)
                     : 0;
                 const targetLot = item.lotId
                     ? lotState.queue.find(lot => lot.id === item.lotId)
@@ -19714,7 +19774,20 @@
                 return reservedQty + (Number(shopProduct.quantityInShop) || 0);
             }
 
-            function addToCart(productId = null, quantityOverride = null) {
+            function getCartItemUnitCount(item) {
+                return Math.max(1, parseNonNegativeInteger(item?.packageUnits, 1));
+            }
+
+            function getCartItemStockUnits(item) {
+                return Math.max(1, parseNonNegativeInteger(item?.stockUnits, item?.quantity || 1));
+            }
+
+            function getCartItemMaxSelectableQuantity(item) {
+                const availableUnits = getCartItemAvailableQuantity(item);
+                return Math.max(0, Math.floor(availableUnits / getCartItemUnitCount(item)));
+            }
+
+            function addToCart(productId = null, quantityOverride = null, packageRef = null) {
                 const shopProductId = productId;
                 const quantityInput = Number.isFinite(quantityOverride) ? quantityOverride : 1;
 
@@ -19725,6 +19798,11 @@
 
                 const shopProduct = appData.shopStock[shopProductId];
                 if (!shopProduct) return;
+                const sourceProduct = appData.storeProducts[shopProduct.sourceProductId];
+                const selectedPackaging = findPackagingByRef(sourceProduct, packageRef) || getShopItemSellPackagings(shopProduct)[0];
+                const packageUnits = Number(selectedPackaging?.unitCount) || 1;
+                const stockUnitsRequested = quantityInput * packageUnits;
+                const sellingPrice = getPackageSellingPrice(sourceProduct, selectedPackaging?.code);
                 const activeLot = getShopItemActiveLot(shopProduct);
                 const pendingLot = getShopItemPendingValidationLot(shopProduct);
                 const productBoutiqueId = resolveBoutiqueId(shopProduct.boutiqueId);
@@ -19748,34 +19826,39 @@
                     showSalesErrorMessage("Stock insuffisant pour ce produit.");
                     return;
                 }
+                if (!Number.isFinite(sellingPrice)) {
+                    showSalesErrorMessage("Prix non défini pour ce conditionnement.");
+                    return;
+                }
 
                 const existingItemIndex = cartItems.findIndex(item =>
-                    item.shopProductId === shopProductId && (item.lotId || '') === (activeLot.id || '')
+                    item.shopProductId === shopProductId &&
+                    (item.lotId || '') === (activeLot.id || '') &&
+                    (item.packageCode || '') === ((selectedPackaging?.code || '').toString())
                 );
-                const existingQty = existingItemIndex !== -1 ? cartItems[existingItemIndex].quantity : 0;
+                const existingQty = existingItemIndex !== -1 ? getCartItemStockUnits(cartItems[existingItemIndex]) : 0;
                 const maxQty = existingItemIndex !== -1
                     ? getCartItemAvailableQuantity(cartItems[existingItemIndex])
                     : (Number(activeLot.remainingQuantity) || 0);
-                if (existingQty + quantityInput > maxQty) {
-                    showSalesErrorMessage(`Stock insuffisant sur ${activeLot.label}. Disponible: ${maxQty}`);
+                if (existingQty + stockUnitsRequested > maxQty) {
+                    showSalesErrorMessage(`Stock insuffisant sur ${activeLot.label}. Disponible: ${formatBaseUnits(maxQty, getProductBaseUnitLabel(sourceProduct))}`);
                     return;
                 }
 
                 if (existingItemIndex !== -1) {
                     cartItems[existingItemIndex].quantity += quantityInput;
+                    cartItems[existingItemIndex].stockUnits += stockUnitsRequested;
                 } else {
                     const currency = appData.storeProducts[shopProduct.sourceProductId]?.currency || 'CFA';
-                    const sourceProduct = appData.storeProducts[shopProduct.sourceProductId];
-                    const sellingPrice = getShopItemEffectiveSellingPrice(shopProduct, sourceProduct);
-                    if (!Number.isFinite(sellingPrice)) {
-                        showSalesErrorMessage("Prix non défini pour ce produit.");
-                        return;
-                    }
                     cartItems.push({
                         shopProductId,
                         boutiqueId: productBoutiqueId,
                         boutiqueName: getBoutiqueName(productBoutiqueId),
                         name: getShopItemDisplayName(shopProduct),
+                        packageCode: selectedPackaging?.code || 'DTL',
+                        packageLabel: selectedPackaging?.label || getProductBaseUnitLabel(sourceProduct),
+                        packageUnits,
+                        stockUnits: stockUnitsRequested,
                         lotId: activeLot.id,
                         lotLabel: activeLot.label,
                         lotReceivedAt: activeLot.receivedAt || '',
@@ -19803,12 +19886,13 @@
                     removeFromCart(index);
                     return;
                 }
-                const maxQty = getCartItemAvailableQuantity(item) || item.quantity;
+                const maxQty = getCartItemMaxSelectableQuantity(item) || item.quantity;
                 if (newQty > maxQty) {
                     showSalesErrorMessage(`Stock insuffisant. Disponible: ${maxQty}`);
                     return;
                 }
                 cartItems[index].quantity = newQty;
+                cartItems[index].stockUnits = newQty * getCartItemUnitCount(item);
                 renderCart();
             }
 
@@ -19836,7 +19920,7 @@
                         return;
                     }
 
-                    const maxQty = getCartItemAvailableQuantity(item) || item.quantity;
+                    const maxQty = getCartItemMaxSelectableQuantity(item) || item.quantity;
                     if (desiredQty > maxQty) {
                         showSalesErrorMessage(`Stock insuffisant. Disponible: ${maxQty}`);
                         input.value = item.quantity;
@@ -19845,6 +19929,7 @@
 
                     if (desiredQty !== item.quantity) {
                         cartItems[index].quantity = desiredQty;
+                        cartItems[index].stockUnits = desiredQty * getCartItemUnitCount(item);
                         hasChanges = true;
                     }
                 });
@@ -20062,11 +20147,13 @@
                 if (cartItemsList) {
                     cartItemsList.innerHTML = cartItems.map((item, index) => {
                         const subtotal = item.sellingPrice * item.quantity;
+                        const packageInfo = item.packageLabel ? `<p class="text-[11px] font-semibold text-slate-500 mt-1">${item.packageLabel} · ${item.quantity}</p>` : '';
                         const lotInfo = item.lotLabel ? `<p class="text-[11px] font-semibold text-cyan-700 mt-1">${item.lotLabel}</p>` : '';
                         return `
                             <div class="border border-gray-200 rounded-xl p-3 flex items-start justify-between gap-3">
                                 <div>
                                     <p class="text-sm font-semibold text-gray-900">${item.name}</p>
+                                    ${packageInfo}
                                     ${lotInfo}
                                     <p class="text-xs text-gray-500 mt-1">${formatCurrency(item.sellingPrice, item.currency)} x ${item.quantity}</p>
                                 </div>
@@ -20152,7 +20239,7 @@
                         if (!currentUser) return;
                         for (const item of cartItems) {
                             if (item.stockReservedFromPending) continue; // déjà réservé
-                            const maxQty = getCartItemAvailableQuantity(item);
+                            const maxQty = getCartItemMaxSelectableQuantity(item);
                             if (!maxQty || item.quantity > maxQty) {
                                 showSalesErrorMessage(`Stock insuffisant pour ${item.name}. Disponible: ${maxQty || 0}`);
                                 return;
@@ -20168,10 +20255,11 @@
 
                         for (const item of cartItems) {
                             const shopProduct = appData.shopStock[item.shopProductId];
+                            const stockUnits = getCartItemStockUnits(item);
                             if (item.stockReservedFromPending) {
-                                const reservedQty = parseNonNegativeInteger(item.reservedQuantity ?? item.quantity, item.quantity);
-                                if (item.quantity > reservedQty) {
-                                    const extraQty = item.quantity - reservedQty;
+                                const reservedQty = parseNonNegativeInteger(item.reservedQuantity ?? item.stockUnits ?? item.quantity, item.stockUnits || item.quantity);
+                                if (stockUnits > reservedQty) {
+                                    const extraQty = stockUnits - reservedQty;
                                     const extraReservation = consumeShopLotQuantity(shopProduct, extraQty, {
                                         preferredLotId: item.lotId,
                                         allowFallbackToActive: true
@@ -20200,8 +20288,8 @@
                                         userName: currentUserData?.fullName || currentUser.email || '',
                                         status: EXIT_STATUS_APPROVED
                                     };
-                                } else if (item.quantity < reservedQty) {
-                                    const releasedQty = reservedQty - item.quantity;
+                                } else if (stockUnits < reservedQty) {
+                                    const releasedQty = reservedQty - stockUnits;
                                     const restoredShopProduct = restoreShopLotQuantity(shopProduct, {
                                         lotId: item.lotId || null,
                                         lotLabel: item.lotLabel || '',
@@ -20229,10 +20317,10 @@
                                         status: EXIT_STATUS_APPROVED
                                     };
                                 }
-                                item.reservedQuantity = item.quantity;
+                                item.reservedQuantity = stockUnits;
                                 continue;
                             }
-                            const lotReservation = consumeShopLotQuantity(shopProduct, item.quantity, {
+                            const lotReservation = consumeShopLotQuantity(shopProduct, stockUnits, {
                                 preferredLotId: item.lotId,
                                 allowFallbackToActive: !item.lotId
                             });
@@ -20251,7 +20339,7 @@
                                 boutiqueId: resolveBoutiqueId(item.boutiqueId),
                                 boutiqueName: item.boutiqueName || getBoutiqueName(resolveBoutiqueId(item.boutiqueId)),
                                 type: "Sortie",
-                                quantityChange: item.quantity,
+                                quantityChange: stockUnits,
                                 oldStock: shopProduct?.quantityInShop ?? 0,
                                 newStock,
                                 comment: comment ? `Vente en attente: ${comment}` : 'Vente en attente',
@@ -20265,7 +20353,7 @@
                             item.purchaseCostSnapshot = Number.isFinite(Number(item.purchaseCostSnapshot))
                                 ? Number(item.purchaseCostSnapshot)
                                 : (Number(lotReservation.consumedLot?.purchaseCost) || 0);
-                            item.reservedQuantity = item.quantity;
+                            item.reservedQuantity = stockUnits;
                         }
 
                         heldSale.items = cartItems.map(({ stockReservedFromPending: _, ...rest }) => rest);
@@ -20315,7 +20403,7 @@
 
                 // Vérifier le stock disponible pour chaque article
                 for (const item of cartItems) {
-                    const availableQty = getCartItemAvailableQuantity(item);
+                    const availableQty = getCartItemMaxSelectableQuantity(item);
                     if (!availableQty || item.quantity > availableQty) {
                         alert(`Stock insuffisant pour ${item.name}. Disponible: ${availableQty || 0}`);
                         return;
@@ -20346,7 +20434,11 @@
                         quantity: item.quantity,
                         price: item.sellingPrice,
                         total: item.discountedTotal,
-                        lotLabel: item.lotLabel || ''
+                        lotLabel: item.lotLabel || '',
+                        packageCode: item.packageCode || 'detail',
+                        packageLabel: item.packageLabel || '',
+                        packageUnits: getCartItemUnitCount(item),
+                        stockUnits: getCartItemStockUnits(item)
                     }));
 
                     updates[`${dbBasePath}/sales/${saleGroupId}`] = {
@@ -20377,10 +20469,11 @@
                     // Traiter chaque article du panier
                     for (const item of discountedItems) {
                         const shopProduct = appData.shopStock[item.shopProductId];
+                        const stockUnits = getCartItemStockUnits(item);
                         if (item.stockReservedFromPending) {
-                            const reservedQty = parseNonNegativeInteger(item.reservedQuantity ?? item.quantity, item.quantity);
-                            if (item.quantity > reservedQty) {
-                                const extraQty = item.quantity - reservedQty;
+                            const reservedQty = parseNonNegativeInteger(item.reservedQuantity ?? item.stockUnits ?? item.quantity, item.stockUnits || item.quantity);
+                            if (stockUnits > reservedQty) {
+                                const extraQty = stockUnits - reservedQty;
                                 const extraReservation = consumeShopLotQuantity(shopProduct, extraQty, {
                                     preferredLotId: item.lotId,
                                     allowFallbackToActive: true
@@ -20408,8 +20501,8 @@
                                     userName: currentUserData?.fullName || currentUser.email || '',
                                     status: EXIT_STATUS_APPROVED
                                 };
-                            } else if (item.quantity < reservedQty) {
-                                const releasedQty = reservedQty - item.quantity;
+                            } else if (stockUnits < reservedQty) {
+                                const releasedQty = reservedQty - stockUnits;
                                 const restoredShopProduct = restoreShopLotQuantity(shopProduct, {
                                     lotId: item.lotId || null,
                                     lotLabel: item.lotLabel || '',
@@ -20438,7 +20531,7 @@
                                 };
                             }
                         } else {
-                            const lotReservation = consumeShopLotQuantity(shopProduct, item.quantity, {
+                            const lotReservation = consumeShopLotQuantity(shopProduct, stockUnits, {
                                 preferredLotId: item.lotId,
                                 allowFallbackToActive: !item.lotId
                             });
@@ -20463,7 +20556,7 @@
                                 boutiqueId: resolveBoutiqueId(item.boutiqueId),
                                 boutiqueName: item.boutiqueName || getBoutiqueName(resolveBoutiqueId(item.boutiqueId)),
                                 type: "Sortie",
-                                quantityChange: item.quantity,
+                                quantityChange: stockUnits,
                                 oldStock: shopProduct.quantityInShop,
                                 newStock: shopNewStock,
                                 comment: comment ? `Vente groupée: ${comment}` : 'Vente groupée',
@@ -20473,7 +20566,7 @@
                                 status: EXIT_STATUS_APPROVED
                             };
                         }
-                        item.reservedQuantity = item.quantity;
+                        item.reservedQuantity = stockUnits;
 
                         // Ajouter une vente à l'historique
                         const saleKey = push(ref(db, `${dbBasePath}/salesHistory`)).key;
@@ -20483,6 +20576,10 @@
                             shopProductId: item.shopProductId,
                             productName: item.name,
                             quantity: item.quantity,
+                            stockUnits,
+                            packageCode: item.packageCode || 'detail',
+                            packageLabel: item.packageLabel || '',
+                            packageUnits: getCartItemUnitCount(item),
                             lotId: item.lotId || null,
                             lotLabel: item.lotLabel || '',
                             purchaseCostSnapshot: item.purchaseCostSnapshot || 0,
@@ -20695,29 +20792,30 @@
                     for (const sale of entries) {
                         if (sale.paymentStatus === 'rejected' || sale.validationStatus === 'rejected') continue;
                         const quantity = parseInt(sale.quantity, 10) || 0;
+                        const stockUnits = parseNonNegativeInteger(sale.stockUnits, quantity);
                         const comment = sale.comment ? `Annulation vente ${invoiceLabel} - ${sale.comment}` : `Annulation vente ${invoiceLabel}`;
 
                         if (sale.shopProductId) {
                             const shopProduct = appData.shopStock?.[sale.shopProductId];
-                            if (shopProduct && quantity > 0) {
+                            if (shopProduct && stockUnits > 0) {
                                 const restoredShopProduct = restoreShopLotQuantity(shopProduct, {
                                     lotId: sale.lotId || null,
                                     lotLabel: sale.lotLabel || '',
                                     sellingPrice: sale.sellingPrice,
                                     purchaseCost: sale.purchaseCostSnapshot,
                                     receivedAt: sale.date || now
-                                }, quantity);
+                                }, stockUnits);
                                 const syncedShopProduct = applyShopItemStateToUpdates(updates, sale.shopProductId, restoredShopProduct, now);
                                 const newStock = Number(syncedShopProduct.quantityInShop) || 0;
                                 const moveKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
                                 updates[`${dbBasePath}/shopMovements/${moveKey}`] = {
                                     id: moveKey,
                                     shopProductId: sale.shopProductId,
-                                    productName: sale.productName || shopProduct.name || 'Produit',
+                                    productName: sale.productName || getShopItemDisplayName(shopProduct) || 'Produit',
                                     boutiqueId: resolveBoutiqueId(sale.boutiqueId) || resolveBoutiqueId(shopProduct.boutiqueId),
                                     boutiqueName: getBoutiqueName(resolveBoutiqueId(sale.boutiqueId) || resolveBoutiqueId(shopProduct.boutiqueId)),
                                     type: "Entrée",
-                                    quantityChange: quantity,
+                                    quantityChange: stockUnits,
                                     oldStock: shopProduct.quantityInShop,
                                     newStock,
                                     comment,
@@ -20813,7 +20911,7 @@
 
                 if (!isReserved) {
                     for (const item of items) {
-                        const availableQty = getCartItemAvailableQuantity(item);
+                        const availableQty = getCartItemMaxSelectableQuantity(item);
                         if (!availableQty || item.quantity > availableQty) {
                             alert(`Stock insuffisant pour ${item.name}. Disponible: ${availableQty || 0}`);
                             return;
@@ -20867,9 +20965,10 @@
                     };
 
                     for (const item of discountedItems) {
+                        const stockUnits = getCartItemStockUnits(item);
                         if (!isReserved) {
                             const shopProduct = appData.shopStock[item.shopProductId];
-                            const lotReservation = consumeShopLotQuantity(shopProduct, item.quantity, {
+                            const lotReservation = consumeShopLotQuantity(shopProduct, stockUnits, {
                                 preferredLotId: item.lotId,
                                 allowFallbackToActive: !item.lotId
                             });
@@ -20893,7 +20992,7 @@
                                 boutiqueId: pendingBoutiqueId || resolveBoutiqueId(item.boutiqueId),
                                 boutiqueName: pendingBoutiqueName || item.boutiqueName || getBoutiqueName(resolveBoutiqueId(item.boutiqueId)),
                                 type: "Sortie",
-                                quantityChange: item.quantity,
+                                quantityChange: stockUnits,
                                 oldStock: shopProduct.quantityInShop,
                                 newStock: shopNewStock,
                                 comment: comment ? `Vente en attente: ${comment}` : 'Vente en attente',
@@ -20911,6 +21010,10 @@
                             shopProductId: item.shopProductId,
                             productName: item.name,
                             quantity: item.quantity,
+                            stockUnits,
+                            packageCode: item.packageCode || 'detail',
+                            packageLabel: item.packageLabel || '',
+                            packageUnits: getCartItemUnitCount(item),
                             lotId: item.lotId || null,
                             lotLabel: item.lotLabel || '',
                             purchaseCostSnapshot: item.purchaseCostSnapshot || 0,
@@ -21010,16 +21113,16 @@
                                     sellingPrice: item.sellingPrice,
                                     purchaseCost: item.purchaseCostSnapshot,
                                     receivedAt: item.lotReceivedAt || pending.createdAt || now
-                                }, item.quantity);
+                                }, getCartItemStockUnits(item));
                                 const syncedShopProduct = applyShopItemStateToUpdates(updates, item.shopProductId, restoredShopProduct, now);
                                 const newStock = Number(syncedShopProduct.quantityInShop) || 0;
                                 const shopMoveKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
                                 updates[`${dbBasePath}/shopMovements/${shopMoveKey}`] = {
                                     id: shopMoveKey,
                                     shopProductId: item.shopProductId,
-                                    productName: item.name || shopProduct.name || 'Produit',
+                                    productName: item.name || getShopItemDisplayName(shopProduct) || 'Produit',
                                     type: "Entrée",
-                                    quantityChange: item.quantity,
+                                    quantityChange: getCartItemStockUnits(item),
                                     oldStock: shopProduct.quantityInShop,
                                     newStock,
                                     comment: pending.comment ? `Vente en attente: ${pending.comment}` : 'Vente en attente',
@@ -21063,7 +21166,7 @@
                     cartItems = (pending.items || []).map(item => ({
                         ...item,
                         stockReservedFromPending: pending.stockReserved === true,
-                        reservedQuantity: pending.stockReserved === true ? (Number(item.quantity) || 0) : 0
+                        reservedQuantity: pending.stockReserved === true ? (Number(item.stockUnits ?? item.quantity) || 0) : 0
                     }));
 
                     // 2. Restaurer le client
@@ -21179,16 +21282,16 @@
                                 sellingPrice: removedItem.sellingPrice,
                                 purchaseCost: removedItem.purchaseCostSnapshot,
                                 receivedAt: removedItem.lotReceivedAt || pending.createdAt || now
-                            }, removedItem.quantity);
+                            }, getCartItemStockUnits(removedItem));
                             const syncedShopProduct = applyShopItemStateToUpdates(updates, removedItem.shopProductId, restoredShopProduct, now);
                             const newStock = Number(syncedShopProduct.quantityInShop) || 0;
                             const shopMoveKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
                             updates[`${dbBasePath}/shopMovements/${shopMoveKey}`] = {
                                 id: shopMoveKey,
                                 shopProductId: removedItem.shopProductId,
-                                productName: removedItem.name || shopProduct.name || 'Produit',
+                                productName: removedItem.name || getShopItemDisplayName(shopProduct) || 'Produit',
                                 type: "Entrée",
-                                quantityChange: removedItem.quantity,
+                                quantityChange: getCartItemStockUnits(removedItem),
                                 oldStock: shopProduct.quantityInShop,
                                 newStock,
                                 comment: pending.comment ? `Vente en attente: ${pending.comment}` : 'Vente en attente',
@@ -21236,6 +21339,7 @@
                 }
 
                 const quantity = parseInt(sale.quantity, 10) || 0;
+                const stockUnits = parseNonNegativeInteger(sale.stockUnits, quantity);
                 if (quantity <= 0) return;
                 const itemLabel = sale.productName ? `« ${sale.productName} »` : 'cet article';
                 if (!confirm(`Confirmer le retrait de ${itemLabel} de la facture ?`)) return;
@@ -21258,16 +21362,16 @@
                         sellingPrice: sale.sellingPrice,
                         purchaseCost: sale.purchaseCostSnapshot,
                         receivedAt: sale.date || now
-                    }, quantity);
+                    }, stockUnits);
                     const syncedShopProduct = applyShopItemStateToUpdates(updates, sale.shopProductId, restoredShopProduct, now);
                     const newStock = Number(syncedShopProduct.quantityInShop) || 0;
                     const shopMoveKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
                     updates[`${dbBasePath}/shopMovements/${shopMoveKey}`] = {
                         id: shopMoveKey,
                         shopProductId: sale.shopProductId,
-                        productName: sale.productName || shopProduct.name || 'Produit',
+                        productName: sale.productName || getShopItemDisplayName(shopProduct) || 'Produit',
                         type: "Entrée",
-                        quantityChange: quantity,
+                        quantityChange: stockUnits,
                         oldStock: shopProduct.quantityInShop,
                         newStock,
                         comment: movementComment,
@@ -21339,7 +21443,7 @@
                             sellingPrice: sale.sellingPrice,
                             purchaseCost: sale.purchaseCostSnapshot,
                             receivedAt: sale.date || now
-                        }, quantity);
+                        }, stockUnits);
                     }
                     if (sale.storeProductId && appData.storeProducts?.[sale.storeProductId]) {
                         appData.storeProducts[sale.storeProductId].quantityInStore =
@@ -21964,7 +22068,8 @@
                     const addButton = event.target.closest('[data-add-product]');
                     if (!addButton) return;
                     const productId = addButton.dataset.addProduct;
-                    if (productId) addToCart(productId, 1);
+                    const packageRef = addButton.dataset.packageRef || null;
+                    if (productId) addToCart(productId, 1, packageRef);
                 });
             }
             if (customerSelectedCard) {
@@ -23521,22 +23626,16 @@
                 }
                 const sourcePackaging = getPrimaryPackaging(sourceProd);
                 const sourcePackageRef = sourcePackaging?.code || null;
-                const packageType = shopProd.packagingType || shopProd.packageCode || 'detail';
-                const packageUnits = Number(shopProd.unitsPerPackage) || getPackageUnits(sourceProd, packageType);
                 const unitsPerCarton = getUnitsPerCarton(sourceProd);
-                const totalUnitsRequested = qty * packageUnits;
-                const maxPackages = Math.floor((parseNonNegativeInteger(sourceProd.quantityInStore, 0) * unitsPerCarton) / Math.max(packageUnits, 1));
+                const totalUnitsRequested = qty * unitsPerCarton;
+                const maxPackages = parseNonNegativeInteger(sourceProd.quantityInStore, 0);
                 if (!sourceProd || qty <= 0) {
                     showRestockError("Quantité invalide.");
                     return;
                 }
-                if (totalUnitsRequested % unitsPerCarton !== 0) {
-                    showRestockError("Ce réappro ne correspond pas à un nombre entier de conditionnements source. Utilisez le transfert composé.");
-                    return;
-                }
-                const sourceCartons = totalUnitsRequested / unitsPerCarton;
+                const sourceCartons = qty;
                 if (sourceCartons > sourceProd.quantityInStore) {
-                    showRestockError(`Stock magasin insuffisant. Maximum autorisé: ${Math.max(maxPackages, 0)} ${getPackageLabel(packageType, sourceProd).toLowerCase()}(s).`);
+                    showRestockError(`Stock magasin insuffisant. Maximum autorisé: ${Math.max(maxPackages, 0)} ${getPackageLabel(sourcePackageRef, sourceProd).toLowerCase()}(s).`);
                     return;
                 }
 
@@ -23545,19 +23644,21 @@
                     const updates = {}; const now = new Date().toISOString();
                     const storeNew = sourceProd.quantityInStore - sourceCartons;
                     const sourceVariantCode = getPackageVariantCode(sourceProd, sourcePackageRef);
+                    const baseUnitLabel = getProductBaseUnitLabel(sourceProd);
                     const targetPackage = {
-                        type: packageType,
-                        packageCode: packageType,
-                        label: getPackageLabel(packageType, sourceProd),
-                        code: shopProd.variantCode || getPackageVariantCode(sourceProd, packageType),
-                        displayName: getPackageDisplayName(sourceProd, packageType),
-                        quantity: qty,
-                        unitsPerPackage: packageUnits,
+                        type: 'detail',
+                        packageCode: 'detail',
+                        label: baseUnitLabel,
+                        code: getBaseProductCode(sourceProd) || getPackageVariantCode(sourceProd, 'detail'),
+                        displayName: sourceProd.name,
+                        quantity: totalUnitsRequested,
+                        unitsPerPackage: 1,
                         totalUnits: totalUnitsRequested,
-                        sellingPrice: getPackageSellingPrice(sourceProd, packageType),
-                        purchaseCost: getPackagePurchaseCost(sourceProd, packageType)
+                        sellingPrice: getPackageSellingPrice(sourceProd, 'detail'),
+                        purchaseCost: getPackagePurchaseCost(sourceProd, 'detail')
                     };
-                    const restockComment = `${comment} · ${sourceCartons} ${sourceVariantCode} = ${targetPackage.quantity} ${targetPackage.code}`;
+                    const targetSummary = formatBaseUnits(totalUnitsRequested, baseUnitLabel);
+                    const restockComment = `${comment} · ${sourceCartons} ${sourceVariantCode} = ${targetSummary}`;
 
                     updates[`${dbBasePath}/storeProducts/${sourceProd.id}/quantityInStore`] = storeNew;
                     const smKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
@@ -23590,7 +23691,7 @@
                             boutiqueName: getBoutiqueName(targetBoutiqueId),
                             sourceProductId: sourceProd.id,
                             sourceProductName: sourceProd.name,
-                            productName: shopProd.name,
+                            productName: sourceProd.name,
                             baseProductCode: getBaseProductCode(sourceProd),
                             categoryId: sourceProd.categoryId || shopProd.categoryId || null,
                             purchaseCost: getPackagePurchaseCost(sourceProd, sourcePackageRef),
@@ -23602,7 +23703,7 @@
                             sourceSummary: `${sourceCartons} ${sourceVariantCode}`,
                             unitsPerCarton,
                             totalUnits: totalUnitsRequested,
-                            targetSummary: `${targetPackage.quantity} ${targetPackage.code}`,
+                            targetSummary,
                             targetPackages: [targetPackage],
                             alertThreshold: shopProd.alertThreshold,
                             requestedAt: now,
@@ -23610,7 +23711,7 @@
                             requestedByName: currentUserData?.fullName || currentUser.email || '',
                             requestedByEmail: currentUser.email || '',
                             storeMovementId: smKey,
-                            shopProductId: sid,
+                            shopProductId: (shopProd.stockUnitMode === 'base_unit' || Number(shopProd.stockModelVersion) >= 2) ? sid : null,
                             stockReserved: true,
                             stockBeforeStore: sourceProd.quantityInStore,
                             stockAfterStore: storeNew,
