@@ -718,6 +718,61 @@
                                     <span id="cart-items-count">0 article(s)</span>
                                 </div>
                             </div>
+                            <div class="p-6 border-b border-gray-100 bg-slate-50/60">
+                                <p class="text-sm font-semibold text-gray-800">Ajout rapide</p>
+                                <p class="mt-1 text-xs text-gray-500">Ajoutez un produit directement depuis la facture.</p>
+                                <div class="mt-4 space-y-3">
+                                    <div>
+                                        <label for="sales-quick-product-select" class="text-xs font-semibold text-gray-500">Produit</label>
+                                        <div id="sales-quick-product-combobox" class="relative mt-2">
+                                            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
+                                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                                </svg>
+                                            </div>
+                                            <input type="text" id="sales-quick-product-search" autocomplete="off" placeholder="Rechercher ou sélectionner un produit..."
+                                                class="w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-12 text-sm text-gray-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
+                                            <button type="button" id="sales-quick-product-toggle"
+                                                class="absolute inset-y-0 right-0 flex items-center px-4 text-gray-400 transition hover:text-gray-600"
+                                                aria-label="Afficher les produits" aria-expanded="false">
+                                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                                </svg>
+                                            </button>
+                                            <div id="sales-quick-product-dropdown"
+                                                class="hidden absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+                                                <div id="sales-quick-product-options" class="max-h-72 space-y-1 overflow-y-auto p-2"></div>
+                                                <div id="sales-quick-product-empty" class="hidden px-4 py-6 text-sm text-gray-400">Aucun produit correspondant.</div>
+                                            </div>
+                                        </div>
+                                        <select id="sales-quick-product-select" class="hidden">
+                                            <option value="">Sélectionnez un produit</option>
+                                        </select>
+                                    </div>
+                                    <div class="grid grid-cols-1 sm:grid-cols-[1fr_88px] gap-3">
+                                        <div>
+                                            <label for="sales-quick-package-select" class="text-xs font-semibold text-gray-500">Conditionnement</label>
+                                            <select id="sales-quick-package-select"
+                                                class="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm text-gray-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
+                                                <option value="">Sélectionnez un produit</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="sales-quick-quantity" class="text-xs font-semibold text-gray-500">Qté</label>
+                                            <input type="number" id="sales-quick-quantity" min="1" value="1"
+                                                class="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm text-gray-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
+                                        </div>
+                                    </div>
+                                    <div id="sales-quick-selection-info" class="hidden rounded-xl border border-cyan-100 bg-white px-4 py-3 text-xs text-gray-600">
+                                        <p id="sales-quick-selection-stock" class="font-semibold text-cyan-700">—</p>
+                                        <p id="sales-quick-selection-price" class="mt-1">—</p>
+                                    </div>
+                                    <button id="sales-quick-add-button" type="button"
+                                        class="w-full rounded-xl bg-cyan-500 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-cyan-600 disabled:cursor-not-allowed disabled:bg-gray-300">
+                                        Ajouter à la facture
+                                    </button>
+                                </div>
+                            </div>
                             <div class="p-6 border-b border-gray-100">
                                 <p class="text-sm font-semibold text-gray-800">Client</p>
                                 <input type="hidden" id="customer-id" />
@@ -4766,6 +4821,7 @@
             const productComboboxStates = {
                 entry: { query: '', isOpen: false },
                 exit: { query: '', isOpen: false },
+                salesQuick: { query: '', isOpen: false },
                 restock: { query: '', isOpen: false },
                 traceability: { query: '', isOpen: false }
             };
@@ -4963,6 +5019,19 @@
             if (inventorySaveButton) inventorySaveButton.disabled = true;
 
             const salesError = document.getElementById('sales-error');
+            const salesQuickProductCombobox = document.getElementById('sales-quick-product-combobox');
+            const salesQuickProductSearchInput = document.getElementById('sales-quick-product-search');
+            const salesQuickProductToggleButton = document.getElementById('sales-quick-product-toggle');
+            const salesQuickProductDropdown = document.getElementById('sales-quick-product-dropdown');
+            const salesQuickProductOptions = document.getElementById('sales-quick-product-options');
+            const salesQuickProductEmpty = document.getElementById('sales-quick-product-empty');
+            const salesQuickProductSelect = document.getElementById('sales-quick-product-select');
+            const salesQuickPackageSelect = document.getElementById('sales-quick-package-select');
+            const salesQuickQuantityInput = document.getElementById('sales-quick-quantity');
+            const salesQuickAddButton = document.getElementById('sales-quick-add-button');
+            const salesQuickSelectionInfo = document.getElementById('sales-quick-selection-info');
+            const salesQuickSelectionStock = document.getElementById('sales-quick-selection-stock');
+            const salesQuickSelectionPrice = document.getElementById('sales-quick-selection-price');
             const salesHistoryEmpty = document.getElementById('sales-history-empty');
             const salesHistoryList = document.getElementById('sales-history-list');
             const salesHistoryListWrapper = document.getElementById('sales-history-list-wrapper');
@@ -6651,6 +6720,49 @@
                     });
             }
 
+            function getSalesQuickProductComboboxItems(search = '') {
+                const normalized = normalizeString(search);
+                const boutiqueId = getActiveBoutiqueId();
+                return Object.values(appData.shopStock || {})
+                    .filter(item => {
+                        const matchesBoutique = boutiqueId ? resolveBoutiqueId(item.boutiqueId) === boutiqueId : true;
+                        if (!matchesBoutique) return false;
+                        const sourceProduct = appData.storeProducts?.[item.sourceProductId];
+                        if (!sourceProduct) return false;
+                        const activeQty = getShopItemAvailableSaleQuantity(item);
+                        const pendingLot = getShopItemPendingValidationLot(item);
+                        if (pendingLot || activeQty <= 0) return false;
+                        const sellablePackagings = getShopItemSellPackagings(item).filter(packaging => {
+                            const unitCount = Number(packaging.unitCount) || 1;
+                            return activeQty >= unitCount && Number.isFinite(getPackageSellingPrice(sourceProduct, packaging.code));
+                        });
+                        if (!sellablePackagings.length) return false;
+                        if (!normalized) return true;
+                        const haystack = [
+                            getShopItemDisplayName(item),
+                            getShopItemCategory(item),
+                            item.sourceName,
+                            item.name,
+                            item.variantCode,
+                            item.id
+                        ].map(normalizeString).join(' ');
+                        return haystack.includes(normalized);
+                    })
+                    .sort((a, b) => getShopItemDisplayName(a).localeCompare(getShopItemDisplayName(b)))
+                    .map(item => {
+                        const activeQty = getShopItemAvailableSaleQuantity(item);
+                        return {
+                            value: item.id,
+                            title: getShopItemDisplayName(item),
+                            meta: getShopItemCategory(item),
+                            description: formatShopStockBreakdown(activeQty, item, { includeBaseTotal: true }),
+                            badge: `Stock ${formatShopStockBreakdown(activeQty, item)}`,
+                            badgeClasses: 'bg-cyan-50 text-cyan-700',
+                            displayLabel: getShopItemDisplayName(item)
+                        };
+                    });
+            }
+
             function getTraceabilityProductComboboxItems(search = '') {
                 return getTraceabilityProducts(search).map(product => {
                     const rawStoreId = product.storeId || UNASSIGNED_STORE_ID;
@@ -6691,6 +6803,16 @@
                         select: exitProductSelect,
                         getItems: () => getExitProductComboboxItems(productComboboxStates.exit.query)
                     },
+                    salesQuick: {
+                        combobox: salesQuickProductCombobox,
+                        input: salesQuickProductSearchInput,
+                        toggle: salesQuickProductToggleButton,
+                        dropdown: salesQuickProductDropdown,
+                        options: salesQuickProductOptions,
+                        empty: salesQuickProductEmpty,
+                        select: salesQuickProductSelect,
+                        getItems: () => getSalesQuickProductComboboxItems(productComboboxStates.salesQuick.query)
+                    },
                     restock: {
                         combobox: restockProductCombobox,
                         input: restockProductSearchInput,
@@ -6724,6 +6846,10 @@
                 if (key === 'exit') {
                     const product = getActiveStoreProductById(value);
                     return product ? getTransferProductDisplayLabel(product) : '';
+                }
+                if (key === 'salesQuick') {
+                    const item = appData.shopStock?.[value];
+                    return item ? getShopItemDisplayName(item) : '';
                 }
                 if (key === 'restock') {
                     const item = appData.shopStock?.[value];
@@ -19670,8 +19796,91 @@
                 }).join('');
             }
 
+            function updateSalesQuickPackageOptions() {
+                if (!salesQuickPackageSelect) return;
+                const shopProductId = salesQuickProductSelect?.value || '';
+                const shopItem = shopProductId ? appData.shopStock?.[shopProductId] : null;
+                const sourceProduct = shopItem ? appData.storeProducts?.[shopItem.sourceProductId] : null;
+                const activeQty = shopItem ? getShopItemAvailableSaleQuantity(shopItem) : 0;
+                const packagings = shopItem
+                    ? getShopItemSellPackagings(shopItem).filter(packaging => {
+                        const unitCount = Number(packaging.unitCount) || 1;
+                        return Number.isFinite(getPackageSellingPrice(sourceProduct, packaging.code)) && activeQty >= unitCount;
+                    })
+                    : [];
+                const previousValue = salesQuickPackageSelect.value || '';
+                salesQuickPackageSelect.innerHTML = '';
+
+                if (!shopItem || !sourceProduct || !packagings.length) {
+                    salesQuickPackageSelect.innerHTML = '<option value="">Sélectionnez un produit</option>';
+                    salesQuickPackageSelect.disabled = true;
+                    if (salesQuickSelectionInfo) salesQuickSelectionInfo.classList.add('hidden');
+                    if (salesQuickAddButton) salesQuickAddButton.disabled = true;
+                    return;
+                }
+
+                packagings.forEach(packaging => {
+                    const option = document.createElement('option');
+                    const unitCount = Number(packaging.unitCount) || 1;
+                    const sellingPrice = getPackageSellingPrice(sourceProduct, packaging.code);
+                    option.value = packaging.code || 'detail';
+                    option.textContent = `${packaging.label} — ${formatCurrency(sellingPrice, sourceProduct.currency || 'CFA')}`;
+                    option.dataset.units = String(unitCount);
+                    salesQuickPackageSelect.appendChild(option);
+                });
+
+                salesQuickPackageSelect.disabled = false;
+                const hasPrevious = packagings.some(packaging => packaging.code === previousValue);
+                salesQuickPackageSelect.value = hasPrevious ? previousValue : (packagings[0]?.code || '');
+
+                const selectedPackaging = findPackagingByRef(sourceProduct, salesQuickPackageSelect.value) || packagings[0];
+                const selectedUnits = Number(selectedPackaging?.unitCount) || 1;
+                const maxQty = Math.max(1, Math.floor(activeQty / selectedUnits));
+                if (salesQuickQuantityInput) {
+                    salesQuickQuantityInput.min = '1';
+                    salesQuickQuantityInput.max = String(maxQty);
+                    if (!salesQuickQuantityInput.value || Number(salesQuickQuantityInput.value) < 1) {
+                        salesQuickQuantityInput.value = '1';
+                    }
+                    if (Number(salesQuickQuantityInput.value) > maxQty) {
+                        salesQuickQuantityInput.value = String(maxQty);
+                    }
+                }
+
+                if (salesQuickSelectionInfo && salesQuickSelectionStock && salesQuickSelectionPrice) {
+                    const sellingPrice = getPackageSellingPrice(sourceProduct, selectedPackaging?.code);
+                    salesQuickSelectionStock.textContent = `Stock disponible: ${formatShopStockBreakdown(activeQty, shopItem, { includeBaseTotal: true })}`;
+                    salesQuickSelectionPrice.textContent = `${selectedPackaging?.label || getProductBaseUnitLabel(sourceProduct)} · ${formatCurrency(sellingPrice, sourceProduct.currency || 'CFA')} · ${selectedUnits} unité(s)`;
+                    salesQuickSelectionInfo.classList.remove('hidden');
+                }
+
+                if (salesQuickAddButton) salesQuickAddButton.disabled = false;
+            }
+
+            function renderSalesQuickAddPanel() {
+                if (!salesQuickProductSelect) return;
+                const previousValue = salesQuickProductSelect.value || '';
+                const items = getSalesQuickProductComboboxItems();
+                salesQuickProductSelect.innerHTML = '<option value="">Sélectionnez un produit</option>';
+                items.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.value;
+                    option.textContent = item.displayLabel || item.title || 'Produit';
+                    salesQuickProductSelect.appendChild(option);
+                });
+                const hasPrevious = items.some(item => item.value === previousValue);
+                salesQuickProductSelect.value = hasPrevious ? previousValue : '';
+                if (!hasPrevious) {
+                    productComboboxStates.salesQuick.query = '';
+                }
+                syncProductComboboxInput('salesQuick');
+                renderProductCombobox('salesQuick');
+                updateSalesQuickPackageOptions();
+            }
+
             function renderSalesProducts(searchTerm = '') {
                 if (!salesProductsPlaceholder || !salesProductsContainer) return;
+                renderSalesQuickAddPanel();
                 const normalizedSearch = normalizeString(searchTerm);
                 const activeBoutique = getActiveBoutiqueId();
                 const stock = Object.values(appData.shopStock || {}).filter(item => {
@@ -23924,7 +24133,7 @@
                 closeTransferProductDropdown({ restoreSelection: true });
             });
             document.addEventListener('click', (event) => {
-                ['entry', 'exit', 'restock', 'traceability'].forEach(key => {
+                ['entry', 'exit', 'salesQuick', 'restock', 'traceability'].forEach(key => {
                     if (!productComboboxStates[key].isOpen) return;
                     const config = getProductComboboxConfig(key);
                     if (config?.combobox?.contains(event.target)) return;
@@ -23987,6 +24196,7 @@
 
             bindProductCombobox('entry');
             bindProductCombobox('exit');
+            bindProductCombobox('salesQuick');
             bindProductCombobox('restock');
             bindProductCombobox('traceability');
 
@@ -24002,6 +24212,41 @@
                     syncProductComboboxInput('exit');
                     renderProductCombobox('exit');
                     updateExitProductInfo(getActiveStoreProductById(exitProductSelect.value));
+                });
+            }
+            if (salesQuickProductSelect) {
+                salesQuickProductSelect.addEventListener('change', () => {
+                    syncProductComboboxInput('salesQuick');
+                    renderProductCombobox('salesQuick');
+                    updateSalesQuickPackageOptions();
+                });
+            }
+            if (salesQuickPackageSelect) {
+                salesQuickPackageSelect.addEventListener('change', () => {
+                    updateSalesQuickPackageOptions();
+                });
+            }
+            if (salesQuickQuantityInput) {
+                salesQuickQuantityInput.addEventListener('input', () => {
+                    const maxQty = parseNonNegativeInteger(salesQuickQuantityInput.max, 1);
+                    const nextQty = Math.max(1, Math.min(parseNonNegativeInteger(salesQuickQuantityInput.value, 1), maxQty));
+                    salesQuickQuantityInput.value = String(nextQty);
+                });
+            }
+            if (salesQuickAddButton) {
+                salesQuickAddButton.addEventListener('click', () => {
+                    const shopProductId = salesQuickProductSelect?.value || '';
+                    const packageRef = salesQuickPackageSelect?.value || '';
+                    const quantity = parseNonNegativeInteger(salesQuickQuantityInput?.value, 1);
+                    if (!shopProductId) {
+                        showSalesErrorMessage("Sélectionnez un produit.");
+                        return;
+                    }
+                    if (!packageRef) {
+                        showSalesErrorMessage("Sélectionnez un conditionnement.");
+                        return;
+                    }
+                    addToCart(shopProductId, quantity, packageRef);
                 });
             }
             if (suppliersSearchInput) {
