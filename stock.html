@@ -6652,7 +6652,6 @@
             function getExitProductComboboxItems(search = '') {
                 const normalized = normalizeString(search);
                 return getActiveStoreProducts()
-                    .filter(product => isProductPricingComplete(product))
                     .filter(product => {
                         if (!normalized) return true;
                         const haystack = [
@@ -6667,13 +6666,16 @@
                     .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
                     .map(product => {
                         const qty = parseNonNegativeInteger(product.quantityInStore, 0);
+                        const hasSellingPrice = Number.isFinite(getStoreSellingPrice(product));
                         return {
                             value: product.id,
                             title: product.name || 'Produit sans nom',
                             meta: product.baseCode || product.sku || product.id || '—',
-                            description: product.description || '',
-                            badge: `Stock ${qty}`,
-                            badgeClasses: qty > 0 ? 'bg-orange-50 text-orange-700' : 'bg-rose-50 text-rose-700',
+                            description: product.description || (!hasSellingPrice ? 'Prix magasin à définir avant validation.' : ''),
+                            badge: hasSellingPrice ? `Stock ${qty}` : 'Prix manquant',
+                            badgeClasses: hasSellingPrice
+                                ? (qty > 0 ? 'bg-orange-50 text-orange-700' : 'bg-rose-50 text-rose-700')
+                                : 'bg-amber-50 text-amber-700',
                             displayLabel: getTransferProductDisplayLabel(product)
                         };
                     });
@@ -15096,7 +15098,8 @@
             }
 
             function populateStoreProductSelects() {
-                const activeProducts = getActiveStoreProducts().filter(product => isProductPricingComplete(product));
+                const activeStoreProducts = getActiveStoreProducts();
+                const transferProducts = activeStoreProducts.filter(product => isProductPricingComplete(product));
                 const entryProducts = getEntrySelectableProducts();
 
                 const fillSelect = (select, products, showAssignmentHint = false, disableOutOfStock = false) => {
@@ -15134,8 +15137,8 @@
                 };
 
                 fillSelect(entryProductSelect, entryProducts, true);
-                fillSelect(exitProductSelect, activeProducts);
-                fillSelect(transferProductSelect, activeProducts, false, true);
+                fillSelect(exitProductSelect, activeStoreProducts);
+                fillSelect(transferProductSelect, transferProducts, false, true);
 
                 if (entryProductSelect && entryProductSelect.value) {
                     updateEntryProductInfo(getEntryProductById(entryProductSelect.value));
@@ -23565,7 +23568,20 @@
                 const customerEmail = exitCustomerEmailInput ? exitCustomerEmailInput.value.trim() : '';
                 const customerPhone = exitCustomerPhoneInput ? exitCustomerPhoneInput.value.trim() : '';
                 const prod = getActiveStoreProductById(pid);
-                if (!prod || qty <= 0) return;
+                if (!pid || !prod) {
+                    if (exitError) {
+                        exitError.textContent = 'Veuillez sélectionner un produit valide.';
+                        exitError.classList.remove('hidden');
+                    }
+                    return;
+                }
+                if (qty <= 0) {
+                    if (exitError) {
+                        exitError.textContent = 'Veuillez renseigner une quantité supérieure à 0.';
+                        exitError.classList.remove('hidden');
+                    }
+                    return;
+                }
                 if (!customerName || !customerPhone) {
                     if (exitError) {
                         exitError.textContent = 'Veuillez renseigner le nom et le téléphone du client.';
@@ -23585,7 +23601,12 @@
                 }
                 const sellingPrice = getStoreSellingPrice(prod);
                 if (!Number.isFinite(sellingPrice)) {
-                    showSuccessToast("Prix magasin non défini. Ajoutez-le dans le tableau des prix.");
+                    if (exitError) {
+                        exitError.textContent = 'Prix magasin non défini. Ajoutez-le dans le tableau des prix.';
+                        exitError.classList.remove('hidden');
+                    } else {
+                        showSuccessToast("Prix magasin non défini. Ajoutez-le dans le tableau des prix.");
+                    }
                     return;
                 }
 
