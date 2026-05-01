@@ -11879,6 +11879,58 @@
                 return `${labels.join(joiner)}${suffix}`;
             }
 
+            function formatProductStockBreakdown(totalUnits, product, options = {}) {
+                const packagings = product ? getProductPackagings(product) : [];
+                const parts = decomposeBaseUnitsByPackagings(totalUnits, packagings);
+                const baseUnitLabel = product ? getProductBaseUnitLabel(product) : DEFAULT_BASE_UNIT_LABEL;
+                if (!parts.length) {
+                    return formatBaseUnits(totalUnits, baseUnitLabel);
+                }
+                const labels = parts.map(part => `${part.quantity} ${part.label}`);
+                const suffix = options.includeBaseTotal ? ` (${formatBaseUnits(totalUnits, baseUnitLabel)})` : '';
+                return `${labels.join(' · ')}${suffix}`;
+            }
+
+            function formatInventoryQuantityDisplay(item, quantity, options = {}) {
+                const numericQty = Number(quantity) || 0;
+                if (item?.sourceType === 'shop') {
+                    const shopItem = appData.shopStock?.[item.id];
+                    return shopItem
+                        ? formatShopStockBreakdown(numericQty, shopItem, options)
+                        : `${numericQty} u. base`;
+                }
+                const product = appData.storeProducts?.[item?.id];
+                if (!product) return `${numericQty}`;
+                const totalUnits = numericQty * Math.max(getPackageUnits(product, getPrimaryPackaging(product)?.code || null), 1);
+                return formatProductStockBreakdown(totalUnits, product, options);
+            }
+
+            function getInventoryProductMeta(item) {
+                if (item?.sourceType === 'shop') {
+                    const shopItem = appData.shopStock?.[item.id];
+                    const sourceProduct = getShopItemSourceProduct(shopItem);
+                    return {
+                        summary: sourceProduct ? summarizeProductPackagings(sourceProduct) : '',
+                        baseLabel: sourceProduct ? getProductBaseUnitLabel(sourceProduct) : DEFAULT_BASE_UNIT_LABEL
+                    };
+                }
+                const product = appData.storeProducts?.[item?.id];
+                return {
+                    summary: product ? summarizeProductPackagings(product) : '',
+                    baseLabel: product ? getProductBaseUnitLabel(product) : DEFAULT_BASE_UNIT_LABEL
+                };
+            }
+
+            function getInventoryAggregateProduct(entry) {
+                if (!entry) return null;
+                if (entry.key && appData.storeProducts?.[entry.key]) return appData.storeProducts[entry.key];
+                return Object.values(appData.storeProducts || {}).find(product => {
+                    if (!product) return false;
+                    if (entry.key && product.id === entry.key) return true;
+                    return normalizeString(product.name) === normalizeString(entry.name || '');
+                }) || null;
+            }
+
             function buildPackageSummaryFromEntries(entries = []) {
                 const labels = entries
                     .filter(entry => entry && Number(entry.quantity) > 0)
@@ -17064,6 +17116,10 @@
                 inventoryGlobalTableContainer.classList.remove('hidden');
                 inventoryGlobalTbody.innerHTML = items.map(entry => {
                     const entryKey = encodeURIComponent(entry.key || entry.name || '');
+                    const product = getInventoryAggregateProduct(entry);
+                    const totalLabel = product ? formatProductStockBreakdown(entry.totalQty, product, { includeBaseTotal: true }) : `${entry.totalQty} u. base`;
+                    const storeLabel = product ? formatProductStockBreakdown(entry.storeQty, product, { includeBaseTotal: true }) : `${entry.storeQty} u. base`;
+                    const shopLabel = product ? formatProductStockBreakdown(entry.shopQty, product, { includeBaseTotal: true }) : `${entry.shopQty} u. base`;
                     const storeEntries = Object.entries(entry.storeBreakdown || {}).map(([id, qty]) => ({
                         id,
                         qty,
@@ -17076,18 +17132,21 @@
                     })).sort((a, b) => a.name.localeCompare(b.name));
 
                     const storeTags = storeEntries.length
-                        ? storeEntries.map(item => `<span class="px-2 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold">${escapeHtml(item.name)} · ${item.qty} u. base</span>`).join('')
+                        ? storeEntries.map(item => `<span class="px-2 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold">${escapeHtml(item.name)} · ${escapeHtml(product ? formatProductStockBreakdown(item.qty, product, { includeBaseTotal: true }) : `${item.qty} u. base`)}</span>`).join('')
                         : '<span class="text-xs text-gray-400">Aucun stock magasin.</span>';
                     const shopTags = shopEntries.length
-                        ? shopEntries.map(item => `<span class="px-2 py-1 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-semibold">${escapeHtml(item.name)} · ${item.qty} u. base</span>`).join('')
+                        ? shopEntries.map(item => `<span class="px-2 py-1 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-semibold">${escapeHtml(item.name)} · ${escapeHtml(product ? formatProductStockBreakdown(item.qty, product, { includeBaseTotal: true }) : `${item.qty} u. base`)}</span>`).join('')
                         : '<span class="text-xs text-gray-400">Aucun stock boutique.</span>';
 
                     return `
                         <tr class="hover:bg-gray-50">
-                            <td class="px-4 py-3 text-sm font-semibold text-gray-900">${escapeHtml(entry.name || '')}</td>
-                            <td class="px-4 py-3 text-sm text-right text-gray-700 font-semibold">${entry.totalQty} u.</td>
-                            <td class="px-4 py-3 text-sm text-right text-gray-600">${entry.storeQty} u.</td>
-                            <td class="px-4 py-3 text-sm text-right text-gray-600">${entry.shopQty} u.</td>
+                            <td class="px-4 py-3 text-sm font-semibold text-gray-900">
+                                <div>${escapeHtml(entry.name || '')}</div>
+                                <div class="mt-1 text-xs font-medium text-gray-400">${escapeHtml(product ? summarizeProductPackagings(product) : 'Base unité')}</div>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-right text-gray-700 font-semibold">${escapeHtml(totalLabel)}</td>
+                            <td class="px-4 py-3 text-sm text-right text-gray-600">${escapeHtml(storeLabel)}</td>
+                            <td class="px-4 py-3 text-sm text-right text-gray-600">${escapeHtml(shopLabel)}</td>
                             <td class="px-4 py-3 text-right">
                                 <button type="button" data-inventory-breakdown="${entryKey}"
                                     class="text-xs font-semibold text-cyan-600 hover:text-cyan-800">Voir</button>
@@ -17234,10 +17293,21 @@
                     const physical = Number(item.physicalQty);
                     const display = getInventoryRowDisplay(item.systemQty, physical);
                     const inputValue = Number.isFinite(physical) ? physical : '';
+                    const meta = getInventoryProductMeta(item);
+                    const systemLabel = formatInventoryQuantityDisplay(item, item.systemQty, { includeBaseTotal: true });
+                    const physicalLabel = Number.isFinite(physical)
+                        ? formatInventoryQuantityDisplay(item, physical, { includeBaseTotal: true })
+                        : `Saisissez en ${meta.baseLabel.toLowerCase()}`;
                     return `
                         <tr data-inventory-row="${item.id}">
-                            <td class="px-4 py-3 text-sm font-semibold text-gray-900">${item.name}</td>
-                            <td class="px-4 py-3 text-sm text-gray-600 text-right">${item.systemQty}</td>
+                            <td class="px-4 py-3 text-sm font-semibold text-gray-900">
+                                <div>${escapeHtml(item.name)}</div>
+                                <div class="mt-1 text-xs font-medium text-gray-400">${escapeHtml(meta.summary || meta.baseLabel)}</div>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-right text-gray-600">
+                                <div class="font-semibold text-gray-700">${escapeHtml(systemLabel)}</div>
+                                <div class="mt-1 text-xs text-gray-400">Valeur enregistrée: ${escapeHtml(String(item.systemQty))}</div>
+                            </td>
                             <td class="px-4 py-3 text-sm">
                                 <div class="flex items-center gap-2">
                                     <input type="number" min="0" step="1" value="${inputValue}"
@@ -17249,6 +17319,7 @@
                                         Conforme
                                     </button>
                                 </div>
+                                <div data-inventory-physical-summary="${item.id}" class="mt-1 text-xs text-gray-400">${escapeHtml(physicalLabel)}</div>
                             </td>
                             <td class="px-4 py-3 text-sm text-right">
                                 <span data-inventory-delta="${item.id}" class="font-semibold ${display.deltaClass}">${display.deltaLabel}</span>
@@ -17271,11 +17342,18 @@
                 if (!item) return;
                 const physical = Number(item.physicalQty);
                 const display = getInventoryRowDisplay(item.systemQty, physical);
+                const meta = getInventoryProductMeta(item);
                 const deltaEl = inventoryTbody.querySelector(`[data-inventory-delta="${itemId}"]`);
+                const physicalSummaryEl = inventoryTbody.querySelector(`[data-inventory-physical-summary="${itemId}"]`);
                 const statusEl = inventoryTbody.querySelector(`[data-inventory-status="${itemId}"]`);
                 if (deltaEl) {
                     deltaEl.textContent = display.deltaLabel;
                     deltaEl.className = `font-semibold ${display.deltaClass}`;
+                }
+                if (physicalSummaryEl) {
+                    physicalSummaryEl.textContent = Number.isFinite(physical)
+                        ? formatInventoryQuantityDisplay(item, physical, { includeBaseTotal: true })
+                        : `Saisissez en ${meta.baseLabel.toLowerCase()}`;
                 }
                 if (statusEl) {
                     statusEl.textContent = display.label;
@@ -17552,12 +17630,24 @@
                         ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                         : 'bg-rose-50 text-rose-700 border-rose-200';
                     const deltaLabel = `${item.delta > 0 ? '+' : ''}${item.delta}`;
+                    const detailItem = {
+                        id: item.itemId,
+                        sourceType: inv.locationType === 'shop' ? 'shop' : 'store'
+                    };
+                    const meta = getInventoryProductMeta(detailItem);
+                    const systemLabel = formatInventoryQuantityDisplay(detailItem, item.systemQty, { includeBaseTotal: true });
+                    const physicalLabel = formatInventoryQuantityDisplay(detailItem, item.physicalQty, { includeBaseTotal: true });
+                    const deltaAbsLabel = formatInventoryQuantityDisplay(detailItem, Math.abs(item.delta), { includeBaseTotal: true });
+                    const deltaDisplayLabel = item.delta === 0 ? deltaLabel : `${deltaLabel} · ${deltaAbsLabel}`;
                     return `
                         <tr class="hover:bg-gray-50">
-                            <td class="px-4 py-3 text-sm font-semibold text-gray-900">${item.productName || ''}</td>
-                            <td class="px-4 py-3 text-sm text-right text-gray-600">${item.systemQty}</td>
-                            <td class="px-4 py-3 text-sm text-right text-gray-600">${item.physicalQty}</td>
-                            <td class="px-4 py-3 text-sm text-right ${item.delta === 0 ? 'text-emerald-600' : 'text-rose-600'}">${deltaLabel}</td>
+                            <td class="px-4 py-3 text-sm font-semibold text-gray-900">
+                                <div>${escapeHtml(item.productName || '')}</div>
+                                <div class="mt-1 text-xs font-medium text-gray-400">${escapeHtml(meta.summary || meta.baseLabel)}</div>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-right text-gray-600">${escapeHtml(systemLabel)}</td>
+                            <td class="px-4 py-3 text-sm text-right text-gray-600">${escapeHtml(physicalLabel)}</td>
+                            <td class="px-4 py-3 text-sm text-right ${item.delta === 0 ? 'text-emerald-600' : 'text-rose-600'}">${escapeHtml(deltaDisplayLabel)}</td>
                             <td class="px-4 py-3 text-sm">
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full border text-xs font-semibold ${statusClass}">
                                     ${statusLabel}
