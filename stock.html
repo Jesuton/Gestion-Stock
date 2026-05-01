@@ -6513,7 +6513,7 @@
 
             function renderTransferProductDropdown() {
                 if (!transferProductOptions || !transferProductEmpty) return;
-                const products = getActiveStoreProducts().filter(product => isProductPricingComplete(product));
+                const products = getActiveStoreProducts().filter(product => isProductTransferReady(product));
                 const query = normalizeString(transferProductSearchQuery);
                 const filteredProducts = products.filter(product => {
                     if (!query) return true;
@@ -6671,8 +6671,8 @@
                             value: product.id,
                             title: product.name || 'Produit sans nom',
                             meta: product.baseCode || product.sku || product.id || '—',
-                            description: product.description || (!hasSellingPrice ? 'Prix magasin à définir avant validation.' : ''),
-                            badge: hasSellingPrice ? `Stock ${qty}` : 'Prix manquant',
+                            description: product.description || (!hasSellingPrice ? 'Prix en attente. Le transfert reste autorisé.' : ''),
+                            badge: hasSellingPrice ? `Stock ${qty}` : 'Prix en attente',
                             badgeClasses: hasSellingPrice
                                 ? (qty > 0 ? 'bg-orange-50 text-orange-700' : 'bg-rose-50 text-rose-700')
                                 : 'bg-amber-50 text-amber-700',
@@ -6691,7 +6691,7 @@
                         const matchesStore = storeId ? resolveStoreId(item.sourceStoreId) === storeId : true;
                         if (!matchesBoutique || !matchesStore) return false;
                         const sourceProduct = appData.storeProducts?.[item.sourceProductId];
-                        if (!isProductPricingComplete(sourceProduct)) return false;
+                        if (!isProductTransferReady(sourceProduct)) return false;
                         if (!normalized) return true;
                         const haystack = [
                             getShopItemDisplayName(item),
@@ -6736,7 +6736,7 @@
                         if (pendingLot || activeQty <= 0) return false;
                         const sellablePackagings = getShopItemSellPackagings(item).filter(packaging => {
                             const unitCount = Number(packaging.unitCount) || 1;
-                            return activeQty >= unitCount && Number.isFinite(getPackageSellingPrice(sourceProduct, packaging.code));
+                            return activeQty >= unitCount;
                         });
                         if (!sellablePackagings.length) return false;
                         if (!normalized) return true;
@@ -6753,13 +6753,18 @@
                     .sort((a, b) => getShopItemDisplayName(a).localeCompare(getShopItemDisplayName(b)))
                     .map(item => {
                         const activeQty = getShopItemAvailableSaleQuantity(item);
+                        const sourceProduct = appData.storeProducts?.[item.sourceProductId];
+                        const hasDirectPrice = getShopItemSellPackagings(item).some(packaging => {
+                            const unitCount = Number(packaging.unitCount) || 1;
+                            return activeQty >= unitCount && Number.isFinite(getPackageSellingPrice(sourceProduct, packaging.code));
+                        });
                         return {
                             value: item.id,
                             title: getShopItemDisplayName(item),
                             meta: getShopItemCategory(item),
                             description: formatShopStockBreakdown(activeQty, item, { includeBaseTotal: true }),
-                            badge: `Stock ${formatShopStockBreakdown(activeQty, item)}`,
-                            badgeClasses: 'bg-cyan-50 text-cyan-700',
+                            badge: hasDirectPrice ? `Stock ${formatShopStockBreakdown(activeQty, item)}` : 'Prix à définir',
+                            badgeClasses: hasDirectPrice ? 'bg-cyan-50 text-cyan-700' : 'bg-amber-50 text-amber-700',
                             displayLabel: getShopItemDisplayName(item)
                         };
                     });
@@ -7202,13 +7207,13 @@
 
             function getRestockAvailability(shopItem) {
                 const sourceProduct = shopItem ? appData.storeProducts?.[shopItem.sourceProductId] : null;
-                const pricingReadyProduct = sourceProduct && isProductPricingComplete(sourceProduct) ? sourceProduct : null;
+                const transferReadyProduct = sourceProduct && isProductTransferReady(sourceProduct) ? sourceProduct : null;
                 const sourceStoreId = resolveStoreId(shopItem?.sourceStoreId);
                 const activeStoreId = getActiveStoreId();
-                const resolvedSourceProduct = pricingReadyProduct &&
-                    (!sourceStoreId || resolveStoreId(pricingReadyProduct.storeId) === sourceStoreId) &&
-                    (!activeStoreId || resolveStoreId(pricingReadyProduct.storeId) === activeStoreId)
-                    ? pricingReadyProduct
+                const resolvedSourceProduct = transferReadyProduct &&
+                    (!sourceStoreId || resolveStoreId(transferReadyProduct.storeId) === sourceStoreId) &&
+                    (!activeStoreId || resolveStoreId(transferReadyProduct.storeId) === activeStoreId)
+                    ? transferReadyProduct
                     : null;
                 const availableCartons = parseNonNegativeInteger(resolvedSourceProduct?.quantityInStore, 0);
                 const unitsPerCarton = resolvedSourceProduct ? getUnitsPerCarton(resolvedSourceProduct) : 1;
@@ -8255,6 +8260,7 @@
                             comment: pending.comment || '',
                             customer: pending.customer || {},
                             items: Array.isArray(pending.items) ? pending.items : [],
+                            pricingStatus: normalizePendingSalePricingStatus(pending.pricingStatus) || '',
                             adjustmentDirection: pending.adjustmentDirection || pending.discountDirection || 'discount',
                             discountMode: pending.discountMode || pending.discountType || null,
                             discountValue: pending.discountValue ?? pending.discountPercent ?? pending.discountAmountValue ?? pending.discountAmount ?? 0,
@@ -8482,6 +8488,7 @@
             }
 
             function syncDiscountInputFields(summary = null) {
+                const hasPendingPrice = cartHasPendingPriceItems();
                 if (discountPercentInput && document.activeElement !== discountPercentInput) {
                     discountPercentInput.value = discountMode === 'percent' && discountValue > 0
                         ? formatInputNumber(discountValue)
@@ -8493,7 +8500,7 @@
                         : '';
                 }
                 if (discountFinalTotalInput && document.activeElement !== discountFinalTotalInput) {
-                    if (!cartItems.length) {
+                    if (!cartItems.length || hasPendingPrice) {
                         discountFinalTotalInput.value = '';
                     } else {
                         const effectiveSummary = summary || calculateCartSummary();
@@ -8504,6 +8511,7 @@
 
             function updateDiscountQuickControls(summary = null) {
                 const hasItems = cartItems.length > 0;
+                const hasPendingPrice = hasItems && cartHasPendingPriceItems();
                 const effectiveSummary = summary || (hasItems ? calculateCartSummary() : null);
                 const baseSummary = hasItems ? calculateCartBaseSummary() : null;
                 const direction = normalizeDiscountDirection(discountDirection);
@@ -8526,7 +8534,9 @@
                     button.textContent = `${direction === 'increase' ? '+' : '-'}${formatPresetAmount(amount)}`;
                 });
                 if (discountQuickSummary) {
-                    if (!hasItems || !effectiveSummary || !baseSummary) {
+                    if (hasPendingPrice) {
+                        discountQuickSummary.textContent = "Indisponible tant que le prix des articles n'est pas défini.";
+                    } else if (!hasItems || !effectiveSummary || !baseSummary) {
                         discountQuickSummary.textContent = 'Ajoutez un article pour appliquer un ajustement.';
                     } else if (effectiveSummary.discountAmount > 0) {
                         discountQuickSummary.textContent =
@@ -8578,18 +8588,19 @@
                 if (!cartItems.length) {
                     discountApproval = null;
                 }
+                const hasPendingPriceItems = cartHasPendingPriceItems();
                 const requiresApproval = !isDiscountApproverRole();
                 const isApproved = !!discountApproval;
-                const lockInputs = requiresApproval && !isApproved;
+                const lockInputs = hasPendingPriceItems || (requiresApproval && !isApproved);
 
                 setDiscountInputsLocked(lockInputs);
 
                 if (discountApprovalTrigger) {
-                    const canShow = requiresApproval && cartItems.length > 0 && !isApproved && !discountApprovalInline;
+                    const canShow = !hasPendingPriceItems && requiresApproval && cartItems.length > 0 && !isApproved && !discountApprovalInline;
                     discountApprovalTrigger.classList.toggle('hidden', !canShow);
                 }
                 if (discountApprovalHint) {
-                    const showHint = requiresApproval && !isApproved && cartItems.length > 0;
+                    const showHint = !hasPendingPriceItems && requiresApproval && !isApproved && cartItems.length > 0;
                     if (showHint) {
                         const masterCode = getDiscountApprovalMasterCode();
                         discountApprovalHint.textContent = masterCode
@@ -8599,7 +8610,7 @@
                     discountApprovalHint.classList.toggle('hidden', !showHint);
                 }
                 if (discountApprovalStatus) {
-                    if (requiresApproval && isApproved) {
+                    if (!hasPendingPriceItems && requiresApproval && isApproved) {
                         discountApprovalStatus.textContent = `Validée par ${getDiscountApprovalLabel(discountApproval)}`;
                         discountApprovalStatus.classList.remove('hidden');
                     } else {
@@ -8607,7 +8618,7 @@
                     }
                 }
                 if (discountApprovalInline) {
-                    const showInline = requiresApproval && cartItems.length > 0 && !isApproved;
+                    const showInline = !hasPendingPriceItems && requiresApproval && cartItems.length > 0 && !isApproved;
                     discountApprovalInline.classList.toggle('hidden', !showInline);
                 }
                 updateAdjustmentDirectionUI();
@@ -10080,18 +10091,27 @@
 
                 const pendingLocalHtml = filteredPending.map(pending => {
                     const customer = pending.customer || {};
-                    const items = pending.items || [];
+                    const pricingState = syncSaleItemsPricing(pending.items || []);
+                    const items = pricingState.items || [];
                     const itemsCount = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
-                    const summary = calculateItemsSummary(items, getPendingDiscountState(pending));
+                    const hasPendingPrice = pricingState.hasPendingPrice;
+                    const summary = hasPendingPrice ? null : calculateItemsSummary(items, getPendingDiscountState(pending));
                     const { dateLabel, timeLabel } = formatHistoryDateParts(pending.createdAt || pending.date || new Date().toISOString());
                     const pendingBoutiqueId = resolveBoutiqueId(pending.boutiqueId || items[0]?.boutiqueId);
                     const pendingBoutiqueLabel = pending.boutiqueName || (pendingBoutiqueId ? getBoutiqueName(pendingBoutiqueId) : '');
+                    const pendingPricingStatus = normalizePendingSalePricingStatus(pending.pricingStatus);
                     const pendingBoutiqueHtml = pendingBoutiqueLabel
                         ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-cyan-50 text-cyan-700">Boutique: ${pendingBoutiqueLabel}</span>`
                         : '';
+                    const pendingStatusHtml = hasPendingPrice
+                        ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700">Prix à définir</span>`
+                        : (pendingPricingStatus === PENDING_SALE_PRICING_PENDING
+                            ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">Prix défini · prêt</span>`
+                            : `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-50 text-orange-700">En attente</span>`);
                     const itemsHtml = items.map((item, itemIndex) => {
-                        const unitPrice = item.sellingPrice || (item.total / Math.max(item.quantity, 1));
-                        const lineTotal = (item.sellingPrice || item.price || 0) * (item.quantity || 0);
+                        const hasLinePrice = Number.isFinite(Number(item.sellingPrice)) && item.pricePending !== true;
+                        const unitPrice = hasLinePrice ? Number(item.sellingPrice) : null;
+                        const lineTotal = hasLinePrice ? Number(item.sellingPrice) * (item.quantity || 0) : null;
                         return `
                             <div class="flex items-center justify-between text-sm text-gray-700">
                                 <div class="flex items-center gap-3">
@@ -10099,8 +10119,8 @@
                                     <span class="font-semibold text-gray-900">${item.name}</span>
                                 </div>
                                 <div class="text-right">
-                                    <p class="text-xs text-gray-500">${formatCurrency(unitPrice, summary.currency)} / unité</p>
-                                    <p class="text-sm font-semibold text-gray-900">${formatCurrency(lineTotal, summary.currency)}</p>
+                                    <p class="text-xs ${hasLinePrice ? 'text-gray-500' : 'text-amber-600'}">${hasLinePrice ? `${formatCurrency(unitPrice, item.currency || summary?.currency || 'CFA')} / unité` : 'Prix non défini'}</p>
+                                    <p class="text-sm font-semibold ${hasLinePrice ? 'text-gray-900' : 'text-amber-600'}">${hasLinePrice ? formatCurrency(lineTotal, item.currency || summary?.currency || 'CFA') : 'Prix à définir'}</p>
                                     <button type="button" data-pending-item-remove="${pending.id}" data-pending-item-index="${itemIndex}"
                                         class="mt-1 text-xs font-semibold text-red-600 hover:text-red-700">
                                         Retirer
@@ -10109,12 +10129,34 @@
                             </div>
                         `;
                     }).join('');
-                    const taxRowHtml = isTaxEnabled ? `
+                    const taxRowHtml = !hasPendingPrice && isTaxEnabled ? `
                         <div class="flex items-center justify-between text-sm text-gray-400">
                             <span>TVA (20%)</span>
                             <span>${formatCurrency(summary.tax, summary.currency)}</span>
                         </div>
-                    ` : '';
+                    ` : (hasPendingPrice ? `
+                        <div class="flex items-center justify-between text-sm text-amber-600">
+                            <span>Montant</span>
+                            <span>Bloqué jusqu'au prix</span>
+                        </div>
+                    ` : '');
+                    const totalLabel = hasPendingPrice ? 'Prix à définir' : formatCurrency(summary.total, summary.currency);
+                    const totalClass = hasPendingPrice ? 'text-amber-600' : 'text-blue-600';
+                    const validateButtonHtml = hasPendingPrice
+                        ? `<button type="button" disabled
+                                class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gray-300 text-white font-semibold cursor-not-allowed">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01" />
+                                </svg>
+                                Prix requis
+                            </button>`
+                        : `<button type="button" data-pending-validate="${pending.id}"
+                                class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                Valider la vente
+                            </button>`;
 
                     return `
                         <div class="border border-gray-200 rounded-2xl shadow-sm bg-white overflow-hidden">
@@ -10128,7 +10170,7 @@
                                     <div>
                                         <div class="flex items-center gap-2 flex-wrap">
                                             <p class="font-semibold text-gray-900">INV-${(pending.id || '').slice(-6).toUpperCase()}</p>
-                                            <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-50 text-orange-700">En attente</span>
+                                            ${pendingStatusHtml}
                                             ${pendingBoutiqueHtml}
                                         </div>
                                         <div class="mt-1 flex flex-wrap items-center gap-3 text-xs text-gray-500">
@@ -10139,7 +10181,7 @@
                                     </div>
                                 </div>
                                 <div class="text-right">
-                                    <p class="text-2xl font-bold text-blue-600">${formatCurrency(summary.total, summary.currency)}</p>
+                                    <p class="text-2xl font-bold ${totalClass}">${totalLabel}</p>
                                     <p class="text-xs text-gray-400">${itemsCount} article${itemsCount > 1 ? 's' : ''}</p>
                                 </div>
                             </div>
@@ -10177,22 +10219,16 @@
                                 <div class="mt-4 space-y-2 border-t border-gray-100 pt-4">
                                     <div class="flex items-center justify-between text-sm text-gray-600">
                                         <span>Sous-total</span>
-                                        <span>${formatCurrency(summary.subtotal, summary.currency)}</span>
+                                        <span>${hasPendingPrice ? 'Prix à définir' : formatCurrency(summary.subtotal, summary.currency)}</span>
                                     </div>
                                     ${taxRowHtml}
                                     <div class="flex items-center justify-between text-base font-semibold text-gray-900 border-t border-gray-100 pt-3">
                                         <span>Total</span>
-                                        <span class="text-blue-600">${formatCurrency(summary.total, summary.currency)}</span>
+                                        <span class="${totalClass}">${totalLabel}</span>
                                     </div>
                                 </div>
                                 <div class="mt-4 flex flex-col md:flex-row gap-3">
-                                    <button type="button" data-pending-validate="${pending.id}"
-                                        class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700">
-                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                        </svg>
-                                        Valider la vente
-                                    </button>
+                                    ${validateButtonHtml}
                                     <button type="button" data-pending-resume="${pending.id}"
                                         class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-cyan-500 text-white font-semibold hover:bg-cyan-600">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -10793,10 +10829,18 @@
 
             const PRICING_STATUS_PENDING = 'pending';
             const PRICING_STATUS_ACTIVE = 'active';
+            const PENDING_SALE_PRICING_READY = 'ready';
+            const PENDING_SALE_PRICING_PENDING = 'pending_price';
 
             function normalizePricingStatus(status) {
                 const normalized = (status || '').toString().trim().toLowerCase();
                 if (normalized === PRICING_STATUS_PENDING || normalized === PRICING_STATUS_ACTIVE) return normalized;
+                return '';
+            }
+
+            function normalizePendingSalePricingStatus(status) {
+                const normalized = (status || '').toString().trim().toLowerCase();
+                if (normalized === PENDING_SALE_PRICING_READY || normalized === PENDING_SALE_PRICING_PENDING) return normalized;
                 return '';
             }
 
@@ -10820,6 +10864,14 @@
 
             function isProductPricingComplete(product) {
                 return getProductPricingStatus(product) === PRICING_STATUS_ACTIVE;
+            }
+
+            function isProductTransferReady(product) {
+                if (!product) return false;
+                const primaryPackaging = getPrimaryPackaging(product);
+                if (!primaryPackaging) return false;
+                if (!isPackageTypeAvailable(product, primaryPackaging.code, 'transfer')) return false;
+                return !!getProductBaseUnitLabel(product);
             }
 
             function stripLegacyPriceFields(fields = {}) {
@@ -10896,6 +10948,12 @@
                 if (value === '' || value === null || typeof value === 'undefined') return null;
                 const parsed = Number(value);
                 return Number.isFinite(parsed) ? parsed : NaN;
+            }
+
+            function toNullableFiniteNumber(value) {
+                if (value === '' || value === null || typeof value === 'undefined') return null;
+                const parsed = Number(value);
+                return Number.isFinite(parsed) ? parsed : null;
             }
 
             function buildPackagingDraft(overrides = {}) {
@@ -11944,6 +12002,8 @@
                 const sourceUnits = sourcePackaging?.unitCount || 1;
                 const totalUnits = sourceQty * sourceUnits;
                 const baseUnitLabel = getProductBaseUnitLabel(product);
+                const detailSellingPrice = toNullableFiniteNumber(getPackageSellingPrice(product, 'detail'));
+                const detailPurchaseCost = toNullableFiniteNumber(getPackagePurchaseCost(product, 'detail'));
                 const targets = totalUnits > 0 ? [{
                     type: 'detail',
                     packageCode: 'detail',
@@ -11953,8 +12013,8 @@
                     quantity: totalUnits,
                     unitsPerPackage: 1,
                     totalUnits,
-                    sellingPrice: getPackageSellingPrice(product, 'detail'),
-                    purchaseCost: getPackagePurchaseCost(product, 'detail')
+                    sellingPrice: detailSellingPrice,
+                    purchaseCost: detailPurchaseCost
                 }] : [];
 
                 return {
@@ -15151,7 +15211,7 @@
 
             function populateStoreProductSelects() {
                 const activeStoreProducts = getActiveStoreProducts();
-                const transferProducts = activeStoreProducts.filter(product => isProductPricingComplete(product));
+                const transferProducts = activeStoreProducts.filter(product => isProductTransferReady(product));
                 const entryProducts = getEntrySelectableProducts();
 
                 const fillSelect = (select, products, showAssignmentHint = false, disableOutOfStock = false) => {
@@ -15368,7 +15428,7 @@
                     const matchesStore = storeId ? resolveStoreId(item.sourceStoreId) === storeId : true;
                     if (!matchesBoutique || !matchesStore) return false;
                     const sourceProduct = appData.storeProducts?.[item.sourceProductId];
-                    return isProductPricingComplete(sourceProduct);
+                    return isProductTransferReady(sourceProduct);
                 });
                 const selects = [restockProductSelect];
                 selects.forEach(select => {
@@ -18421,8 +18481,8 @@
                         quantity: parseInt(request.quantity, 10) || 0,
                         unitsPerPackage: 1,
                         totalUnits: parseInt(request.quantity, 10) || 0,
-                        sellingPrice: Number.isFinite(Number(request.sellingPrice)) ? Number(request.sellingPrice) : getPackageSellingPrice(sourceProd, 'detail'),
-                        purchaseCost: Number.isFinite(Number(request.purchaseCost)) ? Number(request.purchaseCost) : getPackagePurchaseCost(sourceProd, 'detail')
+                        sellingPrice: toNullableFiniteNumber(request.sellingPrice) ?? toNullableFiniteNumber(getPackageSellingPrice(sourceProd, 'detail')),
+                        purchaseCost: toNullableFiniteNumber(request.purchaseCost) ?? toNullableFiniteNumber(getPackagePurchaseCost(sourceProd, 'detail'))
                     }];
                     const requestedBaseUnits = parseNonNegativeInteger(
                         request.totalUnits,
@@ -18463,17 +18523,15 @@
                     }
 
                     const shopId = shopItem ? shopItem.id : push(ref(db, `${dbBasePath}/shopStock`)).key;
-                    const sellingPrice = Number.isFinite(Number(request.sellingPrice))
-                        ? Number(request.sellingPrice)
-                        : getPackageSellingPrice(sourceProd, 'detail');
-                    const purchaseCost = Number.isFinite(Number(request.purchaseCost))
-                        ? Number(request.purchaseCost)
-                        : getPackagePurchaseCost(sourceProd, 'detail');
+                    const sellingPrice = toNullableFiniteNumber(request.sellingPrice)
+                        ?? toNullableFiniteNumber(getPackageSellingPrice(sourceProd, 'detail'));
+                    const purchaseCost = toNullableFiniteNumber(request.purchaseCost)
+                        ?? toNullableFiniteNumber(getPackagePurchaseCost(sourceProd, 'detail'));
                     const alertThreshold = Number.isFinite(request.alertThreshold)
                         ? request.alertThreshold
                         : (shopItem?.alertThreshold ?? 5);
-                    if (!shopId || !Number.isFinite(sellingPrice)) {
-                        showSuccessToast("Prix boutique non défini.");
+                    if (!shopId) {
+                        showSuccessToast("Produit boutique introuvable.");
                         return;
                     }
 
@@ -19898,7 +19956,7 @@
                 const packagings = shopItem
                     ? getShopItemSellPackagings(shopItem).filter(packaging => {
                         const unitCount = Number(packaging.unitCount) || 1;
-                        return Number.isFinite(getPackageSellingPrice(sourceProduct, packaging.code)) && activeQty >= unitCount;
+                        return activeQty >= unitCount;
                     })
                     : [];
                 const previousValue = salesQuickPackageSelect.value || '';
@@ -19917,7 +19975,7 @@
                     const unitCount = Number(packaging.unitCount) || 1;
                     const sellingPrice = getPackageSellingPrice(sourceProduct, packaging.code);
                     option.value = packaging.code || 'detail';
-                    option.textContent = `${packaging.label} — ${formatCurrency(sellingPrice, sourceProduct.currency || 'CFA')}`;
+                    option.textContent = `${packaging.label} — ${Number.isFinite(Number(sellingPrice)) ? formatCurrency(sellingPrice, sourceProduct.currency || 'CFA') : 'Prix à définir'}`;
                     option.dataset.units = String(unitCount);
                     salesQuickPackageSelect.appendChild(option);
                 });
@@ -19943,7 +20001,7 @@
                 if (salesQuickSelectionInfo && salesQuickSelectionStock && salesQuickSelectionPrice) {
                     const sellingPrice = getPackageSellingPrice(sourceProduct, selectedPackaging?.code);
                     salesQuickSelectionStock.textContent = `Stock disponible: ${formatShopStockBreakdown(activeQty, shopItem, { includeBaseTotal: true })}`;
-                    salesQuickSelectionPrice.textContent = `${selectedPackaging?.label || getProductBaseUnitLabel(sourceProduct)} · ${formatCurrency(sellingPrice, sourceProduct.currency || 'CFA')} · ${selectedUnits} unité(s)`;
+                    salesQuickSelectionPrice.textContent = `${selectedPackaging?.label || getProductBaseUnitLabel(sourceProduct)} · ${Number.isFinite(Number(sellingPrice)) ? formatCurrency(sellingPrice, sourceProduct.currency || 'CFA') : 'Prix à définir'} · ${selectedUnits} unité(s)`;
                     salesQuickSelectionInfo.classList.remove('hidden');
                 }
 
@@ -20016,17 +20074,23 @@
                             ? 'bg-yellow-100 text-yellow-700'
                             : 'bg-green-100 text-green-700';
                     const itemLabel = getShopItemDisplayName(item);
+                    const hasAnyDirectPrice = packagings.some(packaging => {
+                        const unitCount = Number(packaging.unitCount) || 1;
+                        return activeQty >= unitCount && Number.isFinite(getPackageSellingPrice(sourceProduct, packaging.code));
+                    });
                     const packagingButtons = packagings.map(packaging => {
                         const unitCount = Number(packaging.unitCount) || 1;
                         const sellingPrice = getPackageSellingPrice(sourceProduct, packaging.code);
                         const hasPrice = Number.isFinite(sellingPrice);
-                        const canSellThisPackaging = !pendingLot && activeQty >= unitCount && hasPrice;
-                        const disabledClass = canSellThisPackaging
-                            ? 'border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100'
+                        const canAddThisPackaging = !pendingLot && activeQty >= unitCount;
+                        const buttonClass = canAddThisPackaging
+                            ? (hasPrice
+                                ? 'border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100'
+                                : 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100')
                             : 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed';
                         return `
                             <button type="button" data-add-product="${item.id}" data-package-ref="${escapeHtml(packaging.code || 'DTL')}"
-                                class="px-3 py-2 rounded-xl border text-left transition ${disabledClass}" ${canSellThisPackaging ? '' : 'disabled'}>
+                                class="px-3 py-2 rounded-xl border text-left transition ${buttonClass}" ${canAddThisPackaging ? '' : 'disabled'}>
                                 <span class="block text-xs font-semibold">${escapeHtml(packaging.label || getProductBaseUnitLabel(sourceProduct))}</span>
                                 <span class="mt-1 block text-[11px]">${hasPrice ? formatCurrency(sellingPrice, currency) : 'Prix non défini'} · ${unitCount} unité(s)</span>
                             </button>
@@ -20041,6 +20105,7 @@
                             <h3 class="mt-3 text-base font-semibold text-gray-900">${itemLabel}</h3>
                             <p class="mt-1 text-xs text-gray-400">${formatShopStockBreakdown(activeQty, item, { includeBaseTotal: true })}</p>
                             <p class="mt-2 text-xs font-semibold text-cyan-700">${activeLot ? `${activeLot.label} · ${formatBaseUnits(activeQty, getProductBaseUnitLabel(sourceProduct))}` : (pendingLot ? `${pendingLot.label} · en attente de validation` : 'Aucun lot actif')}</p>
+                            ${hasAnyDirectPrice ? '' : '<p class="mt-1 text-[11px] font-semibold text-amber-600">Prix à définir avant validation ou facture.</p>'}
                             ${nextLot && !pendingLot ? `<p class="mt-1 text-[11px] text-amber-600">Prochain lot: ${escapeHtml(nextLot.label)} · ${nextLot.requiresActivationValidation ? 'validation requise' : 'activation auto'}</p>` : ''}
                             <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 ${packagingButtons}
@@ -20089,6 +20154,57 @@
                 return Math.max(0, Math.floor(availableUnits / getCartItemUnitCount(item)));
             }
 
+            function getLiveSellingPriceForSaleItem(item) {
+                const shopProduct = item?.shopProductId ? appData.shopStock?.[item.shopProductId] : null;
+                const sourceProduct = shopProduct ? appData.storeProducts?.[shopProduct.sourceProductId] : null;
+                return {
+                    price: sourceProduct ? getPackageSellingPrice(sourceProduct, item?.packageCode || 'detail') : NaN,
+                    currency: sourceProduct?.currency || item?.currency || 'CFA'
+                };
+            }
+
+            function resolveSaleItemPricing(item, { mutate = false } = {}) {
+                if (!item || typeof item !== 'object') return item;
+                const target = mutate ? item : { ...item };
+                const hasStoredPrice = Number.isFinite(Number(target.sellingPrice)) && target.pricePending !== true;
+                const livePricing = getLiveSellingPriceForSaleItem(target);
+                target.currency = livePricing.currency || target.currency || 'CFA';
+
+                if (hasStoredPrice) {
+                    target.sellingPrice = Number(target.sellingPrice);
+                    target.pricePending = false;
+                    target.pricingStatus = PENDING_SALE_PRICING_READY;
+                    return target;
+                }
+
+                if (Number.isFinite(Number(livePricing.price))) {
+                    target.sellingPrice = Number(livePricing.price);
+                    target.pricePending = false;
+                    target.pricingStatus = PENDING_SALE_PRICING_READY;
+                } else {
+                    target.sellingPrice = null;
+                    target.pricePending = true;
+                    target.pricingStatus = PENDING_SALE_PRICING_PENDING;
+                }
+
+                return target;
+            }
+
+            function syncSaleItemsPricing(items = [], { mutate = false } = {}) {
+                const sourceItems = Array.isArray(items) ? items : [];
+                const resolvedItems = sourceItems.map(item => resolveSaleItemPricing(item, { mutate }));
+                const unresolvedItems = resolvedItems.filter(item => item?.pricePending === true || !Number.isFinite(Number(item?.sellingPrice)));
+                return {
+                    items: resolvedItems,
+                    hasPendingPrice: unresolvedItems.length > 0,
+                    unresolvedItems
+                };
+            }
+
+            function cartHasPendingPriceItems() {
+                return syncSaleItemsPricing(cartItems || []).hasPendingPrice;
+            }
+
             function addToCart(productId = null, quantityOverride = null, packageRef = null) {
                 const shopProductId = productId;
                 const quantityInput = Number.isFinite(quantityOverride) ? quantityOverride : 1;
@@ -20105,6 +20221,7 @@
                 const packageUnits = Number(selectedPackaging?.unitCount) || 1;
                 const stockUnitsRequested = quantityInput * packageUnits;
                 const sellingPrice = getPackageSellingPrice(sourceProduct, selectedPackaging?.code);
+                const hasResolvedPrice = Number.isFinite(Number(sellingPrice));
                 const activeLot = getShopItemActiveLot(shopProduct);
                 const pendingLot = getShopItemPendingValidationLot(shopProduct);
                 const productBoutiqueId = resolveBoutiqueId(shopProduct.boutiqueId);
@@ -20114,9 +20231,15 @@
                     return;
                 }
                 if (cartItems.length) {
+                    syncSaleItemsPricing(cartItems, { mutate: true });
                     const cartBoutiqueId = resolveBoutiqueId(cartItems[0]?.boutiqueId);
                     if (cartBoutiqueId && productBoutiqueId && cartBoutiqueId !== productBoutiqueId) {
                         showSalesErrorMessage("Le panier contient des articles d'une autre boutique.");
+                        return;
+                    }
+                    const cartHasPendingPrice = cartHasPendingPriceItems();
+                    if (cartHasPendingPrice !== !hasResolvedPrice) {
+                        showSalesErrorMessage("Les articles sans prix doivent être mis en attente dans un panier séparé.");
                         return;
                     }
                 }
@@ -20126,10 +20249,6 @@
                 }
                 if (!activeLot || getShopItemAvailableSaleQuantity(shopProduct) <= 0) {
                     showSalesErrorMessage("Stock insuffisant pour ce produit.");
-                    return;
-                }
-                if (!Number.isFinite(sellingPrice)) {
-                    showSalesErrorMessage("Prix non défini pour ce conditionnement.");
                     return;
                 }
 
@@ -20165,7 +20284,9 @@
                         lotLabel: activeLot.label,
                         lotReceivedAt: activeLot.receivedAt || '',
                         purchaseCostSnapshot: Number.isFinite(Number(activeLot.purchaseCost)) ? Number(activeLot.purchaseCost) : 0,
-                        sellingPrice,
+                        sellingPrice: hasResolvedPrice ? Number(sellingPrice) : null,
+                        pricePending: !hasResolvedPrice,
+                        pricingStatus: hasResolvedPrice ? PENDING_SALE_PRICING_READY : PENDING_SALE_PRICING_PENDING,
                         quantity: quantityInput,
                         currency
                     });
@@ -20368,6 +20489,7 @@
             }
 
             function renderCart() {
+                const pricingState = syncSaleItemsPricing(cartItems, { mutate: true });
                 const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
                 if (cartItemsCount) {
                     let label = 'article';
@@ -20377,6 +20499,7 @@
                 }
 
                 const hasItems = cartItems.length > 0;
+                const hasPendingPrice = pricingState.hasPendingPrice;
                 const canGenerateInvoice = !hasItems && !!lastValidatedInvoiceData;
                 const canHold = hasItems && !!selectedCustomer;
                 if (cartTaxRow) cartTaxRow.classList.toggle('hidden', !isTaxEnabled);
@@ -20416,6 +20539,7 @@
                     if (holdCartButton) {
                         holdCartButton.disabled = true;
                         holdCartButton.title = 'Ajoutez des articles pour mettre en attente';
+                        holdCartButton.textContent = 'Mettre en attente';
                     }
                     updateDiscountQuickControls();
                     updateDiscountApprovalUI();
@@ -20423,9 +20547,11 @@
                 }
 
                 if (validateCartButton) {
-                    validateCartButton.disabled = false;
-                    validateCartButton.classList.remove('bg-gray-300');
-                    validateCartButton.classList.add('bg-cyan-500', 'hover:bg-cyan-600');
+                    validateCartButton.disabled = hasPendingPrice;
+                    validateCartButton.title = hasPendingPrice ? "Définissez d'abord le prix des articles." : '';
+                    validateCartButton.classList.toggle('bg-gray-300', hasPendingPrice);
+                    validateCartButton.classList.toggle('bg-cyan-500', !hasPendingPrice);
+                    validateCartButton.classList.toggle('hover:bg-cyan-600', !hasPendingPrice);
                 }
                 if (generateInvoiceButton) {
                     generateInvoiceButton.disabled = true;
@@ -20434,9 +20560,11 @@
                     generateInvoiceButton.classList.remove('bg-blue-600', 'hover:bg-blue-700');
                 }
                 if (payLaterButton) {
-                    const canPayLater = hasItems && !!selectedCustomer;
+                    const canPayLater = hasItems && !!selectedCustomer && !hasPendingPrice;
                     payLaterButton.disabled = !canPayLater;
-                    payLaterButton.title = canPayLater ? '' : 'Sélectionnez un client pour marquer à payer plus tard';
+                    payLaterButton.title = hasPendingPrice
+                        ? "Définissez d'abord le prix des articles."
+                        : (canPayLater ? '' : 'Sélectionnez un client pour marquer à payer plus tard');
                     payLaterButton.classList.toggle('bg-gray-300', !canPayLater);
                     payLaterButton.classList.toggle('bg-amber-500', canPayLater);
                     payLaterButton.classList.toggle('hover:bg-amber-600', canPayLater);
@@ -20444,11 +20572,13 @@
                 if (holdCartButton) {
                     holdCartButton.disabled = !canHold;
                     holdCartButton.title = canHold ? '' : 'Sélectionnez un client pour mettre en attente';
+                    holdCartButton.textContent = hasPendingPrice ? 'Mettre prix en attente' : 'Mettre en attente';
                 }
 
                 if (cartItemsList) {
                     cartItemsList.innerHTML = cartItems.map((item, index) => {
-                        const subtotal = item.sellingPrice * item.quantity;
+                        const hasLinePrice = Number.isFinite(Number(item.sellingPrice)) && item.pricePending !== true;
+                        const subtotal = hasLinePrice ? Number(item.sellingPrice) * item.quantity : null;
                         const packageInfo = item.packageLabel ? `<p class="text-[11px] font-semibold text-slate-500 mt-1">${item.packageLabel} · ${item.quantity}</p>` : '';
                         const lotInfo = item.lotLabel ? `<p class="text-[11px] font-semibold text-cyan-700 mt-1">${item.lotLabel}</p>` : '';
                         return `
@@ -20457,10 +20587,10 @@
                                     <p class="text-sm font-semibold text-gray-900">${item.name}</p>
                                     ${packageInfo}
                                     ${lotInfo}
-                                    <p class="text-xs text-gray-500 mt-1">${formatCurrency(item.sellingPrice, item.currency)} x ${item.quantity}</p>
+                                    <p class="text-xs text-gray-500 mt-1">${hasLinePrice ? `${formatCurrency(item.sellingPrice, item.currency)} x ${item.quantity}` : 'Prix à définir avant validation'}</p>
                                 </div>
                                 <div class="text-right">
-                                    <p class="text-sm font-semibold text-gray-900">${formatCurrency(subtotal, item.currency)}</p>
+                                    <p class="text-sm font-semibold ${hasLinePrice ? 'text-gray-900' : 'text-amber-600'}">${hasLinePrice ? formatCurrency(subtotal, item.currency) : 'Prix à définir'}</p>
                                     <div class="mt-2 flex items-center justify-end gap-2">
                                         <button type="button" data-cart-action="decrease" data-index="${index}" class="w-7 h-7 rounded-full border border-gray-200 text-gray-500 hover:text-gray-700">-</button>
                                         <input type="number" min="1" step="1" value="${item.quantity}" data-cart-quantity data-index="${index}"
@@ -20472,6 +20602,17 @@
                             </div>
                         `;
                     }).join('');
+                }
+
+                if (hasPendingPrice) {
+                    if (cartSubtotal) cartSubtotal.textContent = 'Prix à définir';
+                    if (cartTax) cartTax.textContent = '—';
+                    if (cartDiscount) cartDiscount.textContent = '—';
+                    if (cartDiscountRow) cartDiscountRow.classList.add('hidden');
+                    if (cartTotal) cartTotal.textContent = 'Prix à définir';
+                    updateDiscountQuickControls();
+                    updateDiscountApprovalUI();
+                    return;
                 }
 
                 const summary = calculateCartSummary();
@@ -20507,9 +20648,14 @@
                     return;
                 }
 
-                const summary = calculateCartSummary();
-                const approval = await ensureDiscountApprovalForSummary(summary, { existingApproval: discountApproval, persist: true });
-                if (summary.discountAmount > 0 && !approval) {
+                const pricingState = syncSaleItemsPricing(cartItems, { mutate: true });
+                const hasPendingPrice = pricingState.hasPendingPrice;
+                const holdMovementLabel = hasPendingPrice ? 'Vente en attente de prix' : 'Vente en attente';
+                const summary = hasPendingPrice ? null : calculateCartSummary();
+                const approval = hasPendingPrice
+                    ? null
+                    : await ensureDiscountApprovalForSummary(summary, { existingApproval: discountApproval, persist: true });
+                if (!hasPendingPrice && summary.discountAmount > 0 && !approval) {
                     showSalesErrorMessage("Un code admin/manager est requis pour appliquer cet ajustement.");
                     return;
                 }
@@ -20523,10 +20669,11 @@
                         comment,
                         boutiqueId: cartBoutiqueId || null,
                         boutiqueName: cartBoutiqueName || '',
-                        adjustmentDirection: summary.adjustmentDirection,
-                        discountMode: summary.discountMode,
-                        discountValue: summary.discountValue,
-                        discountAmount: summary.discountAmount,
+                        pricingStatus: hasPendingPrice ? PENDING_SALE_PRICING_PENDING : PENDING_SALE_PRICING_READY,
+                        adjustmentDirection: hasPendingPrice ? 'discount' : summary.adjustmentDirection,
+                        discountMode: hasPendingPrice ? null : summary.discountMode,
+                        discountValue: hasPendingPrice ? 0 : summary.discountValue,
+                        discountAmount: hasPendingPrice ? 0 : summary.discountAmount,
                         ...buildDiscountApprovalPayload(approval),
                         customer: {
                             id: selectedCustomer.id,
@@ -20584,7 +20731,7 @@
                                         quantityChange: extraQty,
                                         oldStock: shopProduct?.quantityInShop ?? 0,
                                         newStock,
-                                        comment: comment ? `Vente en attente: ${comment}` : 'Vente en attente',
+                                        comment: comment ? `${holdMovementLabel}: ${comment}` : holdMovementLabel,
                                         date: { ".sv": "timestamp" },
                                         userEmail: currentUser.email || '',
                                         userName: currentUserData?.fullName || currentUser.email || '',
@@ -20612,7 +20759,7 @@
                                         quantityChange: releasedQty,
                                         oldStock: shopProduct?.quantityInShop ?? 0,
                                         newStock,
-                                        comment: comment ? `Vente en attente: ${comment}` : 'Vente en attente',
+                                        comment: comment ? `${holdMovementLabel}: ${comment}` : holdMovementLabel,
                                         date: { ".sv": "timestamp" },
                                         userEmail: currentUser.email || '',
                                         userName: currentUserData?.fullName || currentUser.email || '',
@@ -20644,7 +20791,7 @@
                                 quantityChange: stockUnits,
                                 oldStock: shopProduct?.quantityInShop ?? 0,
                                 newStock,
-                                comment: comment ? `Vente en attente: ${comment}` : 'Vente en attente',
+                                comment: comment ? `${holdMovementLabel}: ${comment}` : holdMovementLabel,
                                 date: { ".sv": "timestamp" },
                                 userEmail: currentUser.email || '',
                                 userName: currentUserData?.fullName || currentUser.email || '',
@@ -20679,7 +20826,7 @@
                 resetDiscountInputs();
                 renderCart();
                 renderSalesHistory();
-                showSuccessToast('Panier mis en attente');
+                showSuccessToast(hasPendingPrice ? 'Panier prix en attente enregistré' : 'Panier mis en attente');
             }
 
             async function finalizeSale({ generateInvoice = false, payLater = false } = {}) {
@@ -20687,6 +20834,11 @@
                 if (!currentUser || !dbBasePath) return;
                 if (cartItems.length === 0) {
                     alert('Le panier est vide !');
+                    return;
+                }
+                const pricingState = syncSaleItemsPricing(cartItems, { mutate: true });
+                if (pricingState.hasPendingPrice) {
+                    showSalesErrorMessage("Définissez d'abord le prix des articles mis en attente.");
                     return;
                 }
                 if (payLater && !selectedCustomer) {
@@ -21204,9 +21356,14 @@
                 const pendingIndex = pendingSales.findIndex(sale => sale.id === pendingId);
                 if (pendingIndex === -1) return;
                 const pending = pendingSales[pendingIndex];
-                const items = pending.items || [];
+                const pricingState = syncSaleItemsPricing(pending.items || []);
+                const items = pricingState.items || [];
                 if (!items.length) {
                     showSalesErrorMessage('Aucun article dans cette vente en attente.');
+                    return;
+                }
+                if (pricingState.hasPendingPrice) {
+                    showSalesErrorMessage("Définissez d'abord le prix de cette vente en attente.");
                     return;
                 }
                 const isReserved = pending.stockReserved === true;
@@ -21466,7 +21623,7 @@
                     //    On marque chaque article stockReservedFromPending = true
                     //    pour que holdCart ne ré-déduise pas le stock sur ces articles
                     cartItems = (pending.items || []).map(item => ({
-                        ...item,
+                        ...resolveSaleItemPricing(item),
                         stockReservedFromPending: pending.stockReserved === true,
                         reservedQuantity: pending.stockReserved === true ? (Number(item.stockUnits ?? item.quantity) || 0) : 0
                     }));
@@ -23808,11 +23965,15 @@
                     showTransferError('Veuillez sélectionner une boutique.');
                     return;
                 }
-                if (sourceProd && !isProductPricingComplete(sourceProd)) {
-                    showTransferError("Prix du produit en attente. Un manager doit finaliser le tableau des prix.");
+                if (!sourceProd) {
+                    showTransferError('Veuillez sélectionner un produit.');
                     return;
                 }
-                if (!sourceProd || qty > sourceProd.quantityInStore) {
+                if (!isProductTransferReady(sourceProd)) {
+                    showTransferError("Ce produit ne peut pas encore être transféré car son conditionnement principal est incomplet.");
+                    return;
+                }
+                if (qty > sourceProd.quantityInStore) {
                     showTransferError("Stock magasin insuffisant pour ce transfert.");
                     return;
                 }
@@ -23825,11 +23986,6 @@
                 }
                 if (!plan.isValid) {
                     showTransferError("La repartition boutique ne correspond pas a la quantite sortie du magasin.");
-                    return;
-                }
-                const invalidTarget = plan.targets.find(target => !Number.isFinite(target.sellingPrice) || target.sellingPrice < 0);
-                if (invalidTarget) {
-                    showTransferError(`Le prix boutique n'est pas encore defini pour le format ${invalidTarget.label || 'selectionne'}.`);
                     return;
                 }
 
@@ -23875,7 +24031,7 @@
                             productName: sourceProd.name,
                             baseProductCode: getBaseProductCode(sourceProd),
                             categoryId: sourceProd.categoryId || null,
-                            purchaseCost: getPackagePurchaseCost(sourceProd, sourcePackageRef),
+                            purchaseCost: toNullableFiniteNumber(getPackagePurchaseCost(sourceProd, sourcePackageRef)),
                             quantity: qty,
                             sourceCartonQty: qty,
                             sourcePackageCode: sourcePackageRef,
@@ -23936,8 +24092,8 @@
                     showSuccessToast("Produit source introuvable pour ce réappro.");
                     return;
                 }
-                if (!isProductPricingComplete(sourceProd)) {
-                    showRestockError("Prix du produit en attente. Un manager doit finaliser le tableau des prix.");
+                if (!isProductTransferReady(sourceProd)) {
+                    showRestockError("Ce produit ne peut pas encore être réapprovisionné car son conditionnement principal est incomplet.");
                     return;
                 }
                 if (sourceStoreId && resolveStoreId(sourceProd.storeId) !== sourceStoreId) {
@@ -23974,8 +24130,8 @@
                         quantity: totalUnitsRequested,
                         unitsPerPackage: 1,
                         totalUnits: totalUnitsRequested,
-                        sellingPrice: getPackageSellingPrice(sourceProd, 'detail'),
-                        purchaseCost: getPackagePurchaseCost(sourceProd, 'detail')
+                        sellingPrice: toNullableFiniteNumber(getPackageSellingPrice(sourceProd, 'detail')),
+                        purchaseCost: toNullableFiniteNumber(getPackagePurchaseCost(sourceProd, 'detail'))
                     };
                     const targetSummary = formatBaseUnits(totalUnitsRequested, baseUnitLabel);
                     const restockComment = `${comment} · ${sourceCartons} ${sourceVariantCode} = ${targetSummary}`;
@@ -24014,7 +24170,7 @@
                             productName: sourceProd.name,
                             baseProductCode: getBaseProductCode(sourceProd),
                             categoryId: sourceProd.categoryId || shopProd.categoryId || null,
-                            purchaseCost: getPackagePurchaseCost(sourceProd, sourcePackageRef),
+                            purchaseCost: toNullableFiniteNumber(getPackagePurchaseCost(sourceProd, sourcePackageRef)),
                             quantity: sourceCartons,
                             sourceCartonQty: sourceCartons,
                             sourcePackageCode: sourcePackageRef,
