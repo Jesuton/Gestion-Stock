@@ -6756,7 +6756,7 @@
                         const sourceProduct = appData.storeProducts?.[item.sourceProductId];
                         const hasDirectPrice = getShopItemSellPackagings(item).some(packaging => {
                             const unitCount = Number(packaging.unitCount) || 1;
-                            return activeQty >= unitCount && Number.isFinite(getPackageSellingPrice(sourceProduct, packaging.code));
+                            return activeQty >= unitCount && hasUsableSellingPrice(getPackageSellingPrice(sourceProduct, packaging.code));
                         });
                         return {
                             value: item.id,
@@ -10109,7 +10109,7 @@
                             ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">Prix défini · prêt</span>`
                             : `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-50 text-orange-700">En attente</span>`);
                     const itemsHtml = items.map((item, itemIndex) => {
-                        const hasLinePrice = Number.isFinite(Number(item.sellingPrice)) && item.pricePending !== true;
+                        const hasLinePrice = hasUsableSellingPrice(item.sellingPrice) && item.pricePending !== true;
                         const unitPrice = hasLinePrice ? Number(item.sellingPrice) : null;
                         const lineTotal = hasLinePrice ? Number(item.sellingPrice) * (item.quantity || 0) : null;
                         return `
@@ -10851,8 +10851,8 @@
                 const primary = getPrimaryPackaging(product);
                 if (!primary) return false;
                 const hasPurchase = primary.purchaseCost !== null && Number.isFinite(Number(primary.purchaseCost));
-                const hasStore = primary.storePrice !== null && Number.isFinite(Number(primary.storePrice));
-                const hasShop = primary.shopPrice !== null && Number.isFinite(Number(primary.shopPrice));
+                const hasStore = primary.storePrice !== null && hasUsableSellingPrice(primary.storePrice);
+                const hasShop = primary.shopPrice !== null && hasUsableSellingPrice(primary.shopPrice);
                 return hasPurchase && hasStore && hasShop;
             }
 
@@ -11216,6 +11216,11 @@
                 }
                 const price = Number(product?.boutiquePriceUnit);
                 return Number.isFinite(price) ? price : NaN;
+            }
+
+            function hasUsableSellingPrice(value) {
+                const numeric = Number(value);
+                return Number.isFinite(numeric) && numeric > 0;
             }
 
             const SHOP_LOT_STATUS_ACTIVE = 'active';
@@ -19975,7 +19980,7 @@
                     const unitCount = Number(packaging.unitCount) || 1;
                     const sellingPrice = getPackageSellingPrice(sourceProduct, packaging.code);
                     option.value = packaging.code || 'detail';
-                    option.textContent = `${packaging.label} — ${Number.isFinite(Number(sellingPrice)) ? formatCurrency(sellingPrice, sourceProduct.currency || 'CFA') : 'Prix à définir'}`;
+                    option.textContent = `${packaging.label} — ${hasUsableSellingPrice(sellingPrice) ? formatCurrency(sellingPrice, sourceProduct.currency || 'CFA') : 'Prix à définir'}`;
                     option.dataset.units = String(unitCount);
                     salesQuickPackageSelect.appendChild(option);
                 });
@@ -20001,7 +20006,7 @@
                 if (salesQuickSelectionInfo && salesQuickSelectionStock && salesQuickSelectionPrice) {
                     const sellingPrice = getPackageSellingPrice(sourceProduct, selectedPackaging?.code);
                     salesQuickSelectionStock.textContent = `Stock disponible: ${formatShopStockBreakdown(activeQty, shopItem, { includeBaseTotal: true })}`;
-                    salesQuickSelectionPrice.textContent = `${selectedPackaging?.label || getProductBaseUnitLabel(sourceProduct)} · ${Number.isFinite(Number(sellingPrice)) ? formatCurrency(sellingPrice, sourceProduct.currency || 'CFA') : 'Prix à définir'} · ${selectedUnits} unité(s)`;
+                    salesQuickSelectionPrice.textContent = `${selectedPackaging?.label || getProductBaseUnitLabel(sourceProduct)} · ${hasUsableSellingPrice(sellingPrice) ? formatCurrency(sellingPrice, sourceProduct.currency || 'CFA') : 'Prix à définir'} · ${selectedUnits} unité(s)`;
                     salesQuickSelectionInfo.classList.remove('hidden');
                 }
 
@@ -20076,12 +20081,12 @@
                     const itemLabel = getShopItemDisplayName(item);
                     const hasAnyDirectPrice = packagings.some(packaging => {
                         const unitCount = Number(packaging.unitCount) || 1;
-                        return activeQty >= unitCount && Number.isFinite(getPackageSellingPrice(sourceProduct, packaging.code));
+                        return activeQty >= unitCount && hasUsableSellingPrice(getPackageSellingPrice(sourceProduct, packaging.code));
                     });
                     const packagingButtons = packagings.map(packaging => {
                         const unitCount = Number(packaging.unitCount) || 1;
                         const sellingPrice = getPackageSellingPrice(sourceProduct, packaging.code);
-                        const hasPrice = Number.isFinite(sellingPrice);
+                        const hasPrice = hasUsableSellingPrice(sellingPrice);
                         const canAddThisPackaging = !pendingLot && activeQty >= unitCount;
                         const buttonClass = canAddThisPackaging
                             ? (hasPrice
@@ -20166,7 +20171,7 @@
             function resolveSaleItemPricing(item, { mutate = false } = {}) {
                 if (!item || typeof item !== 'object') return item;
                 const target = mutate ? item : { ...item };
-                const hasStoredPrice = Number.isFinite(Number(target.sellingPrice)) && target.pricePending !== true;
+                const hasStoredPrice = hasUsableSellingPrice(target.sellingPrice) && target.pricePending !== true;
                 const livePricing = getLiveSellingPriceForSaleItem(target);
                 target.currency = livePricing.currency || target.currency || 'CFA';
 
@@ -20177,7 +20182,7 @@
                     return target;
                 }
 
-                if (Number.isFinite(Number(livePricing.price))) {
+                if (hasUsableSellingPrice(livePricing.price)) {
                     target.sellingPrice = Number(livePricing.price);
                     target.pricePending = false;
                     target.pricingStatus = PENDING_SALE_PRICING_READY;
@@ -20193,7 +20198,7 @@
             function syncSaleItemsPricing(items = [], { mutate = false } = {}) {
                 const sourceItems = Array.isArray(items) ? items : [];
                 const resolvedItems = sourceItems.map(item => resolveSaleItemPricing(item, { mutate }));
-                const unresolvedItems = resolvedItems.filter(item => item?.pricePending === true || !Number.isFinite(Number(item?.sellingPrice)));
+                const unresolvedItems = resolvedItems.filter(item => item?.pricePending === true || !hasUsableSellingPrice(item?.sellingPrice));
                 return {
                     items: resolvedItems,
                     hasPendingPrice: unresolvedItems.length > 0,
@@ -20221,7 +20226,7 @@
                 const packageUnits = Number(selectedPackaging?.unitCount) || 1;
                 const stockUnitsRequested = quantityInput * packageUnits;
                 const sellingPrice = getPackageSellingPrice(sourceProduct, selectedPackaging?.code);
-                const hasResolvedPrice = Number.isFinite(Number(sellingPrice));
+                const hasResolvedPrice = hasUsableSellingPrice(sellingPrice);
                 const activeLot = getShopItemActiveLot(shopProduct);
                 const pendingLot = getShopItemPendingValidationLot(shopProduct);
                 const productBoutiqueId = resolveBoutiqueId(shopProduct.boutiqueId);
@@ -20577,7 +20582,7 @@
 
                 if (cartItemsList) {
                     cartItemsList.innerHTML = cartItems.map((item, index) => {
-                        const hasLinePrice = Number.isFinite(Number(item.sellingPrice)) && item.pricePending !== true;
+                        const hasLinePrice = hasUsableSellingPrice(item.sellingPrice) && item.pricePending !== true;
                         const subtotal = hasLinePrice ? Number(item.sellingPrice) * item.quantity : null;
                         const packageInfo = item.packageLabel ? `<p class="text-[11px] font-semibold text-slate-500 mt-1">${item.packageLabel} · ${item.quantity}</p>` : '';
                         const lotInfo = item.lotLabel ? `<p class="text-[11px] font-semibold text-cyan-700 mt-1">${item.lotLabel}</p>` : '';
