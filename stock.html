@@ -12133,8 +12133,19 @@
                 customers: 'sales_history.tab_customers'
             };
 
+            const FEATURE_ACCESS_KEY_TOKEN = '__dot__';
+
+            function decodeCompanyFeatureAccessKey(value) {
+                return (value || '').toString().replaceAll(FEATURE_ACCESS_KEY_TOKEN, '.');
+            }
+
             function normalizeCompanyFeatureAccessMap(value) {
-                return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+                if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+                const normalized = {};
+                Object.entries(value).forEach(([key, featureValue]) => {
+                    normalized[decodeCompanyFeatureAccessKey(key)] = featureValue !== false;
+                });
+                return normalized;
             }
 
             function isCompanyFeatureEnabled(featureId) {
