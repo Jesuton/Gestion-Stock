@@ -626,7 +626,7 @@
                         </div>
                         <div id="dashboard-stock-alerts" class="mt-4 space-y-3"></div>
                         <div id="dashboard-stock-alerts-empty" class="mt-6 text-sm text-gray-400 hidden">Aucune alerte de stock.</div>
-                        <button type="button"
+                        <button type="button" id="dashboard-order-stocks-button"
                             class="mt-6 w-full inline-flex items-center justify-center px-4 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700">
                             Commander des stocks
                         </button>
@@ -2618,10 +2618,10 @@
                             <div class="flex flex-wrap gap-3 text-sm">
                                 <div class="px-3 py-2 bg-cyan-50 text-cyan-700 rounded-lg font-medium"
                                     id="settings-admin-badge">Rôle : Admin</div>
-                                <button
+                                <button id="settings-upgrade-button"
                                     class="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 font-semibold">Mettre
                                     à niveau</button>
-                                <button
+                                <button id="settings-download-policy-button"
                                     class="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 font-semibold">Télécharger
                                     la politique d'accès</button>
                             </div>
@@ -2725,9 +2725,9 @@
                                 <p id="add-boutique-error" class="text-sm text-red-500 hidden"></p>
                             </div>
                             <div class="flex flex-wrap gap-3">
-                                <button
+                                <button id="settings-account-save-button"
                                     class="px-5 py-2.5 bg-cyan-500 text-white rounded-xl text-sm font-semibold hover:bg-cyan-600">Enregistrer</button>
-                                <button
+                                <button id="settings-account-cancel-button"
                                     class="px-5 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50">Annuler</button>
                             </div>
                         </div>
@@ -2772,7 +2772,7 @@
                                 </label>
                             </div>
                             <div class="flex justify-end">
-                                <button
+                                <button id="settings-application-save-button"
                                     class="px-5 py-2.5 bg-cyan-500 text-white rounded-xl text-sm font-semibold hover:bg-cyan-600">Sauvegarder</button>
                             </div>
                         </div>
@@ -2899,7 +2899,7 @@
                                 </div>
                             </div>
                             <div class="flex justify-end">
-                                <button
+                                <button id="settings-notifications-save-button"
                                     class="px-5 py-2.5 bg-cyan-500 text-white rounded-xl text-sm font-semibold hover:bg-cyan-600">Mettre
                                     à jour</button>
                             </div>
@@ -2926,7 +2926,7 @@
                                     </div>
                                     <p class="text-sm text-gray-500">Basée sur 3 boutiques actives et 7 utilisateurs.
                                     </p>
-                                    <button
+                                    <button id="settings-download-invoice-button"
                                         class="px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50">Télécharger
                                         la dernière facture</button>
                                 </div>
@@ -2937,15 +2937,15 @@
                                         <p class="text-sm text-gray-500">Titulaire : Turibe Bayomi</p>
                                     </div>
                                     <div class="flex gap-3">
-                                        <button
+                                        <button id="settings-edit-payment-button"
                                             class="px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50">Modifier</button>
-                                        <button
+                                        <button id="settings-delete-payment-button"
                                             class="px-4 py-2 rounded-xl border border-red-200 text-sm font-semibold text-red-600 hover:bg-red-50">Supprimer</button>
                                     </div>
                                 </div>
                             </div>
                             <div class="flex justify-end">
-                                <button
+                                <button id="settings-add-payment-button"
                                     class="px-5 py-2.5 bg-cyan-500 text-white rounded-xl text-sm font-semibold hover:bg-cyan-600">Ajouter
                                     un moyen de paiement</button>
                             </div>
@@ -2997,7 +2997,7 @@
                                         <option value="vendeur">Vendeur</option>
                                         <option value="consultation">Consultation</option>
                                     </select>
-                                    <button type="submit"
+                                    <button type="submit" id="access-add-member-submit-button"
                                         class="col-span-2 md:col-span-1 bg-cyan-500 text-white rounded-xl font-semibold hover:bg-cyan-600">Générer
                                         le code</button>
                                 </form>
@@ -4732,7 +4732,7 @@
             let currentUserData = null;
             let dbBasePath = '';
 
-            const appData = { stores: {}, boutiques: {}, categories: {}, storeProducts: {}, storeMovements: {}, shopStock: {}, shopMovements: {}, shopTransferRequests: {}, salesHistory: {}, saleCorrections: {}, customers: {}, suppliers: {}, supplierInvoices: {}, supplierPayments: {}, customerPayments: {}, storeExitRequests: {}, pendingSales: {}, settings: {}, inventories: {}, losses: {} };
+            const appData = { stores: {}, boutiques: {}, categories: {}, storeProducts: {}, storeMovements: {}, shopStock: {}, shopMovements: {}, shopTransferRequests: {}, salesHistory: {}, saleCorrections: {}, customers: {}, suppliers: {}, supplierInvoices: {}, supplierPayments: {}, customerPayments: {}, storeExitRequests: {}, pendingSales: {}, settings: {}, inventories: {}, losses: {}, companyFeatureAccess: {} };
             let isSidebarOpen = false;
             let isSidebarCollapsed = false;
             let isCodeLoginMode = false;
@@ -4753,8 +4753,8 @@
             const SALE_SOURCE_MIXED = 'mixed';
 
 
-            let storesListener, boutiquesListener, categoriesListener, storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, shopTransferRequestsListener, salesHistoryListener, saleCorrectionsListener, companyMembersListener, companyCustomersListener, suppliersListener, supplierInvoicesListener, supplierPaymentsListener, customerPaymentsListener, storeExitRequestsListener, pendingSalesListener, settingsListener, inventoriesListener, chatListListener, chatReadsListener, chatMessagesListener;
-            let storesRef, boutiquesRef, categoriesRef, storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, shopTransferRequestsRef, salesHistoryRef, saleCorrectionsRef, companyMembersRef, companyCustomersRef, suppliersRef, supplierInvoicesRef, supplierPaymentsRef, customerPaymentsRef, storeExitRequestsRef, pendingSalesRef, settingsRef, inventoriesRef, chatListRef, chatReadsRef, chatMessagesRef;
+            let storesListener, boutiquesListener, categoriesListener, storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, shopTransferRequestsListener, salesHistoryListener, saleCorrectionsListener, companyMembersListener, companyCustomersListener, suppliersListener, supplierInvoicesListener, supplierPaymentsListener, customerPaymentsListener, storeExitRequestsListener, pendingSalesListener, settingsListener, inventoriesListener, companyFeatureAccessListener, chatListListener, chatReadsListener, chatMessagesListener;
+            let storesRef, boutiquesRef, categoriesRef, storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, shopTransferRequestsRef, salesHistoryRef, saleCorrectionsRef, companyMembersRef, companyCustomersRef, suppliersRef, supplierInvoicesRef, supplierPaymentsRef, customerPaymentsRef, storeExitRequestsRef, pendingSalesRef, settingsRef, inventoriesRef, companyFeatureAccessRef, chatListRef, chatReadsRef, chatMessagesRef;
 
             const accessModules = [
                 'Tableau de bord',
@@ -4885,6 +4885,7 @@
             const dashboardAdminMemberSelect = document.getElementById('dashboard-admin-member-select');
             const dashboardAdminPromoteButton = document.getElementById('dashboard-admin-promote-button');
             const dashboardAdminRecoveryEmpty = document.getElementById('dashboard-admin-recovery-empty');
+            const dashboardOrderStocksButton = document.getElementById('dashboard-order-stocks-button');
 
             const boutiqueSelectorSales = document.getElementById('boutique-selector-sales');
             const boutiqueSelectorStock = document.getElementById('boutique-selector-stock');
@@ -5045,6 +5046,7 @@
             const salesHistoryTabReminders = document.getElementById('sales-history-tab-reminders');
             const salesHistoryTabStoreValidation = document.getElementById('sales-history-tab-store-validation');
             const salesHistoryTabCustomers = document.getElementById('sales-history-tab-customers');
+            const salesHistoryExportButton = document.getElementById('sales-history-export');
             const salesHistoryCompletedCount = document.getElementById('sales-history-completed-count');
             const salesHistoryPendingCount = document.getElementById('sales-history-pending-count');
             const salesHistoryPayLaterCount = document.getElementById('sales-history-paylater-count');
@@ -5089,6 +5091,7 @@
             const customerHistoryButton = document.getElementById('customer-history-button');
             const openCustomerSelectButton = document.getElementById('open-customer-select-button');
             const changeCustomerSelectionButton = document.getElementById('change-customer-selection');
+            const clearCustomerSelectionButton = document.getElementById('clear-customer-selection');
             const customerHistorySection = document.getElementById('customer-history-section');
             const customerHistorySubtitle = document.getElementById('customer-history-subtitle');
             const customerHistoryTotal = document.getElementById('customer-history-total');
@@ -5489,11 +5492,22 @@
             const settingsTabButtons = document.querySelectorAll('.settings-tab-button');
             const settingsPanels = document.querySelectorAll('[data-settings-panel]');
             const settingsAdminBadge = document.getElementById('settings-admin-badge');
+            const settingsUpgradeButton = document.getElementById('settings-upgrade-button');
+            const settingsDownloadPolicyButton = document.getElementById('settings-download-policy-button');
+            const settingsAccountSaveButton = document.getElementById('settings-account-save-button');
+            const settingsAccountCancelButton = document.getElementById('settings-account-cancel-button');
+            const settingsApplicationSaveButton = document.getElementById('settings-application-save-button');
+            const settingsNotificationsSaveButton = document.getElementById('settings-notifications-save-button');
+            const settingsDownloadInvoiceButton = document.getElementById('settings-download-invoice-button');
+            const settingsEditPaymentButton = document.getElementById('settings-edit-payment-button');
+            const settingsDeletePaymentButton = document.getElementById('settings-delete-payment-button');
+            const settingsAddPaymentButton = document.getElementById('settings-add-payment-button');
             const accessMembersTbody = document.getElementById('access-members-tbody');
             const accessAddMemberForm = document.getElementById('access-add-member-form');
             const accessMemberNameInput = document.getElementById('access-member-name');
             const accessMemberEmailInput = document.getElementById('access-member-email');
             const accessMemberRoleInput = document.getElementById('access-member-role');
+            const accessAddMemberSubmitButton = document.getElementById('access-add-member-submit-button');
             const accessTotalUsers = document.getElementById('access-total-users');
             const accessTotalAdmins = document.getElementById('access-total-admins');
             const accessTotalPending = document.getElementById('access-total-pending');
@@ -12087,17 +12101,161 @@
                 'Paramètres': 'Paramètres'
             };
 
+            const pageFeatureAccessMap = {
+                'Tableau de bord': 'dashboard.view',
+                'Ventes': 'sales.view',
+                'Historique des ventes': 'sales_history.view',
+                'Stock Boutique': 'shop_stock.view',
+                'Mon Magasin': 'store_stock.view',
+                'Fournisseurs': 'suppliers.view',
+                'Paramètres': 'settings.view'
+            };
+
+            const settingsTabFeatureMap = {
+                compte: 'settings.tab_account',
+                application: 'settings.tab_app',
+                notifications: 'settings.tab_notifications',
+                facturation: 'settings.tab_billing',
+                acces: 'settings.tab_access'
+            };
+
+            const salesHistoryTabFeatureMap = {
+                completed: 'sales_history.tab_completed',
+                pending: 'sales_history.tab_pending',
+                pay_later: 'sales_history.tab_paylater',
+                reminders: 'sales_history.tab_reminders',
+                store_validation: 'sales_history.tab_store_validation',
+                customers: 'sales_history.tab_customers'
+            };
+
+            function normalizeCompanyFeatureAccessMap(value) {
+                return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+            }
+
+            function isCompanyFeatureEnabled(featureId) {
+                if (!featureId) return true;
+                const featureMap = normalizeCompanyFeatureAccessMap(appData.companyFeatureAccess);
+                if (!Object.keys(featureMap).length) return true;
+                return featureMap[featureId] !== false;
+            }
+
+            function getFeatureRestrictionMessage() {
+                return "Désactivé dans les accès de l'entreprise.";
+            }
+
+            function applyFeatureState(target, featureId, options = {}) {
+                if (!target) return;
+                const { hide = true, disable = false } = options;
+                const elements = typeof target.length === 'number' && !target.tagName ? Array.from(target) : [target];
+                const enabled = isCompanyFeatureEnabled(featureId);
+                elements.forEach(element => {
+                    if (!element) return;
+                    if (hide) element.style.display = enabled ? '' : 'none';
+                    if ('disabled' in element && (disable || !hide)) {
+                        element.disabled = !enabled;
+                    }
+                    element.classList.toggle('opacity-50', disable && !enabled);
+                    element.classList.toggle('cursor-not-allowed', disable && !enabled);
+                    if (!enabled) {
+                        element.setAttribute('title', getFeatureRestrictionMessage());
+                    } else if (element.getAttribute('title') === getFeatureRestrictionMessage()) {
+                        element.removeAttribute('title');
+                    }
+                });
+            }
+
+            function getFirstAvailableSettingsTab() {
+                const tabOrder = ['compte', 'application', 'notifications', 'facturation', 'acces'];
+                return tabOrder.find(tabId => isCompanyFeatureEnabled(settingsTabFeatureMap[tabId])) || 'compte';
+            }
+
+            function ensureAccessibleSalesHistoryTab() {
+                const tabOrder = ['completed', 'pending', 'pay_later', 'reminders', 'store_validation', 'customers'];
+                if (isCompanyFeatureEnabled(salesHistoryTabFeatureMap[salesHistoryTab])) return false;
+                const fallbackTab = tabOrder.find(tabId => isCompanyFeatureEnabled(salesHistoryTabFeatureMap[tabId])) || 'completed';
+                const changed = salesHistoryTab !== fallbackTab;
+                salesHistoryTab = fallbackTab;
+                return changed;
+            }
+
+            function updateFeatureAccessUI() {
+                applyFeatureState(dashboardOrderStocksButton, 'dashboard.order_stocks');
+
+                applyFeatureState(openCustomerSelectButton, 'sales.open_customer');
+                applyFeatureState(changeCustomerSelectionButton, 'sales.change_customer');
+                applyFeatureState(customerHistoryButton, 'sales.customer_history');
+                applyFeatureState(clearCustomerSelectionButton, 'sales.clear_customer');
+                applyFeatureState(validateCartButton, 'sales.validate_sale');
+                applyFeatureState(generateInvoiceButton, 'sales.generate_invoice');
+                applyFeatureState(payLaterButton, 'sales.pay_later');
+                applyFeatureState(holdCartButton, 'sales.hold_cart');
+                applyFeatureState(openNewCustomerModalButton, 'sales.modal_new_customer');
+                applyFeatureState(continueWithoutCustomerButton, 'sales.modal_without_customer');
+                applyFeatureState(customerSubmitButton, 'sales.modal_save_customer', { hide: false, disable: true });
+                applyFeatureState(backToCustomerSelectButton, 'sales.modal_customer_back');
+                applyFeatureState(salesDetailPrint, 'sales.print');
+                applyFeatureState(salesDetailEmail, 'sales.email');
+
+                applyFeatureState(salesHistoryExportButton, 'sales_history.export');
+                applyFeatureState(salesHistoryTabCompleted, 'sales_history.tab_completed');
+                applyFeatureState(salesHistoryTabPending, 'sales_history.tab_pending');
+                applyFeatureState(salesHistoryTabPayLater, 'sales_history.tab_paylater');
+                applyFeatureState(salesHistoryTabReminders, 'sales_history.tab_reminders');
+                applyFeatureState(salesHistoryTabStoreValidation, 'sales_history.tab_store_validation');
+                applyFeatureState(salesHistoryTabCustomers, 'sales_history.tab_customers');
+
+                applyFeatureState(openTransferModalButton, 'store_stock.transfer');
+                applyFeatureState(openRestockModalButton, 'store_stock.restock');
+                applyFeatureState(openEntryModalButton, 'store_stock.entry');
+                applyFeatureState(openExitModalButton, 'store_stock.exit');
+                applyFeatureState(openNewProductModalButton, 'store_stock.new_product');
+                applyFeatureState(entrySubmitButton, 'store_modal_entry_validate', { hide: false, disable: true });
+                applyFeatureState(entryCancelButton, 'store_modal_entry_cancel', { hide: false, disable: true });
+                applyFeatureState(exitSubmitButton, 'store_modal_exit_submit', { hide: false, disable: true });
+                applyFeatureState(exitCancelButton, 'store_modal_exit_cancel', { hide: false, disable: true });
+                applyFeatureState(transferSubmitButton, 'store_modal_transfer', { hide: false, disable: true });
+                applyFeatureState(restockSubmitButton, 'store_modal_restock', { hide: false, disable: true });
+
+                applyFeatureState(openSupplierModalFromPage, 'suppliers.add');
+
+                applyFeatureState(settingsUpgradeButton, 'settings.upgrade');
+                applyFeatureState(settingsDownloadPolicyButton, 'settings.download_policy');
+                applyFeatureState(settingsAccountSaveButton, 'settings.save_account');
+                applyFeatureState(settingsAccountCancelButton, 'settings.cancel_account');
+                applyFeatureState(settingsApplicationSaveButton, 'settings.save_app');
+                applyFeatureState(settingsNotificationsSaveButton, 'settings.update_notifications');
+                applyFeatureState(settingsDownloadInvoiceButton, 'settings.download_invoice');
+                applyFeatureState(settingsEditPaymentButton, 'settings.edit_payment');
+                applyFeatureState(settingsDeletePaymentButton, 'settings.delete_payment');
+                applyFeatureState(settingsAddPaymentButton, 'settings.add_payment');
+                applyFeatureState(accessAddMemberSubmitButton, 'settings.generate_code');
+                applyFeatureState(discountApprovalCodeGenerate, 'settings.generate_code');
+                applyFeatureState(discountApprovalCodeSave, 'settings.generate_code');
+                applyFeatureState(discountApprovalCodeClear, 'settings.generate_code');
+
+                settingsTabButtons.forEach(button => {
+                    applyFeatureState(button, settingsTabFeatureMap[button.dataset.settingsTab]);
+                });
+
+                const activeSettingsButton = Array.from(settingsTabButtons).find(button => button.classList.contains('bg-cyan-500'));
+                if (currentPage === 'Paramètres' && activeSettingsButton && !isCompanyFeatureEnabled(settingsTabFeatureMap[activeSettingsButton.dataset.settingsTab])) {
+                    setActiveSettingsTab(getFirstAvailableSettingsTab());
+                }
+
+                const salesHistoryChanged = ensureAccessibleSalesHistoryTab();
+                if (currentPage === 'Historique des ventes' && salesHistoryChanged) {
+                    renderSalesHistory();
+                }
+            }
+
             function canAccessPage(pageName) {
                 if (!isAuthenticated || !currentUserData) {
                     console.log(`[canAccessPage] Not authenticated or no user data for page: ${pageName}`);
                     return false;
                 }
 
-                if (pageName === 'Tableau de bord') {
-                    return true;
-                }
-
                 const requiredPermission = pagePermissions[pageName];
+                const requiredFeature = pageFeatureAccessMap[pageName];
                 console.log(`[canAccessPage] Checking page: ${pageName}, Required permission: ${requiredPermission}`);
                 console.log(`[canAccessPage] User permissions:`, currentUserData.permissions);
 
@@ -12108,7 +12266,9 @@
 
                 // Sinon, vérifier la permission
                 const requiredList = Array.isArray(requiredPermission) ? requiredPermission : [requiredPermission];
-                const hasAccess = requiredList.some(permission => hasPermission(permission));
+                const hasPermissionAccess = requiredList.some(permission => hasPermission(permission));
+                const hasFeatureAccess = isCompanyFeatureEnabled(requiredFeature);
+                const hasAccess = hasPermissionAccess && hasFeatureAccess;
                 console.log(`[canAccessPage] Access result for ${pageName}: ${hasAccess}`);
                 return hasAccess;
             }
@@ -13701,6 +13861,9 @@
 
             function setActiveSettingsTab(tabId = 'compte') {
                 if (!settingsTabButtons.length) return;
+                if (!isCompanyFeatureEnabled(settingsTabFeatureMap[tabId])) {
+                    tabId = getFirstAvailableSettingsTab();
+                }
                 settingsTabButtons.forEach(button => {
                     const isActive = button.dataset.settingsTab === tabId;
                     button.classList.toggle('bg-cyan-500', isActive);
@@ -14790,6 +14953,10 @@
             if (accessAddMemberForm) {
                 accessAddMemberForm.addEventListener('submit', async (event) => {
                     event.preventDefault();
+                    if (!isCompanyFeatureEnabled('settings.generate_code')) {
+                        showSuccessToast(getFeatureRestrictionMessage());
+                        return;
+                    }
                     if (!dbBasePath) {
                         showSuccessToast("Veuillez sélectionner une entreprise valide.");
                         return;
@@ -15141,6 +15308,10 @@
 
             if (discountApprovalCodeGenerate) {
                 discountApprovalCodeGenerate.addEventListener('click', () => {
+                    if (!isCompanyFeatureEnabled('settings.generate_code')) {
+                        showSuccessToast(getFeatureRestrictionMessage());
+                        return;
+                    }
                     if (!discountApprovalCodeInputSetting) return;
                     discountApprovalCodeInputSetting.value = formatApprovalCode(generateAccessCode());
                     discountApprovalCodeInputSetting.focus();
@@ -15148,6 +15319,10 @@
             }
             if (discountApprovalCodeClear) {
                 discountApprovalCodeClear.addEventListener('click', async () => {
+                    if (!isCompanyFeatureEnabled('settings.generate_code')) {
+                        showSuccessToast(getFeatureRestrictionMessage());
+                        return;
+                    }
                     if (!discountApprovalCodeInputSetting) return;
                     discountApprovalCodeInputSetting.value = '';
                     await persistDiscountApprovalCode('');
@@ -15156,6 +15331,10 @@
             if (discountApprovalCodeForm) {
                 discountApprovalCodeForm.addEventListener('submit', async (event) => {
                     event.preventDefault();
+                    if (!isCompanyFeatureEnabled('settings.generate_code')) {
+                        showSuccessToast(getFeatureRestrictionMessage());
+                        return;
+                    }
                     if (!discountApprovalCodeInputSetting) return;
                     await persistDiscountApprovalCode(discountApprovalCodeInputSetting.value);
                 });
@@ -15525,6 +15704,8 @@
                     let html = '';
                     const sortedProducts = filteredProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                     const canDelete = hasPermission('Supprimer Stock Magasin');
+                    const canCreateEntry = isCompanyFeatureEnabled('store_stock.entry');
+                    const canCreateExit = isCompanyFeatureEnabled('store_stock.exit');
                     sortedProducts.forEach(product => {
                         const quantity = Number(product.quantityInStore ?? 0);
                         const quantityClass = quantity <= 10
@@ -15532,22 +15713,22 @@
                             : quantity <= 50
                                 ? 'bg-amber-100 text-amber-700'
                                 : 'bg-emerald-100 text-emerald-700';
-                        const entryButtonHtml = `
+                        const entryButtonHtml = canCreateEntry ? `
                             <button type="button"
                                 class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-emerald-100 text-emerald-600 hover:bg-emerald-200"
                                 data-store-action="entry" data-product-id="${product.id}">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                 </svg>
-                            </button>`;
-                        const exitButtonHtml = `
+                            </button>` : '';
+                        const exitButtonHtml = canCreateExit ? `
                             <button type="button"
                                 class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-orange-100 text-orange-600 hover:bg-orange-200"
                                 data-store-action="exit" data-product-id="${product.id}">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
                                 </svg>
-                            </button>`;
+                            </button>` : '';
                         const deleteButtonHtml = canDelete
                             ? `<button type="button" class="delete-icon inline-flex items-center justify-center w-9 h-9 rounded-lg bg-red-50 text-red-500 hover:bg-red-100" data-type="store" data-product-id="${product.id}">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
@@ -16337,6 +16518,10 @@
                     alert('Vous n\'avez pas la permission de supprimer des produits du Stock Boutique.');
                     return;
                 }
+                if (!isCompanyFeatureEnabled('shop_stock.delete')) {
+                    showSuccessToast(getFeatureRestrictionMessage());
+                    return;
+                }
                 const item = appData.shopStock?.[stockId];
                 if (!item) {
                     showSuccessToast('Produit introuvable.');
@@ -17034,7 +17219,7 @@
                     shopStockTableContainer.classList.remove('hidden');
                     let html = '';
                     const sortedStock = filteredStock.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                    const canDelete = hasPermission('Supprimer Stock Boutique');
+                    const canDelete = hasPermission('Supprimer Stock Boutique') && isCompanyFeatureEnabled('shop_stock.delete');
                     sortedStock.forEach(item => {
                         const lotState = reconcileShopLotQueueToQuantity(item);
                         const activeLot = lotState.activeLot;
@@ -18815,6 +19000,14 @@
                 }
             }
 
+            function onCompanyFeatureAccessValue(snapshot) {
+                appData.companyFeatureAccess = normalizeCompanyFeatureAccessMap(snapshot.val());
+                renderStoreProducts(storeSearchInput ? storeSearchInput.value : '');
+                renderShopStock(shopSearchInput ? shopSearchInput.value : '');
+                renderSupplierDetail();
+                updateUI();
+            }
+
             function onCompanyCustomersValue(snapshot) {
                 appData.customers = snapshot.val() || {};
                 renderCustomerOptions();
@@ -18909,6 +19102,9 @@
                 settingsRef = ref(db, `${dbBasePath}/settings`);
                 settingsListener = onValue(settingsRef, onSettingsValue);
 
+                companyFeatureAccessRef = ref(db, `${dbBasePath}/featureAccess`);
+                companyFeatureAccessListener = onValue(companyFeatureAccessRef, onCompanyFeatureAccessValue);
+
                 companyMembersRef = ref(db, `${dbBasePath}/members`);
                 companyMembersListener = onValue(companyMembersRef, onCompanyMembersValue);
 
@@ -18959,6 +19155,7 @@
                 if (saleCorrectionsListener && saleCorrectionsRef) off(saleCorrectionsRef, saleCorrectionsListener);
                 if (pendingSalesListener && pendingSalesRef) off(pendingSalesRef, pendingSalesListener);
                 if (settingsListener && settingsRef) off(settingsRef, settingsListener);
+                if (companyFeatureAccessListener && companyFeatureAccessRef) off(companyFeatureAccessRef, companyFeatureAccessListener);
                 if (companyMembersListener && companyMembersRef) off(companyMembersRef, companyMembersListener);
                 if (companyCustomersListener && companyCustomersRef) off(companyCustomersRef, companyCustomersListener);
                 if (suppliersListener && suppliersRef) off(suppliersRef, suppliersListener);
@@ -18970,9 +19167,9 @@
                 if (chatListListener && chatListRef) off(chatListRef, chatListListener);
                 if (chatReadsListener && chatReadsRef) off(chatReadsRef, chatReadsListener);
                 if (chatMessagesListener && chatMessagesRef) off(chatMessagesRef, chatMessagesListener);
-                storesListener = null; boutiquesListener = null; categoriesListener = null; storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; shopTransferRequestsListener = null; salesHistoryListener = null; saleCorrectionsListener = null; pendingSalesListener = null; settingsListener = null; companyMembersListener = null; companyCustomersListener = null; suppliersListener = null; supplierInvoicesListener = null; supplierPaymentsListener = null; customerPaymentsListener = null; inventoriesListener = null; lossesListener = null; chatListListener = null; chatReadsListener = null; chatMessagesListener = null;
-                chatListRef = null; chatReadsRef = null; chatMessagesRef = null; inventoriesRef = null; saleCorrectionsRef = null;
-                appData.stores = {}; appData.boutiques = {}; appData.categories = {}; appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.shopMovements = {}; appData.shopTransferRequests = {}; appData.salesHistory = {}; appData.saleCorrections = {}; appData.customers = {}; appData.suppliers = {}; appData.supplierInvoices = {}; appData.supplierPayments = {}; appData.customerPayments = {}; appData.storeExitRequests = {}; appData.pendingSales = {}; appData.settings = {}; appData.inventories = {}; appData.losses = {};
+                storesListener = null; boutiquesListener = null; categoriesListener = null; storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; shopTransferRequestsListener = null; salesHistoryListener = null; saleCorrectionsListener = null; pendingSalesListener = null; settingsListener = null; companyFeatureAccessListener = null; companyMembersListener = null; companyCustomersListener = null; suppliersListener = null; supplierInvoicesListener = null; supplierPaymentsListener = null; customerPaymentsListener = null; inventoriesListener = null; lossesListener = null; chatListListener = null; chatReadsListener = null; chatMessagesListener = null;
+                chatListRef = null; chatReadsRef = null; chatMessagesRef = null; inventoriesRef = null; saleCorrectionsRef = null; companyFeatureAccessRef = null;
+                appData.stores = {}; appData.boutiques = {}; appData.categories = {}; appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.shopMovements = {}; appData.shopTransferRequests = {}; appData.salesHistory = {}; appData.saleCorrections = {}; appData.customers = {}; appData.suppliers = {}; appData.supplierInvoices = {}; appData.supplierPayments = {}; appData.customerPayments = {}; appData.storeExitRequests = {}; appData.pendingSales = {}; appData.settings = {}; appData.inventories = {}; appData.losses = {}; appData.companyFeatureAccess = {};
                 inventoriesPathSuffix = 'inventories';
                 selectedCustomer = null;
                 customerOptionLookup = {};
@@ -19061,6 +19258,7 @@
                     }
                 });
 
+                updateFeatureAccessUI();
                 updateSettingsAccess();
                 updatePricingAccessState();
                 updateDiscountApprovalUI();
@@ -22308,8 +22506,16 @@
                     if (actionButton && actionButton.dataset.productId) {
                         const action = actionButton.dataset.storeAction;
                         if (action === 'entry') {
+                            if (!isCompanyFeatureEnabled('store_stock.entry')) {
+                                showSuccessToast(getFeatureRestrictionMessage());
+                                return;
+                            }
                             openEntryModalForProduct(actionButton.dataset.productId);
                         } else if (action === 'exit') {
+                            if (!isCompanyFeatureEnabled('store_stock.exit')) {
+                                showSuccessToast(getFeatureRestrictionMessage());
+                                return;
+                            }
                             openExitModalForProduct(actionButton.dataset.productId);
                         }
                         return;
@@ -22453,8 +22659,20 @@
             if (authToggleSignup) authToggleSignup.addEventListener('click', () => { isLoginView = false; updateAuthFormView(); });
             if (loginModeAdminButton) loginModeAdminButton.addEventListener('click', () => { isCodeLoginMode = false; updateLoginModeUI(); });
             if (loginModeCodeButton) loginModeCodeButton.addEventListener('click', () => { isCodeLoginMode = true; updateLoginModeUI(); });
-            if (openCustomerSelectButton) openCustomerSelectButton.addEventListener('click', openCustomerSelectModal);
-            if (changeCustomerSelectionButton) changeCustomerSelectionButton.addEventListener('click', openCustomerSelectModal);
+            if (openCustomerSelectButton) openCustomerSelectButton.addEventListener('click', () => {
+                if (!isCompanyFeatureEnabled('sales.open_customer')) {
+                    showSuccessToast(getFeatureRestrictionMessage());
+                    return;
+                }
+                openCustomerSelectModal();
+            });
+            if (changeCustomerSelectionButton) changeCustomerSelectionButton.addEventListener('click', () => {
+                if (!isCompanyFeatureEnabled('sales.change_customer')) {
+                    showSuccessToast(getFeatureRestrictionMessage());
+                    return;
+                }
+                openCustomerSelectModal();
+            });
             if (closeCustomerSelectModalButton) closeCustomerSelectModalButton.addEventListener('click', closeCustomerSelectModal);
             if (customerSelectModal) {
                 customerSelectModal.addEventListener('click', (event) => {
@@ -22479,12 +22697,20 @@
             }
             if (openNewCustomerModalButton) {
                 openNewCustomerModalButton.addEventListener('click', () => {
+                    if (!isCompanyFeatureEnabled('sales.modal_new_customer')) {
+                        showSuccessToast(getFeatureRestrictionMessage());
+                        return;
+                    }
                     closeCustomerSelectModal();
                     openCustomerModalDialog();
                 });
             }
             if (continueWithoutCustomerButton) {
                 continueWithoutCustomerButton.addEventListener('click', () => {
+                    if (!isCompanyFeatureEnabled('sales.modal_without_customer')) {
+                        showSuccessToast(getFeatureRestrictionMessage());
+                        return;
+                    }
                     clearSelectedCustomer();
                     closeCustomerSelectModal();
                 });
@@ -22492,6 +22718,10 @@
             if (closeCustomerModalButton) closeCustomerModalButton.addEventListener('click', closeCustomerModalDialog);
             if (backToCustomerSelectButton) {
                 backToCustomerSelectButton.addEventListener('click', () => {
+                    if (!isCompanyFeatureEnabled('sales.modal_customer_back')) {
+                        showSuccessToast(getFeatureRestrictionMessage());
+                        return;
+                    }
                     closeCustomerModalDialog();
                     openCustomerSelectModal();
                 });
@@ -22503,6 +22733,10 @@
             }
             if (customerHistoryButton) {
                 customerHistoryButton.addEventListener('click', () => {
+                    if (!isCompanyFeatureEnabled('sales.customer_history')) {
+                        showSuccessToast(getFeatureRestrictionMessage());
+                        return;
+                    }
                     if (!selectedCustomer) return;
                     isCustomerHistoryOpen = !isCustomerHistoryOpen;
                     renderCustomerHistory();
@@ -22583,7 +22817,13 @@
             }
             if (customerSelectedCard) {
                 const clearButton = document.getElementById('clear-customer-selection');
-                if (clearButton) clearButton.addEventListener('click', () => clearSelectedCustomer());
+                if (clearButton) clearButton.addEventListener('click', () => {
+                    if (!isCompanyFeatureEnabled('sales.clear_customer')) {
+                        showSuccessToast(getFeatureRestrictionMessage());
+                        return;
+                    }
+                    clearSelectedCustomer();
+                });
             }
             if (holdCommentInput) {
                 holdCommentInput.addEventListener('input', () => {
@@ -22622,46 +22862,76 @@
                     syncCartQuantitiesFromInputs();
                 });
             }
-            if (validateCartButton) validateCartButton.addEventListener('click', validateCart);
-            if (generateInvoiceButton) generateInvoiceButton.addEventListener('click', generateInvoiceFromCart);
-            if (payLaterButton) payLaterButton.addEventListener('click', markPayLaterFromCart);
-            if (holdCartButton) holdCartButton.addEventListener('click', holdCart);
+            if (validateCartButton) validateCartButton.addEventListener('click', () => {
+                if (!isCompanyFeatureEnabled('sales.validate_sale')) {
+                    showSuccessToast(getFeatureRestrictionMessage());
+                    return;
+                }
+                validateCart();
+            });
+            if (generateInvoiceButton) generateInvoiceButton.addEventListener('click', () => {
+                if (!isCompanyFeatureEnabled('sales.generate_invoice')) {
+                    showSuccessToast(getFeatureRestrictionMessage());
+                    return;
+                }
+                generateInvoiceFromCart();
+            });
+            if (payLaterButton) payLaterButton.addEventListener('click', () => {
+                if (!isCompanyFeatureEnabled('sales.pay_later')) {
+                    showSuccessToast(getFeatureRestrictionMessage());
+                    return;
+                }
+                markPayLaterFromCart();
+            });
+            if (holdCartButton) holdCartButton.addEventListener('click', () => {
+                if (!isCompanyFeatureEnabled('sales.hold_cart')) {
+                    showSuccessToast(getFeatureRestrictionMessage());
+                    return;
+                }
+                holdCart();
+            });
             if (payLaterDueDateInput) {
                 // Griser les dates passées : min = aujourd'hui
                 payLaterDueDateInput.min = new Date().toISOString().split('T')[0];
             }
             if (salesHistoryTabCompleted) {
                 salesHistoryTabCompleted.addEventListener('click', () => {
+                    if (!isCompanyFeatureEnabled('sales_history.tab_completed')) return;
                     salesHistoryTab = 'completed';
                     renderSalesHistory();
                 });
             }
             if (salesHistoryTabPending) {
                 salesHistoryTabPending.addEventListener('click', () => {
+                    if (!isCompanyFeatureEnabled('sales_history.tab_pending')) return;
                     salesHistoryTab = 'pending';
                     renderSalesHistory();
                 });
             }
             if (salesHistoryTabPayLater) {
                 salesHistoryTabPayLater.addEventListener('click', () => {
+                    if (!isCompanyFeatureEnabled('sales_history.tab_paylater')) return;
                     salesHistoryTab = 'pay_later';
                     renderSalesHistory();
                 });
             }
             if (salesHistoryTabStoreValidation) {
                 salesHistoryTabStoreValidation.addEventListener('click', () => {
+                    if (!isCompanyFeatureEnabled('sales_history.tab_store_validation')) return;
                     salesHistoryTab = 'store_validation';
                     renderSalesHistory();
                 });
             }
             if (salesHistoryTabCustomers) {
                 salesHistoryTabCustomers.addEventListener('click', () => {
+                    if (!isCompanyFeatureEnabled('sales_history.tab_customers')) return;
                     salesHistoryTab = 'customers';
                     renderSalesHistory();
                 });
             }
             if (salesHistoryTabReminders) {
                 salesHistoryTabReminders.addEventListener('click', () => {
+                    if (!isCompanyFeatureEnabled('sales_history.tab_reminders')) return;
                     salesHistoryTab = 'reminders';
                     renderSalesHistory();
                 });
@@ -23087,11 +23357,19 @@
             }
             if (salesDetailPrint) {
                 salesDetailPrint.addEventListener('click', () => {
+                    if (!isCompanyFeatureEnabled('sales.print')) {
+                        showSuccessToast(getFeatureRestrictionMessage());
+                        return;
+                    }
                     if (activeSalesDetailId) generateReceiptFromGroup(activeSalesDetailId);
                 });
             }
             if (salesDetailEmail) {
                 salesDetailEmail.addEventListener('click', () => {
+                    if (!isCompanyFeatureEnabled('sales.email')) {
+                        showSuccessToast(getFeatureRestrictionMessage());
+                        return;
+                    }
                     showSuccessToast('Email envoyé (simulation).');
                 });
             }
@@ -23269,6 +23547,10 @@
 
             if (customerForm) customerForm.addEventListener('submit', async (event) => {
                 event.preventDefault();
+                if (!isCompanyFeatureEnabled('sales.modal_save_customer')) {
+                    showSuccessToast(getFeatureRestrictionMessage());
+                    return;
+                }
                 if (!dbBasePath) return;
                 if (customerError) customerError.classList.add('hidden');
                 const name = customerNameInput?.value.trim();
@@ -24304,6 +24586,10 @@
 
             // Modals Open
             if (openNewProductModalButton) openNewProductModalButton.addEventListener('click', () => {
+                if (!isCompanyFeatureEnabled('store_stock.new_product')) {
+                    showSuccessToast(getFeatureRestrictionMessage());
+                    return;
+                }
                 if (!getActiveStoreId()) {
                     showSuccessToast('Veuillez créer ou sélectionner un magasin.');
                     return;
@@ -24336,7 +24622,13 @@
                 ], 'new-product');
                 updatePricingAccessState();
             });
-            if (openEntryModalButton) openEntryModalButton.addEventListener('click', () => openEntryModalForProduct());
+            if (openEntryModalButton) openEntryModalButton.addEventListener('click', () => {
+                if (!isCompanyFeatureEnabled('store_stock.entry')) {
+                    showSuccessToast(getFeatureRestrictionMessage());
+                    return;
+                }
+                openEntryModalForProduct();
+            });
             if (entryTabExistingButton) entryTabExistingButton.addEventListener('click', () => setEntryMode('existing'));
             if (entryTabNewButton) entryTabNewButton.addEventListener('click', () => setEntryMode('new'));
             if (entryCreateFromSearchButton) entryCreateFromSearchButton.addEventListener('click', () => {
@@ -24345,7 +24637,13 @@
                 closeProductCombobox('entry');
                 setEntryMode('new', { prefillName: query });
             });
-            if (openExitModalButton) openExitModalButton.addEventListener('click', () => openExitModalForProduct());
+            if (openExitModalButton) openExitModalButton.addEventListener('click', () => {
+                if (!isCompanyFeatureEnabled('store_stock.exit')) {
+                    showSuccessToast(getFeatureRestrictionMessage());
+                    return;
+                }
+                openExitModalForProduct();
+            });
             if (openSupplierModalButton) openSupplierModalButton.addEventListener('click', () => {
                 if (!supplierModal || !supplierForm) return;
                 supplierForm.reset();
@@ -24355,6 +24653,10 @@
                 supplierModal.classList.remove('hidden');
             });
             if (openSupplierModalFromPage) openSupplierModalFromPage.addEventListener('click', () => {
+                if (!isCompanyFeatureEnabled('suppliers.add')) {
+                    showSuccessToast(getFeatureRestrictionMessage());
+                    return;
+                }
                 if (!supplierModal || !supplierForm) return;
                 supplierForm.reset();
                 if (supplierError) supplierError.classList.add('hidden');
@@ -24366,6 +24668,10 @@
                 openSupplierPaymentModalForSupplier();
             });
             if (openTransferModalButton) openTransferModalButton.addEventListener('click', () => {
+                if (!isCompanyFeatureEnabled('store_stock.transfer')) {
+                    showSuccessToast(getFeatureRestrictionMessage());
+                    return;
+                }
                 if (!getActiveStoreId()) {
                     showSuccessToast('Veuillez créer ou sélectionner un magasin.');
                     return;
@@ -24383,6 +24689,10 @@
                 closeTransferProductDropdown();
             });
             if (openRestockModalButton) openRestockModalButton.addEventListener('click', () => {
+                if (!isCompanyFeatureEnabled('store_stock.restock')) {
+                    showSuccessToast(getFeatureRestrictionMessage());
+                    return;
+                }
                 restockModal.classList.remove('hidden');
                 restockForm.reset();
                 productComboboxStates.restock.query = '';
