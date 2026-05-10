@@ -414,6 +414,7 @@
                     <!-- Placeholder pour le profil utilisateur -->
                     <p id="user-name-display" class="text-sm font-medium text-gray-700">Utilisateur connecté</p>
                     <p id="user-company-display" class="text-xs text-gray-500 font-semibold truncate mt-1"></p>
+                    <p id="user-company-id-display" class="text-[11px] text-gray-400 truncate mt-1">Entreprise ID: —</p>
                     <p id="user-email-display" class="text-xs text-gray-400 truncate">Chargement...</p>
                 </div>
                 <button id="logout-button"
@@ -4853,6 +4854,7 @@
             const userEmailDisplay = document.getElementById('user-email-display');
             const userNameDisplay = document.getElementById('user-name-display');
             const userCompanyDisplay = document.getElementById('user-company-display');
+            const userCompanyIdDisplay = document.getElementById('user-company-id-display');
             const loginError = document.getElementById('login-error');
             const accessRequestError = document.getElementById('access-request-error');
             const accessRequestErrorContainer = document.getElementById('access-request-error-container');
@@ -13888,7 +13890,7 @@
                     }).join('');
                     accessMembersTbody.innerHTML = rows;
                 }
-                if (accessTotalUsers) accessTotalUsers.textContent = teamMembersState.length;
+                if (accessTotalUsers) accessTotalUsers.textContent = teamMembersState.filter(m => (m.role || '').toLowerCase() !== 'admin').length;
                 if (accessTotalAdmins) accessTotalAdmins.textContent = teamMembersState.filter(m => m.role === 'admin').length;
                 if (accessTotalPending) accessTotalPending.textContent = teamMembersState.filter(m => m.status === 'pending').length;
             }
@@ -14596,6 +14598,48 @@
                     }
                 }
                 return null;
+            }
+
+            async function resolveStoredUserCompanyContext(authUser, storedProfile = {}) {
+                if (!authUser) return null;
+                const companyId = (storedProfile.companyId || '').trim();
+                if (!companyId) return null;
+
+                const companySnapshot = await get(ref(db, `companies/${companyId}`));
+                if (!companySnapshot.exists()) return null;
+
+                const companyData = companySnapshot.val() || {};
+                const members = companyData.members || {};
+                const normalizedEmail = (authUser.email || storedProfile.email || '').trim().toLowerCase();
+
+                let memberKey = authUser.uid && members[authUser.uid] ? authUser.uid : '';
+                let memberData = memberKey ? members[memberKey] : null;
+
+                if (!memberData && normalizedEmail) {
+                    const emailMatchKey = Object.keys(members).find(key => (members[key]?.email || '').trim().toLowerCase() === normalizedEmail);
+                    if (emailMatchKey) {
+                        memberKey = emailMatchKey;
+                        memberData = members[emailMatchKey];
+                    }
+                }
+
+                if (!memberData) return null;
+
+                return {
+                    companyId,
+                    companyName: companyData.companyName || companyData.name || storedProfile.companyName || '',
+                    memberKey,
+                    userData: normalizeMemberSecurity({
+                        ...storedProfile,
+                        ...memberData,
+                        uid: authUser.uid,
+                        id: memberData.id || memberKey || authUser.uid,
+                        email: authUser.email || memberData.email || storedProfile.email || '',
+                        fullName: memberData.fullName || memberData.name || storedProfile.fullName || storedProfile.name || authUser.email || 'Utilisateur',
+                        status: memberData.status || storedProfile.status || 'actif',
+                        companyId
+                    })
+                };
             }
 
             async function handleAccessCodeLogin(email, code) {
@@ -18973,6 +19017,7 @@
                     if (currentUserData) {
                         if (userNameDisplay) userNameDisplay.textContent = currentUserData.fullName || 'Utilisateur';
                         if (userCompanyDisplay) userCompanyDisplay.textContent = currentUserData.companyName || '';
+                        if (userCompanyIdDisplay) userCompanyIdDisplay.textContent = `Entreprise ID: ${currentUserData.companyId || '—'}`;
                     }
                     if (mobilePageTitle) mobilePageTitle.textContent = currentPage;
 
@@ -24747,16 +24792,28 @@
                     currentUser = user;
                     get(ref(db, `users/${user.uid}`)).then(async (snapshot) => {
                         if (snapshot.exists()) {
-                            currentUserData = normalizeMemberSecurity(snapshot.val() || {});
-                            currentUserData.role = currentUserData.role || 'consultation';
-                            dbBasePath = currentUserData.companyId ? `companies/${currentUserData.companyId}` : `users/${user.uid}`;
-                            await ensureStoresSetup();
-                            await ensureBoutiquesSetup();
-                            setupFirebaseListeners();
-                            ensureCurrentUserInTeam();
-                            updateSettingsAccess();
-                            updateUI();
-                            return;
+                            const storedContext = await resolveStoredUserCompanyContext(user, snapshot.val() || {});
+                            if (storedContext) {
+                                currentUserData = storedContext.userData;
+                                currentUserData.role = currentUserData.role || 'consultation';
+                                dbBasePath = `companies/${storedContext.companyId}`;
+                                try {
+                                    await set(ref(db, `users/${user.uid}`), {
+                                        ...currentUserData,
+                                        companyId: storedContext.companyId,
+                                        companyName: storedContext.companyName
+                                    });
+                                } catch (persistError) {
+                                    console.warn('Impossible de resynchroniser le profil utilisateur:', persistError);
+                                }
+                                await ensureStoresSetup();
+                                await ensureBoutiquesSetup();
+                                setupFirebaseListeners();
+                                ensureCurrentUserInTeam();
+                                updateSettingsAccess();
+                                updateUI();
+                                return;
+                            }
                         }
 
                         const fallbackMatch = await findMemberByEmail(user.email || '');
