@@ -12105,8 +12105,13 @@
                 'Tableau de bord': 'dashboard.view',
                 'Ventes': 'sales.view',
                 'Historique des ventes': 'sales_history.view',
+                'Messagerie': 'messaging.view',
                 'Stock Boutique': 'shop_stock.view',
                 'Mon Magasin': 'store_stock.view',
+                'Inventaire': 'inventory.view',
+                'Tableau des prix': 'pricing.view',
+                'Mouvements Magasin': 'store_movements.view',
+                'Traçabilité': 'traceability.view',
                 'Fournisseurs': 'suppliers.view',
                 'Paramètres': 'settings.view'
             };
@@ -12204,6 +12209,11 @@
                 applyFeatureState(salesHistoryTabStoreValidation, 'sales_history.tab_store_validation');
                 applyFeatureState(salesHistoryTabCustomers, 'sales_history.tab_customers');
 
+                applyFeatureState(chatCreateButton, 'messaging.create');
+                applyFeatureState(chatNotificationsButton, 'messaging.notifications');
+                applyFeatureState(chatMarkReadButton, 'messaging.mark_read');
+                applyFeatureState(chatSendButton, 'messaging.send');
+
                 applyFeatureState(openTransferModalButton, 'store_stock.transfer');
                 applyFeatureState(openRestockModalButton, 'store_stock.restock');
                 applyFeatureState(openEntryModalButton, 'store_stock.entry');
@@ -12215,6 +12225,13 @@
                 applyFeatureState(exitCancelButton, 'store_modal_exit_cancel', { hide: false, disable: true });
                 applyFeatureState(transferSubmitButton, 'store_modal_transfer', { hide: false, disable: true });
                 applyFeatureState(restockSubmitButton, 'store_modal_restock', { hide: false, disable: true });
+
+                applyFeatureState(inventoryStartButton, 'inventory.start');
+                applyFeatureState(inventorySaveButton, 'inventory.save');
+
+                applyFeatureState(openPriceProductModalButton, 'pricing.add_product');
+                applyFeatureState(priceTableImportButton, 'pricing.import_csv');
+                applyFeatureState(categorySubmitButton, 'pricing.manage_categories');
 
                 applyFeatureState(openSupplierModalFromPage, 'suppliers.add');
 
@@ -15066,6 +15083,10 @@
 
             if (chatCreateButton) {
                 chatCreateButton.addEventListener('click', () => {
+                    if (!isCompanyFeatureEnabled('messaging.create')) {
+                        showSuccessToast(getFeatureRestrictionMessage());
+                        return;
+                    }
                     if (!chatCreateModal) return;
                     if (chatMemberSearchInput) chatMemberSearchInput.value = '';
                     if (chatGroupNameInput) chatGroupNameInput.value = '';
@@ -15133,6 +15154,10 @@
 
             if (chatMarkReadButton) {
                 chatMarkReadButton.addEventListener('click', () => {
+                    if (!isCompanyFeatureEnabled('messaging.mark_read')) {
+                        showSuccessToast(getFeatureRestrictionMessage());
+                        return;
+                    }
                     if (!activeChatId) return;
                     markChatRead(activeChatId, true);
                     renderChatList();
@@ -15194,11 +15219,24 @@
             }
 
             if (chatComposerForm) {
-                chatComposerForm.addEventListener('submit', handleChatSend);
+                chatComposerForm.addEventListener('submit', (event) => {
+                    if (!isCompanyFeatureEnabled('messaging.send')) {
+                        event.preventDefault();
+                        showSuccessToast(getFeatureRestrictionMessage());
+                        return;
+                    }
+                    handleChatSend(event);
+                });
             }
 
             if (chatNotificationsButton) {
-                chatNotificationsButton.addEventListener('click', requestChatNotifications);
+                chatNotificationsButton.addEventListener('click', () => {
+                    if (!isCompanyFeatureEnabled('messaging.notifications')) {
+                        showSuccessToast(getFeatureRestrictionMessage());
+                        return;
+                    }
+                    requestChatNotifications();
+                });
             }
 
             if (addStoreForm) {
@@ -22589,7 +22627,13 @@
             }
 
             if (inventoryStartButton) {
-                inventoryStartButton.addEventListener('click', startInventoryDraft);
+                inventoryStartButton.addEventListener('click', () => {
+                    if (!isCompanyFeatureEnabled('inventory.start')) {
+                        showSuccessToast(getFeatureRestrictionMessage());
+                        return;
+                    }
+                    startInventoryDraft();
+                });
             }
 
             if (inventoryCancelButton) {
@@ -22602,7 +22646,13 @@
             }
 
             if (inventorySaveButton) {
-                inventorySaveButton.addEventListener('click', saveInventoryDraft);
+                inventorySaveButton.addEventListener('click', () => {
+                    if (!isCompanyFeatureEnabled('inventory.save')) {
+                        showSuccessToast(getFeatureRestrictionMessage());
+                        return;
+                    }
+                    saveInventoryDraft();
+                });
             }
 
             if (inventoryTbody) {
@@ -22975,6 +23025,10 @@
             }
             if (priceTableImportButton && priceTableImportInput) {
                 priceTableImportButton.addEventListener('click', () => {
+                    if (!isCompanyFeatureEnabled('pricing.import_csv')) {
+                        showSuccessToast(getFeatureRestrictionMessage());
+                        return;
+                    }
                     priceTableImportInput.click();
                 });
                 priceTableImportInput.addEventListener('change', async (event) => {
@@ -22987,6 +23041,10 @@
             if (categoryForm) {
                 categoryForm.addEventListener('submit', async (event) => {
                     event.preventDefault();
+                    if (!isCompanyFeatureEnabled('pricing.manage_categories')) {
+                        showSuccessToast(getFeatureRestrictionMessage());
+                        return;
+                    }
                     clearCategoryError();
                     const name = categoryNameInput?.value || '';
                     await createCategory(name);
@@ -24598,6 +24656,10 @@
                 openEntryModalForProduct();
             });
             if (openPriceProductModalButton) openPriceProductModalButton.addEventListener('click', () => {
+                if (!isCompanyFeatureEnabled('pricing.add_product')) {
+                    showSuccessToast(getFeatureRestrictionMessage());
+                    return;
+                }
                 if (!getActiveStoreId()) {
                     showSuccessToast('Veuillez créer ou sélectionner un magasin.');
                     return;
