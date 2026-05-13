@@ -8126,6 +8126,74 @@
                 return sale.validationStatus === 'pending' || sale.paymentStatus === 'store_validation';
             }
 
+            function hasPendingSaleLinePrice(sale) {
+                if (!sale) return true;
+                return sale.pricePending === true || !hasUsableSellingPrice(sale.sellingPrice);
+            }
+
+            function getStoreValidationGroupEntries(groupOrSaleId) {
+                const sourceSale = appData.salesHistory?.[groupOrSaleId] || null;
+                const targetGroupId = sourceSale?.saleGroupId || sourceSale?.id || groupOrSaleId;
+                return Object.values(appData.salesHistory || {})
+                    .filter(sale => canAccessSaleEntry(sale) && isStoreValidationPending(sale) && (sale.saleGroupId || sale.id) === targetGroupId)
+                    .sort((a, b) => getSaleActivityTimestamp(b) - getSaleActivityTimestamp(a));
+            }
+
+            function buildStoreValidationGroups(entries = null) {
+                const sales = Array.isArray(entries)
+                    ? entries.filter(sale => canAccessSaleEntry(sale) && isStoreValidationPending(sale))
+                    : Object.values(appData.salesHistory || {}).filter(sale => canAccessSaleEntry(sale) && isStoreValidationPending(sale));
+                const groups = {};
+                sales.forEach(sale => {
+                    const groupId = sale.saleGroupId || sale.id;
+                    if (!groups[groupId]) {
+                        groups[groupId] = {
+                            id: groupId,
+                            date: sale.date || sale.requestedAt || sale.createdAt || new Date().toISOString(),
+                            sellerName: sale.sellerName || '',
+                            customerId: sale.customerId || null,
+                            customerName: sale.customerName || '',
+                            customerPhone: sale.customerPhone || '',
+                            customerEmail: sale.customerEmail || '',
+                            currency: getSaleCurrency(sale) || 'CFA',
+                            paymentStatus: 'store_validation',
+                            saleSource: getSaleSource(sale),
+                            boutiqueId: getSaleBoutiqueId(sale),
+                            boutiqueName: getSaleBoutiqueLabel(sale),
+                            comments: [],
+                            items: [],
+                            hasPendingPrice: false,
+                            totalQuantity: 0
+                        };
+                    }
+                    const group = groups[groupId];
+                    if (new Date(sale.date || sale.requestedAt || sale.createdAt || 0) > new Date(group.date || 0)) {
+                        group.date = sale.date || sale.requestedAt || sale.createdAt || group.date;
+                    }
+                    if (!group.sellerName && sale.sellerName) group.sellerName = sale.sellerName;
+                    if (!group.customerName && sale.customerName) group.customerName = sale.customerName;
+                    if (!group.customerPhone && sale.customerPhone) group.customerPhone = sale.customerPhone;
+                    if (!group.customerEmail && sale.customerEmail) group.customerEmail = sale.customerEmail;
+                    if (sale.comment && !group.comments.includes(sale.comment)) group.comments.push(sale.comment);
+                    const hasLinePrice = !hasPendingSaleLinePrice(sale);
+                    group.hasPendingPrice = group.hasPendingPrice || !hasLinePrice;
+                    group.totalQuantity += Number(sale.quantity || 0) || 0;
+                    group.items.push({
+                        saleId: sale.id,
+                        storeProductId: sale.storeProductId || null,
+                        name: sale.productName || 'Produit',
+                        quantity: Number(sale.quantity || 0) || 0,
+                        price: hasLinePrice ? Number(sale.sellingPrice) : null,
+                        total: hasLinePrice ? Number(sale.totalAmount || 0) : null,
+                        currency: getSaleCurrency(sale) || 'CFA',
+                        packageLabel: sale.packageLabel || '',
+                        pricePending: !hasLinePrice
+                    });
+                });
+
+                return Object.values(groups).sort((a, b) => getSaleActivityTimestamp(b) - getSaleActivityTimestamp(a));
+            }
+
             function getCountableSalesEntries() {
                 return Object.values(appData.salesHistory || {}).filter(sale => {
                     if (isStoreValidationPending(sale)) return false;
@@ -9664,7 +9732,7 @@
 
                 const groups = buildSalesHistoryGroups();
                 const pendingSales = getPendingSalesList();
-                const storeValidationSales = Object.values(appData.salesHistory || {}).filter(sale => isStoreValidationPending(sale) && canAccessSaleEntry(sale));
+                const storeValidationGroups = buildStoreValidationGroups();
 
                 const filteredGroups = groups.filter(group => {
                     if (!isDateInFilter(group.date, salesHistoryDateFilterValue)) return false;
@@ -9707,22 +9775,22 @@
                     return matchesHistorySearch(salesHistorySearch, values);
                 });
 
-                const filteredStoreValidation = storeValidationSales.filter(sale => {
-                    const dateValue = sale.date || sale.requestedAt || sale.createdAt;
+                const filteredStoreValidation = storeValidationGroups.filter(group => {
+                    const dateValue = group.date;
                     if (!isDateInFilter(dateValue, salesHistoryDateFilterValue)) return false;
                     if (!salesHistorySearch) return true;
-                    const customerLabel = sale.customerName || 'Client comptoir';
-                    const sourceLabel = formatSaleSourceBadge(getSaleSource(sale))?.label || '';
-                    const boutiqueLabel = getSaleBoutiqueLabel(sale);
+                    const customerLabel = group.customerName || 'Client comptoir';
+                    const sourceLabel = formatSaleSourceBadge(group.saleSource)?.label || '';
+                    const boutiqueLabel = getGroupBoutiqueLabel(group);
                     const values = [
-                        `INV-${(sale.saleGroupId || sale.id || '').slice(-6).toUpperCase()}`,
-                        sale.id,
+                        `INV-${(group.id || '').slice(-6).toUpperCase()}`,
+                        group.id,
                         customerLabel,
-                        sale.customerEmail,
-                        sale.customerPhone,
-                        sale.sellerName,
-                        sale.productName,
-                        sale.comment,
+                        group.customerEmail,
+                        group.customerPhone,
+                        group.sellerName,
+                        (group.items || []).map(item => item.name).join(' '),
+                        (group.comments || []).join(' '),
                         sourceLabel,
                         boutiqueLabel
                     ];
@@ -9738,8 +9806,8 @@
                 const completedCurrency = paidGroups[0]?.currency
                     || payLaterGroups[0]?.currency
                     || filteredGroups[0]?.currency
-                    || filteredStoreValidation[0]?.currency
-                    || storeValidationSales[0]?.currency
+                    || filteredStoreValidation[0]?.items?.[0]?.currency
+                    || storeValidationGroups[0]?.items?.[0]?.currency
                     || groups[0]?.currency
                     || 'CFA';
                 const revenueGroups = filteredGroups.filter(group => group.paymentStatus !== 'pending');
@@ -9911,28 +9979,22 @@
 
                 if (showStoreValidation) {
                     const canValidateStore = getCurrentUserRole() === 'admin';
-                    salesHistoryList.innerHTML = filteredStoreValidation.map(sale => {
-                        const quantity = Number(sale.quantity || 0) || 1;
-                        const unitPrice = Number(sale.sellingPrice || (sale.totalAmount / Math.max(quantity, 1)) || 0);
-                        const currency = getSaleCurrency(sale) || 'CFA';
-                        const summary = calculateItemsSummary([{
-                            sellingPrice: unitPrice,
-                            quantity,
-                            currency
-                        }], getSaleDiscountState(sale));
-                        const { dateLabel, timeLabel } = formatHistoryDateParts(sale.date || new Date().toISOString());
-                        const customerLabel = sale.customerName || 'Client comptoir';
-                        const customerEmail = sale.customerEmail || '';
-                        const sourceBadge = formatSaleSourceBadge(getSaleSource(sale));
+                    salesHistoryList.innerHTML = filteredStoreValidation.map(group => {
+                        const summary = group.hasPendingPrice ? null : calculateGroupSummary(group);
+                        const currency = group.items[0]?.currency || 'CFA';
+                        const { dateLabel, timeLabel } = formatHistoryDateParts(group.date || new Date().toISOString());
+                        const customerLabel = group.customerName || 'Client comptoir';
+                        const customerEmail = group.customerEmail || '';
+                        const sourceBadge = formatSaleSourceBadge(group.saleSource);
                         const sourceHtml = sourceBadge
                             ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold ${sourceBadge.classes}">${sourceBadge.label}</span>`
                             : '';
-                        const boutiqueLabel = getSaleBoutiqueLabel(sale);
+                        const boutiqueLabel = getGroupBoutiqueLabel(group);
                         const boutiqueHtml = boutiqueLabel
                             ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-cyan-50 text-cyan-700">Boutique: ${boutiqueLabel}</span>`
                             : '';
                         const detailsButtonHtml = `
-                            <button type="button" data-history-action="details" data-history-id="${sale.id}"
+                            <button type="button" data-history-action="details" data-history-id="${group.id}"
                                 class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -9941,28 +10003,28 @@
                             </button>
                         `;
                         const validationActions = canValidateStore ? `
-                            <button type="button" data-store-validation-id="${sale.id}" data-store-validation-action="paid"
+                            <button type="button" ${group.hasPendingPrice ? 'disabled' : ''} data-store-validation-id="${group.id}" data-store-validation-action="paid"
                                 class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                 </svg>
-                                Valider
+                                ${group.hasPendingPrice ? 'Prix requis' : 'Valider'}
                             </button>
-                            <button type="button" data-store-validation-id="${sale.id}" data-store-validation-action="pending"
+                            <button type="button" ${group.hasPendingPrice ? 'disabled' : ''} data-store-validation-id="${group.id}" data-store-validation-action="pending"
                                 class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-orange-500 text-white font-semibold hover:bg-orange-600">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3M12 6a6 6 0 100 12 6 6 0 000-12z" />
                                 </svg>
                                 En attente
                             </button>
-                            <button type="button" data-store-validation-id="${sale.id}" data-store-validation-action="pay_later"
+                            <button type="button" ${group.hasPendingPrice ? 'disabled' : ''} data-store-validation-id="${group.id}" data-store-validation-action="pay_later"
                                 class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-purple-600 text-white font-semibold hover:bg-purple-700">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 11h18M5 7v10a2 2 0 002 2h10a2 2 0 002-2V7" />
                                 </svg>
                                 A payer plus tard
                             </button>
-                            <button type="button" data-store-validation-id="${sale.id}" data-store-validation-action="cancel"
+                            <button type="button" data-store-validation-id="${group.id}" data-store-validation-action="cancel"
                                 class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-rose-600 text-white font-semibold hover:bg-rose-700">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -9971,6 +10033,50 @@
                             </button>
                             ${detailsButtonHtml}
                         ` : detailsButtonHtml;
+                        const totalLabel = group.hasPendingPrice
+                            ? 'Prix à définir'
+                            : formatCurrency(summary.total, summary.currency);
+                        const totalClass = group.hasPendingPrice ? 'text-amber-600' : 'text-emerald-600';
+                        const subtotalLabel = group.hasPendingPrice
+                            ? 'Prix à définir'
+                            : formatCurrency(summary.subtotal, summary.currency);
+                        const itemsHtml = group.items.map(item => {
+                            const hasLinePrice = item.pricePending !== true && hasUsableSellingPrice(item.price);
+                            const unitPriceLabel = hasLinePrice
+                                ? `${formatCurrency(item.price, item.currency || currency)} / unité`
+                                : 'Prix à définir avant validation';
+                            const totalLineLabel = hasLinePrice
+                                ? formatCurrency(item.total ?? (item.price * item.quantity), item.currency || currency)
+                                : 'Prix à définir';
+                            const packageHtml = item.packageLabel
+                                ? `<p class="mt-1 text-[11px] font-semibold text-slate-500">${item.packageLabel}</p>`
+                                : '';
+                            const priceEditorHtml = canValidateStore ? `
+                                <div class="mt-2 flex items-center justify-end gap-2">
+                                    <span class="text-[11px] font-semibold text-slate-400">PU</span>
+                                    <input type="number" min="0" step="0.01" value="${hasLinePrice ? formatInputNumber(item.price) : ''}"
+                                        data-store-validation-price-id="${item.saleId}"
+                                        class="w-24 h-8 rounded-md border border-gray-200 px-2 text-xs text-right text-gray-700 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400"
+                                        placeholder="Prix" />
+                                </div>
+                            ` : '';
+                            return `
+                                <div class="flex items-start justify-between text-sm text-gray-700 gap-4">
+                                    <div class="flex items-start gap-3">
+                                        <span class="px-2 py-0.5 rounded-lg bg-gray-100 text-xs font-semibold text-gray-500">${item.quantity}x</span>
+                                        <div>
+                                            <span class="font-semibold text-gray-900">${item.name}</span>
+                                            ${packageHtml}
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-xs ${hasLinePrice ? 'text-gray-500' : 'text-amber-600'}">${unitPriceLabel}</p>
+                                        <p class="text-sm font-semibold ${hasLinePrice ? 'text-gray-900' : 'text-amber-600'}">${totalLineLabel}</p>
+                                        ${priceEditorHtml}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
                         return `
                             <div class="border border-gray-200 rounded-2xl shadow-sm bg-white overflow-hidden">
                                 <div class="p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -9982,21 +10088,22 @@
                                         </div>
                                         <div>
                                             <div class="flex items-center gap-2 flex-wrap">
-                                                <p class="font-semibold text-gray-900">INV-${(sale.saleGroupId || sale.id || '').slice(-6).toUpperCase()}</p>
+                                                <p class="font-semibold text-gray-900">INV-${(group.id || '').slice(-6).toUpperCase()}</p>
                                                 <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">Validation magasin</span>
                                                 ${sourceHtml}
                                                 ${boutiqueHtml}
+                                                ${group.hasPendingPrice ? '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700">Prix à définir</span>' : ''}
                                             </div>
                                             <div class="mt-1 flex flex-wrap items-center gap-3 text-xs text-gray-500">
                                                 <span>${dateLabel}</span>
                                                 <span>${timeLabel}</span>
-                                                <span>${quantity} article${quantity > 1 ? 's' : ''}</span>
+                                                <span>${group.totalQuantity} article${group.totalQuantity > 1 ? 's' : ''}</span>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="text-right">
-                                        <p class="text-2xl font-bold text-emerald-600">${formatCurrency(summary.total, summary.currency)}</p>
-                                        <p class="text-xs text-gray-400">${quantity} article${quantity > 1 ? 's' : ''}</p>
+                                        <p class="text-2xl font-bold ${totalClass}">${totalLabel}</p>
+                                        <p class="text-xs text-gray-400">${group.items.length} ligne${group.items.length > 1 ? 's' : ''}</p>
                                     </div>
                                 </div>
                                 <div class="px-4 pb-4">
@@ -10007,33 +10114,29 @@
                                         <span class="font-semibold text-gray-900">${customerLabel}</span>
                                         ${customerEmail ? `<span class="text-xs text-gray-400">· ${customerEmail}</span>` : ''}
                                     </div>
-                                    ${sale.comment ? `<p class="mt-2 text-xs text-gray-500">Commentaire: ${sale.comment}</p>` : ''}
+                                    ${(group.comments || []).length ? `<p class="mt-2 text-xs text-gray-500">Commentaire: ${group.comments.join(' · ')}</p>` : ''}
                                     <div class="mt-4 space-y-3">
-                                        <div class="flex items-center justify-between text-sm text-gray-700">
-                                            <div class="flex items-center gap-3">
-                                                <span class="px-2 py-0.5 rounded-lg bg-gray-100 text-xs font-semibold text-gray-500">${quantity}x</span>
-                                                <span class="font-semibold text-gray-900">${sale.productName || 'Produit'}</span>
-                                            </div>
-                                            <div class="text-right">
-                                                <p class="text-xs text-gray-500">${formatCurrency(unitPrice, summary.currency)} / unité</p>
-                                                <p class="text-sm font-semibold text-gray-900">${formatCurrency(sale.totalAmount || (unitPrice * quantity), summary.currency)}</p>
-                                            </div>
-                                        </div>
+                                        ${itemsHtml}
                                     </div>
                                     <div class="mt-4 space-y-2 border-t border-gray-100 pt-4">
                                         <div class="flex items-center justify-between text-sm text-gray-600">
                                             <span>Sous-total</span>
-                                            <span>${formatCurrency(summary.subtotal, summary.currency)}</span>
+                                            <span>${subtotalLabel}</span>
                                         </div>
-                                        ${isTaxEnabled ? `
+                                        ${!group.hasPendingPrice && isTaxEnabled ? `
                                             <div class="flex items-center justify-between text-sm text-gray-400">
                                                 <span>TVA (20%)</span>
                                                 <span>${formatCurrency(summary.tax, summary.currency)}</span>
                                             </div>
-                                        ` : ''}
+                                        ` : (group.hasPendingPrice ? `
+                                            <div class="flex items-center justify-between text-sm text-amber-600">
+                                                <span>Montant</span>
+                                                <span>Bloqué jusqu'au prix</span>
+                                            </div>
+                                        ` : '')}
                                         <div class="flex items-center justify-between text-base font-semibold text-gray-900 border-t border-gray-100 pt-3">
                                             <span>Total</span>
-                                            <span class="text-emerald-600">${formatCurrency(summary.total, summary.currency)}</span>
+                                            <span class="${totalClass}">${totalLabel}</span>
                                         </div>
                                     </div>
                                     <div class="mt-4 flex flex-col md:flex-row gap-3">
@@ -10558,11 +10661,15 @@
                 const groups = buildSalesHistoryGroups();
                 let group = groups.find(item => item.id === groupId);
                 if (!group) {
+                    group = buildStoreValidationGroups().find(item => item.id === groupId);
+                }
+                if (!group) {
                     const sale = appData.salesHistory?.[groupId];
                     if (!sale) return;
                     const quantity = Number(sale.quantity || 0) || 1;
-                    const totalAmount = Number(sale.totalAmount || 0);
-                    const unitPrice = Number(sale.sellingPrice || (totalAmount / Math.max(quantity, 1)) || 0);
+                    const hasLinePrice = !hasPendingSaleLinePrice(sale);
+                    const totalAmount = hasLinePrice ? Number(sale.totalAmount || 0) : null;
+                    const unitPrice = hasLinePrice ? Number(sale.sellingPrice) : null;
                     const currency = getSaleCurrency(sale) || 'CFA';
                     group = {
                         id: sale.saleGroupId || sale.id || groupId,
@@ -10576,12 +10683,14 @@
                             name: sale.productName || 'Produit',
                             quantity,
                             price: unitPrice,
-                            total: totalAmount || (unitPrice * quantity),
-                            packageLabel: sale.packageLabel || ''
+                            total: hasLinePrice ? (totalAmount || (unitPrice * quantity)) : null,
+                            packageLabel: sale.packageLabel || '',
+                            pricePending: !hasLinePrice
                         }],
-                        total: totalAmount || (unitPrice * quantity),
+                        total: hasLinePrice ? (totalAmount || (unitPrice * quantity)) : null,
                         currency,
                         comments: sale.comment ? [sale.comment] : [],
+                        hasPendingPrice: !hasLinePrice,
                         payLater: sale.payLater === true || sale.paymentStatus === 'pay_later',
                         saleSource: getSaleSource(sale),
                         paymentStatus: sale.paymentStatus || (sale.payLater ? 'pay_later' : (isStoreValidationPending(sale) ? 'store_validation' : 'paid')),
@@ -10601,9 +10710,10 @@
                 const customerName = group.customerName || (group.customerId && appData.customers?.[group.customerId]?.fullName) || 'Client comptoir';
                 const customerEmail = group.customerEmail || (group.customerId && appData.customers?.[group.customerId]?.email) || 'Email non renseigné';
                 const sellerName = group.sellerName || 'Non renseigné';
-                const summary = calculateGroupSummary(group);
+                const summary = group.hasPendingPrice ? null : calculateGroupSummary(group);
                 const itemsHtml = group.items.map(item => {
-                    const unitPrice = item.price || (item.total / Math.max(item.quantity, 1));
+                    const hasLinePrice = hasUsableSellingPrice(item.price) && item.pricePending !== true;
+                    const unitPrice = hasLinePrice ? Number(item.price) : null;
                     const packageInfoHtml = item.packageLabel
                         ? `<p class="text-[11px] font-semibold text-slate-500 mt-1">${escapeHtml(item.packageLabel)}</p>`
                         : '';
@@ -10612,9 +10722,9 @@
                             <div>
                                 <p class="text-sm font-semibold text-gray-900">${item.name}</p>
                                 ${packageInfoHtml}
-                                <p class="text-xs text-gray-500">${item.quantity}x ${formatCurrency(unitPrice, group.currency)}</p>
+                                <p class="text-xs ${hasLinePrice ? 'text-gray-500' : 'text-amber-600'}">${hasLinePrice ? `${item.quantity}x ${formatCurrency(unitPrice, group.currency)}` : 'Prix à définir avant validation'}</p>
                             </div>
-                            <p class="text-sm font-semibold text-gray-900">${formatCurrency(item.total, group.currency)}</p>
+                            <p class="text-sm font-semibold ${hasLinePrice ? 'text-gray-900' : 'text-amber-600'}">${hasLinePrice ? formatCurrency(item.total, group.currency) : 'Prix à définir'}</p>
                         </div>
                     `;
                 }).join('');
@@ -10678,18 +10788,22 @@
                 if (salesDetailCorrectionsCount) salesDetailCorrectionsCount.textContent = `${corrections.length}`;
                 if (salesDetailCorrectionsList) salesDetailCorrectionsList.innerHTML = correctionsHtml;
                 if (salesDetailCorrectionsSection) salesDetailCorrectionsSection.classList.toggle('hidden', corrections.length === 0);
-                if (salesDetailSubtotal) salesDetailSubtotal.textContent = formatCurrency(summary.subtotal, summary.currency);
-                if (salesDetailTax) salesDetailTax.textContent = formatCurrency(summary.tax, summary.currency);
+                if (salesDetailSubtotal) salesDetailSubtotal.textContent = summary ? formatCurrency(summary.subtotal, summary.currency) : 'Prix à définir';
+                if (salesDetailTax) salesDetailTax.textContent = summary ? formatCurrency(summary.tax, summary.currency) : '—';
                 if (salesDetailDiscount) {
-                    const adjustmentValue = getAdjustmentSignedAmount(summary);
-                    salesDetailDiscount.textContent = adjustmentValue !== 0
-                        ? formatCurrency(adjustmentValue, summary.currency)
-                        : formatCurrency(0, summary.currency);
+                    if (summary) {
+                        const adjustmentValue = getAdjustmentSignedAmount(summary);
+                        salesDetailDiscount.textContent = adjustmentValue !== 0
+                            ? formatCurrency(adjustmentValue, summary.currency)
+                            : formatCurrency(0, summary.currency);
+                    } else {
+                        salesDetailDiscount.textContent = '—';
+                    }
                 }
-                if (salesDetailDiscountLabel) salesDetailDiscountLabel.textContent = summary.adjustmentLabel || 'Réduction';
-                if (salesDetailDiscountRow) salesDetailDiscountRow.classList.toggle('hidden', !(summary.discountAmount > 0));
-                if (salesDetailTotal) salesDetailTotal.textContent = formatCurrency(summary.total, summary.currency);
-                if (salesDetailTaxRow) salesDetailTaxRow.classList.toggle('hidden', !isTaxEnabled);
+                if (salesDetailDiscountLabel) salesDetailDiscountLabel.textContent = summary?.adjustmentLabel || 'Réduction';
+                if (salesDetailDiscountRow) salesDetailDiscountRow.classList.toggle('hidden', !(summary?.discountAmount > 0));
+                if (salesDetailTotal) salesDetailTotal.textContent = summary ? formatCurrency(summary.total, summary.currency) : 'Prix à définir';
+                if (salesDetailTaxRow) salesDetailTaxRow.classList.toggle('hidden', !isTaxEnabled || !summary);
                 if (salesDetailCorrect) salesDetailCorrect.classList.toggle('hidden', !canManageSaleCorrections() || group.paymentStatus === 'pending' || group.paymentStatus === 'store_validation');
 
                 salesDetailModal.classList.remove('hidden');
@@ -16353,10 +16467,6 @@
                     if (!product) throw new Error(`Ligne ${row.lineNumber}: sélectionnez un produit valide.`);
                     const quantity = parseNonNegativeInteger(row.quantityRaw, 0);
                     if (quantity <= 0) throw new Error(`Ligne ${row.lineNumber}: renseignez une quantité supérieure à 0.`);
-                    const sellingPrice = getStoreSellingPrice(product);
-                    if (!Number.isFinite(sellingPrice)) {
-                        throw new Error(`Ligne ${row.lineNumber}: le prix magasin de ${product.name} n'est pas défini.`);
-                    }
                     aggregateByProduct[product.id] = (aggregateByProduct[product.id] || 0) + quantity;
                 });
 
@@ -16371,6 +16481,7 @@
                 const runningStock = {};
                 const previewRows = [];
                 let totalAmount = 0;
+                let hasPendingPrice = false;
                 rows.forEach(row => {
                     const product = getActiveStoreProductById(row.productId);
                     const quantity = parseNonNegativeInteger(row.quantityRaw, 0);
@@ -16381,13 +16492,19 @@
                     const stockBefore = runningStock[product.id];
                     const stockAfter = stockBefore - quantity;
                     runningStock[product.id] = stockAfter;
-                    const totalLineAmount = sellingPrice * quantity;
-                    totalAmount += totalLineAmount;
+                    const hasLinePrice = Number.isFinite(sellingPrice) && sellingPrice > 0;
+                    const totalLineAmount = hasLinePrice ? sellingPrice * quantity : null;
+                    if (hasLinePrice) {
+                        totalAmount += totalLineAmount;
+                    } else {
+                        hasPendingPrice = true;
+                    }
                     previewRows.push({
                         ...row,
                         product,
                         quantity,
-                        sellingPrice,
+                        sellingPrice: hasLinePrice ? sellingPrice : null,
+                        pricePending: !hasLinePrice,
                         stockBefore,
                         stockAfter,
                         totalAmount: totalLineAmount
@@ -16403,6 +16520,7 @@
                     comment: (bulkExitCommentInput?.value || '').trim(),
                     rows: previewRows,
                     totalAmount,
+                    hasPendingPrice,
                     finalStocks: runningStock
                 };
             }
@@ -16421,6 +16539,9 @@
                 }
                 preview.rows.forEach(row => {
                     const tr = document.createElement('tr');
+                    const totalLabel = row.pricePending
+                        ? 'Prix à définir'
+                        : formatCurrency(row.totalAmount, row.product.currency || 'CFA');
                     tr.innerHTML = `
                         <td class="px-3 py-3">
                             <p class="font-semibold text-gray-900">${row.product.name || 'Produit'}</p>
@@ -16428,14 +16549,16 @@
                         </td>
                         <td class="px-3 py-3 text-right text-gray-700">${row.quantity}</td>
                         <td class="px-3 py-3 text-right text-gray-700">${row.stockAfter}</td>
-                        <td class="px-3 py-3 text-right font-semibold text-gray-900">${formatCurrency(row.totalAmount, row.product.currency || 'CFA')}</td>
+                        <td class="px-3 py-3 text-right font-semibold ${row.pricePending ? 'text-amber-600' : 'text-gray-900'}">${totalLabel}</td>
                     `;
                     bulkExitPreviewTbody.appendChild(tr);
                 });
                 if (bulkExitPreviewCount) bulkExitPreviewCount.textContent = String(preview.rows.length);
                 if (bulkExitPreviewTotal) {
                     const currency = preview.rows[0]?.product?.currency || 'CFA';
-                    bulkExitPreviewTotal.textContent = formatCurrency(preview.totalAmount, currency);
+                    bulkExitPreviewTotal.textContent = preview.hasPendingPrice
+                        ? 'Prix à définir'
+                        : formatCurrency(preview.totalAmount, currency);
                 }
                 bulkExitPreviewSection.classList.remove('hidden');
                 if (bulkExitPreviewButton) bulkExitPreviewButton.classList.add('hidden');
@@ -16578,6 +16701,7 @@
                     const now = new Date().toISOString();
                     const updates = {};
                     const sellerName = currentUserData?.fullName || currentUser.email || '';
+                    const saleGroupId = push(ref(db, `${dbBasePath}/salesHistory`)).key || `store-sale-${Date.now()}`;
                     Object.entries(preview.finalStocks).forEach(([productId, finalStock]) => {
                         updates[`${dbBasePath}/storeProducts/${productId}/quantityInStore`] = finalStock;
                     });
@@ -16609,6 +16733,7 @@
                         updates[`${dbBasePath}/storeExitRequests/${requestRef.key}`] = {
                             id: requestRef.key,
                             batchId,
+                            saleGroupId,
                             productId: row.product.id,
                             productName: row.product.name,
                             storeId: preview.storeId,
@@ -16623,6 +16748,8 @@
                             requestedByName: sellerName,
                             requestedByEmail: currentUser.email || '',
                             requestedById: currentUser.uid || '',
+                            requestedSellingPrice: row.sellingPrice,
+                            pricePending: row.pricePending === true,
                             stockBefore: row.stockBefore,
                             stockAfter: row.stockAfter,
                             saleHistoryId: saleRef.key,
@@ -16633,13 +16760,16 @@
                         updates[`${dbBasePath}/salesHistory/${saleRef.key}`] = {
                             id: saleRef.key,
                             batchId,
-                            saleGroupId: saleRef.key,
+                            saleGroupId,
                             storeProductId: row.product.id,
                             productName: row.product.name,
                             storeId: preview.storeId,
                             quantity: row.quantity,
                             sellingPrice: row.sellingPrice,
                             totalAmount: row.totalAmount,
+                            pricePending: row.pricePending === true,
+                            pricingStatus: row.pricePending === true ? PENDING_SALE_PRICING_PENDING : PENDING_SALE_PRICING_READY,
+                            manualSellingPrice: row.sellingPrice,
                             sellerName,
                             customerId: null,
                             customerName: preview.customerName,
@@ -16660,7 +16790,10 @@
                     });
 
                     await update(ref(db), updates);
-                    showSuccessToast(`Lot de ${preview.rows.length} sortie(s) envoyé pour validation.`);
+                    const successMessage = preview.hasPendingPrice
+                        ? `Lot de ${preview.rows.length} sortie(s) envoyé. Prix à définir avant validation.`
+                        : `Lot de ${preview.rows.length} sortie(s) envoyé pour validation.`;
+                    showSuccessToast(successMessage);
                     closeBulkExitModal();
                 } catch (error) {
                     console.error(error);
@@ -17905,27 +18038,16 @@
                     showSuccessToast("Accès réservé aux administrateurs.");
                     return;
                 }
-                const sale = appData.salesHistory?.[saleId];
-                if (!sale || !isStoreValidationPending(sale)) {
+                const groupSales = getStoreValidationGroupEntries(saleId);
+                if (!groupSales.length) {
                     showSuccessToast("Cette vente a déjà été traitée.");
                     return;
                 }
                 if (!['paid', 'pending', 'pay_later'].includes(action)) return;
-                const product = appData.storeProducts?.[sale.storeProductId];
-                if (!product) {
-                    showSuccessToast("Produit introuvable.");
+                if (groupSales.some(hasPendingSaleLinePrice)) {
+                    showSuccessToast("Définissez le prix de toutes les lignes avant validation.");
                     return;
                 }
-                const quantity = parseInt(sale.quantity, 10) || 0;
-                const stockUnits = parseNonNegativeInteger(sale.stockUnits, quantity);
-                if (quantity <= 0) return;
-                const movementId = sale.storeMovementId || sale.storeMovementKey || null;
-                const stockReserved = sale.stockReserved === true || !!movementId;
-                if (!stockReserved && quantity > (product.quantityInStore || 0)) {
-                    showSuccessToast("Stock insuffisant pour valider cette sortie.");
-                    return;
-                }
-
                 const paymentStatus = action === 'pay_later'
                     ? 'pay_later'
                     : (action === 'pending' ? 'pending' : 'paid');
@@ -17934,54 +18056,73 @@
                 try {
                     const now = new Date().toISOString();
                     const updates = {};
-                    let resolvedMovementId = movementId;
+                    const liveStocksByProduct = {};
 
-                    if (!stockReserved) {
-                        const newStock = (product.quantityInStore || 0) - quantity;
-                        updates[`${dbBasePath}/storeProducts/${product.id}/quantityInStore`] = newStock;
+                    for (const sale of groupSales) {
+                        const product = appData.storeProducts?.[sale.storeProductId];
+                        if (!product) {
+                            throw new Error(`Produit introuvable pour ${sale.productName || 'cette ligne'}.`);
+                        }
+                        const quantity = parseInt(sale.quantity, 10) || 0;
+                        if (quantity <= 0) continue;
+                        const movementId = sale.storeMovementId || sale.storeMovementKey || null;
+                        const stockReserved = sale.stockReserved === true || !!movementId;
+                        let resolvedMovementId = movementId;
 
-                        const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
-                        resolvedMovementId = moveKey;
-                        updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
-                            id: moveKey,
-                            productId: product.id,
-                            productName: product.name,
-                            storeId: resolveStoreId(sale.storeId) || resolveStoreId(product.storeId) || getActiveStoreId(),
-                            type: "Sortie directe",
-                            quantityChange: quantity,
-                            oldStock: product.quantityInStore,
-                            newStock,
-                            comment: sale.comment ? `Sortie directe: ${sale.comment}` : "Sortie directe magasin",
-                            date: { ".sv": "timestamp" },
-                            approvedFromRequest: sale.storeRequestId || sale.approvedFromRequest || null,
-                            userEmail: currentUser.email || '',
-                            userName: currentUserData?.fullName || currentUser.email || '',
-                            status: EXIT_STATUS_APPROVED
-                        };
-                    } else if (movementId) {
-                        updates[`${dbBasePath}/storeMovements/${movementId}/status`] = EXIT_STATUS_APPROVED;
-                        updates[`${dbBasePath}/storeMovements/${movementId}/approvedAt`] = now;
-                    }
+                        if (!stockReserved) {
+                            const currentStock = Object.prototype.hasOwnProperty.call(liveStocksByProduct, product.id)
+                                ? liveStocksByProduct[product.id]
+                                : (product.quantityInStore || 0);
+                            if (quantity > currentStock) {
+                                throw new Error(`Stock insuffisant pour ${product.name}.`);
+                            }
+                            const newStock = currentStock - quantity;
+                            liveStocksByProduct[product.id] = newStock;
+                            updates[`${dbBasePath}/storeProducts/${product.id}/quantityInStore`] = newStock;
 
-                    updates[`${dbBasePath}/salesHistory/${saleId}/paymentStatus`] = paymentStatus;
-                    updates[`${dbBasePath}/salesHistory/${saleId}/payLater`] = payLater;
-                    if (paymentStatus === 'paid') {
-                        updates[`${dbBasePath}/salesHistory/${saleId}/paymentPaidAt`] = now;
-                    } else if (paymentStatus === 'pay_later' || paymentStatus === 'pending') {
-                        updates[`${dbBasePath}/salesHistory/${saleId}/paymentPaidAt`] = '';
-                    }
-                    updates[`${dbBasePath}/salesHistory/${saleId}/validationStatus`] = 'validated';
-                    updates[`${dbBasePath}/salesHistory/${saleId}/validatedAt`] = now;
-                    updates[`${dbBasePath}/salesHistory/${saleId}/validatedBy`] = currentUser.email || currentUserData?.email || '';
-                    if (resolvedMovementId) updates[`${dbBasePath}/salesHistory/${saleId}/storeMovementId`] = resolvedMovementId;
+                            const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
+                            resolvedMovementId = moveKey;
+                            updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
+                                id: moveKey,
+                                productId: product.id,
+                                productName: product.name,
+                                storeId: resolveStoreId(sale.storeId) || resolveStoreId(product.storeId) || getActiveStoreId(),
+                                type: "Sortie directe",
+                                quantityChange: quantity,
+                                oldStock: currentStock,
+                                newStock,
+                                comment: sale.comment ? `Sortie directe: ${sale.comment}` : "Sortie directe magasin",
+                                date: { ".sv": "timestamp" },
+                                approvedFromRequest: sale.storeRequestId || sale.approvedFromRequest || null,
+                                userEmail: currentUser.email || '',
+                                userName: currentUserData?.fullName || currentUser.email || '',
+                                status: EXIT_STATUS_APPROVED
+                            };
+                        } else if (movementId) {
+                            updates[`${dbBasePath}/storeMovements/${movementId}/status`] = EXIT_STATUS_APPROVED;
+                            updates[`${dbBasePath}/storeMovements/${movementId}/approvedAt`] = now;
+                        }
 
-                    const requestId = sale.storeRequestId || sale.approvedFromRequest || sale.requestId;
-                    if (requestId) {
-                        updates[`${dbBasePath}/storeExitRequests/${requestId}/status`] = EXIT_STATUS_APPROVED;
-                        updates[`${dbBasePath}/storeExitRequests/${requestId}/validatedAt`] = now;
-                        updates[`${dbBasePath}/storeExitRequests/${requestId}/validatedBy`] = currentUser.email || currentUserData?.email || '';
-                        if (resolvedMovementId) {
-                            updates[`${dbBasePath}/storeExitRequests/${requestId}/storeMovementId`] = resolvedMovementId;
+                        updates[`${dbBasePath}/salesHistory/${sale.id}/paymentStatus`] = paymentStatus;
+                        updates[`${dbBasePath}/salesHistory/${sale.id}/payLater`] = payLater;
+                        if (paymentStatus === 'paid') {
+                            updates[`${dbBasePath}/salesHistory/${sale.id}/paymentPaidAt`] = now;
+                        } else if (paymentStatus === 'pay_later' || paymentStatus === 'pending') {
+                            updates[`${dbBasePath}/salesHistory/${sale.id}/paymentPaidAt`] = '';
+                        }
+                        updates[`${dbBasePath}/salesHistory/${sale.id}/validationStatus`] = 'validated';
+                        updates[`${dbBasePath}/salesHistory/${sale.id}/validatedAt`] = now;
+                        updates[`${dbBasePath}/salesHistory/${sale.id}/validatedBy`] = currentUser.email || currentUserData?.email || '';
+                        if (resolvedMovementId) updates[`${dbBasePath}/salesHistory/${sale.id}/storeMovementId`] = resolvedMovementId;
+
+                        const requestId = sale.storeRequestId || sale.approvedFromRequest || sale.requestId;
+                        if (requestId) {
+                            updates[`${dbBasePath}/storeExitRequests/${requestId}/status`] = EXIT_STATUS_APPROVED;
+                            updates[`${dbBasePath}/storeExitRequests/${requestId}/validatedAt`] = now;
+                            updates[`${dbBasePath}/storeExitRequests/${requestId}/validatedBy`] = currentUser.email || currentUserData?.email || '';
+                            if (resolvedMovementId) {
+                                updates[`${dbBasePath}/storeExitRequests/${requestId}/storeMovementId`] = resolvedMovementId;
+                            }
                         }
                     }
 
@@ -18005,67 +18146,68 @@
                     showSuccessToast("Accès réservé aux administrateurs.");
                     return;
                 }
-                const sale = appData.salesHistory?.[saleId];
-                if (!sale || !isStoreValidationPending(sale)) {
+                const groupSales = getStoreValidationGroupEntries(saleId);
+                if (!groupSales.length) {
                     showSuccessToast("Cette vente a déjà été traitée.");
                     return;
                 }
-                const invoiceLabel = `INV-${(sale.saleGroupId || sale.id || '').slice(-6).toUpperCase()}`;
+                const invoiceLabel = `INV-${(groupSales[0]?.saleGroupId || groupSales[0]?.id || saleId).slice(-6).toUpperCase()}`;
                 if (!confirm(`Annuler la vente ${invoiceLabel} ?`)) return;
-
-                const requestId = sale.storeRequestId || sale.approvedFromRequest || sale.requestId;
-                if (requestId && appData.storeExitRequests?.[requestId]?.status === EXIT_STATUS_PENDING) {
-                    await rejectExitRequest(requestId);
-                    return;
-                }
 
                 try {
                     const now = new Date().toISOString();
                     const updates = {};
-                    const product = appData.storeProducts?.[sale.storeProductId];
-                    const quantity = parseInt(sale.quantity, 10) || 0;
-                    const shouldRestore = sale.stockReserved === true || !!sale.storeMovementId || !!sale.storeMovementKey;
+                    const liveStocksByProduct = {};
 
-                    if (shouldRestore && product && quantity > 0) {
-                        const newStock = (product.quantityInStore || 0) + quantity;
-                        updates[`${dbBasePath}/storeProducts/${product.id}/quantityInStore`] = newStock;
-                        const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
-                        updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
-                            id: moveKey,
-                            productId: product.id,
-                            productName: product.name,
-                            storeId: resolveStoreId(sale.storeId) || resolveStoreId(product.storeId) || getActiveStoreId(),
-                            type: "Entrée",
-                            quantityChange: quantity,
-                            oldStock: product.quantityInStore,
-                            newStock,
-                            comment: sale.comment ? `Annulation vente magasin - ${sale.comment}` : "Annulation vente magasin",
-                            date: { ".sv": "timestamp" },
-                            status: EXIT_STATUS_APPROVED,
-                            userEmail: currentUser.email || '',
-                            userName: currentUserData?.fullName || currentUser.email || ''
-                        };
-                    }
+                    for (const sale of groupSales) {
+                        const product = appData.storeProducts?.[sale.storeProductId];
+                        const quantity = parseInt(sale.quantity, 10) || 0;
+                        const shouldRestore = sale.stockReserved === true || !!sale.storeMovementId || !!sale.storeMovementKey;
 
-                    updates[`${dbBasePath}/salesHistory/${saleId}/validationStatus`] = 'rejected';
-                    updates[`${dbBasePath}/salesHistory/${saleId}/paymentStatus`] = 'rejected';
-                    updates[`${dbBasePath}/salesHistory/${saleId}/rejectedAt`] = now;
-                    updates[`${dbBasePath}/salesHistory/${saleId}/rejectedBy`] = currentUser.email || currentUserData?.email || '';
+                        if (shouldRestore && product && quantity > 0) {
+                            const currentStock = Object.prototype.hasOwnProperty.call(liveStocksByProduct, product.id)
+                                ? liveStocksByProduct[product.id]
+                                : (product.quantityInStore || 0);
+                            const newStock = currentStock + quantity;
+                            liveStocksByProduct[product.id] = newStock;
+                            updates[`${dbBasePath}/storeProducts/${product.id}/quantityInStore`] = newStock;
+                            const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
+                            updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
+                                id: moveKey,
+                                productId: product.id,
+                                productName: product.name,
+                                storeId: resolveStoreId(sale.storeId) || resolveStoreId(product.storeId) || getActiveStoreId(),
+                                type: "Entrée",
+                                quantityChange: quantity,
+                                oldStock: currentStock,
+                                newStock,
+                                comment: sale.comment ? `Annulation vente magasin - ${sale.comment}` : "Annulation vente magasin",
+                                date: { ".sv": "timestamp" },
+                                status: EXIT_STATUS_APPROVED,
+                                userEmail: currentUser.email || '',
+                                userName: currentUserData?.fullName || currentUser.email || ''
+                            };
+                        }
 
-                    if (sale.storeMovementId) {
-                        updates[`${dbBasePath}/storeMovements/${sale.storeMovementId}/status`] = EXIT_STATUS_REJECTED;
-                        updates[`${dbBasePath}/storeMovements/${sale.storeMovementId}/rejectedAt`] = now;
-                    }
-                    if (requestId) {
-                        updates[`${dbBasePath}/storeExitRequests/${requestId}/status`] = EXIT_STATUS_REJECTED;
-                        updates[`${dbBasePath}/storeExitRequests/${requestId}/validatedAt`] = now;
-                        updates[`${dbBasePath}/storeExitRequests/${requestId}/validatedBy`] = currentUser.email || currentUserData?.email || '';
+                        updates[`${dbBasePath}/salesHistory/${sale.id}/validationStatus`] = 'rejected';
+                        updates[`${dbBasePath}/salesHistory/${sale.id}/paymentStatus`] = 'rejected';
+                        updates[`${dbBasePath}/salesHistory/${sale.id}/rejectedAt`] = now;
+                        updates[`${dbBasePath}/salesHistory/${sale.id}/rejectedBy`] = currentUser.email || currentUserData?.email || '';
+
+                        if (sale.storeMovementId) {
+                            updates[`${dbBasePath}/storeMovements/${sale.storeMovementId}/status`] = EXIT_STATUS_REJECTED;
+                            updates[`${dbBasePath}/storeMovements/${sale.storeMovementId}/rejectedAt`] = now;
+                        }
+                        const requestId = sale.storeRequestId || sale.approvedFromRequest || sale.requestId;
+                        if (requestId) {
+                            updates[`${dbBasePath}/storeExitRequests/${requestId}/status`] = EXIT_STATUS_REJECTED;
+                            updates[`${dbBasePath}/storeExitRequests/${requestId}/validatedAt`] = now;
+                            updates[`${dbBasePath}/storeExitRequests/${requestId}/validatedBy`] = currentUser.email || currentUserData?.email || '';
+                        }
                     }
 
                     await update(ref(db), updates);
 
-                    sale.validationStatus = 'rejected';
-                    sale.paymentStatus = 'rejected';
                     renderSalesHistory();
                     updateDashboardStats();
                     updateAllStats();
@@ -18073,6 +18215,53 @@
                 } catch (error) {
                     console.error(error);
                     showSuccessToast("Impossible d'annuler cette vente pour le moment.");
+                }
+            }
+
+            async function updateStoreValidationSalePrice(saleId, rawValue) {
+                if (!dbBasePath || !currentUser || getCurrentUserRole() !== 'admin') return;
+                const sale = appData.salesHistory?.[saleId];
+                if (!sale || !isStoreValidationPending(sale)) return;
+
+                const trimmedValue = String(rawValue ?? '').trim();
+                const updates = {};
+                const requestId = sale.storeRequestId || sale.approvedFromRequest || sale.requestId;
+
+                if (!trimmedValue) {
+                    updates[`${dbBasePath}/salesHistory/${saleId}/sellingPrice`] = null;
+                    updates[`${dbBasePath}/salesHistory/${saleId}/totalAmount`] = null;
+                    updates[`${dbBasePath}/salesHistory/${saleId}/manualSellingPrice`] = null;
+                    updates[`${dbBasePath}/salesHistory/${saleId}/pricePending`] = true;
+                    updates[`${dbBasePath}/salesHistory/${saleId}/pricingStatus`] = PENDING_SALE_PRICING_PENDING;
+                    if (requestId) {
+                        updates[`${dbBasePath}/storeExitRequests/${requestId}/requestedSellingPrice`] = null;
+                        updates[`${dbBasePath}/storeExitRequests/${requestId}/pricePending`] = true;
+                    }
+                } else {
+                    const nextPrice = roundAmount(parseNumericInput(trimmedValue));
+                    if (!hasUsableSellingPrice(nextPrice)) {
+                        showSuccessToast("Saisissez un prix valide.");
+                        renderSalesHistory();
+                        return;
+                    }
+                    const quantity = parseInt(sale.quantity, 10) || 0;
+                    updates[`${dbBasePath}/salesHistory/${saleId}/sellingPrice`] = nextPrice;
+                    updates[`${dbBasePath}/salesHistory/${saleId}/totalAmount`] = nextPrice * quantity;
+                    updates[`${dbBasePath}/salesHistory/${saleId}/manualSellingPrice`] = nextPrice;
+                    updates[`${dbBasePath}/salesHistory/${saleId}/pricePending`] = false;
+                    updates[`${dbBasePath}/salesHistory/${saleId}/pricingStatus`] = PENDING_SALE_PRICING_READY;
+                    if (requestId) {
+                        updates[`${dbBasePath}/storeExitRequests/${requestId}/requestedSellingPrice`] = nextPrice;
+                        updates[`${dbBasePath}/storeExitRequests/${requestId}/pricePending`] = false;
+                    }
+                }
+
+                try {
+                    await update(ref(db), updates);
+                    showSuccessToast(trimmedValue ? "Prix enregistré." : "Prix remis en attente.");
+                } catch (error) {
+                    console.error(error);
+                    showSuccessToast("Impossible de mettre à jour le prix.");
                 }
             }
 
@@ -18132,19 +18321,19 @@
                     }
                     const saleKey = push(ref(db, `${dbBasePath}/salesHistory`)).key;
                     const sellingPrice = getStoreSellingPrice(product);
-                    if (!Number.isFinite(sellingPrice)) {
-                        showSuccessToast("Prix magasin non défini pour ce produit.");
-                        return;
-                    }
-                    const totalAmount = sellingPrice * quantity;
+                    const hasResolvedPrice = Number.isFinite(sellingPrice) && sellingPrice > 0;
+                    const totalAmount = hasResolvedPrice ? sellingPrice * quantity : null;
                     updates[`${dbBasePath}/salesHistory/${saleKey}`] = {
                         id: saleKey,
                         storeProductId: product.id,
                         productName: product.name,
                         storeId: resolveStoreId(request.storeId) || resolveStoreId(product.storeId) || getActiveStoreId(),
                         quantity,
-                        sellingPrice,
+                        sellingPrice: hasResolvedPrice ? sellingPrice : null,
                         totalAmount,
+                        pricePending: !hasResolvedPrice,
+                        pricingStatus: hasResolvedPrice ? PENDING_SALE_PRICING_READY : PENDING_SALE_PRICING_PENDING,
+                        manualSellingPrice: hasResolvedPrice ? sellingPrice : null,
                         sellerName,
                         customerId: null,
                         customerName: request.customerName || '',
@@ -18165,9 +18354,13 @@
                     updates[`${dbBasePath}/storeExitRequests/${requestId}/status`] = EXIT_STATUS_APPROVED;
                     updates[`${dbBasePath}/storeExitRequests/${requestId}/validatedAt`] = now;
                     updates[`${dbBasePath}/storeExitRequests/${requestId}/validatedBy`] = currentUser.email || currentUserData?.email || '';
+                    updates[`${dbBasePath}/storeExitRequests/${requestId}/requestedSellingPrice`] = hasResolvedPrice ? sellingPrice : null;
+                    updates[`${dbBasePath}/storeExitRequests/${requestId}/pricePending`] = !hasResolvedPrice;
                     if (resolvedMovementId) updates[`${dbBasePath}/storeExitRequests/${requestId}/storeMovementId`] = resolvedMovementId;
                     await update(ref(db), updates);
-                    showSuccessToast("Sortie validée avec succès.");
+                    showSuccessToast(hasResolvedPrice
+                        ? "Sortie validée avec succès."
+                        : "Sortie validée. Prix à définir avant clôture commerciale.");
                 } catch (error) {
                     console.error(error);
                     showSuccessToast("Impossible de valider cette sortie pour le moment.");
@@ -21626,11 +21819,14 @@
             }
 
             function buildSaleItemPricingSnapshot(item) {
+                const hasResolvedPrice = hasUsableSellingPrice(item?.sellingPrice) && item?.pricePending !== true;
                 return {
-                    sellingPrice: Number(item?.sellingPrice) || 0,
+                    sellingPrice: hasResolvedPrice ? Number(item.sellingPrice) : null,
                     originalSellingPrice: hasUsableSellingPrice(item?.originalSellingPrice) ? Number(item.originalSellingPrice) : null,
                     manualSellingPrice: hasUsableSellingPrice(item?.manualSellingPrice) ? Number(item.manualSellingPrice) : null,
-                    priceOverridden: item?.priceOverridden === true
+                    priceOverridden: item?.priceOverridden === true,
+                    pricePending: !hasResolvedPrice,
+                    pricingStatus: item?.pricingStatus || (hasResolvedPrice ? PENDING_SALE_PRICING_READY : PENDING_SALE_PRICING_PENDING)
                 };
             }
 
@@ -24498,6 +24694,14 @@
                         cancelPendingSale(cancelButton.dataset.pendingCancel);
                     }
                 });
+                salesHistoryList.addEventListener('change', (event) => {
+                    const priceInput = event.target.closest('[data-store-validation-price-id]');
+                    if (!priceInput) return;
+                    const saleId = priceInput.dataset.storeValidationPriceId;
+                    if (saleId) {
+                        updateStoreValidationSalePrice(saleId, priceInput.value);
+                    }
+                });
             }
             if (salesHistoryRemindersTbody) {
                 salesHistoryRemindersTbody.addEventListener('click', (event) => {
@@ -25482,15 +25686,7 @@
                     return;
                 }
                 const sellingPrice = getStoreSellingPrice(prod);
-                if (!Number.isFinite(sellingPrice)) {
-                    if (exitError) {
-                        exitError.textContent = 'Prix magasin non défini. Ajoutez-le dans le tableau des prix.';
-                        exitError.classList.remove('hidden');
-                    } else {
-                        showSuccessToast("Prix magasin non défini. Ajoutez-le dans le tableau des prix.");
-                    }
-                    return;
-                }
+                const hasResolvedPrice = Number.isFinite(sellingPrice) && sellingPrice > 0;
 
                 try {
                     if (exitSubmitButton) exitSubmitButton.disabled = true;
@@ -25499,7 +25695,7 @@
                     const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
                     const now = new Date().toISOString();
                     const sellerName = currentUserData?.fullName || currentUser.email || '';
-                    const totalAmount = sellingPrice * qty;
+                    const totalAmount = hasResolvedPrice ? sellingPrice * qty : null;
                     const updates = {};
                     const newStock = (prod.quantityInStore || 0) - qty;
 
@@ -25537,6 +25733,8 @@
                         requestedByName: currentUserData?.fullName || currentUser.email || '',
                         requestedByEmail: currentUser.email || '',
                         requestedById: currentUser.uid || '',
+                        requestedSellingPrice: hasResolvedPrice ? sellingPrice : null,
+                        pricePending: !hasResolvedPrice,
                         stockBefore: prod.quantityInStore,
                         stockAfter: newStock,
                         saleHistoryId: saleRef.key,
@@ -25551,8 +25749,11 @@
                         productName: prod.name,
                         storeId,
                         quantity: qty,
-                        sellingPrice,
+                        sellingPrice: hasResolvedPrice ? sellingPrice : null,
                         totalAmount,
+                        pricePending: !hasResolvedPrice,
+                        pricingStatus: hasResolvedPrice ? PENDING_SALE_PRICING_READY : PENDING_SALE_PRICING_PENDING,
+                        manualSellingPrice: hasResolvedPrice ? sellingPrice : null,
                         sellerName,
                         customerId: null,
                         customerName,
@@ -25572,7 +25773,9 @@
                     };
 
                     await update(ref(db), updates);
-                    showSuccessToast("Vente magasin envoyée pour validation.");
+                    showSuccessToast(hasResolvedPrice
+                        ? "Vente magasin envoyée pour validation."
+                        : "Vente magasin envoyée. Prix à définir avant validation.");
                     exitForm.reset();
                     exitModal.classList.add('hidden');
                 } catch (err) {
