@@ -11015,6 +11015,38 @@
                 };
             }
 
+            function ensureBaseUnitPackaging(packagings = [], baseUnitLabel = DEFAULT_BASE_UNIT_LABEL) {
+                const safeBaseUnitLabel = (baseUnitLabel || DEFAULT_BASE_UNIT_LABEL).toString().trim() || DEFAULT_BASE_UNIT_LABEL;
+                const normalized = packagings
+                    .map((entry, index) => normalizePackagingEntry(entry, index))
+                    .filter(Boolean);
+                const hasUnitPackaging = normalized.some(item => Number(item.unitCount) === 1);
+                if (!hasUnitPackaging) {
+                    normalized.push(normalizePackagingEntry({
+                        code: 'DTL',
+                        label: safeBaseUnitLabel,
+                        shopDisplayName: '',
+                        unitCount: 1,
+                        purchaseCost: null,
+                        storePrice: null,
+                        shopPrice: null,
+                        allowPurchase: false,
+                        allowTransfer: true,
+                        allowSell: true,
+                        allowStore: true
+                    }, normalized.length) || buildPackagingDraft({
+                        code: 'DTL',
+                        label: safeBaseUnitLabel,
+                        unitCount: 1,
+                        allowPurchase: false,
+                        allowTransfer: true,
+                        allowSell: true,
+                        allowStore: true
+                    }));
+                }
+                return normalized.sort((a, b) => b.unitCount - a.unitCount);
+            }
+
             function getLegacyDerivedPackagings(product) {
                 if (!product) return [];
                 const baseUnitLabel = (product.baseUnitLabel || DEFAULT_BASE_UNIT_LABEL).toString().trim() || DEFAULT_BASE_UNIT_LABEL;
@@ -11064,10 +11096,7 @@
             function getProductPackagings(product) {
                 if (!product) return [];
                 if (Array.isArray(product.packagings) && product.packagings.length) {
-                    return product.packagings
-                        .map((entry, index) => normalizePackagingEntry(entry, index))
-                        .filter(Boolean)
-                        .sort((a, b) => b.unitCount - a.unitCount);
+                    return ensureBaseUnitPackaging(product.packagings, getProductBaseUnitLabel(product));
                 }
                 return getLegacyDerivedPackagings(product);
             }
@@ -15976,7 +16005,7 @@
                 const rawCategoryId = row.querySelector('[data-price-field="categoryId"]')?.value || '';
                 const categoryId = canManageCategories() ? rawCategoryId : (appData.storeProducts?.[productId]?.categoryId || '');
                 const packagings = getProductPackagings(appData.storeProducts?.[productId]);
-                const packagingValidation = validatePackagingEntries(packagings);
+                const packagingValidation = validatePackagingEntries(packagings, { baseUnitLabel });
                 if (packagingValidation.error) {
                     showSuccessToast(packagingValidation.error);
                     return;
@@ -19485,10 +19514,11 @@
                 }
             }
 
-            function validatePackagingEntries(entries = []) {
+            function validatePackagingEntries(entries = [], options = {}) {
                 if (!entries.length) {
                     return { error: "Ajoutez au moins un conditionnement." };
                 }
+                const safeBaseUnitLabel = (options.baseUnitLabel || DEFAULT_BASE_UNIT_LABEL).toString().trim() || DEFAULT_BASE_UNIT_LABEL;
                 const normalized = [];
                 const seenCodes = new Set();
                 for (let index = 0; index < entries.length; index += 1) {
@@ -19514,7 +19544,7 @@
                     seenCodes.add(packaging.code);
                     normalized.push(packaging);
                 }
-                return { packagings: normalized.sort((a, b) => b.unitCount - a.unitCount) };
+                return { packagings: ensureBaseUnitPackaging(normalized, safeBaseUnitLabel) };
             }
 
             function openPricePackagingModal(productId) {
@@ -19552,7 +19582,7 @@
                     }
                     return;
                 }
-                const validation = validatePackagingEntries(collectPackagingEditorEntries(pricePackagingsList));
+                const validation = validatePackagingEntries(collectPackagingEditorEntries(pricePackagingsList), { baseUnitLabel });
                 if (validation.error) {
                     if (pricePackagingError) {
                         pricePackagingError.textContent = validation.error;
@@ -20471,6 +20501,7 @@
                     target.sellingPrice = Number(target.sellingPrice);
                     target.pricePending = false;
                     target.pricingStatus = PENDING_SALE_PRICING_READY;
+                    syncCartItemPriceMetadata(target);
                     return target;
                 }
 
@@ -20484,6 +20515,7 @@
                     target.pricingStatus = PENDING_SALE_PRICING_PENDING;
                 }
 
+                syncCartItemPriceMetadata(target);
                 return target;
             }
 
@@ -20500,6 +20532,108 @@
 
             function cartHasPendingPriceItems() {
                 return syncSaleItemsPricing(cartItems || []).hasPendingPrice;
+            }
+
+            function getCartItemOriginalSellingPrice(item) {
+                const storedOriginalPrice = Number(item?.originalSellingPrice);
+                if (hasUsableSellingPrice(storedOriginalPrice)) {
+                    return roundAmount(storedOriginalPrice);
+                }
+
+                const livePricing = getLiveSellingPriceForSaleItem(item);
+                if (hasUsableSellingPrice(livePricing.price)) {
+                    return roundAmount(Number(livePricing.price));
+                }
+
+                return null;
+            }
+
+            function syncCartItemPriceMetadata(item) {
+                if (!item || typeof item !== 'object') return item;
+
+                const originalSellingPrice = getCartItemOriginalSellingPrice(item);
+                const currentSellingPrice = hasUsableSellingPrice(item?.sellingPrice) && item?.pricePending !== true
+                    ? roundAmount(Number(item.sellingPrice))
+                    : null;
+
+                if (originalSellingPrice !== null) {
+                    item.originalSellingPrice = originalSellingPrice;
+                }
+
+                if (currentSellingPrice === null) {
+                    item.manualSellingPrice = null;
+                    item.priceOverridden = false;
+                    return item;
+                }
+
+                if (originalSellingPrice === null) {
+                    item.manualSellingPrice = currentSellingPrice;
+                    item.priceOverridden = true;
+                    return item;
+                }
+
+                const priceOverridden = Math.abs(currentSellingPrice - originalSellingPrice) > 0.004;
+                item.sellingPrice = priceOverridden ? currentSellingPrice : originalSellingPrice;
+                item.manualSellingPrice = priceOverridden ? currentSellingPrice : null;
+                item.priceOverridden = priceOverridden;
+                return item;
+            }
+
+            function getCartItemPriceInputValue(item) {
+                if (!hasUsableSellingPrice(item?.sellingPrice) || item?.pricePending === true) return '';
+                return formatInputNumber(item.sellingPrice);
+            }
+
+            function buildSaleItemPricingSnapshot(item) {
+                return {
+                    sellingPrice: Number(item?.sellingPrice) || 0,
+                    originalSellingPrice: hasUsableSellingPrice(item?.originalSellingPrice) ? Number(item.originalSellingPrice) : null,
+                    manualSellingPrice: hasUsableSellingPrice(item?.manualSellingPrice) ? Number(item.manualSellingPrice) : null,
+                    priceOverridden: item?.priceOverridden === true
+                };
+            }
+
+            function updateCartItemSellingPrice(index, rawValue) {
+                const item = cartItems[index];
+                if (!item) return;
+
+                const trimmedValue = String(rawValue ?? '').trim();
+                const originalSellingPrice = getCartItemOriginalSellingPrice(item);
+
+                if (!trimmedValue) {
+                    if (originalSellingPrice !== null) {
+                        item.originalSellingPrice = originalSellingPrice;
+                        item.sellingPrice = originalSellingPrice;
+                        item.manualSellingPrice = null;
+                        item.priceOverridden = false;
+                        item.pricePending = false;
+                        item.pricingStatus = PENDING_SALE_PRICING_READY;
+                    } else {
+                        item.sellingPrice = null;
+                        item.manualSellingPrice = null;
+                        item.priceOverridden = false;
+                        item.pricePending = true;
+                        item.pricingStatus = PENDING_SALE_PRICING_PENDING;
+                    }
+                    renderCart();
+                    return;
+                }
+
+                const nextSellingPrice = roundAmount(parseNumericInput(trimmedValue));
+                if (!hasUsableSellingPrice(nextSellingPrice)) {
+                    showSalesErrorMessage("Saisissez un prix client valide.");
+                    renderCart();
+                    return;
+                }
+
+                if (originalSellingPrice !== null) {
+                    item.originalSellingPrice = originalSellingPrice;
+                }
+                item.sellingPrice = nextSellingPrice;
+                item.pricePending = false;
+                item.pricingStatus = PENDING_SALE_PRICING_READY;
+                syncCartItemPriceMetadata(item);
+                renderCart();
             }
 
             function addToCart(productId = null, quantityOverride = null, packageRef = null) {
@@ -20582,6 +20716,9 @@
                         lotReceivedAt: activeLot.receivedAt || '',
                         purchaseCostSnapshot: Number.isFinite(Number(activeLot.purchaseCost)) ? Number(activeLot.purchaseCost) : 0,
                         sellingPrice: hasResolvedPrice ? Number(sellingPrice) : null,
+                        originalSellingPrice: hasResolvedPrice ? Number(sellingPrice) : null,
+                        manualSellingPrice: null,
+                        priceOverridden: false,
                         pricePending: !hasResolvedPrice,
                         pricingStatus: hasResolvedPrice ? PENDING_SALE_PRICING_READY : PENDING_SALE_PRICING_PENDING,
                         quantity: quantityInput,
@@ -20660,7 +20797,11 @@
             }
 
             function calculateCartTotal() {
-                return cartItems.reduce((total, item) => total + (item.sellingPrice * item.quantity), 0);
+                return cartItems.reduce((total, item) => {
+                    const sellingPrice = Number(item?.sellingPrice) || 0;
+                    const quantity = Number(item?.quantity) || 0;
+                    return total + (sellingPrice * quantity);
+                }, 0);
             }
 
             function calculateCartSummary(discountState = getDiscountStateFromInputs()) {
@@ -20874,8 +21015,21 @@
 
                 if (cartItemsList) {
                     cartItemsList.innerHTML = cartItems.map((item, index) => {
+                        syncCartItemPriceMetadata(item);
                         const hasLinePrice = hasUsableSellingPrice(item.sellingPrice) && item.pricePending !== true;
                         const subtotal = hasLinePrice ? Number(item.sellingPrice) * item.quantity : null;
+                        const originalSellingPrice = getCartItemOriginalSellingPrice(item);
+                        const hasOriginalSellingPrice = hasUsableSellingPrice(originalSellingPrice);
+                        const priceStatus = item.pricePending === true
+                            ? '<p class="mt-1 text-[11px] font-semibold text-amber-600">Prix à définir avant validation</p>'
+                            : item.priceOverridden
+                                ? `<p class="mt-1 text-[11px] font-semibold text-amber-600">Prix client applique${hasOriginalSellingPrice ? ` · Standard ${formatCurrency(originalSellingPrice, item.currency)}` : ''}</p>`
+                                : hasOriginalSellingPrice
+                                    ? `<p class="mt-1 text-[11px] font-semibold text-emerald-600">Prix standard ${formatCurrency(originalSellingPrice, item.currency)}</p>`
+                                    : '<p class="mt-1 text-[11px] font-semibold text-slate-500">Prix saisi manuellement</p>';
+                        const resetPriceButton = item.priceOverridden && hasOriginalSellingPrice
+                            ? `<button type="button" data-cart-action="reset-price" data-index="${index}" class="text-[11px] font-semibold text-cyan-600 hover:text-cyan-700">Standard</button>`
+                            : '';
                         const packageInfo = item.packageLabel ? `<p class="text-[11px] font-semibold text-slate-500 mt-1">${item.packageLabel} · ${item.quantity}</p>` : '';
                         const lotInfo = item.lotLabel ? `<p class="text-[11px] font-semibold text-cyan-700 mt-1">${item.lotLabel}</p>` : '';
                         return `
@@ -20885,9 +21039,17 @@
                                     ${packageInfo}
                                     ${lotInfo}
                                     <p class="text-xs text-gray-500 mt-1">${hasLinePrice ? `${formatCurrency(item.sellingPrice, item.currency)} x ${item.quantity}` : 'Prix à définir avant validation'}</p>
+                                    ${priceStatus}
                                 </div>
                                 <div class="text-right">
                                     <p class="text-sm font-semibold ${hasLinePrice ? 'text-gray-900' : 'text-amber-600'}">${hasLinePrice ? formatCurrency(subtotal, item.currency) : 'Prix à définir'}</p>
+                                    <div class="mt-2 flex items-center justify-end gap-2">
+                                        <span class="text-[11px] font-semibold text-slate-400">PU</span>
+                                        <input type="number" min="0" step="0.01" value="${getCartItemPriceInputValue(item)}" data-cart-price data-index="${index}"
+                                            class="w-24 h-8 rounded-md border border-gray-200 px-2 text-xs text-right text-gray-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                                            placeholder="${hasOriginalSellingPrice ? formatInputNumber(originalSellingPrice) : 'Prix'}" />
+                                        ${resetPriceButton}
+                                    </div>
                                     <div class="mt-2 flex items-center justify-end gap-2">
                                         <button type="button" data-cart-action="decrease" data-index="${index}" class="w-7 h-7 rounded-full border border-gray-200 text-gray-500 hover:text-gray-700">-</button>
                                         <input type="number" min="1" step="1" value="${item.quantity}" data-cart-quantity data-index="${index}"
@@ -21184,6 +21346,9 @@
                         name: item.name,
                         quantity: item.quantity,
                         price: item.sellingPrice,
+                        originalPrice: hasUsableSellingPrice(item?.originalSellingPrice) ? Number(item.originalSellingPrice) : null,
+                        manualPrice: hasUsableSellingPrice(item?.manualSellingPrice) ? Number(item.manualSellingPrice) : null,
+                        priceOverridden: item?.priceOverridden === true,
                         total: item.discountedTotal,
                         lotLabel: item.lotLabel || '',
                         packageCode: item.packageCode || 'detail',
@@ -21334,7 +21499,7 @@
                             lotId: item.lotId || null,
                             lotLabel: item.lotLabel || '',
                             purchaseCostSnapshot: item.purchaseCostSnapshot || 0,
-                            sellingPrice: item.sellingPrice,
+                            ...buildSaleItemPricingSnapshot(item),
                             totalAmount: item.discountedTotal,
                             discountShare: item.discountShare || 0,
                             adjustmentDirection: summary.adjustmentDirection,
@@ -21684,6 +21849,7 @@
 
                 try {
                     const updates = {};
+                    const lotNotifications = [];
                     const now = new Date().toISOString();
                     const sellerName = currentUserData?.fullName || currentUser.email;
                     const comment = pending.comment || '';
@@ -21773,7 +21939,7 @@
                             lotId: item.lotId || null,
                             lotLabel: item.lotLabel || '',
                             purchaseCostSnapshot: item.purchaseCostSnapshot || 0,
-                            sellingPrice: item.sellingPrice,
+                            ...buildSaleItemPricingSnapshot(item),
                             totalAmount: item.discountedTotal,
                             discountShare: item.discountShare || 0,
                             adjustmentDirection: summary.adjustmentDirection,
@@ -21820,6 +21986,9 @@
                             name: item.name,
                             quantity: item.quantity,
                             price: item.sellingPrice,
+                            originalPrice: hasUsableSellingPrice(item?.originalSellingPrice) ? Number(item.originalSellingPrice) : null,
+                            manualPrice: hasUsableSellingPrice(item?.manualSellingPrice) ? Number(item.manualSellingPrice) : null,
+                            priceOverridden: item?.priceOverridden === true,
                             total: item.discountedTotal
                         })),
                         total: totalAmount,
@@ -22903,24 +23072,48 @@
                     if (action === 'increase') updateCartQuantity(index, cartItems[index]?.quantity + 1);
                     if (action === 'decrease') updateCartQuantity(index, cartItems[index]?.quantity - 1);
                     if (action === 'remove') removeFromCart(index);
+                    if (action === 'reset-price') updateCartItemSellingPrice(index, '');
                 });
                 cartItemsList.addEventListener('change', (event) => {
                     const qtyInput = event.target.closest('[data-cart-quantity]');
-                    if (!qtyInput) return;
-                    syncCartQuantitiesFromInputs();
+                    if (qtyInput) {
+                        syncCartQuantitiesFromInputs();
+                        return;
+                    }
+                    const priceInput = event.target.closest('[data-cart-price]');
+                    if (!priceInput) return;
+                    const index = parseInt(priceInput.dataset.index, 10);
+                    if (Number.isNaN(index)) return;
+                    updateCartItemSellingPrice(index, priceInput.value);
                 });
                 cartItemsList.addEventListener('keydown', (event) => {
                     const qtyInput = event.target.closest('[data-cart-quantity]');
-                    if (!qtyInput) return;
-                    if (event.key !== 'Enter') return;
+                    if (qtyInput) {
+                        if (event.key !== 'Enter') return;
+                        event.preventDefault();
+                        syncCartQuantitiesFromInputs();
+                        qtyInput.blur();
+                        return;
+                    }
+                    const priceInput = event.target.closest('[data-cart-price]');
+                    if (!priceInput || event.key !== 'Enter') return;
                     event.preventDefault();
-                    syncCartQuantitiesFromInputs();
-                    qtyInput.blur();
+                    const index = parseInt(priceInput.dataset.index, 10);
+                    if (Number.isNaN(index)) return;
+                    updateCartItemSellingPrice(index, priceInput.value);
+                    priceInput.blur();
                 });
                 cartItemsList.addEventListener('focusout', (event) => {
                     const qtyInput = event.target.closest('[data-cart-quantity]');
-                    if (!qtyInput) return;
-                    syncCartQuantitiesFromInputs();
+                    if (qtyInput) {
+                        syncCartQuantitiesFromInputs();
+                        return;
+                    }
+                    const priceInput = event.target.closest('[data-cart-price]');
+                    if (!priceInput) return;
+                    const index = parseInt(priceInput.dataset.index, 10);
+                    if (Number.isNaN(index)) return;
+                    updateCartItemSellingPrice(index, priceInput.value);
                 });
             }
             if (validateCartButton) validateCartButton.addEventListener('click', () => {
@@ -23698,7 +23891,7 @@
                 const currency = (productCurrencyInput?.value || 'CFA').trim().toUpperCase();
                 const rawCategoryId = productCategorySelect?.value || '';
                 const categoryId = canManageCategories() ? rawCategoryId : '';
-                const packagingValidation = validatePackagingEntries(collectPackagingEditorEntries(newProductPackagingsList));
+                const packagingValidation = validatePackagingEntries(collectPackagingEditorEntries(newProductPackagingsList), { baseUnitLabel });
                 if (!name) {
                     showSuccessToast("Le nom du produit est requis.");
                     return;
