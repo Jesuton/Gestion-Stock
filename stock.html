@@ -1677,6 +1677,15 @@
                             </svg>
                             <span class="whitespace-nowrap">Nouveau produit</span>
                         </button>
+                        <button id="open-bulk-transfer-modal-button"
+                            class="inline-flex items-center justify-center gap-2 px-4 h-10 rounded-lg border border-cyan-200 bg-white text-cyan-700 font-semibold shadow-sm hover:bg-cyan-50 transition-colors flex-grow sm:flex-grow-0">
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M7 7h10M7 12h10M7 17h10M4 7h.01M4 12h.01M4 17h.01" />
+                            </svg>
+                            <span class="whitespace-nowrap">Transfert groupé</span>
+                        </button>
                         <button id="open-restock-modal-button"
                             class="inline-flex items-center justify-center gap-2 px-4 h-10 rounded-lg bg-purple-600 text-white font-semibold shadow-sm hover:bg-purple-700 transition-colors flex-grow sm:flex-grow-0">
                             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -1707,6 +1716,10 @@
                                 class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2 whitespace-nowrap">Entrée</button>
                             <button id="open-exit-modal-button"
                                 class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2 whitespace-nowrap">Sortie</button>
+                            <button id="open-bulk-exit-modal-button"
+                                class="px-4 py-2 border border-orange-200 bg-orange-50 text-orange-700 font-semibold rounded-lg shadow-sm hover:bg-orange-100 transition-colors flex items-center gap-2 whitespace-nowrap">
+                                Sorties groupées
+                            </button>
                             <button id="store-import-csv-button"
                                 class="px-4 py-2 bg-emerald-600 text-white font-semibold rounded-lg shadow-sm hover:bg-emerald-700 transition-colors flex items-center gap-2 whitespace-nowrap">
                                 Importer entrées CSV
@@ -3811,6 +3824,109 @@
         </div>
     </div>
 
+    <div id="bulk-exit-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden">
+        <div class="w-full max-w-6xl m-4 overflow-hidden rounded-3xl border border-white/70 bg-white shadow-2xl">
+            <div class="flex items-start justify-between gap-4 border-b border-gray-100 px-6 py-5">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-orange-600">Magasin</p>
+                    <h2 class="mt-2 text-2xl font-bold text-gray-900">Sorties groupées</h2>
+                    <p class="mt-1 text-sm text-gray-500">Saisissez plusieurs sorties, vérifiez le récapitulatif puis envoyez tout en une seule validation.</p>
+                </div>
+                <button id="close-bulk-exit-modal-button" class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="px-6 py-6 space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="bulk-exit-delivery-name" class="block text-sm font-medium text-gray-700">Livreur commun (optionnel)</label>
+                        <input type="text" id="bulk-exit-delivery-name" placeholder="Nom du livreur"
+                            class="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:ring-2 focus:ring-orange-400 focus:border-orange-400" />
+                    </div>
+                    <div>
+                        <label for="bulk-exit-comment" class="block text-sm font-medium text-gray-700">Commentaire global</label>
+                        <input type="text" id="bulk-exit-comment" placeholder="Ex: tournée du matin"
+                            class="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:ring-2 focus:ring-orange-400 focus:border-orange-400" />
+                    </div>
+                </div>
+
+                <div class="rounded-2xl border border-gray-200 overflow-hidden">
+                    <div class="flex items-center justify-between gap-3 border-b border-gray-200 bg-gray-50 px-4 py-3">
+                        <div>
+                            <p class="text-sm font-semibold text-gray-900">Lignes de sortie</p>
+                            <p class="text-xs text-gray-500">Produit, quantité et client par ligne.</p>
+                        </div>
+                        <button type="button" id="bulk-exit-add-row-button"
+                            class="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-3 py-2 text-xs font-semibold text-white hover:bg-orange-600">
+                            Ajouter une ligne
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 text-sm">
+                            <thead class="bg-white">
+                                <tr>
+                                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Produit</th>
+                                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Qté</th>
+                                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Client</th>
+                                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Téléphone</th>
+                                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Email</th>
+                                    <th class="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bulk-exit-rows-tbody" class="divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <p id="bulk-exit-error" class="hidden rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600"></p>
+
+                <div id="bulk-exit-preview-section" class="hidden rounded-2xl border border-orange-200 bg-orange-50/40 p-4 space-y-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <p class="text-sm font-semibold text-gray-900">Récapitulatif avant validation</p>
+                            <p class="text-xs text-gray-500 mt-1">Vérifiez les quantités, les clients et l'impact stock avant d'envoyer.</p>
+                        </div>
+                        <div class="text-right text-xs text-gray-500">
+                            <p>Lignes: <span id="bulk-exit-preview-count" class="font-semibold text-gray-900">0</span></p>
+                            <p class="mt-1">Montant estimé: <span id="bulk-exit-preview-total" class="font-semibold text-gray-900">0 FCFA</span></p>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto rounded-xl border border-orange-100 bg-white">
+                        <table class="min-w-full divide-y divide-gray-200 text-sm">
+                            <thead class="bg-orange-50">
+                                <tr>
+                                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-orange-700">Produit</th>
+                                    <th class="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wide text-orange-700">Qté</th>
+                                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-orange-700">Client</th>
+                                    <th class="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wide text-orange-700">Stock après</th>
+                                    <th class="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wide text-orange-700">Montant</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bulk-exit-preview-tbody" class="divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="flex flex-col-reverse sm:flex-row gap-3">
+                    <button type="button" id="bulk-exit-cancel-button"
+                        class="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-50">
+                        Annuler
+                    </button>
+                    <button type="button" id="bulk-exit-preview-button"
+                        class="flex-1 rounded-xl border border-orange-200 bg-white px-4 py-3 text-sm font-semibold text-orange-700 hover:bg-orange-50">
+                        Voir le récapitulatif
+                    </button>
+                    <button type="button" id="bulk-exit-confirm-button"
+                        class="hidden flex-1 rounded-xl bg-orange-500 px-4 py-3 text-sm font-semibold text-white hover:bg-orange-600">
+                        Confirmer et envoyer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 
       MODAL "TRANSFÉRER UN ARTICLE DEPUIS LE MAGASIN"
     -->
@@ -3965,6 +4081,113 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <div id="bulk-transfer-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 backdrop-blur-sm hidden">
+        <div class="w-full max-w-6xl m-4 overflow-hidden rounded-3xl border border-white/70 bg-white shadow-2xl">
+            <div class="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-5">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-600">Magasin vers boutique</p>
+                    <h2 class="mt-2 text-2xl font-bold text-slate-900">Transfert groupé</h2>
+                    <p class="mt-1 text-sm text-slate-500">Préparez plusieurs transferts, relisez le tableau récapitulatif, puis envoyez le lot complet.</p>
+                </div>
+                <button id="close-bulk-transfer-modal-button" class="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="px-6 py-6 space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label for="bulk-transfer-boutique-select" class="block text-sm font-medium text-slate-700">Boutique cible *</label>
+                        <select id="bulk-transfer-boutique-select"
+                            class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400">
+                            <option value="">Sélectionnez une boutique...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="bulk-transfer-alert-threshold" class="block text-sm font-medium text-slate-700">Seuil d'alerte par défaut</label>
+                        <input type="number" id="bulk-transfer-alert-threshold" min="0" value="10"
+                            class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" />
+                    </div>
+                    <div>
+                        <label for="bulk-transfer-comment" class="block text-sm font-medium text-slate-700">Commentaire global</label>
+                        <input type="text" id="bulk-transfer-comment" placeholder="Ex: réassort boutique centre"
+                            class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" />
+                    </div>
+                </div>
+
+                <div class="rounded-2xl border border-slate-200 overflow-hidden">
+                    <div class="flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3">
+                        <div>
+                            <p class="text-sm font-semibold text-slate-900">Lignes de transfert</p>
+                            <p class="text-xs text-slate-500">Chaque ligne sort du magasin et sera reçue en stock unifié côté boutique.</p>
+                        </div>
+                        <button type="button" id="bulk-transfer-add-row-button"
+                            class="inline-flex items-center gap-2 rounded-xl bg-cyan-500 px-3 py-2 text-xs font-semibold text-white hover:bg-cyan-600">
+                            Ajouter une ligne
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-slate-200 text-sm">
+                            <thead class="bg-white">
+                                <tr>
+                                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Produit source</th>
+                                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Qté sortie</th>
+                                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Résumé réception</th>
+                                    <th class="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bulk-transfer-rows-tbody" class="divide-y divide-slate-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <p id="bulk-transfer-error" class="hidden rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600"></p>
+
+                <div id="bulk-transfer-preview-section" class="hidden rounded-2xl border border-cyan-200 bg-cyan-50/40 p-4 space-y-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <p class="text-sm font-semibold text-slate-900">Récapitulatif avant validation</p>
+                            <p class="text-xs text-slate-500 mt-1">Confirmez le stock sortant et la quantité qui sera reçue en boutique.</p>
+                        </div>
+                        <div class="text-right text-xs text-slate-500">
+                            <p>Lignes: <span id="bulk-transfer-preview-count" class="font-semibold text-slate-900">0</span></p>
+                            <p class="mt-1">Unités transférées: <span id="bulk-transfer-preview-units" class="font-semibold text-slate-900">0</span></p>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto rounded-xl border border-cyan-100 bg-white">
+                        <table class="min-w-full divide-y divide-slate-200 text-sm">
+                            <thead class="bg-cyan-50">
+                                <tr>
+                                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-cyan-700">Produit</th>
+                                    <th class="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wide text-cyan-700">Qté sortie</th>
+                                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-cyan-700">Réception boutique</th>
+                                    <th class="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wide text-cyan-700">Stock après</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bulk-transfer-preview-tbody" class="divide-y divide-slate-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="flex flex-col-reverse sm:flex-row gap-3">
+                    <button type="button" id="bulk-transfer-cancel-button"
+                        class="flex-1 rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50">
+                        Annuler
+                    </button>
+                    <button type="button" id="bulk-transfer-preview-button"
+                        class="flex-1 rounded-xl border border-cyan-200 bg-white px-4 py-3 text-sm font-semibold text-cyan-700 hover:bg-cyan-50">
+                        Voir le récapitulatif
+                    </button>
+                    <button type="button" id="bulk-transfer-confirm-button"
+                        class="hidden flex-1 rounded-xl bg-cyan-500 px-4 py-3 text-sm font-semibold text-white hover:bg-cyan-600">
+                        Confirmer et envoyer
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -4819,6 +5042,8 @@
             let activePriceLotShopItemId = null;
             let transferProductSearchQuery = '';
             let isTransferProductDropdownOpen = false;
+            let bulkExitPreviewCache = null;
+            let bulkTransferPreviewCache = null;
             const productComboboxStates = {
                 entry: { query: '', isOpen: false },
                 exit: { query: '', isOpen: false },
@@ -5358,6 +5583,21 @@
             const exitError = document.getElementById('exit-error');
             const exitSubmitButton = document.getElementById('exit-submit-button');
             const exitCancelButton = document.getElementById('exit-cancel-button');
+            const openBulkExitModalButton = document.getElementById('open-bulk-exit-modal-button');
+            const bulkExitModal = document.getElementById('bulk-exit-modal');
+            const closeBulkExitModalButton = document.getElementById('close-bulk-exit-modal-button');
+            const bulkExitDeliveryNameInput = document.getElementById('bulk-exit-delivery-name');
+            const bulkExitCommentInput = document.getElementById('bulk-exit-comment');
+            const bulkExitRowsTbody = document.getElementById('bulk-exit-rows-tbody');
+            const bulkExitAddRowButton = document.getElementById('bulk-exit-add-row-button');
+            const bulkExitError = document.getElementById('bulk-exit-error');
+            const bulkExitPreviewSection = document.getElementById('bulk-exit-preview-section');
+            const bulkExitPreviewCount = document.getElementById('bulk-exit-preview-count');
+            const bulkExitPreviewTotal = document.getElementById('bulk-exit-preview-total');
+            const bulkExitPreviewTbody = document.getElementById('bulk-exit-preview-tbody');
+            const bulkExitCancelButton = document.getElementById('bulk-exit-cancel-button');
+            const bulkExitPreviewButton = document.getElementById('bulk-exit-preview-button');
+            const bulkExitConfirmButton = document.getElementById('bulk-exit-confirm-button');
 
             const openTransferModalButton = document.getElementById('open-transfer-modal-button');
             const transferModal = document.getElementById('transfer-modal');
@@ -5387,6 +5627,22 @@
             const transferStockInfoUnit = document.getElementById('transfer-stock-info-unit');
             const transferError = document.getElementById('transfer-error');
             const transferSubmitButton = document.getElementById('transfer-submit-button');
+            const openBulkTransferModalButton = document.getElementById('open-bulk-transfer-modal-button');
+            const bulkTransferModal = document.getElementById('bulk-transfer-modal');
+            const closeBulkTransferModalButton = document.getElementById('close-bulk-transfer-modal-button');
+            const bulkTransferBoutiqueSelect = document.getElementById('bulk-transfer-boutique-select');
+            const bulkTransferAlertThresholdInput = document.getElementById('bulk-transfer-alert-threshold');
+            const bulkTransferCommentInput = document.getElementById('bulk-transfer-comment');
+            const bulkTransferRowsTbody = document.getElementById('bulk-transfer-rows-tbody');
+            const bulkTransferAddRowButton = document.getElementById('bulk-transfer-add-row-button');
+            const bulkTransferError = document.getElementById('bulk-transfer-error');
+            const bulkTransferPreviewSection = document.getElementById('bulk-transfer-preview-section');
+            const bulkTransferPreviewCount = document.getElementById('bulk-transfer-preview-count');
+            const bulkTransferPreviewUnits = document.getElementById('bulk-transfer-preview-units');
+            const bulkTransferPreviewTbody = document.getElementById('bulk-transfer-preview-tbody');
+            const bulkTransferCancelButton = document.getElementById('bulk-transfer-cancel-button');
+            const bulkTransferPreviewButton = document.getElementById('bulk-transfer-preview-button');
+            const bulkTransferConfirmButton = document.getElementById('bulk-transfer-confirm-button');
 
             const openRestockModalButton = document.getElementById('open-restock-modal-button');
             const restockModal = document.getElementById('restock-modal');
@@ -12255,15 +12511,21 @@
                 applyFeatureState(chatSendButton, 'messaging.send');
 
                 applyFeatureState(openTransferModalButton, 'store_stock.transfer');
+                applyFeatureState(openBulkTransferModalButton, 'store_stock.transfer');
                 applyFeatureState(openRestockModalButton, 'store_stock.restock');
                 applyFeatureState(openEntryModalButton, 'store_stock.entry');
                 applyFeatureState(openExitModalButton, 'store_stock.exit');
+                applyFeatureState(openBulkExitModalButton, 'store_stock.exit');
                 applyFeatureState(openNewProductModalButton, 'store_stock.new_product');
                 applyFeatureState(entrySubmitButton, 'store_modal_entry_validate', { hide: false, disable: true });
                 applyFeatureState(entryCancelButton, 'store_modal_entry_cancel', { hide: false, disable: true });
                 applyFeatureState(exitSubmitButton, 'store_modal_exit_submit', { hide: false, disable: true });
                 applyFeatureState(exitCancelButton, 'store_modal_exit_cancel', { hide: false, disable: true });
+                applyFeatureState(bulkExitPreviewButton, 'store_modal_exit_submit', { hide: false, disable: true });
+                applyFeatureState(bulkExitConfirmButton, 'store_modal_exit_submit', { hide: false, disable: true });
                 applyFeatureState(transferSubmitButton, 'store_modal_transfer', { hide: false, disable: true });
+                applyFeatureState(bulkTransferPreviewButton, 'store_modal_transfer', { hide: false, disable: true });
+                applyFeatureState(bulkTransferConfirmButton, 'store_modal_transfer', { hide: false, disable: true });
                 applyFeatureState(restockSubmitButton, 'store_modal_restock', { hide: false, disable: true });
 
                 applyFeatureState(inventoryStartButton, 'inventory.start');
@@ -15577,6 +15839,9 @@
                 }
                 renderTransferProductDropdown();
                 updateTransferPackagingUI();
+                refreshBulkExitRowProducts();
+                refreshBulkTransferRowProducts();
+                renderBulkTransferBoutiqueOptions();
             }
 
             function updateEntryProductInfo(product) {
@@ -15724,6 +15989,756 @@
                 renderProductCombobox('exit');
                 updateExitProductInfo(productId ? getActiveStoreProductById(productId) : null);
                 exitModal.classList.remove('hidden');
+            }
+
+            function clearBulkExitError() {
+                if (!bulkExitError) return;
+                bulkExitError.textContent = '';
+                bulkExitError.classList.add('hidden');
+            }
+
+            function showBulkExitError(message) {
+                if (!bulkExitError) return;
+                bulkExitError.textContent = message;
+                bulkExitError.classList.remove('hidden');
+            }
+
+            function clearBulkTransferError() {
+                if (!bulkTransferError) return;
+                bulkTransferError.textContent = '';
+                bulkTransferError.classList.add('hidden');
+            }
+
+            function showBulkTransferError(message) {
+                if (!bulkTransferError) return;
+                bulkTransferError.textContent = message;
+                bulkTransferError.classList.remove('hidden');
+            }
+
+            function resetBulkExitPreview() {
+                bulkExitPreviewCache = null;
+                if (bulkExitPreviewSection) bulkExitPreviewSection.classList.add('hidden');
+                if (bulkExitPreviewTbody) bulkExitPreviewTbody.innerHTML = '';
+                if (bulkExitPreviewCount) bulkExitPreviewCount.textContent = '0';
+                if (bulkExitPreviewTotal) bulkExitPreviewTotal.textContent = formatCurrency(0);
+                if (bulkExitPreviewButton) bulkExitPreviewButton.classList.remove('hidden');
+                if (bulkExitConfirmButton) bulkExitConfirmButton.classList.add('hidden');
+            }
+
+            function resetBulkTransferPreview() {
+                bulkTransferPreviewCache = null;
+                if (bulkTransferPreviewSection) bulkTransferPreviewSection.classList.add('hidden');
+                if (bulkTransferPreviewTbody) bulkTransferPreviewTbody.innerHTML = '';
+                if (bulkTransferPreviewCount) bulkTransferPreviewCount.textContent = '0';
+                if (bulkTransferPreviewUnits) bulkTransferPreviewUnits.textContent = '0';
+                if (bulkTransferPreviewButton) bulkTransferPreviewButton.classList.remove('hidden');
+                if (bulkTransferConfirmButton) bulkTransferConfirmButton.classList.add('hidden');
+            }
+
+            function markBulkExitDraftDirty() {
+                clearBulkExitError();
+                resetBulkExitPreview();
+            }
+
+            function markBulkTransferDraftDirty() {
+                clearBulkTransferError();
+                resetBulkTransferPreview();
+            }
+
+            function getBulkExitSelectableProducts() {
+                return getActiveStoreProducts()
+                    .slice()
+                    .sort((a, b) => (a?.name || '').localeCompare(b?.name || ''));
+            }
+
+            function getBulkTransferSelectableProducts() {
+                return getActiveStoreProducts()
+                    .filter(product => isProductTransferReady(product))
+                    .slice()
+                    .sort((a, b) => (a?.name || '').localeCompare(b?.name || ''));
+            }
+
+            function fillBulkProductSelect(select, products, placeholderText, getOptionLabel) {
+                if (!select) return;
+                const previousValue = select.value || '';
+                select.innerHTML = '';
+                const placeholder = document.createElement('option');
+                placeholder.value = '';
+                placeholder.textContent = placeholderText;
+                select.appendChild(placeholder);
+                products.forEach(product => {
+                    const option = document.createElement('option');
+                    option.value = product.id;
+                    option.textContent = getOptionLabel(product);
+                    select.appendChild(option);
+                });
+                if (previousValue && products.some(product => product.id === previousValue)) {
+                    select.value = previousValue;
+                }
+            }
+
+            function getBulkExitProductOptionLabel(product) {
+                const quantity = Math.max(Number(product?.quantityInStore) || 0, 0);
+                return `${product?.name || 'Produit'} · Stock: ${quantity}`;
+            }
+
+            function getBulkTransferProductOptionLabel(product) {
+                const quantity = Math.max(Number(product?.quantityInStore) || 0, 0);
+                const primaryLabel = getPrimaryPackaging(product)?.label || 'format';
+                return `${product?.name || 'Produit'} · ${quantity} ${primaryLabel}`;
+            }
+
+            function renderBulkTransferBoutiqueOptions() {
+                if (!bulkTransferBoutiqueSelect) return;
+                const previousValue = bulkTransferBoutiqueSelect.value || '';
+                const boutiques = getLinkedBoutiquesForStore(getActiveStoreId());
+                bulkTransferBoutiqueSelect.innerHTML = '';
+                const placeholder = document.createElement('option');
+                placeholder.value = '';
+                placeholder.textContent = 'Sélectionnez une boutique...';
+                bulkTransferBoutiqueSelect.appendChild(placeholder);
+                boutiques.forEach(boutique => {
+                    const option = document.createElement('option');
+                    option.value = boutique.id;
+                    option.textContent = boutique.name || DEFAULT_BOUTIQUE_NAME;
+                    bulkTransferBoutiqueSelect.appendChild(option);
+                });
+                const nextValue = boutiques.some(boutique => boutique.id === previousValue)
+                    ? previousValue
+                    : (getActiveBoutiqueId() || '');
+                bulkTransferBoutiqueSelect.value = nextValue;
+            }
+
+            function buildBulkExitRow() {
+                if (!bulkExitRowsTbody) return null;
+                const row = document.createElement('tr');
+                row.dataset.bulkExitRow = 'true';
+                row.innerHTML = `
+                    <td class="px-3 py-3 align-top">
+                        <select data-bulk-exit-field="product"
+                            class="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-orange-400 focus:border-orange-400">
+                        </select>
+                    </td>
+                    <td class="px-3 py-3 align-top">
+                        <input type="number" min="1" step="1" placeholder="0" data-bulk-exit-field="quantity"
+                            class="w-28 rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-orange-400 focus:border-orange-400" />
+                    </td>
+                    <td class="px-3 py-3 align-top">
+                        <input type="text" placeholder="Nom du client" data-bulk-exit-field="customer-name"
+                            class="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-orange-400 focus:border-orange-400" />
+                    </td>
+                    <td class="px-3 py-3 align-top">
+                        <input type="tel" placeholder="+225..." data-bulk-exit-field="customer-phone"
+                            class="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-orange-400 focus:border-orange-400" />
+                    </td>
+                    <td class="px-3 py-3 align-top">
+                        <input type="email" placeholder="Email optionnel" data-bulk-exit-field="customer-email"
+                            class="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-orange-400 focus:border-orange-400" />
+                    </td>
+                    <td class="px-3 py-3 align-top text-right">
+                        <button type="button" data-bulk-exit-remove
+                            class="inline-flex items-center rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50">
+                            Retirer
+                        </button>
+                    </td>
+                `;
+                bulkExitRowsTbody.appendChild(row);
+                return row;
+            }
+
+            function buildBulkTransferRow() {
+                if (!bulkTransferRowsTbody) return null;
+                const row = document.createElement('tr');
+                row.dataset.bulkTransferRow = 'true';
+                row.innerHTML = `
+                    <td class="px-3 py-3 align-top">
+                        <select data-bulk-transfer-field="product"
+                            class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400">
+                        </select>
+                    </td>
+                    <td class="px-3 py-3 align-top">
+                        <input type="number" min="1" step="1" placeholder="0" data-bulk-transfer-field="quantity"
+                            class="w-28 rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" />
+                    </td>
+                    <td class="px-3 py-3 align-top">
+                        <div data-bulk-transfer-summary class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-500">
+                            Sélectionnez un produit et une quantité.
+                        </div>
+                    </td>
+                    <td class="px-3 py-3 align-top text-right">
+                        <button type="button" data-bulk-transfer-remove
+                            class="inline-flex items-center rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">
+                            Retirer
+                        </button>
+                    </td>
+                `;
+                bulkTransferRowsTbody.appendChild(row);
+                return row;
+            }
+
+            function refreshBulkExitRowProducts() {
+                if (!bulkExitRowsTbody) return;
+                const products = getBulkExitSelectableProducts();
+                bulkExitRowsTbody.querySelectorAll('select[data-bulk-exit-field="product"]').forEach(select => {
+                    fillBulkProductSelect(select, products, 'Sélectionnez un produit...', getBulkExitProductOptionLabel);
+                });
+            }
+
+            function updateBulkTransferRowSummary(row) {
+                if (!row) return;
+                const summary = row.querySelector('[data-bulk-transfer-summary]');
+                const productId = row.querySelector('select[data-bulk-transfer-field="product"]')?.value || '';
+                const qtyRaw = row.querySelector('input[data-bulk-transfer-field="quantity"]')?.value || '';
+                if (!summary) return;
+                if (!productId) {
+                    summary.textContent = 'Sélectionnez un produit et une quantité.';
+                    summary.className = 'rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-500';
+                    return;
+                }
+                const product = getActiveStoreProductById(productId);
+                const quantity = parseNonNegativeInteger(qtyRaw, 0);
+                if (!product || quantity <= 0) {
+                    summary.textContent = 'Renseignez une quantité supérieure à 0.';
+                    summary.className = 'rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-700';
+                    return;
+                }
+                const available = Math.max(Number(product.quantityInStore) || 0, 0);
+                if (quantity > available) {
+                    summary.textContent = `Stock insuffisant. Disponible: ${available}.`;
+                    summary.className = 'rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-700';
+                    return;
+                }
+                const plan = computeTransferPackagingPlan(product, quantity, {});
+                if (!plan.isValid || !plan.totalUnits) {
+                    summary.textContent = 'Impossible de calculer la réception boutique.';
+                    summary.className = 'rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-700';
+                    return;
+                }
+                summary.textContent = `${plan.summary} seront reçus en boutique.`;
+                summary.className = 'rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2.5 text-sm text-cyan-800';
+            }
+
+            function refreshBulkTransferRowProducts() {
+                if (!bulkTransferRowsTbody) return;
+                const products = getBulkTransferSelectableProducts();
+                bulkTransferRowsTbody.querySelectorAll('select[data-bulk-transfer-field="product"]').forEach(select => {
+                    fillBulkProductSelect(select, products, 'Sélectionnez un produit...', getBulkTransferProductOptionLabel);
+                });
+                bulkTransferRowsTbody.querySelectorAll('tr[data-bulk-transfer-row]').forEach(updateBulkTransferRowSummary);
+            }
+
+            function ensureBulkExitRows(minRows = 1) {
+                if (!bulkExitRowsTbody) return;
+                while (bulkExitRowsTbody.querySelectorAll('tr[data-bulk-exit-row]').length < minRows) {
+                    buildBulkExitRow();
+                }
+                refreshBulkExitRowProducts();
+            }
+
+            function ensureBulkTransferRows(minRows = 1) {
+                if (!bulkTransferRowsTbody) return;
+                while (bulkTransferRowsTbody.querySelectorAll('tr[data-bulk-transfer-row]').length < minRows) {
+                    buildBulkTransferRow();
+                }
+                refreshBulkTransferRowProducts();
+            }
+
+            function resetBulkExitModalState() {
+                if (bulkExitDeliveryNameInput) bulkExitDeliveryNameInput.value = '';
+                if (bulkExitCommentInput) bulkExitCommentInput.value = '';
+                if (bulkExitRowsTbody) bulkExitRowsTbody.innerHTML = '';
+                ensureBulkExitRows(1);
+                clearBulkExitError();
+                resetBulkExitPreview();
+            }
+
+            function resetBulkTransferModalState() {
+                if (bulkTransferAlertThresholdInput) bulkTransferAlertThresholdInput.value = '10';
+                if (bulkTransferCommentInput) bulkTransferCommentInput.value = '';
+                if (bulkTransferRowsTbody) bulkTransferRowsTbody.innerHTML = '';
+                renderBulkTransferBoutiqueOptions();
+                ensureBulkTransferRows(1);
+                clearBulkTransferError();
+                resetBulkTransferPreview();
+            }
+
+            function openBulkExitModal() {
+                if (!bulkExitModal) return;
+                if (!getActiveStoreId()) {
+                    showSuccessToast('Veuillez créer ou sélectionner un magasin.');
+                    return;
+                }
+                resetBulkExitModalState();
+                bulkExitModal.classList.remove('hidden');
+            }
+
+            function closeBulkExitModal() {
+                if (!bulkExitModal) return;
+                bulkExitModal.classList.add('hidden');
+            }
+
+            function openBulkTransferModal() {
+                if (!bulkTransferModal) return;
+                if (!getActiveStoreId()) {
+                    showSuccessToast('Veuillez créer ou sélectionner un magasin.');
+                    return;
+                }
+                resetBulkTransferModalState();
+                bulkTransferModal.classList.remove('hidden');
+            }
+
+            function closeBulkTransferModal() {
+                if (!bulkTransferModal) return;
+                bulkTransferModal.classList.add('hidden');
+            }
+
+            function getBulkExitDraftRows() {
+                if (!bulkExitRowsTbody) return [];
+                return Array.from(bulkExitRowsTbody.querySelectorAll('tr[data-bulk-exit-row]')).map((row, index) => ({
+                    row,
+                    lineNumber: index + 1,
+                    productId: row.querySelector('select[data-bulk-exit-field="product"]')?.value || '',
+                    quantityRaw: row.querySelector('input[data-bulk-exit-field="quantity"]')?.value || '',
+                    customerName: (row.querySelector('input[data-bulk-exit-field="customer-name"]')?.value || '').trim(),
+                    customerPhone: (row.querySelector('input[data-bulk-exit-field="customer-phone"]')?.value || '').trim(),
+                    customerEmail: (row.querySelector('input[data-bulk-exit-field="customer-email"]')?.value || '').trim()
+                }));
+            }
+
+            function isBulkExitDraftRowBlank(row) {
+                return !row.productId
+                    && !row.quantityRaw
+                    && !row.customerName
+                    && !row.customerPhone
+                    && !row.customerEmail;
+            }
+
+            function buildBulkExitPreview() {
+                clearBulkExitError();
+                const storeId = getActiveStoreId();
+                if (!storeId) {
+                    showBulkExitError('Veuillez créer ou sélectionner un magasin.');
+                    return null;
+                }
+                const rawRows = getBulkExitDraftRows();
+                const rows = rawRows.filter(row => !isBulkExitDraftRowBlank(row));
+                if (!rows.length) {
+                    showBulkExitError('Ajoutez au moins une ligne de sortie.');
+                    return null;
+                }
+                const aggregateByProduct = {};
+                rows.forEach(row => {
+                    const product = getActiveStoreProductById(row.productId);
+                    if (!product) throw new Error(`Ligne ${row.lineNumber}: sélectionnez un produit valide.`);
+                    const quantity = parseNonNegativeInteger(row.quantityRaw, 0);
+                    if (quantity <= 0) throw new Error(`Ligne ${row.lineNumber}: renseignez une quantité supérieure à 0.`);
+                    if (!row.customerName || !row.customerPhone) {
+                        throw new Error(`Ligne ${row.lineNumber}: le nom et le téléphone du client sont obligatoires.`);
+                    }
+                    const sellingPrice = getStoreSellingPrice(product);
+                    if (!Number.isFinite(sellingPrice)) {
+                        throw new Error(`Ligne ${row.lineNumber}: le prix magasin de ${product.name} n'est pas défini.`);
+                    }
+                    aggregateByProduct[product.id] = (aggregateByProduct[product.id] || 0) + quantity;
+                });
+
+                Object.entries(aggregateByProduct).forEach(([productId, quantity]) => {
+                    const product = getActiveStoreProductById(productId);
+                    const available = Math.max(Number(product?.quantityInStore) || 0, 0);
+                    if (quantity > available) {
+                        throw new Error(`${product?.name || 'Produit'}: total demandé ${quantity}, stock disponible ${available}.`);
+                    }
+                });
+
+                const runningStock = {};
+                const previewRows = [];
+                let totalAmount = 0;
+                rows.forEach(row => {
+                    const product = getActiveStoreProductById(row.productId);
+                    const quantity = parseNonNegativeInteger(row.quantityRaw, 0);
+                    const sellingPrice = getStoreSellingPrice(product);
+                    if (!Object.prototype.hasOwnProperty.call(runningStock, product.id)) {
+                        runningStock[product.id] = Math.max(Number(product.quantityInStore) || 0, 0);
+                    }
+                    const stockBefore = runningStock[product.id];
+                    const stockAfter = stockBefore - quantity;
+                    runningStock[product.id] = stockAfter;
+                    const totalLineAmount = sellingPrice * quantity;
+                    totalAmount += totalLineAmount;
+                    previewRows.push({
+                        ...row,
+                        product,
+                        quantity,
+                        sellingPrice,
+                        stockBefore,
+                        stockAfter,
+                        totalAmount: totalLineAmount
+                    });
+                });
+
+                return {
+                    storeId,
+                    deliveryName: (bulkExitDeliveryNameInput?.value || '').trim(),
+                    comment: (bulkExitCommentInput?.value || '').trim(),
+                    rows: previewRows,
+                    totalAmount,
+                    finalStocks: runningStock
+                };
+            }
+
+            function renderBulkExitPreview(preview) {
+                if (!preview || !bulkExitPreviewSection || !bulkExitPreviewTbody) return;
+                bulkExitPreviewTbody.innerHTML = '';
+                preview.rows.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="px-3 py-3">
+                            <p class="font-semibold text-gray-900">${row.product.name || 'Produit'}</p>
+                            <p class="mt-1 text-xs text-gray-500">Ligne ${row.lineNumber}</p>
+                        </td>
+                        <td class="px-3 py-3 text-right text-gray-700">${row.quantity}</td>
+                        <td class="px-3 py-3">
+                            <p class="font-medium text-gray-900">${row.customerName}</p>
+                            <p class="mt-1 text-xs text-gray-500">${row.customerPhone}</p>
+                        </td>
+                        <td class="px-3 py-3 text-right text-gray-700">${row.stockAfter}</td>
+                        <td class="px-3 py-3 text-right font-semibold text-gray-900">${formatCurrency(row.totalAmount, row.product.currency || 'CFA')}</td>
+                    `;
+                    bulkExitPreviewTbody.appendChild(tr);
+                });
+                if (bulkExitPreviewCount) bulkExitPreviewCount.textContent = String(preview.rows.length);
+                if (bulkExitPreviewTotal) {
+                    const currency = preview.rows[0]?.product?.currency || 'CFA';
+                    bulkExitPreviewTotal.textContent = formatCurrency(preview.totalAmount, currency);
+                }
+                bulkExitPreviewSection.classList.remove('hidden');
+                if (bulkExitPreviewButton) bulkExitPreviewButton.classList.add('hidden');
+                if (bulkExitConfirmButton) bulkExitConfirmButton.classList.remove('hidden');
+                bulkExitPreviewCache = preview;
+            }
+
+            function getBulkTransferDraftRows() {
+                if (!bulkTransferRowsTbody) return [];
+                return Array.from(bulkTransferRowsTbody.querySelectorAll('tr[data-bulk-transfer-row]')).map((row, index) => ({
+                    row,
+                    lineNumber: index + 1,
+                    productId: row.querySelector('select[data-bulk-transfer-field="product"]')?.value || '',
+                    quantityRaw: row.querySelector('input[data-bulk-transfer-field="quantity"]')?.value || ''
+                }));
+            }
+
+            function isBulkTransferDraftRowBlank(row) {
+                return !row.productId && !row.quantityRaw;
+            }
+
+            function buildBulkTransferPreview() {
+                clearBulkTransferError();
+                const storeId = getActiveStoreId();
+                if (!storeId) {
+                    showBulkTransferError('Veuillez créer ou sélectionner un magasin.');
+                    return null;
+                }
+                const boutiqueId = bulkTransferBoutiqueSelect?.value || '';
+                if (!boutiqueId) {
+                    showBulkTransferError('Veuillez sélectionner une boutique cible.');
+                    return null;
+                }
+                const rawRows = getBulkTransferDraftRows();
+                const rows = rawRows.filter(row => !isBulkTransferDraftRowBlank(row));
+                if (!rows.length) {
+                    showBulkTransferError('Ajoutez au moins une ligne de transfert.');
+                    return null;
+                }
+                const aggregateByProduct = {};
+                rows.forEach(row => {
+                    const product = getActiveStoreProductById(row.productId);
+                    if (!product) throw new Error(`Ligne ${row.lineNumber}: sélectionnez un produit valide.`);
+                    if (!isProductTransferReady(product)) {
+                        throw new Error(`Ligne ${row.lineNumber}: ${product.name} ne peut pas encore être transféré.`);
+                    }
+                    const quantity = parseNonNegativeInteger(row.quantityRaw, 0);
+                    if (quantity <= 0) throw new Error(`Ligne ${row.lineNumber}: renseignez une quantité supérieure à 0.`);
+                    aggregateByProduct[product.id] = (aggregateByProduct[product.id] || 0) + quantity;
+                });
+
+                Object.entries(aggregateByProduct).forEach(([productId, quantity]) => {
+                    const product = getActiveStoreProductById(productId);
+                    const available = Math.max(Number(product?.quantityInStore) || 0, 0);
+                    if (quantity > available) {
+                        throw new Error(`${product?.name || 'Produit'}: total demandé ${quantity}, stock disponible ${available}.`);
+                    }
+                });
+
+                const runningStock = {};
+                const previewRows = [];
+                let totalUnits = 0;
+                rows.forEach(row => {
+                    const product = getActiveStoreProductById(row.productId);
+                    const quantity = parseNonNegativeInteger(row.quantityRaw, 0);
+                    const plan = computeTransferPackagingPlan(product, quantity, {});
+                    if (!plan.isValid || !plan.totalUnits || !plan.targets.length) {
+                        throw new Error(`Ligne ${row.lineNumber}: impossible de calculer la réception pour ${product.name}.`);
+                    }
+                    if (!Object.prototype.hasOwnProperty.call(runningStock, product.id)) {
+                        runningStock[product.id] = Math.max(Number(product.quantityInStore) || 0, 0);
+                    }
+                    const stockBefore = runningStock[product.id];
+                    const stockAfter = stockBefore - quantity;
+                    runningStock[product.id] = stockAfter;
+                    totalUnits += plan.totalUnits;
+                    previewRows.push({
+                        ...row,
+                        product,
+                        quantity,
+                        plan,
+                        stockBefore,
+                        stockAfter
+                    });
+                });
+
+                return {
+                    storeId,
+                    boutiqueId,
+                    boutiqueName: getBoutiqueName(boutiqueId),
+                    alertThreshold: parseNonNegativeInteger(bulkTransferAlertThresholdInput?.value, 10),
+                    comment: (bulkTransferCommentInput?.value || '').trim(),
+                    rows: previewRows,
+                    totalUnits,
+                    finalStocks: runningStock
+                };
+            }
+
+            function renderBulkTransferPreview(preview) {
+                if (!preview || !bulkTransferPreviewSection || !bulkTransferPreviewTbody) return;
+                bulkTransferPreviewTbody.innerHTML = '';
+                preview.rows.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="px-3 py-3">
+                            <p class="font-semibold text-slate-900">${row.product.name || 'Produit'}</p>
+                            <p class="mt-1 text-xs text-slate-500">Ligne ${row.lineNumber}</p>
+                        </td>
+                        <td class="px-3 py-3 text-right text-slate-700">${row.quantity}</td>
+                        <td class="px-3 py-3">
+                            <p class="font-medium text-slate-900">${row.plan.summary}</p>
+                            <p class="mt-1 text-xs text-slate-500">${preview.boutiqueName}</p>
+                        </td>
+                        <td class="px-3 py-3 text-right text-slate-700">${row.stockAfter}</td>
+                    `;
+                    bulkTransferPreviewTbody.appendChild(tr);
+                });
+                if (bulkTransferPreviewCount) bulkTransferPreviewCount.textContent = String(preview.rows.length);
+                if (bulkTransferPreviewUnits) bulkTransferPreviewUnits.textContent = String(preview.totalUnits);
+                bulkTransferPreviewSection.classList.remove('hidden');
+                if (bulkTransferPreviewButton) bulkTransferPreviewButton.classList.add('hidden');
+                if (bulkTransferConfirmButton) bulkTransferConfirmButton.classList.remove('hidden');
+                bulkTransferPreviewCache = preview;
+            }
+
+            async function submitBulkExitBatch() {
+                if (!currentUser || !dbBasePath) return;
+                let preview;
+                try {
+                    preview = buildBulkExitPreview();
+                } catch (error) {
+                    showBulkExitError(error.message || "Impossible de préparer le lot de sorties.");
+                    return;
+                }
+                if (!preview) return;
+                renderBulkExitPreview(preview);
+                const batchId = push(ref(db, `${dbBasePath}/storeMovements`)).key || `bulk-exit-${Date.now()}`;
+                try {
+                    if (bulkExitConfirmButton) bulkExitConfirmButton.disabled = true;
+                    const now = new Date().toISOString();
+                    const updates = {};
+                    const sellerName = currentUserData?.fullName || currentUser.email || '';
+                    Object.entries(preview.finalStocks).forEach(([productId, finalStock]) => {
+                        updates[`${dbBasePath}/storeProducts/${productId}/quantityInStore`] = finalStock;
+                    });
+                    preview.rows.forEach(row => {
+                        const requestRef = push(ref(db, `${dbBasePath}/storeExitRequests`));
+                        const saleRef = push(ref(db, `${dbBasePath}/salesHistory`));
+                        const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
+                        const baseComment = preview.comment || 'Sortie groupée';
+                        const movementComment = `Sortie groupée en attente${preview.comment ? ` - ${preview.comment}` : ''}`;
+
+                        updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
+                            id: moveKey,
+                            batchId,
+                            productId: row.product.id,
+                            productName: row.product.name,
+                            storeId: preview.storeId,
+                            type: "Sortie directe",
+                            quantityChange: row.quantity,
+                            oldStock: row.stockBefore,
+                            newStock: row.stockAfter,
+                            deliveryName: preview.deliveryName,
+                            comment: movementComment,
+                            date: { ".sv": "timestamp" },
+                            status: EXIT_STATUS_PENDING,
+                            userEmail: currentUser.email || '',
+                            userName: sellerName
+                        };
+
+                        updates[`${dbBasePath}/storeExitRequests/${requestRef.key}`] = {
+                            id: requestRef.key,
+                            batchId,
+                            productId: row.product.id,
+                            productName: row.product.name,
+                            storeId: preview.storeId,
+                            quantity: row.quantity,
+                            comment: baseComment,
+                            customerName: row.customerName,
+                            customerEmail: row.customerEmail,
+                            customerPhone: row.customerPhone,
+                            deliveryName: preview.deliveryName,
+                            status: EXIT_STATUS_PENDING,
+                            requestedAt: now,
+                            requestedByName: sellerName,
+                            requestedByEmail: currentUser.email || '',
+                            requestedById: currentUser.uid || '',
+                            stockBefore: row.stockBefore,
+                            stockAfter: row.stockAfter,
+                            saleHistoryId: saleRef.key,
+                            storeMovementId: moveKey,
+                            stockReserved: true
+                        };
+
+                        updates[`${dbBasePath}/salesHistory/${saleRef.key}`] = {
+                            id: saleRef.key,
+                            batchId,
+                            saleGroupId: saleRef.key,
+                            storeProductId: row.product.id,
+                            productName: row.product.name,
+                            storeId: preview.storeId,
+                            quantity: row.quantity,
+                            sellingPrice: row.sellingPrice,
+                            totalAmount: row.totalAmount,
+                            sellerName,
+                            customerId: null,
+                            customerName: row.customerName,
+                            customerPhone: row.customerPhone,
+                            customerEmail: row.customerEmail,
+                            deliveryName: preview.deliveryName,
+                            comment: baseComment,
+                            paymentStatus: 'store_validation',
+                            validationStatus: 'pending',
+                            payLater: false,
+                            date: { ".sv": "timestamp" },
+                            saleSource: SALE_SOURCE_STORE,
+                            currency: row.product.currency || 'CFA',
+                            storeRequestId: requestRef.key,
+                            storeMovementId: moveKey,
+                            stockReserved: true
+                        };
+                    });
+
+                    await update(ref(db), updates);
+                    showSuccessToast(`Lot de ${preview.rows.length} sortie(s) envoyé pour validation.`);
+                    closeBulkExitModal();
+                } catch (error) {
+                    console.error(error);
+                    showBulkExitError("L'envoi du lot a échoué. Réessayez.");
+                } finally {
+                    if (bulkExitConfirmButton) bulkExitConfirmButton.disabled = false;
+                }
+            }
+
+            async function submitBulkTransferBatch() {
+                if (!currentUser || !dbBasePath) return;
+                let preview;
+                try {
+                    preview = buildBulkTransferPreview();
+                } catch (error) {
+                    showBulkTransferError(error.message || "Impossible de préparer le lot de transferts.");
+                    return;
+                }
+                if (!preview) return;
+                renderBulkTransferPreview(preview);
+                const batchId = push(ref(db, `${dbBasePath}/storeMovements`)).key || `bulk-transfer-${Date.now()}`;
+                try {
+                    if (bulkTransferConfirmButton) bulkTransferConfirmButton.disabled = true;
+                    const now = new Date().toISOString();
+                    const updates = {};
+                    const requesterName = currentUserData?.fullName || currentUser.email || '';
+                    Object.entries(preview.finalStocks).forEach(([productId, finalStock]) => {
+                        updates[`${dbBasePath}/storeProducts/${productId}/quantityInStore`] = finalStock;
+                    });
+                    preview.rows.forEach(row => {
+                        const sourcePackaging = getPrimaryPackaging(row.product);
+                        const sourcePackageRef = sourcePackaging?.code || null;
+                        const sourceVariantCode = getPackageVariantCode(row.product, sourcePackageRef);
+                        const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
+                        const requestRef = push(ref(db, `${dbBasePath}/shopTransferRequests`));
+                        const transferComment = preview.comment
+                            ? `${preview.comment} · ${row.quantity} ${sourceVariantCode} = ${row.plan.summary}`
+                            : `Transfert groupé · ${row.quantity} ${sourceVariantCode} = ${row.plan.summary}`;
+
+                        updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
+                            id: moveKey,
+                            batchId,
+                            productId: row.product.id,
+                            productName: row.product.name,
+                            storeId: preview.storeId,
+                            boutiqueId: preview.boutiqueId,
+                            boutiqueName: preview.boutiqueName,
+                            type: "Sortie",
+                            quantityChange: row.quantity,
+                            oldStock: row.stockBefore,
+                            newStock: row.stockAfter,
+                            comment: transferComment,
+                            date: { ".sv": "timestamp" },
+                            userEmail: currentUser.email || '',
+                            userName: requesterName,
+                            status: EXIT_STATUS_PENDING
+                        };
+
+                        updates[`${dbBasePath}/shopTransferRequests/${requestRef.key}`] = {
+                            id: requestRef.key,
+                            batchId,
+                            requestType: 'transfer',
+                            status: EXIT_STATUS_PENDING,
+                            storeId: preview.storeId,
+                            boutiqueId: preview.boutiqueId,
+                            boutiqueName: preview.boutiqueName,
+                            sourceProductId: row.product.id,
+                            sourceProductName: row.product.name,
+                            productName: row.product.name,
+                            baseProductCode: getBaseProductCode(row.product),
+                            categoryId: row.product.categoryId || null,
+                            purchaseCost: toNullableFiniteNumber(getPackagePurchaseCost(row.product, sourcePackageRef)),
+                            quantity: row.quantity,
+                            sourceCartonQty: row.quantity,
+                            sourcePackageCode: sourcePackageRef,
+                            sourcePackageLabel: sourcePackaging?.label || 'Conditionnement principal',
+                            sourceVariantCode,
+                            sourceSummary: `${row.quantity} ${sourceVariantCode}`,
+                            unitsPerCarton: row.plan.unitsPerCarton,
+                            totalUnits: row.plan.totalUnits,
+                            targetSummary: row.plan.summary,
+                            targetPackages: row.plan.targets,
+                            alertThreshold: preview.alertThreshold,
+                            requestedAt: now,
+                            requestedById: currentUser.uid || '',
+                            requestedByName: requesterName,
+                            requestedByEmail: currentUser.email || '',
+                            storeMovementId: moveKey,
+                            stockReserved: true,
+                            stockBeforeStore: row.stockBefore,
+                            stockAfterStore: row.stockAfter,
+                            comment: transferComment
+                        };
+                    });
+
+                    await update(ref(db), updates);
+                    showSuccessToast(`Lot de ${preview.rows.length} transfert(s) envoyé pour validation.`);
+                    closeBulkTransferModal();
+                } catch (error) {
+                    console.error(error);
+                    showBulkTransferError("L'envoi du lot a échoué. Réessayez.");
+                } finally {
+                    if (bulkTransferConfirmButton) bulkTransferConfirmButton.disabled = false;
+                }
             }
 
             function populateShopProductSelects() {
@@ -24910,6 +25925,13 @@
                 }
                 openExitModalForProduct();
             });
+            if (openBulkExitModalButton) openBulkExitModalButton.addEventListener('click', () => {
+                if (!isCompanyFeatureEnabled('store_stock.exit')) {
+                    showSuccessToast(getFeatureRestrictionMessage());
+                    return;
+                }
+                openBulkExitModal();
+            });
             if (openSupplierModalButton) openSupplierModalButton.addEventListener('click', () => {
                 if (!supplierModal || !supplierForm) return;
                 supplierForm.reset();
@@ -24953,6 +25975,13 @@
                 seedDefaultTransferBreakdown();
                 updateTransferPackagingUI();
                 closeTransferProductDropdown();
+            });
+            if (openBulkTransferModalButton) openBulkTransferModalButton.addEventListener('click', () => {
+                if (!isCompanyFeatureEnabled('store_stock.transfer')) {
+                    showSuccessToast(getFeatureRestrictionMessage());
+                    return;
+                }
+                openBulkTransferModal();
             });
             if (openRestockModalButton) openRestockModalButton.addEventListener('click', () => {
                 if (!isCompanyFeatureEnabled('store_stock.restock')) {
@@ -24999,6 +26028,7 @@
                 closeProductCombobox('exit', { restoreSelection: true });
                 exitModal.classList.add('hidden');
             });
+            if (closeBulkExitModalButton) closeBulkExitModalButton.addEventListener('click', closeBulkExitModal);
             if (entryCancelButton) entryCancelButton.addEventListener('click', () => {
                 closeProductCombobox('entry', { restoreSelection: true });
                 setEntryMode('existing');
@@ -25008,6 +26038,7 @@
                 closeProductCombobox('exit', { restoreSelection: true });
                 exitModal.classList.add('hidden');
             });
+            if (bulkExitCancelButton) bulkExitCancelButton.addEventListener('click', closeBulkExitModal);
             if (closeSupplierModalButton) closeSupplierModalButton.addEventListener('click', () => supplierModal.classList.add('hidden'));
             if (supplierCancelButton) supplierCancelButton.addEventListener('click', () => supplierModal.classList.add('hidden'));
             if (closeSupplierPaymentModalButton) closeSupplierPaymentModalButton.addEventListener('click', closeSupplierPaymentModal);
@@ -25016,10 +26047,12 @@
                 closeTransferProductDropdown({ restoreSelection: true });
                 transferModal.classList.add('hidden');
             });
+            if (closeBulkTransferModalButton) closeBulkTransferModalButton.addEventListener('click', closeBulkTransferModal);
             if (closeRestockModalButton) closeRestockModalButton.addEventListener('click', () => {
                 closeProductCombobox('restock', { restoreSelection: true });
                 restockModal.classList.add('hidden');
             });
+            if (bulkTransferCancelButton) bulkTransferCancelButton.addEventListener('click', closeBulkTransferModal);
             document.addEventListener('click', (event) => {
                 if (!isTransferProductDropdownOpen) return;
                 if (transferProductCombobox?.contains(event.target)) return;
@@ -25086,6 +26119,83 @@
                     applyPackagingPresetToRow(event.target.closest('[data-packaging-row]'));
                 });
             }
+
+            if (bulkExitAddRowButton) {
+                bulkExitAddRowButton.addEventListener('click', () => {
+                    buildBulkExitRow();
+                    refreshBulkExitRowProducts();
+                    markBulkExitDraftDirty();
+                });
+            }
+            if (bulkTransferAddRowButton) {
+                bulkTransferAddRowButton.addEventListener('click', () => {
+                    const row = buildBulkTransferRow();
+                    refreshBulkTransferRowProducts();
+                    updateBulkTransferRowSummary(row);
+                    markBulkTransferDraftDirty();
+                });
+            }
+            if (bulkExitRowsTbody) {
+                bulkExitRowsTbody.addEventListener('click', (event) => {
+                    const removeButton = event.target.closest('[data-bulk-exit-remove]');
+                    if (!removeButton) return;
+                    const row = removeButton.closest('tr[data-bulk-exit-row]');
+                    if (row) row.remove();
+                    ensureBulkExitRows(1);
+                    markBulkExitDraftDirty();
+                });
+                bulkExitRowsTbody.addEventListener('input', markBulkExitDraftDirty);
+                bulkExitRowsTbody.addEventListener('change', markBulkExitDraftDirty);
+            }
+            if (bulkTransferRowsTbody) {
+                bulkTransferRowsTbody.addEventListener('click', (event) => {
+                    const removeButton = event.target.closest('[data-bulk-transfer-remove]');
+                    if (!removeButton) return;
+                    const row = removeButton.closest('tr[data-bulk-transfer-row]');
+                    if (row) row.remove();
+                    ensureBulkTransferRows(1);
+                    markBulkTransferDraftDirty();
+                });
+                const syncBulkTransferRows = (event) => {
+                    const row = event.target.closest('tr[data-bulk-transfer-row]');
+                    if (row) updateBulkTransferRowSummary(row);
+                    markBulkTransferDraftDirty();
+                };
+                bulkTransferRowsTbody.addEventListener('input', syncBulkTransferRows);
+                bulkTransferRowsTbody.addEventListener('change', syncBulkTransferRows);
+            }
+            [bulkExitDeliveryNameInput, bulkExitCommentInput].forEach(input => {
+                if (input) input.addEventListener('input', markBulkExitDraftDirty);
+            });
+            [bulkTransferBoutiqueSelect, bulkTransferAlertThresholdInput, bulkTransferCommentInput].forEach(input => {
+                if (!input) return;
+                input.addEventListener('input', markBulkTransferDraftDirty);
+                input.addEventListener('change', markBulkTransferDraftDirty);
+            });
+            if (bulkExitPreviewButton) {
+                bulkExitPreviewButton.addEventListener('click', () => {
+                    try {
+                        const preview = buildBulkExitPreview();
+                        if (!preview) return;
+                        renderBulkExitPreview(preview);
+                    } catch (error) {
+                        showBulkExitError(error.message || "Impossible de préparer le récapitulatif.");
+                    }
+                });
+            }
+            if (bulkTransferPreviewButton) {
+                bulkTransferPreviewButton.addEventListener('click', () => {
+                    try {
+                        const preview = buildBulkTransferPreview();
+                        if (!preview) return;
+                        renderBulkTransferPreview(preview);
+                    } catch (error) {
+                        showBulkTransferError(error.message || "Impossible de préparer le récapitulatif.");
+                    }
+                });
+            }
+            if (bulkExitConfirmButton) bulkExitConfirmButton.addEventListener('click', submitBulkExitBatch);
+            if (bulkTransferConfirmButton) bulkTransferConfirmButton.addEventListener('click', submitBulkTransferBatch);
 
             bindProductCombobox('entry');
             bindProductCombobox('exit');
@@ -25198,7 +26308,7 @@
             attachSupplierSignatureEvents();
 
             // Background Modal Close
-            [newProductModal, entryModal, exitModal, transferModal, restockModal, accessScopeModal, supplierPaymentModal, pricePackagingModal, priceLotModal].forEach(m => {
+            [newProductModal, entryModal, exitModal, bulkExitModal, transferModal, bulkTransferModal, restockModal, accessScopeModal, supplierPaymentModal, pricePackagingModal, priceLotModal].forEach(m => {
                 if (m) m.addEventListener('click', e => {
                     if (e.target !== m) return;
                     if (m === pricePackagingModal) {
@@ -25208,7 +26318,9 @@
                     } else {
                         if (m === entryModal) closeProductCombobox('entry', { restoreSelection: true });
                         if (m === exitModal) closeProductCombobox('exit', { restoreSelection: true });
+                        if (m === bulkExitModal) resetBulkExitPreview();
                         if (m === transferModal) closeTransferProductDropdown({ restoreSelection: true });
+                        if (m === bulkTransferModal) resetBulkTransferPreview();
                         if (m === restockModal) closeProductCombobox('restock', { restoreSelection: true });
                         m.classList.add('hidden');
                     }
