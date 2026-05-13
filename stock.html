@@ -8131,11 +8131,23 @@
                 return sale.pricePending === true || !hasUsableSellingPrice(sale.sellingPrice);
             }
 
+            function getStoreValidationGroupKey(sale, fallback = '') {
+                if (!sale) return fallback;
+                return sale.batchId || sale.saleGroupId || sale.id || fallback;
+            }
+
+            function getStoreValidationInvoiceKey(sale, fallback = '') {
+                if (!sale) return fallback;
+                return sale.saleGroupId || sale.batchId || sale.id || fallback;
+            }
+
             function getStoreValidationGroupEntries(groupOrSaleId) {
                 const sourceSale = appData.salesHistory?.[groupOrSaleId] || null;
-                const targetGroupId = sourceSale?.saleGroupId || sourceSale?.id || groupOrSaleId;
+                const targetGroupId = sourceSale
+                    ? getStoreValidationGroupKey(sourceSale, groupOrSaleId)
+                    : groupOrSaleId;
                 return Object.values(appData.salesHistory || {})
-                    .filter(sale => canAccessSaleEntry(sale) && isStoreValidationPending(sale) && (sale.saleGroupId || sale.id) === targetGroupId)
+                    .filter(sale => canAccessSaleEntry(sale) && isStoreValidationPending(sale) && getStoreValidationGroupKey(sale, sale.id) === targetGroupId)
                     .sort((a, b) => getSaleActivityTimestamp(b) - getSaleActivityTimestamp(a));
             }
 
@@ -8145,10 +8157,11 @@
                     : Object.values(appData.salesHistory || {}).filter(sale => canAccessSaleEntry(sale) && isStoreValidationPending(sale));
                 const groups = {};
                 sales.forEach(sale => {
-                    const groupId = sale.saleGroupId || sale.id;
+                    const groupId = getStoreValidationGroupKey(sale, sale.id);
                     if (!groups[groupId]) {
                         groups[groupId] = {
                             id: groupId,
+                            invoiceId: getStoreValidationInvoiceKey(sale, groupId),
                             date: sale.date || sale.requestedAt || sale.createdAt || new Date().toISOString(),
                             sellerName: sale.sellerName || '',
                             customerId: sale.customerId || null,
@@ -8170,6 +8183,7 @@
                     if (new Date(sale.date || sale.requestedAt || sale.createdAt || 0) > new Date(group.date || 0)) {
                         group.date = sale.date || sale.requestedAt || sale.createdAt || group.date;
                     }
+                    if (!group.invoiceId) group.invoiceId = getStoreValidationInvoiceKey(sale, groupId);
                     if (!group.sellerName && sale.sellerName) group.sellerName = sale.sellerName;
                     if (!group.customerName && sale.customerName) group.customerName = sale.customerName;
                     if (!group.customerPhone && sale.customerPhone) group.customerPhone = sale.customerPhone;
@@ -9782,9 +9796,11 @@
                     const customerLabel = group.customerName || 'Client comptoir';
                     const sourceLabel = formatSaleSourceBadge(group.saleSource)?.label || '';
                     const boutiqueLabel = getGroupBoutiqueLabel(group);
+                    const invoiceKey = group.invoiceId || group.id;
                     const values = [
-                        `INV-${(group.id || '').slice(-6).toUpperCase()}`,
+                        `INV-${String(invoiceKey || '').slice(-6).toUpperCase()}`,
                         group.id,
+                        invoiceKey,
                         customerLabel,
                         group.customerEmail,
                         group.customerPhone,
@@ -9985,6 +10001,7 @@
                         const { dateLabel, timeLabel } = formatHistoryDateParts(group.date || new Date().toISOString());
                         const customerLabel = group.customerName || 'Client comptoir';
                         const customerEmail = group.customerEmail || '';
+                        const invoiceKey = group.invoiceId || group.id;
                         const sourceBadge = formatSaleSourceBadge(group.saleSource);
                         const sourceHtml = sourceBadge
                             ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold ${sourceBadge.classes}">${sourceBadge.label}</span>`
@@ -10088,7 +10105,7 @@
                                         </div>
                                         <div>
                                             <div class="flex items-center gap-2 flex-wrap">
-                                                <p class="font-semibold text-gray-900">INV-${(group.id || '').slice(-6).toUpperCase()}</p>
+                                                <p class="font-semibold text-gray-900">INV-${String(invoiceKey || '').slice(-6).toUpperCase()}</p>
                                                 <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">Validation magasin</span>
                                                 ${sourceHtml}
                                                 ${boutiqueHtml}
@@ -10673,6 +10690,7 @@
                     const currency = getSaleCurrency(sale) || 'CFA';
                     group = {
                         id: sale.saleGroupId || sale.id || groupId,
+                        invoiceId: getStoreValidationInvoiceKey(sale, sale.saleGroupId || sale.id || groupId),
                         date: sale.date || sale.requestedAt || sale.createdAt || new Date().toISOString(),
                         sellerName: sale.sellerName || '',
                         customerId: sale.customerId || null,
@@ -10735,6 +10753,7 @@
                 const sourceLabel = formatSaleSourceBadge(group.saleSource)?.label || 'Boutique';
                 const boutiqueLabel = getGroupBoutiqueLabel(group);
                 const corrections = Array.isArray(group.corrections) ? group.corrections : [];
+                const invoiceKey = group.invoiceId || group.id;
                 const correctionsHtml = corrections.map(correction => {
                     const createdAt = correction.createdAt ? formatDateForDisplay(correction.createdAt) : 'Date inconnue';
                     const createdBy = correction.createdByName || correction.createdByEmail || 'Utilisateur inconnu';
@@ -10759,7 +10778,7 @@
                     `;
                 }).join('');
 
-                if (salesDetailTitle) salesDetailTitle.textContent = `Détails de la vente INV-${group.id.slice(-6).toUpperCase()}`;
+                if (salesDetailTitle) salesDetailTitle.textContent = `Détails de la vente INV-${String(invoiceKey || '').slice(-6).toUpperCase()}`;
                 if (salesDetailCustomerName) salesDetailCustomerName.textContent = customerName;
                 if (salesDetailCustomerEmail) salesDetailCustomerEmail.textContent = customerEmail;
                 if (salesDetailSellerName) salesDetailSellerName.textContent = `Vendeur : ${sellerName}`;
@@ -18151,7 +18170,7 @@
                     showSuccessToast("Cette vente a déjà été traitée.");
                     return;
                 }
-                const invoiceLabel = `INV-${(groupSales[0]?.saleGroupId || groupSales[0]?.id || saleId).slice(-6).toUpperCase()}`;
+                const invoiceLabel = getSaleInvoiceLabel(getStoreValidationInvoiceKey(groupSales[0], saleId));
                 if (!confirm(`Annuler la vente ${invoiceLabel} ?`)) return;
 
                 try {
