@@ -191,6 +191,16 @@
                 padding-bottom: 0.5rem;
             }
         }
+
+        .product-combobox-dropdown-up {
+            top: auto !important;
+            bottom: calc(100% + 0.5rem);
+        }
+
+        .product-combobox-options-panel {
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+        }
         
     </style>
     <script type="importmap">
@@ -725,23 +735,23 @@
                             </div>
                         </div>
 
-                        <div id="sales-line-builder-pane" class="hidden">
-                            <div id="sales-accordion-quick-add" data-sales-accordion-item data-sales-accordion-group="invoice" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                                <div class="flex flex-col gap-1">
+                        <div id="sales-line-builder-pane" class="hidden space-y-4">
+                            <div id="sales-accordion-quick-add" data-sales-accordion-item data-sales-accordion-group="invoice" class="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-gray-100 overflow-visible">
+                                <div class="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
                                     <p class="text-sm font-semibold text-gray-800">Ajout direct à la facture</p>
-                                    <p id="sales-accordion-quick-summary" class="text-xs text-gray-500">Sélectionnez un produit pour l'ajouter immédiatement. Ajustez ensuite la ligne si nécessaire.</p>
+                                    <p id="sales-accordion-quick-summary" class="text-[11px] text-gray-500">Sélectionnez un produit pour l'ajouter immédiatement. Ajustez ensuite la ligne si nécessaire.</p>
                                 </div>
-                                <div class="mt-4 space-y-3">
+                                <div class="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1.6fr)_220px_92px_124px] lg:items-end">
                                     <div>
-                                        <label for="sales-quick-product-select" class="text-xs font-semibold text-gray-500">Produit</label>
-                                        <div id="sales-quick-product-combobox" class="relative mt-2">
+                                        <label for="sales-quick-product-select" class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Produit</label>
+                                        <div id="sales-quick-product-combobox" class="relative mt-1.5">
                                             <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
                                                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                                     <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
                                                 </svg>
                                             </div>
                                             <input type="text" id="sales-quick-product-search" autocomplete="off" placeholder="Rechercher ou sélectionner un produit..."
-                                                class="w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-12 text-sm text-gray-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
+                                                class="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-11 pr-12 text-sm text-gray-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
                                             <button type="button" id="sales-quick-product-toggle"
                                                 class="absolute inset-y-0 right-0 flex items-center px-4 text-gray-400 transition hover:text-gray-600"
                                                 aria-label="Afficher les produits" aria-expanded="false">
@@ -750,8 +760,8 @@
                                                 </svg>
                                             </button>
                                             <div id="sales-quick-product-dropdown"
-                                                class="hidden absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
-                                                <div id="sales-quick-product-options" class="max-h-72 space-y-1 overflow-y-auto p-2"></div>
+                                                class="hidden absolute left-0 right-0 top-full z-[80] mt-2 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+                                                <div id="sales-quick-product-options" class="product-combobox-options-panel max-h-72 space-y-1 overflow-y-auto p-2"></div>
                                                 <div id="sales-quick-product-empty" class="hidden px-4 py-6 text-sm text-gray-400">Aucun produit correspondant.</div>
                                             </div>
                                         </div>
@@ -759,29 +769,27 @@
                                             <option value="">Sélectionnez un produit</option>
                                         </select>
                                     </div>
-                                    <div class="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_120px_132px]">
-                                        <div>
-                                            <label for="sales-quick-package-select" class="text-xs font-semibold text-gray-500">Conditionnement</label>
-                                            <select id="sales-quick-package-select"
-                                                class="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm text-gray-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
-                                                <option value="">Sélectionnez un produit</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label for="sales-quick-quantity" class="text-xs font-semibold text-gray-500">Qté</label>
-                                            <input type="number" id="sales-quick-quantity" min="1" value="1"
-                                                class="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm text-gray-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
-                                        </div>
-                                        <div class="flex items-end">
-                                            <button id="sales-quick-add-button" type="button"
-                                                class="w-full rounded-xl bg-cyan-500 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-cyan-600 disabled:cursor-not-allowed disabled:bg-gray-300">
-                                                Ajouter la ligne
-                                            </button>
-                                        </div>
+                                    <div>
+                                        <label for="sales-quick-package-select" class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Conditionnement</label>
+                                        <select id="sales-quick-package-select"
+                                            class="mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
+                                            <option value="">Sélectionnez un produit</option>
+                                        </select>
                                     </div>
-                                    <div id="sales-quick-selection-info" class="hidden rounded-xl border border-cyan-100 bg-cyan-50/60 px-4 py-3 text-xs text-gray-600">
+                                    <div>
+                                        <label for="sales-quick-quantity" class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Qté</label>
+                                        <input type="number" id="sales-quick-quantity" min="1" value="1"
+                                            class="mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
+                                    </div>
+                                    <div class="flex items-end">
+                                        <button id="sales-quick-add-button" type="button"
+                                            class="w-full rounded-xl bg-cyan-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-cyan-600 disabled:cursor-not-allowed disabled:bg-gray-300">
+                                            Ajouter
+                                        </button>
+                                    </div>
+                                    <div id="sales-quick-selection-info" class="hidden lg:col-span-4 rounded-xl border border-cyan-100 bg-cyan-50/60 px-3 py-2 text-[11px] text-gray-600">
                                         <p id="sales-quick-selection-stock" class="font-semibold text-cyan-700">—</p>
-                                        <p id="sales-quick-selection-price" class="mt-1">—</p>
+                                        <p id="sales-quick-selection-price" class="mt-0.5">—</p>
                                     </div>
                                 </div>
                             </div>
@@ -5196,6 +5204,12 @@
                 restock: { query: '', isOpen: false },
                 traceability: { query: '', isOpen: false }
             };
+            window.addEventListener('resize', () => {
+                Object.keys(productComboboxStates).forEach(key => {
+                    if (!productComboboxStates[key]?.isOpen) return;
+                    updateProductComboboxDropdownPlacement(key);
+                });
+            });
 
             // Cart state
             let cartItems = [];
@@ -7341,6 +7355,8 @@
                 if (!config) return;
                 productComboboxStates[key].isOpen = false;
                 if (config.dropdown) config.dropdown.classList.add('hidden');
+                if (config.dropdown) config.dropdown.classList.remove('product-combobox-dropdown-up');
+                if (config.options) config.options.style.maxHeight = '';
                 if (config.toggle) config.toggle.setAttribute('aria-expanded', 'false');
                 if (restoreSelection && config.input) {
                     const selectedLabel = getProductComboboxSelectionLabel(key, config.select?.value || '');
@@ -7349,12 +7365,33 @@
                 }
             }
 
+            function updateProductComboboxDropdownPlacement(key) {
+                const config = getProductComboboxConfig(key);
+                if (!config?.dropdown || !config?.input || !config?.options || config.dropdown.classList.contains('hidden')) return;
+
+                const inputRect = config.input.getBoundingClientRect();
+                const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 800;
+                const safeMargin = 16;
+                const minimumHeight = 160;
+                const maximumHeight = 320;
+                const contentHeight = Math.min(Math.max(config.options.scrollHeight + 12, minimumHeight), maximumHeight);
+                const spaceBelow = Math.max(0, viewportHeight - inputRect.bottom - safeMargin);
+                const spaceAbove = Math.max(0, inputRect.top - safeMargin);
+                const openUpward = spaceBelow < minimumHeight && spaceAbove > spaceBelow;
+                const availableHeight = openUpward ? spaceAbove : spaceBelow;
+                const nextHeight = Math.min(Math.max(availableHeight - 12, minimumHeight), maximumHeight, contentHeight);
+
+                config.dropdown.classList.toggle('product-combobox-dropdown-up', openUpward);
+                config.options.style.maxHeight = `${nextHeight}px`;
+            }
+
             function openProductCombobox(key) {
                 const config = getProductComboboxConfig(key);
                 if (!config) return;
                 productComboboxStates[key].isOpen = true;
                 if (config.dropdown) config.dropdown.classList.remove('hidden');
                 if (config.toggle) config.toggle.setAttribute('aria-expanded', 'true');
+                requestAnimationFrame(() => updateProductComboboxDropdownPlacement(key));
             }
 
             function renderProductCombobox(key) {
@@ -7373,6 +7410,7 @@
                     }
                     entryCreateFromSearchButton.classList.toggle('hidden', items.length > 0 || !query || !canCreate);
                 }
+                requestAnimationFrame(() => updateProductComboboxDropdownPlacement(key));
             }
 
             function syncProductComboboxInput(key) {
