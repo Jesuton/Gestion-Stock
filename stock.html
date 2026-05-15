@@ -891,18 +891,18 @@
                                             </div>
                                         </div>
                                         <div class="px-4 py-4">
-                                            <div class="grid grid-cols-1 gap-2.5">
-                                                <div class="rounded-xl border border-gray-200 bg-slate-50 px-3 py-3">
+                                            <div class="grid grid-cols-3 gap-2">
+                                                <div class="min-w-0 rounded-xl border border-gray-200 bg-slate-50 px-2.5 py-3 sm:px-3">
                                                     <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Total facture</p>
-                                                    <p id="sale-payment-total-display" class="mt-1 whitespace-nowrap text-xl font-bold tracking-tight text-gray-900">0 FCFA</p>
+                                                    <p id="sale-payment-total-display" class="mt-1 whitespace-nowrap text-[15px] font-bold leading-tight tracking-tight text-gray-900 sm:text-xl">0 FCFA</p>
                                                 </div>
-                                                <div class="rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 py-3">
+                                                <div class="min-w-0 rounded-xl border border-emerald-100 bg-emerald-50/70 px-2.5 py-3 sm:px-3">
                                                     <p class="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Versé maintenant</p>
-                                                    <p id="sale-payment-paid-display" class="mt-1 whitespace-nowrap text-lg font-bold tracking-tight text-emerald-700">0 FCFA</p>
+                                                    <p id="sale-payment-paid-display" class="mt-1 whitespace-nowrap text-[15px] font-bold leading-tight tracking-tight text-emerald-700 sm:text-lg">0 FCFA</p>
                                                 </div>
-                                                <div class="rounded-xl border border-amber-100 bg-amber-50/70 px-3 py-3">
+                                                <div class="min-w-0 rounded-xl border border-amber-100 bg-amber-50/70 px-2.5 py-3 sm:px-3">
                                                     <p class="text-[11px] font-semibold uppercase tracking-wide text-amber-700">Reste dû</p>
-                                                    <p id="sale-payment-remaining-display" class="mt-1 whitespace-nowrap text-lg font-bold tracking-tight text-amber-700">0 FCFA</p>
+                                                    <p id="sale-payment-remaining-display" class="mt-1 whitespace-nowrap text-[15px] font-bold leading-tight tracking-tight text-amber-700 sm:text-lg">0 FCFA</p>
                                                 </div>
                                             </div>
                                             <div class="mt-4">
@@ -5197,6 +5197,7 @@
             let isTransferProductDropdownOpen = false;
             let bulkExitPreviewCache = null;
             let bulkTransferPreviewCache = null;
+            let suppressNextSalesQuickFocusOpen = false;
             const productComboboxStates = {
                 entry: { query: '', isOpen: false },
                 exit: { query: '', isOpen: false },
@@ -7462,6 +7463,10 @@
                 });
 
                 config.input.addEventListener('focus', () => {
+                    if (key === 'salesQuick' && suppressNextSalesQuickFocusOpen) {
+                        suppressNextSalesQuickFocusOpen = false;
+                        return;
+                    }
                     closeOtherProductComboboxes(key);
                     openProductCombobox(key);
                     renderProductCombobox(key);
@@ -22572,8 +22577,11 @@
                 renderCart();
             }
 
-            function focusSalesQuickSearch({ selectText = false } = {}) {
+            function focusSalesQuickSearch({ selectText = false, keepDropdownClosed = false } = {}) {
                 if (!salesQuickProductSearchInput) return;
+                if (keepDropdownClosed) {
+                    suppressNextSalesQuickFocusOpen = true;
+                }
                 salesQuickProductSearchInput.focus();
                 if (selectText && typeof salesQuickProductSearchInput.select === 'function') {
                     salesQuickProductSearchInput.select();
@@ -22583,12 +22591,13 @@
             function resetSalesQuickSelection({ focusSearch = false } = {}) {
                 if (salesQuickProductSelect) salesQuickProductSelect.value = '';
                 productComboboxStates.salesQuick.query = '';
+                closeProductCombobox('salesQuick');
                 syncProductComboboxInput('salesQuick');
                 renderProductCombobox('salesQuick');
                 updateSalesQuickPackageOptions();
                 if (salesQuickQuantityInput) salesQuickQuantityInput.value = '1';
                 if (focusSearch) {
-                    requestAnimationFrame(() => focusSalesQuickSearch());
+                    requestAnimationFrame(() => focusSalesQuickSearch({ keepDropdownClosed: true }));
                 }
             }
 
