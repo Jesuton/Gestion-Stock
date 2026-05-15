@@ -812,21 +812,39 @@
                                         <button id="clear-customer-selection" class="text-xs font-semibold text-gray-600 hover:text-gray-800">Vente sans client</button>
                                     </div>
                                 </div>
-                                <div id="sale-payment-split-box" class="mt-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
-                                    <div class="flex items-start justify-between gap-3">
-                                        <div>
-                                            <p class="text-xs font-semibold text-gray-700">Paiement à la vente</p>
-                                            <p class="mt-1 text-[11px] text-gray-500">Laissez vide pour encaisser tout de suite. Saisissez un montant pour mettre le reste au compte client.</p>
+                                <div id="sale-payment-split-box" class="mt-4 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                                    <div class="border-b border-gray-100 bg-gradient-to-r from-slate-50 via-white to-cyan-50 px-4 py-3">
+                                        <div class="flex items-start justify-between gap-3">
+                                            <div>
+                                                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Paiement de la vente</p>
+                                                <p class="mt-1 text-sm font-semibold text-gray-800">Définissez l'acompte puis laissez le reliquat au compte client si nécessaire.</p>
+                                            </div>
+                                            <span id="sale-payment-mode-badge" class="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 border border-emerald-100">Comptant</span>
                                         </div>
-                                        <span id="sale-payment-mode-badge" class="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 border border-emerald-100">Comptant</span>
                                     </div>
-                                    <div class="mt-3">
-                                        <label for="sale-paid-now-amount" class="text-xs font-semibold text-gray-500">Montant versé maintenant</label>
-                                        <input type="number" id="sale-paid-now-amount" min="0" step="any" placeholder="Ex: 5000"
-                                            class="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm text-gray-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400" />
+                                    <div class="px-4 py-4">
+                                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                            <div class="rounded-xl border border-gray-200 bg-slate-50 px-3 py-3">
+                                                <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Total facture</p>
+                                                <p id="sale-payment-total-display" class="mt-1 text-lg font-bold text-gray-900">0 FCFA</p>
+                                            </div>
+                                            <div class="rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 py-3">
+                                                <p class="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Versé maintenant</p>
+                                                <p id="sale-payment-paid-display" class="mt-1 text-lg font-bold text-emerald-700">0 FCFA</p>
+                                            </div>
+                                            <div class="rounded-xl border border-amber-100 bg-amber-50/70 px-3 py-3">
+                                                <p class="text-[11px] font-semibold uppercase tracking-wide text-amber-700">Reste dû</p>
+                                                <p id="sale-payment-remaining-display" class="mt-1 text-lg font-bold text-amber-700">0 FCFA</p>
+                                            </div>
+                                        </div>
+                                        <div class="mt-4">
+                                            <label for="sale-paid-now-amount" class="text-xs font-semibold text-gray-500">Acompte encaissé maintenant</label>
+                                            <input type="number" id="sale-paid-now-amount" min="0" step="any" placeholder="Ex: 20 000"
+                                                class="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm text-gray-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400" />
+                                        </div>
+                                        <p id="sale-payment-split-summary" class="mt-3 text-[11px] leading-relaxed text-gray-500">Sans client sélectionné, la vente sera considérée comme encaissée en totalité.</p>
+                                        <p id="sale-payment-split-error" class="mt-2 text-xs text-red-500 hidden"></p>
                                     </div>
-                                    <p id="sale-payment-split-summary" class="mt-3 text-[11px] text-gray-500">Sans client sélectionné, la vente sera considérée comme encaissée en totalité.</p>
-                                    <p id="sale-payment-split-error" class="mt-2 text-xs text-red-500 hidden"></p>
                                 </div>
                             </div>
                             <div class="p-6">
@@ -5373,6 +5391,9 @@
             const clearCustomerSelectionButton = document.getElementById('clear-customer-selection');
             const salePaymentSplitBox = document.getElementById('sale-payment-split-box');
             const salePaymentModeBadge = document.getElementById('sale-payment-mode-badge');
+            const salePaymentTotalDisplay = document.getElementById('sale-payment-total-display');
+            const salePaymentPaidDisplay = document.getElementById('sale-payment-paid-display');
+            const salePaymentRemainingDisplay = document.getElementById('sale-payment-remaining-display');
             const salePaidNowAmountInput = document.getElementById('sale-paid-now-amount');
             const salePaymentSplitSummary = document.getElementById('sale-payment-split-summary');
             const salePaymentSplitError = document.getElementById('sale-payment-split-error');
@@ -8324,6 +8345,11 @@
                 const total = summary?.total || 0;
                 const paidNow = getImmediateSalePaymentAmount();
                 const remaining = Math.max(0, total - paidNow);
+                const paidNowDisplayValue = Math.min(paidNow, total);
+
+                if (salePaymentTotalDisplay) salePaymentTotalDisplay.textContent = formatCurrency(total, currency);
+                if (salePaymentPaidDisplay) salePaymentPaidDisplay.textContent = formatCurrency(paidNowDisplayValue, currency);
+                if (salePaymentRemainingDisplay) salePaymentRemainingDisplay.textContent = formatCurrency(remaining, currency);
 
                 salePaymentSplitBox.classList.toggle('opacity-80', !hasCustomer);
                 salePaidNowAmountInput.disabled = !hasCustomer || !hasItems || !summary;
@@ -8357,7 +8383,7 @@
                 if (paidNow <= 0.01) {
                     salePaymentModeBadge.textContent = 'Comptant';
                     salePaymentModeBadge.className = 'rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 border border-emerald-100';
-                    salePaymentSplitSummary.textContent = `Compte actuel : ${formatCurrency(currentDue.amount, currentDue.currency)}. Sans acompte saisi, ${formatCurrency(total, currency)} seront encaissés immédiatement.`;
+                    salePaymentSplitSummary.textContent = `Compte actuel : ${formatCurrency(currentDue.amount, currentDue.currency)}. Si vous laissez ce champ vide, toute la facture (${formatCurrency(total, currency)}) est encaissée immédiatement.`;
                     return;
                 }
 
@@ -22922,6 +22948,9 @@
                     const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
                     const remainingBalance = Math.max(0, totalAmount - immediatePaymentAmount);
                     const hasDeferredBalance = remainingBalance > 0.01 || (payLater && immediatePaymentAmount <= 0.01);
+                    const amountPaidNow = immediatePaymentAmount > 0.01
+                        ? Math.min(immediatePaymentAmount, totalAmount)
+                        : (hasDeferredBalance ? 0 : totalAmount);
                     const paymentStatus = hasDeferredBalance ? 'pay_later' : 'paid';
                     const paidAtValue = hasDeferredBalance ? '' : now;
                     const itemsSnapshot = discountedItems.map(item => ({
@@ -23142,7 +23171,7 @@
                         discountMode: summary.discountMode,
                         discountValue: summary.discountValue,
                         currency: summary.currency,
-                        amountPaid: immediatePaymentAmount > 0.01 ? immediatePaymentAmount : totalAmount,
+                        amountPaid: amountPaidNow,
                         balanceDue: remainingBalance,
                         comment
                     };
@@ -24155,7 +24184,30 @@
                     doc.text('TOTAL:', 135, yPos + 8);
                     doc.text(formatPDFCurrency(invoiceData.total) + ' ' + invoiceData.currency, 185, yPos + 8, { align: 'right' });
 
-                    yPos += 20;
+                    yPos += 18;
+
+                    const paymentAmountPaid = Number(invoiceData.amountPaid);
+                    const paymentBalanceDue = Math.max(0, Number(invoiceData.balanceDue || 0));
+                    const effectiveBalanceDue = Number.isFinite(paymentBalanceDue) ? paymentBalanceDue : 0;
+                    const effectiveAmountPaid = Number.isFinite(paymentAmountPaid)
+                        ? paymentAmountPaid
+                        : Math.max(0, Number(invoiceData.total || 0) - effectiveBalanceDue);
+                    const paymentStateLabel = effectiveBalanceDue > 0.01
+                        ? (effectiveAmountPaid > 0.01 ? 'Paiement partiel' : 'Paiement différé')
+                        : 'Facture réglée';
+
+                    doc.setFillColor(248, 250, 252);
+                    doc.roundedRect(15, yPos, 180, 24, 3, 3, 'F');
+                    doc.setTextColor(...darkGray);
+                    doc.setFontSize(9);
+                    doc.setFont(undefined, 'bold');
+                    doc.text('REGLEMENT', 20, yPos + 7);
+                    doc.setFont(undefined, 'normal');
+                    doc.text(`Statut: ${paymentStateLabel}`, 20, yPos + 13);
+                    doc.text(`Verse: ${formatPDFCurrency(effectiveAmountPaid)} ${invoiceData.currency}`, 20, yPos + 19);
+                    doc.text(`Reste du: ${formatPDFCurrency(effectiveBalanceDue)} ${invoiceData.currency}`, 105, yPos + 19);
+
+                    yPos += 32;
 
                     // === COMMENTAIRE (si présent) ===
                     if (invoiceData.comment) {
@@ -24250,6 +24302,22 @@
                     discountMode: summary.discountMode,
                     discountValue: summary.discountValue,
                     currency,
+                    amountPaid: (() => {
+                        const paymentStatus = sale.paymentStatus || (sale.payLater ? 'pay_later' : 'paid');
+                        if (paymentStatus === 'pay_later' || sale.payLater === true) {
+                            const groupId = sale.saleGroupId || sale.id;
+                            return getCustomerGroupPaidAmount(groupId);
+                        }
+                        return summary.total;
+                    })(),
+                    balanceDue: (() => {
+                        const paymentStatus = sale.paymentStatus || (sale.payLater ? 'pay_later' : 'paid');
+                        if (paymentStatus === 'pay_later' || sale.payLater === true) {
+                            const groupId = sale.saleGroupId || sale.id;
+                            return Math.max(0, summary.total - getCustomerGroupPaidAmount(groupId));
+                        }
+                        return 0;
+                    })(),
                     comment: sale.comment || ''
                 };
 
@@ -24267,6 +24335,12 @@
                 const customerPhone = group.customerPhone || (group.customerId && appData.customers?.[group.customerId]?.phone) || '';
                 const customerEmail = group.customerEmail || (group.customerId && appData.customers?.[group.customerId]?.email) || '';
                 const summary = calculateGroupSummary(group);
+                const amountPaid = (group.paymentStatus === 'pay_later' || group.payLater)
+                    ? getCustomerGroupPaidAmount(group.id)
+                    : summary.total;
+                const balanceDue = (group.paymentStatus === 'pay_later' || group.payLater)
+                    ? getCustomerGroupBalance(group)
+                    : 0;
                 const invoiceData = {
                     companyName: currentUserData?.companyName || 'Mon Entreprise',
                     sellerName: group.sellerName || currentUser?.email || '',
@@ -24288,6 +24362,8 @@
                     discountMode: summary.discountMode,
                     discountValue: summary.discountValue,
                     currency: summary.currency || group.currency || 'CFA',
+                    amountPaid,
+                    balanceDue,
                     comment: group.comments?.join(' | ') || ''
                 };
                 await generateInvoicePDF(invoiceData);
