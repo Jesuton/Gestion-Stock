@@ -729,7 +729,7 @@
                             <div id="sales-accordion-quick-add" data-sales-accordion-item data-sales-accordion-group="invoice" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                                 <div class="flex flex-col gap-1">
                                     <p class="text-sm font-semibold text-gray-800">Ajout direct à la facture</p>
-                                    <p id="sales-accordion-quick-summary" class="text-xs text-gray-500">Recherchez un produit, choisissez le conditionnement, puis ajoutez la ligne.</p>
+                                    <p id="sales-accordion-quick-summary" class="text-xs text-gray-500">Sélectionnez un produit pour l'ajouter immédiatement. Ajustez ensuite la ligne si nécessaire.</p>
                                 </div>
                                 <div class="mt-4 space-y-3">
                                     <div>
@@ -791,7 +791,7 @@
                             <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                                 <div>
                                     <h2 class="text-lg font-semibold text-gray-900">Lignes de facture</h2>
-                                    <p class="text-sm text-gray-500 mt-1">Chaque produit ajouté apparaît ici. Modifiez le lot, le conditionnement, la quantité et le prix directement sur la ligne.</p>
+                                    <p class="text-sm text-gray-500 mt-1">Chaque produit ajouté apparaît ici. Modifiez le lot, le conditionnement, la quantité, le prix unitaire ou le total directement sur la ligne.</p>
                                 </div>
                                 <div class="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-600">
                                     <span>Lignes actives</span>
@@ -7441,6 +7441,9 @@
                         if (firstOption) {
                             event.preventDefault();
                             setProductComboboxSelection(key, firstOption.dataset.productOption);
+                            if (key === 'salesQuick') {
+                                addSelectedSalesQuickProduct({ silent: true, focusSearch: true });
+                            }
                         }
                     }
                 });
@@ -7460,6 +7463,9 @@
                     const option = event.target.closest('[data-product-option]');
                     if (!option || option.hasAttribute('disabled')) return;
                     setProductComboboxSelection(key, option.dataset.productOption);
+                    if (key === 'salesQuick') {
+                        addSelectedSalesQuickProduct({ silent: true, focusSearch: true });
+                    }
                 });
             }
 
@@ -22388,6 +22394,12 @@
                 return formatInputNumber(item.sellingPrice);
             }
 
+            function getCartItemLineTotalInputValue(item) {
+                if (!hasUsableSellingPrice(item?.sellingPrice) || item?.pricePending === true) return '';
+                const quantity = Math.max(1, Number(item?.quantity) || 1);
+                return formatInputNumber(roundAmount(Number(item.sellingPrice) * quantity));
+            }
+
             function buildSaleItemPricingSnapshot(item) {
                 const hasResolvedPrice = hasUsableSellingPrice(item?.sellingPrice) && item?.pricePending !== true;
                 return {
@@ -22443,6 +22455,34 @@
                 renderCart();
             }
 
+            function updateCartItemLineTotal(index, rawValue) {
+                const item = cartItems[index];
+                if (!item) return;
+                const quantity = Math.max(1, Number(item.quantity) || 1);
+                const trimmedValue = String(rawValue ?? '').trim();
+
+                if (!trimmedValue) {
+                    updateCartItemSellingPrice(index, '');
+                    return;
+                }
+
+                const nextLineTotal = roundAmount(parseNumericInput(trimmedValue));
+                if (nextLineTotal <= 0) {
+                    showSalesErrorMessage("Saisissez un total de ligne valide.");
+                    renderCart();
+                    return;
+                }
+
+                const nextSellingPrice = roundAmount(nextLineTotal / quantity);
+                if (!hasUsableSellingPrice(nextSellingPrice)) {
+                    showSalesErrorMessage("Impossible de recalculer le prix unitaire.");
+                    renderCart();
+                    return;
+                }
+
+                updateCartItemSellingPrice(index, nextSellingPrice);
+            }
+
             function updateCartItemPackage(index, nextPackageCode) {
                 const item = cartItems[index];
                 if (!item?.shopProductId) return;
@@ -22494,17 +22534,52 @@
                 renderCart();
             }
 
-            function addToCart(productId = null, quantityOverride = null, packageRef = null) {
+            function focusSalesQuickSearch({ selectText = false } = {}) {
+                if (!salesQuickProductSearchInput) return;
+                salesQuickProductSearchInput.focus();
+                if (selectText && typeof salesQuickProductSearchInput.select === 'function') {
+                    salesQuickProductSearchInput.select();
+                }
+            }
+
+            function resetSalesQuickSelection({ focusSearch = false } = {}) {
+                if (salesQuickProductSelect) salesQuickProductSelect.value = '';
+                productComboboxStates.salesQuick.query = '';
+                syncProductComboboxInput('salesQuick');
+                renderProductCombobox('salesQuick');
+                updateSalesQuickPackageOptions();
+                if (salesQuickQuantityInput) salesQuickQuantityInput.value = '1';
+                if (focusSearch) {
+                    requestAnimationFrame(() => focusSalesQuickSearch());
+                }
+            }
+
+            function addSelectedSalesQuickProduct({ quantityOverride = 1, packageRef = null, silent = true, focusSearch = true } = {}) {
+                const shopProductId = salesQuickProductSelect?.value || '';
+                const resolvedPackageRef = packageRef || salesQuickPackageSelect?.value || '';
+                const quantity = Math.max(1, parseNonNegativeInteger(quantityOverride, 1));
+                if (!shopProductId) {
+                    showSalesErrorMessage("Sélectionnez un produit.");
+                    return false;
+                }
+                const didAdd = addToCart(shopProductId, quantity, resolvedPackageRef, { silent });
+                if (!didAdd) return false;
+                resetSalesQuickSelection({ focusSearch });
+                return true;
+            }
+
+            function addToCart(productId = null, quantityOverride = null, packageRef = null, options = {}) {
+                const { silent = false } = options || {};
                 const shopProductId = productId;
                 const quantityInput = Number.isFinite(quantityOverride) ? quantityOverride : 1;
 
                 if (!shopProductId || isNaN(quantityInput) || quantityInput <= 0) {
                     showSalesErrorMessage("Veuillez sélectionner un produit valide.");
-                    return;
+                    return false;
                 }
 
                 const shopProduct = appData.shopStock[shopProductId];
-                if (!shopProduct) return;
+                if (!shopProduct) return false;
                 const sourceProduct = appData.storeProducts[shopProduct.sourceProductId];
                 const selectedPackaging = findPackagingByRef(sourceProduct, packageRef) || getShopItemSellPackagings(shopProduct)[0];
                 const packageUnits = Number(selectedPackaging?.unitCount) || 1;
@@ -22517,28 +22592,28 @@
                 const activeBoutique = getActiveBoutiqueId();
                 if (activeBoutique && productBoutiqueId && productBoutiqueId !== activeBoutique) {
                     showSalesErrorMessage("Ce produit n'appartient pas à la boutique sélectionnée.");
-                    return;
+                    return false;
                 }
                 if (cartItems.length) {
                     syncSaleItemsPricing(cartItems, { mutate: true });
                     const cartBoutiqueId = resolveBoutiqueId(cartItems[0]?.boutiqueId);
                     if (cartBoutiqueId && productBoutiqueId && cartBoutiqueId !== productBoutiqueId) {
                         showSalesErrorMessage("Le panier contient des articles d'une autre boutique.");
-                        return;
+                        return false;
                     }
                     const cartHasPendingPrice = cartHasPendingPriceItems();
                     if (cartHasPendingPrice !== !hasResolvedPrice) {
                         showSalesErrorMessage("Les articles sans prix doivent être mis en attente dans un panier séparé.");
-                        return;
+                        return false;
                     }
                 }
                 if (pendingLot) {
                     showSalesErrorMessage(`Le ${pendingLot.label} attend une validation avant activation.`);
-                    return;
+                    return false;
                 }
                 if (!activeLot || getShopItemAvailableSaleQuantity(shopProduct) <= 0) {
                     showSalesErrorMessage("Stock insuffisant pour ce produit.");
-                    return;
+                    return false;
                 }
 
                 const existingItemIndex = cartItems.findIndex(item =>
@@ -22552,7 +22627,7 @@
                     : (Number(activeLot.remainingQuantity) || 0);
                 if (existingQty + stockUnitsRequested > maxQty) {
                     showSalesErrorMessage(`Stock insuffisant sur ${activeLot.label}. Disponible: ${formatBaseUnits(maxQty, getProductBaseUnitLabel(sourceProduct))}`);
-                    return;
+                    return false;
                 }
 
                 if (existingItemIndex !== -1) {
@@ -22585,7 +22660,10 @@
                 }
 
                 renderCart();
-                showSuccessToast('Article ajouté au panier');
+                if (!silent) {
+                    showSuccessToast('Article ajouté au panier');
+                }
+                return true;
             }
 
             function removeFromCart(index) {
@@ -22943,7 +23021,9 @@
                                         </label>
                                         <div>
                                             <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Total ligne</span>
-                                            <p class="mt-1 rounded-lg border border-gray-200 bg-slate-50 px-3 py-2 text-sm font-semibold ${hasLinePrice ? 'text-gray-900' : 'text-amber-600'}">${hasLinePrice ? formatCurrency(subtotal, item.currency) : 'Prix à définir'}</p>
+                                            <input type="number" min="0" step="0.01" value="${getCartItemLineTotalInputValue(item)}" data-cart-line-total data-index="${index}"
+                                                class="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-right font-semibold ${hasLinePrice ? 'text-gray-900' : 'text-amber-600'} focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                                                placeholder="${hasLinePrice ? formatInputNumber(subtotal) : 'Total'}" />
                                         </div>
                                         <div class="flex items-center gap-3 xl:justify-end">
                                             ${resetPriceButton}
@@ -25125,6 +25205,13 @@
                         syncCartQuantitiesFromInputs();
                         return;
                     }
+                    const lineTotalInput = event.target.closest('[data-cart-line-total]');
+                    if (lineTotalInput) {
+                        const index = parseInt(lineTotalInput.dataset.index, 10);
+                        if (Number.isNaN(index)) return;
+                        updateCartItemLineTotal(index, lineTotalInput.value);
+                        return;
+                    }
                     const priceInput = event.target.closest('[data-cart-price]');
                     if (!priceInput) return;
                     const index = parseInt(priceInput.dataset.index, 10);
@@ -25140,6 +25227,16 @@
                         qtyInput.blur();
                         return;
                     }
+                    const lineTotalInput = event.target.closest('[data-cart-line-total]');
+                    if (lineTotalInput) {
+                        if (event.key !== 'Enter') return;
+                        event.preventDefault();
+                        const index = parseInt(lineTotalInput.dataset.index, 10);
+                        if (Number.isNaN(index)) return;
+                        updateCartItemLineTotal(index, lineTotalInput.value);
+                        lineTotalInput.blur();
+                        return;
+                    }
                     const priceInput = event.target.closest('[data-cart-price]');
                     if (!priceInput || event.key !== 'Enter') return;
                     event.preventDefault();
@@ -25152,6 +25249,13 @@
                     const qtyInput = event.target.closest('[data-cart-quantity]');
                     if (qtyInput) {
                         syncCartQuantitiesFromInputs();
+                        return;
+                    }
+                    const lineTotalInput = event.target.closest('[data-cart-line-total]');
+                    if (lineTotalInput) {
+                        const index = parseInt(lineTotalInput.dataset.index, 10);
+                        if (Number.isNaN(index)) return;
+                        updateCartItemLineTotal(index, lineTotalInput.value);
                         return;
                     }
                     const priceInput = event.target.closest('[data-cart-price]');
@@ -27332,18 +27436,13 @@
             }
             if (salesQuickAddButton) {
                 salesQuickAddButton.addEventListener('click', () => {
-                    const shopProductId = salesQuickProductSelect?.value || '';
-                    const packageRef = salesQuickPackageSelect?.value || '';
                     const quantity = parseNonNegativeInteger(salesQuickQuantityInput?.value, 1);
-                    if (!shopProductId) {
-                        showSalesErrorMessage("Sélectionnez un produit.");
-                        return;
-                    }
+                    const packageRef = salesQuickPackageSelect?.value || '';
                     if (!packageRef) {
                         showSalesErrorMessage("Sélectionnez un conditionnement.");
                         return;
                     }
-                    addToCart(shopProductId, quantity, packageRef);
+                    addSelectedSalesQuickProduct({ quantityOverride: quantity, packageRef, silent: false, focusSearch: true });
                 });
             }
             if (suppliersSearchInput) {
