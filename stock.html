@@ -795,7 +795,7 @@
                             </div>
                         </div>
 
-                        <div class="relative z-0 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <div id="sales-cart-workbench" class="relative z-0 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                             <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                                 <div>
                                     <h2 class="text-lg font-semibold text-gray-900">Lignes de facture</h2>
@@ -806,14 +806,16 @@
                                     <span id="sales-invoice-lines-count" class="text-slate-900">0</span>
                                 </div>
                             </div>
-                            <div id="cart-empty-state" class="flex flex-col items-center justify-center text-center text-gray-400 h-40">
-                                <svg class="w-14 h-14 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5m0 0L4 3m3 10l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                </svg>
-                                <p class="mt-4 text-sm font-medium text-gray-500">Aucune ligne</p>
-                                <p class="text-xs text-gray-400">Ajoutez un produit depuis le catalogue ou la saisie facture.</p>
+                            <div id="sales-main-cart-host">
+                                <div id="cart-empty-state" class="flex flex-col items-center justify-center text-center text-gray-400 h-40">
+                                    <svg class="w-14 h-14 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5m0 0L4 3m3 10l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                    </svg>
+                                    <p class="mt-4 text-sm font-medium text-gray-500">Aucune ligne</p>
+                                    <p class="text-xs text-gray-400">Ajoutez un produit depuis le catalogue ou la saisie facture.</p>
+                                </div>
+                                <div id="cart-items-list" class="hidden mt-6 space-y-3"></div>
                             </div>
-                            <div id="cart-items-list" class="hidden mt-6 space-y-3"></div>
                         </div>
                     </div>
 
@@ -827,6 +829,16 @@
                                     </svg>
                                     <span id="cart-items-count">0 article(s)</span>
                                 </div>
+                            </div>
+                            <div id="sales-sidebar-cart-panel" class="hidden border-b border-gray-100 bg-slate-50/30 px-6 py-5">
+                                <div class="flex items-center justify-between gap-3">
+                                    <div>
+                                        <p class="text-sm font-semibold text-gray-800">Panier</p>
+                                        <p class="mt-1 text-xs text-gray-500">Les articles ajoutés depuis le catalogue apparaissent ici.</p>
+                                    </div>
+                                    <span id="sales-sidebar-cart-count" class="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600">0 ligne</span>
+                                </div>
+                                <div id="sales-sidebar-cart-host" class="mt-4"></div>
                             </div>
 
                             <div id="sales-accordion-client" data-sales-accordion-item data-sales-accordion-group="invoice" class="p-6 border-b border-gray-100 bg-slate-50/40">
@@ -5571,6 +5583,11 @@
             const chatCreateError = document.getElementById('chat-create-error');
 
             // Cart elements
+            const salesCartWorkbench = document.getElementById('sales-cart-workbench');
+            const salesMainCartHost = document.getElementById('sales-main-cart-host');
+            const salesSidebarCartPanel = document.getElementById('sales-sidebar-cart-panel');
+            const salesSidebarCartHost = document.getElementById('sales-sidebar-cart-host');
+            const salesSidebarCartCount = document.getElementById('sales-sidebar-cart-count');
             const cartItemsCount = document.getElementById('cart-items-count');
             const cartEmptyState = document.getElementById('cart-empty-state');
             const cartItemsList = document.getElementById('cart-items-list');
@@ -8467,6 +8484,31 @@
                 }
             }
 
+            function syncSalesCartPlacement() {
+                const useSidebarCart = salesPosView === 'catalog';
+                const targetHost = useSidebarCart ? salesSidebarCartHost : salesMainCartHost;
+                if (!targetHost || !cartEmptyState || !cartItemsList) return;
+
+                if (salesCartWorkbench) {
+                    salesCartWorkbench.classList.toggle('hidden', useSidebarCart);
+                }
+                if (salesSidebarCartPanel) {
+                    salesSidebarCartPanel.classList.toggle('hidden', !useSidebarCart);
+                }
+
+                if (cartEmptyState.parentElement !== targetHost) {
+                    targetHost.appendChild(cartEmptyState);
+                }
+                if (cartItemsList.parentElement !== targetHost) {
+                    targetHost.appendChild(cartItemsList);
+                }
+
+                cartEmptyState.classList.toggle('h-40', !useSidebarCart);
+                cartEmptyState.classList.toggle('min-h-[8rem]', useSidebarCart);
+                cartItemsList.classList.toggle('mt-6', !useSidebarCart);
+                cartItemsList.classList.toggle('mt-4', useSidebarCart);
+            }
+
             function updateSalesPosModeUI() {
                 ensureSalesPosViewIsAllowed();
                 const availableViews = getAvailableSalesPosViews();
@@ -8474,6 +8516,7 @@
                 if (salesPosModeToolbar) salesPosModeToolbar.classList.toggle('hidden', !showToggle);
                 if (salesCatalogPane) salesCatalogPane.classList.toggle('hidden', salesPosView !== 'catalog');
                 if (salesLineBuilderPane) salesLineBuilderPane.classList.toggle('hidden', salesPosView !== 'line');
+                syncSalesCartPlacement();
                 if (salesPosModeCatalogButton) {
                     const isActive = salesPosView === 'catalog';
                     salesPosModeCatalogButton.classList.toggle('bg-cyan-500', isActive);
@@ -8490,7 +8533,7 @@
                 }
                 if (salesPosModeDescription) {
                     salesPosModeDescription.textContent = salesPosView === 'catalog'
-                        ? 'Ajoutez depuis le catalogue, puis ajustez la facture dans la zone blanche.'
+                        ? 'Ajoutez depuis le catalogue, puis suivez la facture directement dans la colonne de droite.'
                         : 'Recherchez un produit, ajoutez une ligne, puis ajustez la facture sans parcourir le catalogue.';
                 }
                 if (settingsSalesPosModeSelect) {
@@ -22926,6 +22969,7 @@
                     cartItemsCount.textContent = `${totalItems} ${label}`;
                 }
                 if (salesInvoiceLinesCount) salesInvoiceLinesCount.textContent = String(totalLines);
+                if (salesSidebarCartCount) salesSidebarCartCount.textContent = `${totalLines} ${totalLines > 1 ? 'lignes' : 'ligne'}`;
 
                 const hasItems = cartItems.length > 0;
                 const hasPendingPrice = pricingState.hasPendingPrice;
