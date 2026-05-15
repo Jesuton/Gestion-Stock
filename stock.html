@@ -719,10 +719,18 @@
                                     <span id="cart-items-count">0 article(s)</span>
                                 </div>
                             </div>
-                            <div class="p-6 border-b border-gray-100 bg-slate-50/60">
-                                <p class="text-sm font-semibold text-gray-800">Ajout rapide</p>
-                                <p class="mt-1 text-xs text-gray-500">Ajoutez un produit directement depuis la facture.</p>
-                                <div class="mt-4 space-y-3">
+                            <div class="p-4 border-b border-gray-100 bg-slate-50/60">
+                                <details id="sales-accordion-quick-add" data-sales-accordion-item data-sales-accordion-group="invoice" class="group">
+                                    <summary class="flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl px-2 py-2 transition hover:bg-white/70 [&::-webkit-details-marker]:hidden">
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-semibold text-gray-800">Ajout rapide</p>
+                                            <p id="sales-accordion-quick-summary" class="mt-1 text-xs text-gray-500">Produit, conditionnement et quantité</p>
+                                        </div>
+                                        <svg class="h-4 w-4 shrink-0 text-gray-400 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </summary>
+                                    <div class="px-2 pb-2 pt-4 space-y-3">
                                     <div>
                                         <label for="sales-quick-product-select" class="text-xs font-semibold text-gray-500">Produit</label>
                                         <div id="sales-quick-product-combobox" class="relative mt-2">
@@ -772,13 +780,24 @@
                                         class="w-full rounded-xl bg-cyan-500 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-cyan-600 disabled:cursor-not-allowed disabled:bg-gray-300">
                                         Ajouter à la facture
                                     </button>
-                                </div>
+                                    </div>
+                                </details>
                             </div>
-                            <div class="p-6 border-b border-gray-100">
-                                <p class="text-sm font-semibold text-gray-800">Client</p>
+                            <div class="p-4 border-b border-gray-100">
+                                <details id="sales-accordion-client" data-sales-accordion-item data-sales-accordion-group="invoice" class="group">
+                                    <summary class="flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl px-2 py-2 transition hover:bg-slate-50 [&::-webkit-details-marker]:hidden">
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-semibold text-gray-800">Client</p>
+                                            <p id="sales-accordion-client-summary" class="mt-1 truncate text-xs text-gray-500">Aucun client sélectionné</p>
+                                        </div>
+                                        <svg class="h-4 w-4 shrink-0 text-gray-400 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </summary>
+                                    <div class="px-2 pb-2 pt-4">
                                 <input type="hidden" id="customer-id" />
                                 <button id="open-customer-select-button"
-                                    class="mt-3 w-full border-2 border-dashed border-gray-200 rounded-xl p-4 text-left hover:border-cyan-300 hover:bg-cyan-50/40 transition">
+                                    class="w-full border-2 border-dashed border-gray-200 rounded-xl p-4 text-left hover:border-cyan-300 hover:bg-cyan-50/40 transition">
                                     <div class="flex items-center gap-3">
                                         <div class="w-11 h-11 rounded-full bg-cyan-50 text-cyan-600 flex items-center justify-center">
                                             <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -812,6 +831,8 @@
                                         <button id="clear-customer-selection" class="text-xs font-semibold text-gray-600 hover:text-gray-800">Vente sans client</button>
                                     </div>
                                 </div>
+                                    </div>
+                                </details>
                             </div>
                             <div class="p-6">
                                 <div id="cart-empty-state" class="flex flex-col items-center justify-center text-center text-gray-400 h-40">
@@ -822,29 +843,40 @@
                                     <p class="text-xs text-gray-400">Sélectionnez des produits</p>
                                 </div>
                                 <div id="cart-items-list" class="hidden space-y-3"></div>
-                            <div id="sale-payment-split-box" class="mt-5 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                                <details id="sales-accordion-payment" data-sales-accordion-item data-sales-accordion-group="invoice" class="group mt-5">
+                                    <summary class="flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl border border-gray-200 bg-slate-50 px-4 py-3 transition hover:bg-slate-100 [&::-webkit-details-marker]:hidden">
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-semibold text-gray-800">Paiement & échéance</p>
+                                            <p id="sales-accordion-payment-summary" class="mt-1 truncate text-xs text-gray-500">Comptant immédiat</p>
+                                        </div>
+                                        <svg class="h-4 w-4 shrink-0 text-gray-400 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </summary>
+                                    <div class="pt-4">
+                            <div id="sale-payment-split-box" class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
                                 <div class="border-b border-gray-100 bg-gradient-to-r from-slate-50 via-white to-cyan-50 px-4 py-3">
-                                    <div class="flex items-start justify-between gap-3">
+                                    <div class="flex flex-col items-start gap-2">
+                                        <span id="sale-payment-mode-badge" class="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 border border-emerald-100">Comptant</span>
                                         <div>
                                             <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Paiement de la vente</p>
-                                            <p class="mt-1 text-sm font-semibold text-gray-800">Définissez l'acompte puis laissez le reliquat au compte client si nécessaire.</p>
+                                            <p class="mt-1 text-sm font-semibold leading-6 text-gray-800">Définissez l'acompte puis laissez le reliquat au compte client si nécessaire.</p>
                                         </div>
-                                        <span id="sale-payment-mode-badge" class="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 border border-emerald-100">Comptant</span>
                                     </div>
                                 </div>
                                 <div class="px-4 py-4">
-                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div class="grid grid-cols-1 gap-2.5">
                                         <div class="rounded-xl border border-gray-200 bg-slate-50 px-3 py-3">
                                             <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Total facture</p>
-                                            <p id="sale-payment-total-display" class="mt-1 text-lg font-bold text-gray-900">0 FCFA</p>
+                                            <p id="sale-payment-total-display" class="mt-1 whitespace-nowrap text-xl font-bold tracking-tight text-gray-900">0 FCFA</p>
                                         </div>
                                         <div class="rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 py-3">
                                             <p class="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Versé maintenant</p>
-                                            <p id="sale-payment-paid-display" class="mt-1 text-lg font-bold text-emerald-700">0 FCFA</p>
+                                            <p id="sale-payment-paid-display" class="mt-1 whitespace-nowrap text-lg font-bold tracking-tight text-emerald-700">0 FCFA</p>
                                         </div>
                                         <div class="rounded-xl border border-amber-100 bg-amber-50/70 px-3 py-3">
                                             <p class="text-[11px] font-semibold uppercase tracking-wide text-amber-700">Reste dû</p>
-                                            <p id="sale-payment-remaining-display" class="mt-1 text-lg font-bold text-amber-700">0 FCFA</p>
+                                            <p id="sale-payment-remaining-display" class="mt-1 whitespace-nowrap text-lg font-bold tracking-tight text-amber-700">0 FCFA</p>
                                         </div>
                                     </div>
                                     <div class="mt-4">
@@ -868,8 +900,21 @@
                                     class="mt-2 w-full rounded-xl border border-gray-200 p-3 text-sm focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" />
                                 <p id="pay-later-date-error" class="text-xs text-red-500 mt-2 hidden"></p>
                             </div>
+                                    </div>
+                                </details>
                         </div>
-                            <div class="p-6 border-t border-gray-100 space-y-3 bg-gray-50/60">
+                            <div class="p-6 border-t border-gray-100 bg-gray-50/60">
+                                <details id="sales-accordion-pricing" data-sales-accordion-item data-sales-accordion-group="invoice" class="group">
+                                    <summary class="flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 transition hover:bg-gray-50 [&::-webkit-details-marker]:hidden">
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-semibold text-gray-800">Ajustements & TVA</p>
+                                            <p id="sales-accordion-pricing-summary" class="mt-1 truncate text-xs text-gray-500">TVA active · Aucun ajustement</p>
+                                        </div>
+                                        <svg class="h-4 w-4 shrink-0 text-gray-400 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </summary>
+                                    <div class="space-y-3 pt-4">
                                 <div class="flex items-center justify-between text-xs text-gray-500">
                                     <span class="font-semibold">Appliquer la TVA (20%)</span>
                                     <label class="inline-flex items-center cursor-pointer">
@@ -962,7 +1007,9 @@
                                     <span id="cart-discount-label">Réduction</span>
                                     <span id="cart-discount">0 FCFA</span>
                                 </div>
-                                <div class="flex items-center justify-between text-base font-semibold text-gray-900 border-t border-gray-200 pt-3">
+                                    </div>
+                                </details>
+                                <div class="mt-4 flex items-center justify-between text-base font-semibold text-gray-900 border-t border-gray-200 pt-3">
                                     <span>Total</span>
                                     <span id="cart-total" class="text-lg text-cyan-600">0 FCFA</span>
                                 </div>
@@ -5405,6 +5452,15 @@
             const customerHistoryPlaceholder = document.getElementById('customer-history-placeholder');
             const customerHistoryTableContainer = document.getElementById('customer-history-table-container');
             const customerHistoryTbody = document.getElementById('customer-history-tbody');
+            const salesAccordionPanels = Array.from(document.querySelectorAll('[data-sales-accordion-item]'));
+            const salesAccordionQuickAdd = document.getElementById('sales-accordion-quick-add');
+            const salesAccordionClient = document.getElementById('sales-accordion-client');
+            const salesAccordionPayment = document.getElementById('sales-accordion-payment');
+            const salesAccordionPricing = document.getElementById('sales-accordion-pricing');
+            const salesAccordionQuickSummary = document.getElementById('sales-accordion-quick-summary');
+            const salesAccordionClientSummary = document.getElementById('sales-accordion-client-summary');
+            const salesAccordionPaymentSummary = document.getElementById('sales-accordion-payment-summary');
+            const salesAccordionPricingSummary = document.getElementById('sales-accordion-pricing-summary');
 
             // Paiements clients
             const openCustomerPaymentModalButton = document.getElementById('open-customer-payment-modal-button');
@@ -8335,6 +8391,82 @@
                 if (salePaymentSplitError) salePaymentSplitError.classList.add('hidden');
             }
 
+            function closeSiblingSalesAccordionPanels(activePanel) {
+                if (!activePanel) return;
+                const groupName = activePanel.dataset.salesAccordionGroup;
+                salesAccordionPanels.forEach(panel => {
+                    if (panel === activePanel) return;
+                    if (panel.dataset.salesAccordionGroup !== groupName) return;
+                    panel.open = false;
+                });
+            }
+
+            function openSalesAccordionPanel(panelKey) {
+                const panelMap = {
+                    quick: salesAccordionQuickAdd,
+                    client: salesAccordionClient,
+                    payment: salesAccordionPayment,
+                    pricing: salesAccordionPricing
+                };
+                const targetPanel = panelMap[panelKey];
+                if (!targetPanel) return;
+                targetPanel.open = true;
+                closeSiblingSalesAccordionPanels(targetPanel);
+            }
+
+            function updateSalesAccordionSummaries(summary = null) {
+                if (salesAccordionQuickSummary) {
+                    salesAccordionQuickSummary.textContent = 'Produit, conditionnement et quantité';
+                }
+
+                if (salesAccordionClientSummary) {
+                    if (!selectedCustomer) {
+                        salesAccordionClientSummary.textContent = 'Aucun client sélectionné';
+                    } else {
+                        const balanceInfo = getCustomerOutstandingBalance(selectedCustomer);
+                        const customerName = selectedCustomer.fullName || selectedCustomer.name || 'Client';
+                        salesAccordionClientSummary.textContent = balanceInfo.amount > 0.01
+                            ? `${customerName} · Solde ${formatCurrency(balanceInfo.amount, balanceInfo.currency)}`
+                            : `${customerName} · Compte soldé`;
+                    }
+                }
+
+                if (salesAccordionPaymentSummary) {
+                    const hasItems = cartItems.length > 0;
+                    if (!hasItems) {
+                        salesAccordionPaymentSummary.textContent = 'Comptant immédiat';
+                    } else if (!summary) {
+                        salesAccordionPaymentSummary.textContent = selectedCustomer
+                            ? 'En attente du calcul du total'
+                            : 'Sélectionnez un client pour un paiement différé';
+                    } else if (!selectedCustomer) {
+                        salesAccordionPaymentSummary.textContent = `${formatCurrency(summary.total, summary.currency)} encaissé comptant`;
+                    } else {
+                        const paidNow = Math.min(getImmediateSalePaymentAmount(), summary.total);
+                        const remaining = Math.max(0, summary.total - paidNow);
+                        if (paidNow > 0.01 && remaining > 0.01) {
+                            salesAccordionPaymentSummary.textContent = `${formatCurrency(paidNow, summary.currency)} versé · ${formatCurrency(remaining, summary.currency)} restant`;
+                        } else if (remaining <= 0.01) {
+                            salesAccordionPaymentSummary.textContent = 'Vente soldée immédiatement';
+                        } else {
+                            salesAccordionPaymentSummary.textContent = `Acompte vide · ${formatCurrency(summary.total, summary.currency)} encaissé`;
+                        }
+                    }
+                }
+
+                if (salesAccordionPricingSummary) {
+                    const pricingChunks = [isTaxEnabled ? 'TVA active' : 'TVA inactive'];
+                    if (summary && Number(summary.discountAmount || 0) > 0) {
+                        const adjustmentValue = getAdjustmentSignedAmount(summary);
+                        const adjustmentLabel = adjustmentValue < 0 ? 'Réduction' : 'Majoration';
+                        pricingChunks.push(`${adjustmentLabel} ${formatCurrency(Math.abs(adjustmentValue), summary.currency)}`);
+                    } else {
+                        pricingChunks.push('Aucun ajustement');
+                    }
+                    salesAccordionPricingSummary.textContent = pricingChunks.join(' · ');
+                }
+            }
+
             function updateSalePaymentSplitState(summary = null) {
                 if (!salePaymentSplitBox || !salePaidNowAmountInput || !salePaymentSplitSummary || !salePaymentModeBadge) return;
 
@@ -8512,6 +8644,7 @@
                 selectedCustomer = customer || null;
                 if (customerIdInput) customerIdInput.value = customer?.id || '';
                 resetImmediateSalePaymentInput();
+                openSalesAccordionPanel('payment');
                 updateCustomerSelectedCard();
                 updateCustomerHistoryVisibility();
                 renderCustomerHistory();
@@ -22545,6 +22678,7 @@
                     }
                     updateDiscountQuickControls();
                     updateDiscountApprovalUI();
+                    updateSalesAccordionSummaries();
                     return;
                 }
 
@@ -22644,6 +22778,7 @@
                     updateSalePaymentSplitState();
                     updateDiscountQuickControls();
                     updateDiscountApprovalUI();
+                    updateSalesAccordionSummaries();
                     return;
                 }
 
@@ -22674,17 +22809,20 @@
                 updateSalePaymentSplitState(summary);
                 updateDiscountQuickControls(summary);
                 updateDiscountApprovalUI();
+                updateSalesAccordionSummaries(summary);
             }
 
             async function holdCart() {
                 syncCartQuantitiesFromInputs();
                 if (!cartItems.length) return;
                 if (!selectedCustomer) {
+                    openSalesAccordionPanel('client');
                     showSalesErrorMessage("Sélectionnez un client pour mettre en attente.");
                     return;
                 }
                 const comment = (holdCommentInput?.value || '').trim();
                 if (!comment) {
+                    openSalesAccordionPanel('payment');
                     if (holdCommentError) {
                         holdCommentError.textContent = "Le commentaire est requis pour la mise en attente.";
                         holdCommentError.classList.remove('hidden');
@@ -22884,10 +23022,12 @@
                 }
                 const pricingState = syncSaleItemsPricing(cartItems, { mutate: true });
                 if (pricingState.hasPendingPrice) {
+                    openSalesAccordionPanel('pricing');
                     showSalesErrorMessage("Définissez d'abord le prix des articles mis en attente.");
                     return;
                 }
                 if (payLater && !selectedCustomer) {
+                    openSalesAccordionPanel('client');
                     showSalesErrorMessage("Sélectionnez un client pour marquer la vente 'A payer plus tard'.");
                     return;
                 }
@@ -22898,6 +23038,7 @@
                 const immediatePaymentAmount = getImmediateSalePaymentAmount();
                 if (salePaymentSplitError) salePaymentSplitError.classList.add('hidden');
                 if (immediatePaymentAmount > 0.01 && !selectedCustomer) {
+                    openSalesAccordionPanel('client');
                     showSalesErrorMessage("Sélectionnez un client pour enregistrer un paiement partiel.");
                     if (salePaymentSplitError) {
                         salePaymentSplitError.textContent = "Un acompte ne peut être enregistré que sur un client identifié.";
@@ -22906,6 +23047,7 @@
                     return;
                 }
                 if (immediatePaymentAmount > summary.total + 0.01) {
+                    openSalesAccordionPanel('payment');
                     showSalesErrorMessage(`Le montant versé dépasse le total (${formatCurrency(summary.total, summary.currency)}).`);
                     if (salePaymentSplitError) {
                         salePaymentSplitError.textContent = `Le montant versé dépasse le total (${formatCurrency(summary.total, summary.currency)}).`;
@@ -22915,6 +23057,7 @@
                 }
                 const approval = await ensureDiscountApprovalForSummary(summary, { existingApproval: discountApproval, persist: true });
                 if (summary.discountAmount > 0 && !approval) {
+                    openSalesAccordionPanel('pricing');
                     showSalesErrorMessage("Un code admin/manager est requis pour appliquer cet ajustement.");
                     return;
                 }
@@ -24583,6 +24726,14 @@
                 }
                 openCustomerSelectModal();
             });
+            if (salesAccordionPanels.length) {
+                salesAccordionPanels.forEach(panel => {
+                    panel.addEventListener('toggle', () => {
+                        if (!panel.open) return;
+                        closeSiblingSalesAccordionPanels(panel);
+                    });
+                });
+            }
             if (closeCustomerSelectModalButton) closeCustomerSelectModalButton.addEventListener('click', closeCustomerSelectModal);
             if (customerSelectModal) {
                 customerSelectModal.addEventListener('click', (event) => {
@@ -24807,6 +24958,9 @@
                     showSuccessToast(getFeatureRestrictionMessage());
                     return;
                 }
+                if (!selectedCustomer && getImmediateSalePaymentAmount() > 0.01) {
+                    openSalesAccordionPanel('client');
+                }
                 validateCart();
             });
             if (generateInvoiceButton) generateInvoiceButton.addEventListener('click', () => {
@@ -24821,6 +24975,7 @@
                     showSuccessToast(getFeatureRestrictionMessage());
                     return;
                 }
+                openSalesAccordionPanel(selectedCustomer ? 'payment' : 'client');
                 markPayLaterFromCart();
             });
             if (holdCartButton) holdCartButton.addEventListener('click', () => {
@@ -24828,6 +24983,7 @@
                     showSuccessToast(getFeatureRestrictionMessage());
                     return;
                 }
+                openSalesAccordionPanel(selectedCustomer ? 'payment' : 'client');
                 holdCart();
             });
             if (payLaterDueDateInput) {
