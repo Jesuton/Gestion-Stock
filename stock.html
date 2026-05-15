@@ -662,75 +662,76 @@
                 <div class="flex flex-col lg:flex-row gap-4 lg:gap-6">
                     <div class="flex-1 space-y-6">
                         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                            <div>
-                                <h1 class="text-2xl font-bold text-gray-900">Point de Vente</h1>
-                                <p class="text-sm text-gray-500 mt-1">Recherchez et ajoutez des produits à la facture.</p>
-                            </div>
-                            <div class="flex flex-wrap items-center gap-2">
-                                <span class="text-xs font-semibold px-3 py-1 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-100">Stock Boutique</span>
-                                <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-gray-200">
-                                    <span class="text-xs font-semibold text-gray-500">Boutique</span>
-                                    <select id="boutique-selector-sales"
-                                        class="bg-transparent text-xs font-semibold text-gray-700 focus:outline-none">
-                                        <option value="">Chargement...</option>
-                                    </select>
+                            <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                                <div>
+                                    <h1 class="text-2xl font-bold text-gray-900">Point de Vente</h1>
+                                    <p class="text-sm text-gray-500 mt-1">Choisissez votre mode de saisie puis alimentez la facture ligne par ligne.</p>
                                 </div>
-                                <button id="open-loss-modal" type="button"
-                                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-50 text-red-600 border border-red-200 text-xs font-semibold hover:bg-red-100 active:scale-95 transition-all">
-                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                    </svg>
-                                    Déclarer une perte
-                                </button>
-                            </div>
-                        </div>
-                            <div class="mt-4 relative">
-                                <input type="text" id="sales-product-search" placeholder="Rechercher un produit..."
-                                    class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-cyan-500 focus:border-cyan-500" />
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
-                                    </svg>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="text-xs font-semibold px-3 py-1 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-100">Stock Boutique</span>
+                                    <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-gray-200">
+                                        <span class="text-xs font-semibold text-gray-500">Boutique</span>
+                                        <select id="boutique-selector-sales"
+                                            class="bg-transparent text-xs font-semibold text-gray-700 focus:outline-none">
+                                            <option value="">Chargement...</option>
+                                        </select>
+                                    </div>
+                                    <button id="open-loss-modal" type="button"
+                                        class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-50 text-red-600 border border-red-200 text-xs font-semibold hover:bg-red-100 active:scale-95 transition-all">
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                        Déclarer une perte
+                                    </button>
                                 </div>
                             </div>
-                            <div id="sales-category-filters" class="mt-4 flex flex-wrap gap-2"></div>
+                            <div id="sales-pos-mode-toolbar" class="mt-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                                <div class="inline-flex rounded-2xl border border-gray-200 bg-gray-50 p-1">
+                                    <button type="button" id="sales-pos-mode-catalog-button"
+                                        class="px-4 py-2 rounded-xl text-sm font-semibold bg-cyan-500 text-white shadow-sm">
+                                        Catalogue
+                                    </button>
+                                    <button type="button" id="sales-pos-mode-line-button"
+                                        class="px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 hover:text-gray-900">
+                                        Saisie facture
+                                    </button>
+                                </div>
+                                <p id="sales-pos-mode-description" class="text-sm text-gray-500">Ajoutez depuis le catalogue, puis ajustez la facture dans la zone blanche.</p>
+                            </div>
                             <p id="sales-error" class="text-red-500 text-sm mt-3 hidden"></p>
                         </div>
 
-                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                            <div id="sales-products-placeholder" class="flex flex-col items-center justify-center text-center text-gray-500 h-48">
-                                <p>Aucun produit disponible.</p>
+                        <div id="sales-catalog-pane" class="space-y-6">
+                            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                                <div class="relative">
+                                    <input type="text" id="sales-product-search" placeholder="Rechercher un produit..."
+                                        class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-cyan-500 focus:border-cyan-500" />
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div id="sales-category-filters" class="mt-4 flex flex-wrap gap-2"></div>
                             </div>
-                            <div id="sales-products-container" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                                <!-- Cartes produits inserees par JS -->
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="lg:w-[320px] xl:w-[360px] 2xl:w-[400px] space-y-6 lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100vh-3rem)] overflow-y-auto pr-1">
-                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                            <div class="p-6 border-b border-gray-100">
-                                <h2 class="text-lg font-semibold text-gray-900">Facture en cours</h2>
-                                <div class="mt-3 flex items-center gap-2 text-xs text-gray-500">
-                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                    </svg>
-                                    <span id="cart-items-count">0 article(s)</span>
+                            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                                <div id="sales-products-placeholder" class="flex flex-col items-center justify-center text-center text-gray-500 h-48">
+                                    <p>Aucun produit disponible.</p>
+                                </div>
+                                <div id="sales-products-container" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                                    <!-- Cartes produits inserees par JS -->
                                 </div>
                             </div>
-                            <div class="p-4 border-b border-gray-100 bg-slate-50/60">
-                                <details id="sales-accordion-quick-add" data-sales-accordion-item data-sales-accordion-group="invoice" class="group">
-                                    <summary class="flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl px-2 py-2 transition hover:bg-white/70 [&::-webkit-details-marker]:hidden">
-                                        <div class="min-w-0">
-                                            <p class="text-sm font-semibold text-gray-800">Ajout rapide</p>
-                                            <p id="sales-accordion-quick-summary" class="mt-1 text-xs text-gray-500">Produit, conditionnement et quantité</p>
-                                        </div>
-                                        <svg class="h-4 w-4 shrink-0 text-gray-400 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                        </svg>
-                                    </summary>
-                                    <div class="px-2 pb-2 pt-4 space-y-3">
+                        </div>
+
+                        <div id="sales-line-builder-pane" class="hidden">
+                            <div id="sales-accordion-quick-add" data-sales-accordion-item data-sales-accordion-group="invoice" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                                <div class="flex flex-col gap-1">
+                                    <p class="text-sm font-semibold text-gray-800">Ajout direct à la facture</p>
+                                    <p id="sales-accordion-quick-summary" class="text-xs text-gray-500">Recherchez un produit, choisissez le conditionnement, puis ajoutez la ligne.</p>
+                                </div>
+                                <div class="mt-4 space-y-3">
                                     <div>
                                         <label for="sales-quick-product-select" class="text-xs font-semibold text-gray-500">Produit</label>
                                         <div id="sales-quick-product-combobox" class="relative mt-2">
@@ -758,7 +759,7 @@
                                             <option value="">Sélectionnez un produit</option>
                                         </select>
                                     </div>
-                                    <div class="grid grid-cols-1 sm:grid-cols-[1fr_88px] gap-3">
+                                    <div class="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_120px_132px]">
                                         <div>
                                             <label for="sales-quick-package-select" class="text-xs font-semibold text-gray-500">Conditionnement</label>
                                             <select id="sales-quick-package-select"
@@ -771,245 +772,256 @@
                                             <input type="number" id="sales-quick-quantity" min="1" value="1"
                                                 class="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm text-gray-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
                                         </div>
+                                        <div class="flex items-end">
+                                            <button id="sales-quick-add-button" type="button"
+                                                class="w-full rounded-xl bg-cyan-500 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-cyan-600 disabled:cursor-not-allowed disabled:bg-gray-300">
+                                                Ajouter la ligne
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div id="sales-quick-selection-info" class="hidden rounded-xl border border-cyan-100 bg-white px-4 py-3 text-xs text-gray-600">
+                                    <div id="sales-quick-selection-info" class="hidden rounded-xl border border-cyan-100 bg-cyan-50/60 px-4 py-3 text-xs text-gray-600">
                                         <p id="sales-quick-selection-stock" class="font-semibold text-cyan-700">—</p>
                                         <p id="sales-quick-selection-price" class="mt-1">—</p>
                                     </div>
-                                    <button id="sales-quick-add-button" type="button"
-                                        class="w-full rounded-xl bg-cyan-500 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-cyan-600 disabled:cursor-not-allowed disabled:bg-gray-300">
-                                        Ajouter à la facture
-                                    </button>
-                                    </div>
-                                </details>
-                            </div>
-                            <div class="p-4 border-b border-gray-100">
-                                <details id="sales-accordion-client" data-sales-accordion-item data-sales-accordion-group="invoice" class="group">
-                                    <summary class="flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl px-2 py-2 transition hover:bg-slate-50 [&::-webkit-details-marker]:hidden">
-                                        <div class="min-w-0">
-                                            <p class="text-sm font-semibold text-gray-800">Client</p>
-                                            <p id="sales-accordion-client-summary" class="mt-1 truncate text-xs text-gray-500">Aucun client sélectionné</p>
-                                        </div>
-                                        <svg class="h-4 w-4 shrink-0 text-gray-400 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                        </svg>
-                                    </summary>
-                                    <div class="px-2 pb-2 pt-4">
-                                <input type="hidden" id="customer-id" />
-                                <button id="open-customer-select-button"
-                                    class="w-full border-2 border-dashed border-gray-200 rounded-xl p-4 text-left hover:border-cyan-300 hover:bg-cyan-50/40 transition">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-11 h-11 rounded-full bg-cyan-50 text-cyan-600 flex items-center justify-center">
-                                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M5.121 17.804A4 4 0 0112 15a4 4 0 016.879 2.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                            </svg>
-                                        </div>
-                                        <div>
-                                            <p class="text-sm font-semibold text-gray-800">Sélectionner / Ajouter un client</p>
-                                            <p class="text-xs text-gray-500 mt-1">Optionnel - vente sans enregistrement possible</p>
-                                        </div>
-                                    </div>
-                                </button>
-                                <div id="customer-selected-card" class="mt-4 hidden p-4 rounded-lg border border-cyan-100 bg-cyan-50">
-                                    <div class="flex items-start justify-between gap-3">
-                                        <div>
-                                            <p id="customer-selected-name" class="text-sm font-semibold text-gray-800">-</p>
-                                            <p id="customer-selected-contact" class="text-xs text-gray-500">-</p>
-                                        </div>
-                                        <button id="change-customer-selection" class="text-xs font-semibold text-cyan-700 hover:text-cyan-900">Changer</button>
-                                    </div>
-                                    <div class="mt-3 flex items-center justify-between rounded-lg border border-cyan-100 bg-white/80 px-3 py-2">
-                                        <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Compte client</span>
-                                        <div class="text-right">
-                                            <p id="customer-selected-balance" class="text-sm font-bold text-emerald-600">Soldé</p>
-                                            <p id="customer-selected-balance-meta" class="text-[11px] text-gray-400">Aucune facture ouverte</p>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center gap-3 mt-3">
-                                        <button id="customer-history-button" class="hidden text-xs font-semibold text-cyan-700 hover:text-cyan-900">Historique</button>
-                                        <button id="clear-customer-selection" class="text-xs font-semibold text-gray-600 hover:text-gray-800">Vente sans client</button>
-                                    </div>
                                 </div>
-                                    </div>
-                                </details>
                             </div>
-                            <div class="p-6">
-                                <div id="cart-empty-state" class="flex flex-col items-center justify-center text-center text-gray-400 h-40">
-                                    <svg class="w-14 h-14 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5m0 0L4 3m3 10l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                            <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                                <div>
+                                    <h2 class="text-lg font-semibold text-gray-900">Lignes de facture</h2>
+                                    <p class="text-sm text-gray-500 mt-1">Chaque produit ajouté apparaît ici. Modifiez le lot, le conditionnement, la quantité et le prix directement sur la ligne.</p>
+                                </div>
+                                <div class="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-600">
+                                    <span>Lignes actives</span>
+                                    <span id="sales-invoice-lines-count" class="text-slate-900">0</span>
+                                </div>
+                            </div>
+                            <div id="cart-empty-state" class="flex flex-col items-center justify-center text-center text-gray-400 h-40">
+                                <svg class="w-14 h-14 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5m0 0L4 3m3 10l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                </svg>
+                                <p class="mt-4 text-sm font-medium text-gray-500">Aucune ligne</p>
+                                <p class="text-xs text-gray-400">Ajoutez un produit depuis le catalogue ou la saisie facture.</p>
+                            </div>
+                            <div id="cart-items-list" class="hidden mt-6 space-y-3"></div>
+                        </div>
+                    </div>
+
+                    <div class="lg:w-[320px] xl:w-[360px] 2xl:w-[400px] space-y-6 lg:sticky lg:top-6 lg:self-start">
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div class="p-6 border-b border-gray-100">
+                                <h2 class="text-lg font-semibold text-gray-900">Facture en cours</h2>
+                                <div class="mt-3 flex items-center gap-2 text-xs text-gray-500">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
                                     </svg>
-                                    <p class="mt-4 text-sm font-medium text-gray-500">Aucun article</p>
-                                    <p class="text-xs text-gray-400">Sélectionnez des produits</p>
+                                    <span id="cart-items-count">0 article(s)</span>
                                 </div>
-                                <div id="cart-items-list" class="hidden space-y-3"></div>
-                                <details id="sales-accordion-payment" data-sales-accordion-item data-sales-accordion-group="invoice" class="group mt-5">
-                                    <summary class="flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl border border-gray-200 bg-slate-50 px-4 py-3 transition hover:bg-slate-100 [&::-webkit-details-marker]:hidden">
-                                        <div class="min-w-0">
-                                            <p class="text-sm font-semibold text-gray-800">Paiement & échéance</p>
-                                            <p id="sales-accordion-payment-summary" class="mt-1 truncate text-xs text-gray-500">Comptant immédiat</p>
+                            </div>
+
+                            <div id="sales-accordion-client" data-sales-accordion-item data-sales-accordion-group="invoice" class="p-6 border-b border-gray-100 bg-slate-50/40">
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-800">Client</p>
+                                    <p id="sales-accordion-client-summary" class="mt-1 text-xs text-gray-500">Aucun client sélectionné</p>
+                                </div>
+                                <div class="mt-4">
+                                    <input type="hidden" id="customer-id" />
+                                    <button id="open-customer-select-button"
+                                        class="w-full border-2 border-dashed border-gray-200 rounded-xl p-4 text-left hover:border-cyan-300 hover:bg-cyan-50/40 transition">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-11 h-11 rounded-full bg-cyan-50 text-cyan-600 flex items-center justify-center">
+                                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M5.121 17.804A4 4 0 0112 15a4 4 0 016.879 2.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-semibold text-gray-800">Sélectionner / Ajouter un client</p>
+                                                <p class="text-xs text-gray-500 mt-1">Optionnel - vente sans enregistrement possible</p>
+                                            </div>
                                         </div>
-                                        <svg class="h-4 w-4 shrink-0 text-gray-400 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                        </svg>
-                                    </summary>
-                                    <div class="pt-4">
-                            <div id="sale-payment-split-box" class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-                                <div class="border-b border-gray-100 bg-gradient-to-r from-slate-50 via-white to-cyan-50 px-4 py-3">
-                                    <div class="flex flex-col items-start gap-2">
-                                        <span id="sale-payment-mode-badge" class="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 border border-emerald-100">Comptant</span>
-                                        <div>
-                                            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Paiement de la vente</p>
-                                            <p class="mt-1 text-sm font-semibold leading-6 text-gray-800">Définissez l'acompte puis laissez le reliquat au compte client si nécessaire.</p>
+                                    </button>
+                                    <div id="customer-selected-card" class="mt-4 hidden p-4 rounded-lg border border-cyan-100 bg-cyan-50">
+                                        <div class="flex items-start justify-between gap-3">
+                                            <div>
+                                                <p id="customer-selected-name" class="text-sm font-semibold text-gray-800">-</p>
+                                                <p id="customer-selected-contact" class="text-xs text-gray-500">-</p>
+                                            </div>
+                                            <button id="change-customer-selection" class="text-xs font-semibold text-cyan-700 hover:text-cyan-900">Changer</button>
+                                        </div>
+                                        <div class="mt-3 flex items-center justify-between rounded-lg border border-cyan-100 bg-white/80 px-3 py-2">
+                                            <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Compte client</span>
+                                            <div class="text-right">
+                                                <p id="customer-selected-balance" class="text-sm font-bold text-emerald-600">Soldé</p>
+                                                <p id="customer-selected-balance-meta" class="text-[11px] text-gray-400">Aucune facture ouverte</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-3 mt-3">
+                                            <button id="customer-history-button" class="hidden text-xs font-semibold text-cyan-700 hover:text-cyan-900">Historique</button>
+                                            <button id="clear-customer-selection" class="text-xs font-semibold text-gray-600 hover:text-gray-800">Vente sans client</button>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="px-4 py-4">
-                                    <div class="grid grid-cols-1 gap-2.5">
-                                        <div class="rounded-xl border border-gray-200 bg-slate-50 px-3 py-3">
-                                            <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Total facture</p>
-                                            <p id="sale-payment-total-display" class="mt-1 whitespace-nowrap text-xl font-bold tracking-tight text-gray-900">0 FCFA</p>
+                            </div>
+
+                            <div id="sales-accordion-payment" data-sales-accordion-item data-sales-accordion-group="invoice" class="p-6 border-b border-gray-100">
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-800">Paiement & échéance</p>
+                                    <p id="sales-accordion-payment-summary" class="mt-1 text-xs text-gray-500">Comptant immédiat</p>
+                                </div>
+                                <div class="pt-4">
+                                    <div id="sale-payment-split-box" class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                                        <div class="border-b border-gray-100 bg-gradient-to-r from-slate-50 via-white to-cyan-50 px-4 py-3">
+                                            <div class="flex flex-col items-start gap-2">
+                                                <span id="sale-payment-mode-badge" class="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 border border-emerald-100">Comptant</span>
+                                                <div>
+                                                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Paiement de la vente</p>
+                                                    <p class="mt-1 text-sm font-semibold leading-6 text-gray-800">Définissez l'acompte puis laissez le reliquat au compte client si nécessaire.</p>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 py-3">
-                                            <p class="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Versé maintenant</p>
-                                            <p id="sale-payment-paid-display" class="mt-1 whitespace-nowrap text-lg font-bold tracking-tight text-emerald-700">0 FCFA</p>
+                                        <div class="px-4 py-4">
+                                            <div class="grid grid-cols-1 gap-2.5">
+                                                <div class="rounded-xl border border-gray-200 bg-slate-50 px-3 py-3">
+                                                    <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Total facture</p>
+                                                    <p id="sale-payment-total-display" class="mt-1 whitespace-nowrap text-xl font-bold tracking-tight text-gray-900">0 FCFA</p>
+                                                </div>
+                                                <div class="rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 py-3">
+                                                    <p class="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Versé maintenant</p>
+                                                    <p id="sale-payment-paid-display" class="mt-1 whitespace-nowrap text-lg font-bold tracking-tight text-emerald-700">0 FCFA</p>
+                                                </div>
+                                                <div class="rounded-xl border border-amber-100 bg-amber-50/70 px-3 py-3">
+                                                    <p class="text-[11px] font-semibold uppercase tracking-wide text-amber-700">Reste dû</p>
+                                                    <p id="sale-payment-remaining-display" class="mt-1 whitespace-nowrap text-lg font-bold tracking-tight text-amber-700">0 FCFA</p>
+                                                </div>
+                                            </div>
+                                            <div class="mt-4">
+                                                <label for="sale-paid-now-amount" class="text-xs font-semibold text-gray-500">Acompte encaissé maintenant</label>
+                                                <input type="number" id="sale-paid-now-amount" min="0" step="any" placeholder="Ex: 20 000"
+                                                    class="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm text-gray-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400" />
+                                            </div>
+                                            <p id="sale-payment-split-summary" class="mt-3 text-[11px] leading-relaxed text-gray-500">Sans client sélectionné, la vente sera considérée comme encaissée en totalité.</p>
+                                            <p id="sale-payment-split-error" class="mt-2 text-xs text-red-500 hidden"></p>
                                         </div>
-                                        <div class="rounded-xl border border-amber-100 bg-amber-50/70 px-3 py-3">
-                                            <p class="text-[11px] font-semibold uppercase tracking-wide text-amber-700">Reste dû</p>
-                                            <p id="sale-payment-remaining-display" class="mt-1 whitespace-nowrap text-lg font-bold tracking-tight text-amber-700">0 FCFA</p>
-                                        </div>
+                                    </div>
+                                    <div class="mt-5">
+                                        <label for="hold-comment" class="text-xs font-semibold text-gray-500">Commentaire (mise en attente) *</label>
+                                        <textarea id="hold-comment" rows="2" placeholder="Ex: Client revient à 16h"
+                                            class="mt-2 w-full rounded-xl border border-gray-200 p-3 text-sm focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"></textarea>
+                                        <p id="hold-comment-error" class="text-xs text-red-500 mt-2 hidden"></p>
                                     </div>
                                     <div class="mt-4">
-                                        <label for="sale-paid-now-amount" class="text-xs font-semibold text-gray-500">Acompte encaissé maintenant</label>
-                                        <input type="number" id="sale-paid-now-amount" min="0" step="any" placeholder="Ex: 20 000"
-                                            class="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm text-gray-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400" />
+                                        <label for="pay-later-due-date" class="text-xs font-semibold text-gray-500">Date de paiement prévue <span class="font-normal text-gray-400">(optionnelle)</span></label>
+                                        <input type="date" id="pay-later-due-date"
+                                            class="mt-2 w-full rounded-xl border border-gray-200 p-3 text-sm focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" />
+                                        <p id="pay-later-date-error" class="text-xs text-red-500 mt-2 hidden"></p>
                                     </div>
-                                    <p id="sale-payment-split-summary" class="mt-3 text-[11px] leading-relaxed text-gray-500">Sans client sélectionné, la vente sera considérée comme encaissée en totalité.</p>
-                                    <p id="sale-payment-split-error" class="mt-2 text-xs text-red-500 hidden"></p>
                                 </div>
                             </div>
-                            <div class="mt-5">
-                                <label for="hold-comment" class="text-xs font-semibold text-gray-500">Commentaire (mise en attente) *</label>
-                                <textarea id="hold-comment" rows="2" placeholder="Ex: Client revient à 16h"
-                                    class="mt-2 w-full rounded-xl border border-gray-200 p-3 text-sm focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"></textarea>
-                                <p id="hold-comment-error" class="text-xs text-red-500 mt-2 hidden"></p>
-                            </div>
-                            <div class="mt-4">
-                                <label for="pay-later-due-date" class="text-xs font-semibold text-gray-500">Date de paiement prévue <span class="font-normal text-gray-400">(optionnelle)</span></label>
-                                <input type="date" id="pay-later-due-date"
-                                    class="mt-2 w-full rounded-xl border border-gray-200 p-3 text-sm focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" />
-                                <p id="pay-later-date-error" class="text-xs text-red-500 mt-2 hidden"></p>
-                            </div>
-                                    </div>
-                                </details>
-                        </div>
-                            <div class="p-6 border-t border-gray-100 bg-gray-50/60">
-                                <details id="sales-accordion-pricing" data-sales-accordion-item data-sales-accordion-group="invoice" class="group">
-                                    <summary class="flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 transition hover:bg-gray-50 [&::-webkit-details-marker]:hidden">
-                                        <div class="min-w-0">
-                                            <p class="text-sm font-semibold text-gray-800">Ajustements & TVA</p>
-                                            <p id="sales-accordion-pricing-summary" class="mt-1 truncate text-xs text-gray-500">TVA active · Aucun ajustement</p>
-                                        </div>
-                                        <svg class="h-4 w-4 shrink-0 text-gray-400 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                        </svg>
-                                    </summary>
-                                    <div class="space-y-3 pt-4">
-                                <div class="flex items-center justify-between text-xs text-gray-500">
-                                    <span class="font-semibold">Appliquer la TVA (20%)</span>
-                                    <label class="inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" id="tax-toggle-sales" class="sr-only peer" checked>
-                                        <span
-                                            class="w-12 h-6 bg-gray-200 rounded-full peer peer-checked:bg-cyan-500 relative transition">
-                                            <span
-                                                class="absolute top-0.5 left-1 w-5 h-5 bg-white rounded-full shadow transition-all peer-checked:translate-x-6"></span>
-                                        </span>
-                                    </label>
+
+                            <div id="sales-accordion-pricing" data-sales-accordion-item data-sales-accordion-group="invoice" class="p-6 bg-gray-50/60 border-b border-gray-100">
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-800">Ajustements & TVA</p>
+                                    <p id="sales-accordion-pricing-summary" class="mt-1 text-xs text-gray-500">TVA active · Aucun ajustement</p>
                                 </div>
-                                <div class="rounded-xl border border-gray-200 bg-white p-3">
-                                    <div class="flex items-center justify-between gap-2">
-                                        <p id="discount-panel-title" class="text-xs font-semibold text-gray-500">Ajustement rapide</p>
-                                        <button type="button" id="discount-approval-trigger"
-                                            class="hidden text-[11px] font-semibold text-amber-600 hover:text-amber-700">Valider</button>
+                                <div class="space-y-3 pt-4">
+                                    <div class="flex items-center justify-between text-xs text-gray-500">
+                                        <span class="font-semibold">Appliquer la TVA (20%)</span>
+                                        <label class="inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" id="tax-toggle-sales" class="sr-only peer" checked>
+                                            <span class="w-12 h-6 bg-gray-200 rounded-full peer peer-checked:bg-cyan-500 relative transition">
+                                                <span class="absolute top-0.5 left-1 w-5 h-5 bg-white rounded-full shadow transition-all peer-checked:translate-x-6"></span>
+                                            </span>
+                                        </label>
                                     </div>
-                                    <p id="discount-approval-hint" class="hidden mt-1 text-[11px] text-amber-600">Validation admin/manager requise.</p>
-                                    <p id="discount-approval-status" class="hidden mt-1 text-[11px] text-emerald-600"></p>
-                                    <div id="discount-direction-toggle" class="mt-3 inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
-                                        <button type="button" id="discount-direction-discount" data-discount-quick-control
-                                            class="rounded-md px-3 py-1.5 text-xs font-semibold bg-rose-500 text-white">
-                                            Réduction
-                                        </button>
-                                        <button type="button" id="discount-direction-increase" data-discount-quick-control
-                                            class="rounded-md px-3 py-1.5 text-xs font-semibold text-gray-500 hover:text-gray-700">
-                                            Augmentation
-                                        </button>
-                                    </div>
-                                    <div class="mt-3">
-                                        <label for="discount-final-total-input" id="discount-final-total-label" class="text-xs font-semibold text-gray-500">Total à payer</label>
-                                        <input id="discount-final-total-input" type="number" min="0" step="1" data-discount-quick-control
-                                            placeholder="0"
-                                            class="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-right tabular-nums text-gray-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" />
-                                        <p id="discount-final-total-hint" class="mt-2 text-[11px] text-gray-400">Tapez le montant convenu. L'ajustement se calcule automatiquement.</p>
-                                    </div>
-                                    <div id="discount-quick-presets" class="mt-3 grid grid-cols-2 sm:grid-cols-5 gap-2">
-                                        <button type="button" data-discount-preset="100" data-discount-quick-control
-                                            class="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50">-100</button>
-                                        <button type="button" data-discount-preset="500" data-discount-quick-control
-                                            class="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50">-500</button>
-                                        <button type="button" data-discount-preset="1000" data-discount-quick-control
-                                            class="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50">-1000</button>
-                                        <button type="button" data-discount-preset="2000" data-discount-quick-control
-                                            class="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50">-2000</button>
-                                        <button type="button" id="discount-reset-button" data-discount-quick-control
-                                            class="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50">Prix normal</button>
-                                    </div>
-                                    <p id="discount-quick-summary" class="mt-3 text-[11px] text-gray-500">Ajoutez un article pour appliquer un ajustement.</p>
-                                    <div id="discount-approval-inline" class="hidden mt-3 rounded-lg border border-amber-200 bg-amber-50/40 p-2">
-                                        <label class="text-[11px] font-semibold text-amber-700" for="discount-approval-inline-code">Code de validation</label>
-                                        <div class="mt-1 flex items-center gap-2">
-                                            <input type="text" id="discount-approval-inline-code" placeholder="Ex: Z4T7-9Q3S"
-                                                class="flex-1 rounded-lg border border-amber-200 bg-white px-3 py-2 text-xs uppercase tracking-widest focus:ring-2 focus:ring-amber-400 focus:border-amber-400" />
-                                            <button type="button" id="discount-approval-inline-confirm"
-                                                class="rounded-lg bg-amber-500 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-600">Valider</button>
+                                    <div class="rounded-xl border border-gray-200 bg-white p-3">
+                                        <div class="flex items-center justify-between gap-2">
+                                            <p id="discount-panel-title" class="text-xs font-semibold text-gray-500">Ajustement rapide</p>
+                                            <button type="button" id="discount-approval-trigger"
+                                                class="hidden text-[11px] font-semibold text-amber-600 hover:text-amber-700">Valider</button>
                                         </div>
-                                        <p id="discount-approval-inline-error" class="text-[11px] text-red-500 mt-1 hidden"></p>
-                                    </div>
-                                    <details id="discount-advanced-panel" class="mt-3 rounded-lg border border-gray-200 bg-gray-50/70">
-                                        <summary class="cursor-pointer list-none px-3 py-2 text-xs font-semibold text-gray-600">Options avancées</summary>
-                                        <div class="border-t border-gray-200 px-3 py-3">
-                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                                <label data-discount-input-wrapper class="relative flex items-center rounded-lg border border-gray-200 bg-white px-3 py-2">
-                                                    <span class="absolute left-3 text-xs font-semibold text-gray-400">% </span>
-                                                    <input id="discount-percent-input" type="number" min="0" max="100" step="0.1"
-                                                        placeholder="0"
-                                                        class="w-full bg-transparent text-sm text-gray-700 focus:outline-none pl-5 text-right tabular-nums" />
-                                                </label>
-                                                <label data-discount-input-wrapper class="relative flex items-center rounded-lg border border-gray-200 bg-white px-3 py-2">
-                                                    <span class="absolute left-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Montant</span>
-                                                    <input id="discount-amount-input" type="number" min="0" step="1"
-                                                        placeholder="0"
-                                                        class="w-full bg-transparent text-sm text-gray-700 focus:outline-none pl-20 text-right tabular-nums" />
-                                                </label>
+                                        <p id="discount-approval-hint" class="hidden mt-1 text-[11px] text-amber-600">Validation admin/manager requise.</p>
+                                        <p id="discount-approval-status" class="hidden mt-1 text-[11px] text-emerald-600"></p>
+                                        <div id="discount-direction-toggle" class="mt-3 inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
+                                            <button type="button" id="discount-direction-discount" data-discount-quick-control
+                                                class="rounded-md px-3 py-1.5 text-xs font-semibold bg-rose-500 text-white">
+                                                Réduction
+                                            </button>
+                                            <button type="button" id="discount-direction-increase" data-discount-quick-control
+                                                class="rounded-md px-3 py-1.5 text-xs font-semibold text-gray-500 hover:text-gray-700">
+                                                Augmentation
+                                            </button>
+                                        </div>
+                                        <div class="mt-3">
+                                            <label for="discount-final-total-input" id="discount-final-total-label" class="text-xs font-semibold text-gray-500">Total à payer</label>
+                                            <input id="discount-final-total-input" type="number" min="0" step="1" data-discount-quick-control
+                                                placeholder="0"
+                                                class="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-right tabular-nums text-gray-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" />
+                                            <p id="discount-final-total-hint" class="mt-2 text-[11px] text-gray-400">Tapez le montant convenu. L'ajustement se calcule automatiquement.</p>
+                                        </div>
+                                        <div id="discount-quick-presets" class="mt-3 grid grid-cols-2 sm:grid-cols-5 gap-2">
+                                            <button type="button" data-discount-preset="100" data-discount-quick-control
+                                                class="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50">-100</button>
+                                            <button type="button" data-discount-preset="500" data-discount-quick-control
+                                                class="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50">-500</button>
+                                            <button type="button" data-discount-preset="1000" data-discount-quick-control
+                                                class="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50">-1000</button>
+                                            <button type="button" data-discount-preset="2000" data-discount-quick-control
+                                                class="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50">-2000</button>
+                                            <button type="button" id="discount-reset-button" data-discount-quick-control
+                                                class="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50">Prix normal</button>
+                                        </div>
+                                        <p id="discount-quick-summary" class="mt-3 text-[11px] text-gray-500">Ajoutez un article pour appliquer un ajustement.</p>
+                                        <div id="discount-approval-inline" class="hidden mt-3 rounded-lg border border-amber-200 bg-amber-50/40 p-2">
+                                            <label class="text-[11px] font-semibold text-amber-700" for="discount-approval-inline-code">Code de validation</label>
+                                            <div class="mt-1 flex items-center gap-2">
+                                                <input type="text" id="discount-approval-inline-code" placeholder="Ex: Z4T7-9Q3S"
+                                                    class="flex-1 rounded-lg border border-amber-200 bg-white px-3 py-2 text-xs uppercase tracking-widest focus:ring-2 focus:ring-amber-400 focus:border-amber-400" />
+                                                <button type="button" id="discount-approval-inline-confirm"
+                                                    class="rounded-lg bg-amber-500 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-600">Valider</button>
                                             </div>
-                                            <p class="text-[11px] text-gray-400 mt-2">Renseignez un seul champ.</p>
+                                            <p id="discount-approval-inline-error" class="text-[11px] text-red-500 mt-1 hidden"></p>
                                         </div>
-                                    </details>
-                                </div>
-                                <div class="flex items-center justify-between text-sm text-gray-600">
-                                    <span>Sous-total</span>
-                                    <span id="cart-subtotal">0 FCFA</span>
-                                </div>
-                                <div id="cart-tax-row" class="flex items-center justify-between text-sm text-gray-400">
-                                    <span>TVA (20%)</span>
-                                    <span id="cart-tax">0 FCFA</span>
-                                </div>
-                                <div id="cart-discount-row" class="flex items-center justify-between text-sm text-gray-500 hidden">
-                                    <span id="cart-discount-label">Réduction</span>
-                                    <span id="cart-discount">0 FCFA</span>
-                                </div>
+                                        <details id="discount-advanced-panel" class="mt-3 rounded-lg border border-gray-200 bg-gray-50/70">
+                                            <summary class="cursor-pointer list-none px-3 py-2 text-xs font-semibold text-gray-600">Options avancées</summary>
+                                            <div class="border-t border-gray-200 px-3 py-3">
+                                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                    <label data-discount-input-wrapper class="relative flex items-center rounded-lg border border-gray-200 bg-white px-3 py-2">
+                                                        <span class="absolute left-3 text-xs font-semibold text-gray-400">% </span>
+                                                        <input id="discount-percent-input" type="number" min="0" max="100" step="0.1"
+                                                            placeholder="0"
+                                                            class="w-full bg-transparent text-sm text-gray-700 focus:outline-none pl-5 text-right tabular-nums" />
+                                                    </label>
+                                                    <label data-discount-input-wrapper class="relative flex items-center rounded-lg border border-gray-200 bg-white px-3 py-2">
+                                                        <span class="absolute left-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Montant</span>
+                                                        <input id="discount-amount-input" type="number" min="0" step="1"
+                                                            placeholder="0"
+                                                            class="w-full bg-transparent text-sm text-gray-700 focus:outline-none pl-20 text-right tabular-nums" />
+                                                    </label>
+                                                </div>
+                                                <p class="text-[11px] text-gray-400 mt-2">Renseignez un seul champ.</p>
+                                            </div>
+                                        </details>
                                     </div>
-                                </details>
-                                <div class="mt-4 flex items-center justify-between text-base font-semibold text-gray-900 border-t border-gray-200 pt-3">
+                                    <div class="flex items-center justify-between text-sm text-gray-600">
+                                        <span>Sous-total</span>
+                                        <span id="cart-subtotal">0 FCFA</span>
+                                    </div>
+                                    <div id="cart-tax-row" class="flex items-center justify-between text-sm text-gray-400">
+                                        <span>TVA (20%)</span>
+                                        <span id="cart-tax">0 FCFA</span>
+                                    </div>
+                                    <div id="cart-discount-row" class="flex items-center justify-between text-sm text-gray-500 hidden">
+                                        <span id="cart-discount-label">Réduction</span>
+                                        <span id="cart-discount">0 FCFA</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="p-6">
+                                <div class="flex items-center justify-between text-base font-semibold text-gray-900 border-t border-gray-200 pt-3">
                                     <span>Total</span>
                                     <span id="cart-total" class="text-lg text-cyan-600">0 FCFA</span>
                                 </div>
@@ -1033,51 +1045,51 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        <div id="customer-history-section" class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 hidden">
-                            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                                <div>
-                                    <h2 class="text-xl font-bold text-gray-800">Historique client</h2>
-                                    <p id="customer-history-subtitle" class="text-sm text-gray-500 mt-1"></p>
-                                </div>
-                                <div class="text-xs font-semibold text-gray-500">Achats recents</div>
-                            </div>
-                            <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div class="p-4 rounded-lg bg-gray-50 border border-gray-100">
-                                    <p class="text-xs uppercase text-gray-400">Total achats</p>
-                                    <p id="customer-history-total" class="text-2xl font-semibold text-gray-800">0 FCFA</p>
-                                </div>
-                                <div class="p-4 rounded-lg bg-gray-50 border border-gray-100">
-                                    <p class="text-xs uppercase text-gray-400">Nombre d'achats</p>
-                                    <p id="customer-history-count" class="text-2xl font-semibold text-gray-800">0</p>
-                                </div>
-                                <div class="p-4 rounded-lg bg-gray-50 border border-gray-100">
-                                    <p class="text-xs uppercase text-gray-400">Dernier achat</p>
-                                    <p id="customer-history-last" class="text-sm font-semibold text-gray-800">-</p>
-                                </div>
-                            </div>
-                            <div class="mt-6">
-                                <div id="customer-history-placeholder" class="flex flex-col items-center justify-center text-center text-gray-500 h-24">
-                                    <p>Aucun achat pour ce client.</p>
-                                </div>
-                                <div id="customer-history-table-container" class="hidden overflow-x-auto rounded-lg border border-gray-200">
-                                    <table class="min-w-full bg-white divide-y divide-gray-200">
-                                        <thead class="bg-gray-50">
-                                            <tr>
-                                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Articles</th>
-                                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
-                                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paiement</th>
-                                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Échéance / Payé</th>
-                                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendeur</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="customer-history-tbody" class="divide-y divide-gray-200">
-                                            <!-- Historique client insere par JS -->
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
+                <div id="customer-history-section" class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 hidden mt-6">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-800">Historique client</h2>
+                            <p id="customer-history-subtitle" class="text-sm text-gray-500 mt-1"></p>
+                        </div>
+                        <div class="text-xs font-semibold text-gray-500">Achats recents</div>
+                    </div>
+                    <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="p-4 rounded-lg bg-gray-50 border border-gray-100">
+                            <p class="text-xs uppercase text-gray-400">Total achats</p>
+                            <p id="customer-history-total" class="text-2xl font-semibold text-gray-800">0 FCFA</p>
+                        </div>
+                        <div class="p-4 rounded-lg bg-gray-50 border border-gray-100">
+                            <p class="text-xs uppercase text-gray-400">Nombre d'achats</p>
+                            <p id="customer-history-count" class="text-2xl font-semibold text-gray-800">0</p>
+                        </div>
+                        <div class="p-4 rounded-lg bg-gray-50 border border-gray-100">
+                            <p class="text-xs uppercase text-gray-400">Dernier achat</p>
+                            <p id="customer-history-last" class="text-sm font-semibold text-gray-800">-</p>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <div id="customer-history-placeholder" class="flex flex-col items-center justify-center text-center text-gray-500 h-24">
+                            <p>Aucun achat pour ce client.</p>
+                        </div>
+                        <div id="customer-history-table-container" class="hidden overflow-x-auto rounded-lg border border-gray-200">
+                            <table class="min-w-full bg-white divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Articles</th>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paiement</th>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Échéance / Payé</th>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendeur</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="customer-history-tbody" class="divide-y divide-gray-200">
+                                    <!-- Historique client insere par JS -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -2842,6 +2854,21 @@
                                     entreprise.</p>
                             </div>
                             <div class="space-y-4">
+                                <div class="p-4 rounded-2xl border border-cyan-100 bg-cyan-50/60 space-y-3">
+                                    <div>
+                                        <p class="text-sm font-semibold text-gray-800">Mode Point de Vente</p>
+                                        <p class="text-sm text-gray-500">Définissez le type d'interface disponible pour cette entreprise.</p>
+                                    </div>
+                                    <label class="block">
+                                        <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Interface active</span>
+                                        <select id="settings-sales-pos-mode"
+                                            class="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm text-gray-700 focus:ring-cyan-400 focus:border-cyan-400">
+                                            <option value="hybrid">Catalogue + saisie facture</option>
+                                            <option value="catalog">Catalogue uniquement</option>
+                                            <option value="line">Saisie facture uniquement</option>
+                                        </select>
+                                    </label>
+                                </div>
                                 <label
                                     class="flex items-start justify-between gap-4 p-4 rounded-xl border border-gray-200 hover:border-cyan-200 cursor-pointer">
                                     <div>
@@ -5118,6 +5145,7 @@
             let customerOptionLookup = {};
             let isCustomerHistoryOpen = false;
             let selectedSalesCategory = 'Tous';
+            let salesPosView = 'catalog';
             let salesHistoryTab = 'completed';
             let salesHistorySearch = '';
             let salesHistoryDateFilterValue = 'all';
@@ -5364,6 +5392,14 @@
             if (inventorySaveButton) inventorySaveButton.disabled = true;
 
             const salesError = document.getElementById('sales-error');
+            const salesPosModeToolbar = document.getElementById('sales-pos-mode-toolbar');
+            const salesPosModeCatalogButton = document.getElementById('sales-pos-mode-catalog-button');
+            const salesPosModeLineButton = document.getElementById('sales-pos-mode-line-button');
+            const salesPosModeDescription = document.getElementById('sales-pos-mode-description');
+            const salesCatalogPane = document.getElementById('sales-catalog-pane');
+            const salesLineBuilderPane = document.getElementById('sales-line-builder-pane');
+            const salesInvoiceLinesCount = document.getElementById('sales-invoice-lines-count');
+            const settingsSalesPosModeSelect = document.getElementById('settings-sales-pos-mode');
             const salesQuickProductCombobox = document.getElementById('sales-quick-product-combobox');
             const salesQuickProductSearchInput = document.getElementById('sales-quick-product-search');
             const salesQuickProductToggleButton = document.getElementById('sales-quick-product-toggle');
@@ -8357,6 +8393,57 @@
                 if (customerHistorySection) customerHistorySection.classList.toggle('hidden', !canShow || !isCustomerHistoryOpen);
             }
 
+            function normalizeSalesPosModeSetting(value) {
+                const normalized = String(value || '').trim().toLowerCase();
+                if (normalized === 'catalog' || normalized === 'line') return normalized;
+                return 'hybrid';
+            }
+
+            function getAvailableSalesPosViews() {
+                const modeSetting = normalizeSalesPosModeSetting(appData.settings?.salesPosMode);
+                if (modeSetting === 'catalog') return ['catalog'];
+                if (modeSetting === 'line') return ['line'];
+                return ['catalog', 'line'];
+            }
+
+            function ensureSalesPosViewIsAllowed() {
+                const availableViews = getAvailableSalesPosViews();
+                if (!availableViews.includes(salesPosView)) {
+                    salesPosView = availableViews[0] || 'catalog';
+                }
+            }
+
+            function updateSalesPosModeUI() {
+                ensureSalesPosViewIsAllowed();
+                const availableViews = getAvailableSalesPosViews();
+                const showToggle = availableViews.length > 1;
+                if (salesPosModeToolbar) salesPosModeToolbar.classList.toggle('hidden', !showToggle);
+                if (salesCatalogPane) salesCatalogPane.classList.toggle('hidden', salesPosView !== 'catalog');
+                if (salesLineBuilderPane) salesLineBuilderPane.classList.toggle('hidden', salesPosView !== 'line');
+                if (salesPosModeCatalogButton) {
+                    const isActive = salesPosView === 'catalog';
+                    salesPosModeCatalogButton.classList.toggle('bg-cyan-500', isActive);
+                    salesPosModeCatalogButton.classList.toggle('text-white', isActive);
+                    salesPosModeCatalogButton.classList.toggle('shadow-sm', isActive);
+                    salesPosModeCatalogButton.classList.toggle('text-gray-600', !isActive);
+                }
+                if (salesPosModeLineButton) {
+                    const isActive = salesPosView === 'line';
+                    salesPosModeLineButton.classList.toggle('bg-cyan-500', isActive);
+                    salesPosModeLineButton.classList.toggle('text-white', isActive);
+                    salesPosModeLineButton.classList.toggle('shadow-sm', isActive);
+                    salesPosModeLineButton.classList.toggle('text-gray-600', !isActive);
+                }
+                if (salesPosModeDescription) {
+                    salesPosModeDescription.textContent = salesPosView === 'catalog'
+                        ? 'Ajoutez depuis le catalogue, puis ajustez la facture dans la zone blanche.'
+                        : 'Recherchez un produit, ajoutez une ligne, puis ajustez la facture sans parcourir le catalogue.';
+                }
+                if (settingsSalesPosModeSelect) {
+                    settingsSalesPosModeSelect.value = normalizeSalesPosModeSetting(appData.settings?.salesPosMode);
+                }
+            }
+
             function getCustomerOutstandingBalance(customer) {
                 const customerId = typeof customer === 'string' ? customer : customer?.id;
                 if (!customerId) {
@@ -8397,6 +8484,7 @@
                 salesAccordionPanels.forEach(panel => {
                     if (panel === activePanel) return;
                     if (panel.dataset.salesAccordionGroup !== groupName) return;
+                    if (panel.tagName !== 'DETAILS') return;
                     panel.open = false;
                 });
             }
@@ -8410,8 +8498,13 @@
                 };
                 const targetPanel = panelMap[panelKey];
                 if (!targetPanel) return;
-                targetPanel.open = true;
-                closeSiblingSalesAccordionPanels(targetPanel);
+                if (targetPanel.tagName === 'DETAILS') {
+                    targetPanel.open = true;
+                    closeSiblingSalesAccordionPanels(targetPanel);
+                }
+                if (typeof targetPanel.scrollIntoView === 'function') {
+                    targetPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
             }
 
             function updateSalesAccordionSummaries(summary = null) {
@@ -16261,6 +16354,24 @@
                     }
                 });
             }
+            if (settingsApplicationSaveButton) {
+                settingsApplicationSaveButton.addEventListener('click', async () => {
+                    if (!dbBasePath || getCurrentUserRole() !== 'admin') {
+                        showSuccessToast("Accès réservé aux administrateurs.");
+                        return;
+                    }
+                    const nextPosMode = normalizeSalesPosModeSetting(settingsSalesPosModeSelect?.value);
+                    try {
+                        await update(ref(db, `${dbBasePath}/settings`), { salesPosMode: nextPosMode });
+                        appData.settings = { ...(appData.settings || {}), salesPosMode: nextPosMode };
+                        updateSalesPosModeUI();
+                        showSuccessToast('Préférences du point de vente mises à jour.');
+                    } catch (error) {
+                        console.error(error);
+                        showSuccessToast("Impossible de sauvegarder le mode du point de vente.");
+                    }
+                });
+            }
 
             if (boutiquesList) {
                 boutiquesList.addEventListener('click', async (event) => {
@@ -20751,6 +20862,7 @@
                 if (tzSelect && appData.settings?.timezone) {
                     tzSelect.value = appData.settings.timezone;
                 }
+                updateSalesPosModeUI();
             }
 
             function onCompanyFeatureAccessValue(snapshot) {
@@ -21014,6 +21126,7 @@
                 updateFeatureAccessUI();
                 updateSettingsAccess();
                 updatePricingAccessState();
+                updateSalesPosModeUI();
                 updateDiscountApprovalUI();
                 renderDashboardAdminRecovery();
                 if (currentPage === 'Traçabilité') {
@@ -22330,6 +22443,57 @@
                 renderCart();
             }
 
+            function updateCartItemPackage(index, nextPackageCode) {
+                const item = cartItems[index];
+                if (!item?.shopProductId) return;
+                const shopProduct = appData.shopStock?.[item.shopProductId];
+                const sourceProduct = shopProduct ? appData.storeProducts?.[shopProduct.sourceProductId] : null;
+                if (!shopProduct || !sourceProduct) return;
+
+                const nextPackaging = findPackagingByRef(sourceProduct, nextPackageCode);
+                if (!nextPackaging) {
+                    showSalesErrorMessage("Conditionnement introuvable.");
+                    renderCart();
+                    return;
+                }
+
+                const nextUnitCount = Math.max(1, Number(nextPackaging.unitCount) || 1);
+                const maxQty = Math.max(0, Math.floor(getCartItemAvailableQuantity(item) / nextUnitCount));
+                if (maxQty <= 0) {
+                    showSalesErrorMessage("Stock insuffisant pour ce conditionnement.");
+                    renderCart();
+                    return;
+                }
+
+                item.packageCode = nextPackaging.code || item.packageCode || 'DTL';
+                item.packageLabel = nextPackaging.label || getProductBaseUnitLabel(sourceProduct);
+                item.packageUnits = nextUnitCount;
+                if ((Number(item.quantity) || 1) > maxQty) {
+                    item.quantity = maxQty;
+                }
+                item.stockUnits = (Number(item.quantity) || 1) * nextUnitCount;
+
+                const nextSellingPrice = getPackageSellingPrice(sourceProduct, item.packageCode);
+                if (hasUsableSellingPrice(nextSellingPrice)) {
+                    item.sellingPrice = Number(nextSellingPrice);
+                    item.originalSellingPrice = Number(nextSellingPrice);
+                    item.manualSellingPrice = null;
+                    item.priceOverridden = false;
+                    item.pricePending = false;
+                    item.pricingStatus = PENDING_SALE_PRICING_READY;
+                } else {
+                    item.sellingPrice = null;
+                    item.originalSellingPrice = null;
+                    item.manualSellingPrice = null;
+                    item.priceOverridden = false;
+                    item.pricePending = true;
+                    item.pricingStatus = PENDING_SALE_PRICING_PENDING;
+                }
+
+                syncCartItemPriceMetadata(item);
+                renderCart();
+            }
+
             function addToCart(productId = null, quantityOverride = null, packageRef = null) {
                 const shopProductId = productId;
                 const quantityInput = Number.isFinite(quantityOverride) ? quantityOverride : 1;
@@ -22623,6 +22787,7 @@
             function renderCart() {
                 const pricingState = syncSaleItemsPricing(cartItems, { mutate: true });
                 const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+                const totalLines = cartItems.length;
                 const immediatePaymentAmount = getImmediateSalePaymentAmount();
                 if (cartItemsCount) {
                     let label = 'article';
@@ -22630,6 +22795,7 @@
                     if (totalItems > 1) label = 'articles';
                     cartItemsCount.textContent = `${totalItems} ${label}`;
                 }
+                if (salesInvoiceLinesCount) salesInvoiceLinesCount.textContent = String(totalLines);
 
                 const hasItems = cartItems.length > 0;
                 const hasPendingPrice = pricingState.hasPendingPrice;
@@ -22719,7 +22885,16 @@
                 if (cartItemsList) {
                     cartItemsList.innerHTML = cartItems.map((item, index) => {
                         syncCartItemPriceMetadata(item);
-                        const sourceProduct = item.shopProductId ? appData.storeProducts?.[appData.shopStock?.[item.shopProductId]?.sourceProductId] : null;
+                        const shopProduct = item.shopProductId ? appData.shopStock?.[item.shopProductId] : null;
+                        const sourceProduct = shopProduct ? appData.storeProducts?.[shopProduct.sourceProductId] : null;
+                        const packageOptions = (shopProduct ? getShopItemSellPackagings(shopProduct) : []).map(packaging => {
+                            const optionCode = packaging?.code || 'DTL';
+                            const unitCount = Math.max(1, Number(packaging?.unitCount) || 1);
+                            const maxQtyForPackaging = Math.floor(getCartItemAvailableQuantity(item) / unitCount);
+                            const isSelected = optionCode === (item.packageCode || '');
+                            const disabled = !isSelected && maxQtyForPackaging <= 0;
+                            return `<option value="${escapeHtml(optionCode)}" ${isSelected ? 'selected' : ''} ${disabled ? 'disabled' : ''}>${escapeHtml(packaging?.label || getProductBaseUnitLabel(sourceProduct))}</option>`;
+                        }).join('');
                         const internalCodeText = getProductInternalCodeText(sourceProduct);
                         const hasLinePrice = hasUsableSellingPrice(item.sellingPrice) && item.pricePending !== true;
                         const subtotal = hasLinePrice ? Number(item.sellingPrice) * item.quantity : null;
@@ -22733,35 +22908,47 @@
                                     ? `<p class="mt-1 text-[11px] font-semibold text-emerald-600">Prix standard ${formatCurrency(originalSellingPrice, item.currency)}</p>`
                                     : '<p class="mt-1 text-[11px] font-semibold text-slate-500">Prix saisi manuellement</p>';
                         const resetPriceButton = item.priceOverridden && hasOriginalSellingPrice
-                            ? `<button type="button" data-cart-action="reset-price" data-index="${index}" class="text-[11px] font-semibold text-cyan-600 hover:text-cyan-700">Standard</button>`
+                            ? `<button type="button" data-cart-action="reset-price" data-index="${index}" class="text-[11px] font-semibold text-cyan-600 hover:text-cyan-700">Prix standard</button>`
                             : '';
                         const packageInfo = item.packageLabel ? `<p class="text-[11px] font-semibold text-slate-500 mt-1">${item.packageLabel} · ${item.quantity}</p>` : '';
                         const lotInfo = item.lotLabel ? `<p class="text-[11px] font-semibold text-cyan-700 mt-1">${item.lotLabel}</p>` : '';
                         return `
-                            <div class="border border-gray-200 rounded-xl p-3 flex items-start justify-between gap-3">
-                                <div>
-                                    <p class="text-sm font-semibold text-gray-900">${item.name}</p>
-                                    <p class="text-[11px] font-semibold uppercase tracking-wide ${hasProductInternalCode(sourceProduct) ? 'text-slate-400' : 'text-amber-600'} mt-1">${internalCodeText}</p>
-                                    ${packageInfo}
-                                    ${lotInfo}
-                                    <p class="text-xs text-gray-500 mt-1">${hasLinePrice ? `${formatCurrency(item.sellingPrice, item.currency)} x ${item.quantity}` : 'Prix à définir avant validation'}</p>
-                                    ${priceStatus}
-                                </div>
-                                <div class="text-right">
-                                    <p class="text-sm font-semibold ${hasLinePrice ? 'text-gray-900' : 'text-amber-600'}">${hasLinePrice ? formatCurrency(subtotal, item.currency) : 'Prix à définir'}</p>
-                                    <div class="mt-2 flex items-center justify-end gap-2">
-                                        <span class="text-[11px] font-semibold text-slate-400">PU</span>
-                                        <input type="number" min="0" step="0.01" value="${getCartItemPriceInputValue(item)}" data-cart-price data-index="${index}"
-                                            class="w-24 h-8 rounded-md border border-gray-200 px-2 text-xs text-right text-gray-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
-                                            placeholder="${hasOriginalSellingPrice ? formatInputNumber(originalSellingPrice) : 'Prix'}" />
-                                        ${resetPriceButton}
+                            <div class="rounded-2xl border border-gray-200 bg-white p-4">
+                                <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                                    <div class="xl:max-w-[34%]">
+                                        <p class="text-sm font-semibold text-gray-900">${item.name}</p>
+                                        <p class="text-[11px] font-semibold uppercase tracking-wide ${hasProductInternalCode(sourceProduct) ? 'text-slate-400' : 'text-amber-600'} mt-1">${internalCodeText}</p>
+                                        ${packageInfo}
+                                        ${lotInfo}
+                                        ${priceStatus}
                                     </div>
-                                    <div class="mt-2 flex items-center justify-end gap-2">
-                                        <button type="button" data-cart-action="decrease" data-index="${index}" class="w-7 h-7 rounded-full border border-gray-200 text-gray-500 hover:text-gray-700">-</button>
-                                        <input type="number" min="1" step="1" value="${item.quantity}" data-cart-quantity data-index="${index}"
-                                            class="w-14 h-7 rounded-md border border-gray-200 text-xs text-center text-gray-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" />
-                                        <button type="button" data-cart-action="increase" data-index="${index}" class="w-7 h-7 rounded-full border border-gray-200 text-gray-500 hover:text-gray-700">+</button>
-                                        <button type="button" data-cart-action="remove" data-index="${index}" class="ml-1 text-xs font-semibold text-red-500 hover:text-red-600">Retirer</button>
+                                    <div class="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,1.2fr)_88px_120px_120px_auto] xl:items-end">
+                                        <label class="block">
+                                            <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Conditionnement</span>
+                                            <select data-cart-package data-index="${index}"
+                                                class="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400">
+                                                ${packageOptions}
+                                            </select>
+                                        </label>
+                                        <label class="block">
+                                            <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Qté</span>
+                                            <input type="number" min="1" step="1" value="${item.quantity}" data-cart-quantity data-index="${index}"
+                                                class="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-center text-gray-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" />
+                                        </label>
+                                        <label class="block">
+                                            <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Prix unitaire</span>
+                                            <input type="number" min="0" step="0.01" value="${getCartItemPriceInputValue(item)}" data-cart-price data-index="${index}"
+                                                class="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-right text-gray-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                                                placeholder="${hasOriginalSellingPrice ? formatInputNumber(originalSellingPrice) : 'Prix'}" />
+                                        </label>
+                                        <div>
+                                            <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Total ligne</span>
+                                            <p class="mt-1 rounded-lg border border-gray-200 bg-slate-50 px-3 py-2 text-sm font-semibold ${hasLinePrice ? 'text-gray-900' : 'text-amber-600'}">${hasLinePrice ? formatCurrency(subtotal, item.currency) : 'Prix à définir'}</p>
+                                        </div>
+                                        <div class="flex items-center gap-3 xl:justify-end">
+                                            ${resetPriceButton}
+                                            <button type="button" data-cart-action="remove" data-index="${index}" class="inline-flex items-center justify-center rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50">Retirer</button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -24803,6 +24990,20 @@
                     renderCustomerHistory();
                 });
             }
+            if (salesPosModeCatalogButton) {
+                salesPosModeCatalogButton.addEventListener('click', () => {
+                    if (!getAvailableSalesPosViews().includes('catalog')) return;
+                    salesPosView = 'catalog';
+                    updateSalesPosModeUI();
+                });
+            }
+            if (salesPosModeLineButton) {
+                salesPosModeLineButton.addEventListener('click', () => {
+                    if (!getAvailableSalesPosViews().includes('line')) return;
+                    salesPosView = 'line';
+                    updateSalesPosModeUI();
+                });
+            }
             if (salesProductSearch) salesProductSearch.addEventListener('input', () => {
                 renderSalesProducts(salesProductSearch.value);
             });
@@ -24912,6 +25113,13 @@
                     if (action === 'reset-price') updateCartItemSellingPrice(index, '');
                 });
                 cartItemsList.addEventListener('change', (event) => {
+                    const packageSelect = event.target.closest('[data-cart-package]');
+                    if (packageSelect) {
+                        const index = parseInt(packageSelect.dataset.index, 10);
+                        if (Number.isNaN(index)) return;
+                        updateCartItemPackage(index, packageSelect.value);
+                        return;
+                    }
                     const qtyInput = event.target.closest('[data-cart-quantity]');
                     if (qtyInput) {
                         syncCartQuantitiesFromInputs();
