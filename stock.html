@@ -2332,7 +2332,7 @@
                                             Produit</th>
                                         <th scope="col"
                                             class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Code</th>
+                                            Code interne</th>
                                         <th scope="col"
                                             class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Magasin</th>
@@ -3203,10 +3203,9 @@
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label for="product-base-code" class="block text-sm font-medium text-gray-700">Code produit *</label>
-                            <input type="text" id="product-base-code" placeholder="Ex: 006"
-                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 uppercase tracking-wider"
-                                required>
+                            <label for="product-base-code" class="block text-sm font-medium text-gray-700">Code interne <span class="text-gray-400 font-normal">(optionnel)</span></label>
+                            <input type="text" id="product-base-code" placeholder="Ex: HUIL-001"
+                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 uppercase tracking-wider">
                         </div>
                         <div>
                             <label for="product-base-unit-label" class="block text-sm font-medium text-gray-700">Unité de base *</label>
@@ -3513,6 +3512,11 @@
                             <label for="entry-new-name" class="block text-sm font-medium text-gray-700">Nom du produit *</label>
                             <input type="text" id="entry-new-name" placeholder="Ex: Caméra HD"
                                 class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400">
+                        </div>
+                        <div>
+                            <label for="entry-new-code" class="block text-sm font-medium text-gray-700">Code interne <span class="text-gray-400 font-normal">(optionnel)</span></label>
+                            <input type="text" id="entry-new-code" placeholder="Ex: CAM-001"
+                                class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 uppercase tracking-wider">
                         </div>
                         <div class="rounded-xl border border-amber-200 bg-amber-50/70 p-3 text-xs text-amber-700">
                             Les prix de vente seront à définir dans le tableau des prix après l'entrée.
@@ -5510,6 +5514,7 @@
             const entryExistingPanel = document.getElementById('entry-existing-panel');
             const entryNewPanel = document.getElementById('entry-new-panel');
             const entryNewNameInput = document.getElementById('entry-new-name');
+            const entryNewCodeInput = document.getElementById('entry-new-code');
             const entryProductCombobox = document.getElementById('entry-product-combobox');
             const entryProductSearchInput = document.getElementById('entry-product-search');
             const entryProductToggleButton = document.getElementById('entry-product-toggle');
@@ -6776,7 +6781,9 @@
 
             function getTransferProductDisplayLabel(product) {
                 if (!product) return '';
-                return product.name || 'Produit sans nom';
+                const name = product.name || 'Produit sans nom';
+                const code = getProductInternalCode(product);
+                return code ? `${name} · ${code}` : `${name} · Code manquant`;
             }
 
             function getEntryProductDisplayLabel(product) {
@@ -6819,14 +6826,14 @@
                 const filteredProducts = products.filter(product => {
                     if (!query) return true;
                     const name = normalizeString(product?.name);
-                    const code = normalizeString(product?.baseCode || product?.sku || product?.id);
+                    const code = normalizeString(getProductInternalCode(product));
                     const description = normalizeString(product?.description);
                     return name.includes(query) || code.includes(query) || description.includes(query);
                 });
 
                 transferProductOptions.innerHTML = filteredProducts.map(product => {
                     const qty = parseNonNegativeInteger(product.quantityInStore, 0);
-                    const code = escapeHtml(product.baseCode || product.sku || product.id || '—');
+                    const codeHtml = getProductInternalCodeMarkup(product, { prefix: 'Code' });
                     const name = escapeHtml(product.name || 'Produit sans nom');
                     const description = product.description
                         ? `<p class="mt-1 truncate text-xs text-slate-400">${escapeHtml(product.description)}</p>`
@@ -6840,7 +6847,7 @@
                             ${isDisabled ? 'disabled' : ''}>
                             <div class="min-w-0">
                                 <p class="truncate text-sm font-semibold text-slate-800">${name}</p>
-                                <p class="mt-1 text-xs font-medium uppercase tracking-wide text-slate-400">${code}</p>
+                                <p class="mt-1">${codeHtml}</p>
                                 ${description}
                             </div>
                             <div class="shrink-0 text-right">
@@ -6910,7 +6917,7 @@
                         if (!normalized) return true;
                         const haystack = [
                             product.name,
-                            product.baseCode,
+                            getProductInternalCode(product),
                             product.sku,
                             product.description,
                             product.id
@@ -6937,7 +6944,7 @@
                         return {
                             value: product.id,
                             title: product.name || 'Produit sans nom',
-                            meta: product.baseCode || product.sku || product.id || '—',
+                            meta: getProductInternalCodeText(product),
                             description: isOtherStore
                                 ? `Magasin: ${storeLabel || 'Autre magasin'}`
                                 : (product.description || (isUnassigned ? 'Produit non encore assigné au magasin.' : '')),
@@ -6957,7 +6964,7 @@
                         if (!normalized) return true;
                         const haystack = [
                             product.name,
-                            product.baseCode,
+                            getProductInternalCode(product),
                             product.sku,
                             product.description,
                             product.id
@@ -6971,7 +6978,7 @@
                         return {
                             value: product.id,
                             title: product.name || 'Produit sans nom',
-                            meta: product.baseCode || product.sku || product.id || '—',
+                            meta: getProductInternalCodeText(product),
                             description: product.description || (!hasSellingPrice ? 'Prix en attente. Le transfert reste autorisé.' : ''),
                             badge: hasSellingPrice ? `Stock ${qty}` : 'Prix en attente',
                             badgeClasses: hasSellingPrice
@@ -6997,6 +7004,7 @@
                         const haystack = [
                             getShopItemDisplayName(item),
                             getShopItemPackagingLabel(item),
+                            getProductInternalCode(sourceProduct),
                             item.variantCode,
                             item.sourceName,
                             item.name,
@@ -7011,10 +7019,10 @@
                         return {
                             value: item.id,
                             title: getShopItemDisplayName(item),
-                            meta: getShopItemPackagingLabel(item),
+                            meta: getProductInternalCodeText(availability.sourceProduct),
                             description: isDisabled
-                                ? (!availability.sourceProduct ? 'Source magasin introuvable.' : 'Aucun stock magasin disponible pour ce réapprovisionnement.')
-                                : `Disponible boutique: ${parseNonNegativeInteger(item.quantityInShop, 0)} · Max réappro: ${availability.maxPackages}`,
+                                ? (!availability.sourceProduct ? 'Source magasin introuvable.' : `Aucun stock magasin disponible. · ${getShopItemPackagingLabel(item)}`)
+                                : `Disponible boutique: ${parseNonNegativeInteger(item.quantityInShop, 0)} · Max réappro: ${availability.maxPackages} · ${getShopItemPackagingLabel(item)}`,
                             badge: isDisabled ? 'Indisponible' : `Max ${availability.maxPackages}`,
                             badgeClasses: isDisabled ? 'bg-rose-50 text-rose-700' : 'bg-cyan-50 text-cyan-700',
                             disabled: isDisabled,
@@ -7044,6 +7052,7 @@
                         const haystack = [
                             getShopItemDisplayName(item),
                             getShopItemCategory(item),
+                            getProductInternalCode(sourceProduct),
                             item.sourceName,
                             item.name,
                             item.variantCode,
@@ -7062,8 +7071,8 @@
                         return {
                             value: item.id,
                             title: getShopItemDisplayName(item),
-                            meta: getShopItemCategory(item),
-                            description: formatShopStockBreakdown(activeQty, item, { includeBaseTotal: true }),
+                            meta: getProductInternalCodeText(sourceProduct),
+                            description: `${formatShopStockBreakdown(activeQty, item, { includeBaseTotal: true })}${getShopItemCategory(item) ? ` · ${getShopItemCategory(item)}` : ''}`,
                             badge: hasDirectPrice ? `Stock ${formatShopStockBreakdown(activeQty, item)}` : 'Prix à définir',
                             badgeClasses: hasDirectPrice ? 'bg-cyan-50 text-cyan-700' : 'bg-amber-50 text-amber-700',
                             displayLabel: getShopItemDisplayName(item)
@@ -7080,7 +7089,7 @@
                     return {
                         value: product.id,
                         title: product.name || 'Produit sans nom',
-                        meta: product.baseCode || product.sku || product.id || '—',
+                        meta: getProductInternalCodeText(product),
                         description: product.description || '',
                         badge: storeLabel || 'Magasin',
                         badgeClasses: 'bg-sky-50 text-sky-700',
@@ -7157,11 +7166,18 @@
                 }
                 if (key === 'salesQuick') {
                     const item = appData.shopStock?.[value];
-                    return item ? getShopItemDisplayName(item) : '';
+                    const sourceProduct = item ? appData.storeProducts?.[item.sourceProductId] : null;
+                    const code = getProductInternalCode(sourceProduct);
+                    if (!item) return '';
+                    return code ? `${getShopItemDisplayName(item)} · ${code}` : `${getShopItemDisplayName(item)} · Code manquant`;
                 }
                 if (key === 'restock') {
                     const item = appData.shopStock?.[value];
-                    return item ? `${getShopItemDisplayName(item)} · ${getShopItemPackagingLabel(item)}` : '';
+                    const sourceProduct = item ? appData.storeProducts?.[item.sourceProductId] : null;
+                    const code = getProductInternalCode(sourceProduct);
+                    if (!item) return '';
+                    const baseLabel = `${getShopItemDisplayName(item)} · ${getShopItemPackagingLabel(item)}`;
+                    return code ? `${baseLabel} · ${code}` : `${baseLabel} · Code manquant`;
                 }
                 if (key === 'traceability') {
                     const product = appData.storeProducts?.[value];
@@ -7170,7 +7186,9 @@
                     const storeLabel = rawStoreId === UNASSIGNED_STORE_ID
                         ? 'Non assigné'
                         : getTraceabilityStoreLabel(resolveStoreId(rawStoreId));
-                    return storeLabel ? `${product.name || 'Produit'} · ${storeLabel}` : (product.name || 'Produit');
+                    const code = getProductInternalCode(product);
+                    const baseLabel = storeLabel ? `${product.name || 'Produit'} · ${storeLabel}` : (product.name || 'Produit');
+                    return code ? `${baseLabel} · ${code}` : `${baseLabel} · Code manquant`;
                 }
                 return '';
             }
@@ -11578,8 +11596,84 @@
                 return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
             }
 
+            function normalizeInternalProductCode(value = '') {
+                return (value || '')
+                    .toString()
+                    .trim()
+                    .toUpperCase()
+                    .replace(/[^A-Z0-9_-]+/g, '')
+                    .slice(0, 24);
+            }
+
+            function getProductCatalogId(product) {
+                if (!product) return '';
+                return product.catalogProductId || product.catalogId || product.id || '';
+            }
+
+            function getProductInternalCode(product) {
+                if (!product) return '';
+                return normalizeInternalProductCode(product.internalCode || product.baseProductCode || product.productCode || product.code || '');
+            }
+
+            function hasProductInternalCode(product) {
+                return !!getProductInternalCode(product);
+            }
+
+            function getProductInternalCodeBadge(product) {
+                const code = getProductInternalCode(product);
+                if (code) {
+                    return {
+                        label: `Code: ${code}`,
+                        classes: 'bg-slate-100 text-slate-700'
+                    };
+                }
+                return {
+                    label: 'Code manquant',
+                    classes: 'bg-amber-50 text-amber-700 border border-amber-200'
+                };
+            }
+
+            function getProductInternalCodeText(product) {
+                return getProductInternalCode(product) || 'Code manquant';
+            }
+
+            function getProductInternalCodeMarkup(product, options = {}) {
+                const {
+                    prefix = 'Code',
+                    missingLabel = 'Code manquant',
+                    classes = 'text-xs font-medium uppercase tracking-wide text-slate-400',
+                    missingClasses = 'text-xs font-semibold text-amber-700'
+                } = options;
+                const code = getProductInternalCode(product);
+                if (code) {
+                    return `<span class="${classes}">${escapeHtml(prefix)}: ${escapeHtml(code)}</span>`;
+                }
+                return `<span class="${missingClasses}">${escapeHtml(missingLabel)}</span>`;
+            }
+
+            function isSameProductIdentity(leftProduct, rightProduct) {
+                if (!leftProduct || !rightProduct) return false;
+                const leftCatalogId = getProductCatalogId(leftProduct);
+                const rightCatalogId = getProductCatalogId(rightProduct);
+                if (leftCatalogId && rightCatalogId && leftCatalogId === rightCatalogId) return true;
+                return normalizeString(leftProduct.name || '') === normalizeString(rightProduct.name || '')
+                    && normalizeString(getProductBaseUnitLabel(leftProduct)) === normalizeString(getProductBaseUnitLabel(rightProduct));
+            }
+
+            function findInternalCodeConflict(code, currentProductId = '') {
+                const normalizedCode = normalizeInternalProductCode(code);
+                if (!normalizedCode) return null;
+                const currentProduct = currentProductId ? (appData.storeProducts?.[currentProductId] || null) : null;
+                return Object.values(appData.storeProducts || {}).find(product => {
+                    if (!product || product.id === currentProductId) return false;
+                    if (getProductInternalCode(product) !== normalizedCode) return false;
+                    if (currentProduct && isSameProductIdentity(product, currentProduct)) return false;
+                    return true;
+                }) || null;
+            }
+
             function getBaseProductCode(product) {
-                const raw = (product?.baseProductCode || product?.productCode || product?.code || '').toString().trim().toUpperCase();
+                const raw = getProductInternalCode(product);
                 if (raw) return raw;
                 const fallback = (product?.name || 'PROD')
                     .toString()
@@ -15962,15 +16056,16 @@
                         const activeStore = getActiveStoreId();
                         const isOtherStore = resolvedStoreId && activeStore && resolvedStoreId !== activeStore;
                         const qty = Number(product.quantityInStore) || 0;
+                        const codeSuffix = ` · ${getProductInternalCodeText(product)}`;
                         const option = document.createElement('option');
                         option.value = product.id;
                         option.disabled = disableOutOfStock && qty <= 0;
                         if (showAssignmentHint && isUnassigned) {
-                            option.textContent = `${product.name} (Non assigné${option.disabled ? ' · Rupture' : ''})`;
+                            option.textContent = `${product.name}${codeSuffix} (Non assigné${option.disabled ? ' · Rupture' : ''})`;
                         } else if (showAssignmentHint && isOtherStore) {
-                            option.textContent = `${product.name} (${storeLabel || 'Autre magasin'})`;
+                            option.textContent = `${product.name}${codeSuffix} (${storeLabel || 'Autre magasin'})`;
                         } else {
-                            option.textContent = `${product.name} (Actuellement : ${qty}${option.disabled ? ' · Rupture' : ''})`;
+                            option.textContent = `${product.name}${codeSuffix} (Actuellement : ${qty}${option.disabled ? ' · Rupture' : ''})`;
                         }
                         select.appendChild(option);
                     });
@@ -16016,7 +16111,7 @@
                     return;
                 }
                 entryProductInfo.classList.remove('hidden');
-                entryProductName.textContent = product.name || '—';
+                entryProductName.textContent = `${product.name || '—'} · ${getProductInternalCodeText(product)}`;
                 const rawStoreId = product.storeId;
                 const isUnassigned = rawStoreId === UNASSIGNED_STORE_ID;
                 const resolvedStoreId = isUnassigned ? null : resolveStoreId(rawStoreId);
@@ -16067,6 +16162,7 @@
                         if (prefillName) entryNewNameInput.value = prefillName;
                         entryNewNameInput.focus();
                     }
+                    if (entryNewCodeInput) entryNewCodeInput.value = '';
                 } else {
                     syncProductComboboxInput('entry');
                     renderProductCombobox('entry');
@@ -16103,7 +16199,7 @@
                 const totalStock = Number(product.quantityInStore) || 0;
                 const available = Math.max(totalStock, 0);
                 exitProductInfo.classList.remove('hidden');
-                exitProductName.textContent = product.name || '—';
+                exitProductName.textContent = `${product.name || '—'} · ${getProductInternalCodeText(product)}`;
                 exitProductTotal.textContent = `${totalStock}`;
                 exitProductStock.textContent = `${available}`;
                 if (exitProductPending && exitProductPendingCount) {
@@ -16242,13 +16338,13 @@
 
             function getBulkExitProductOptionLabel(product) {
                 const quantity = Math.max(Number(product?.quantityInStore) || 0, 0);
-                return `${product?.name || 'Produit'} · Stock: ${quantity}`;
+                return `${product?.name || 'Produit'} · ${getProductInternalCodeText(product)} · Stock: ${quantity}`;
             }
 
             function getBulkTransferProductOptionLabel(product) {
                 const quantity = Math.max(Number(product?.quantityInStore) || 0, 0);
                 const primaryLabel = getPrimaryPackaging(product)?.label || 'format';
-                return `${product?.name || 'Produit'} · ${quantity} ${primaryLabel}`;
+                return `${product?.name || 'Produit'} · ${getProductInternalCodeText(product)} · ${quantity} ${primaryLabel}`;
             }
 
             function renderBulkTransferBoutiqueOptions() {
@@ -16558,12 +16654,14 @@
                 }
                 preview.rows.forEach(row => {
                     const tr = document.createElement('tr');
+                    const codeHtml = getProductInternalCodeMarkup(row.product, { prefix: 'Code' });
                     const totalLabel = row.pricePending
                         ? 'Prix à définir'
                         : formatCurrency(row.totalAmount, row.product.currency || 'CFA');
                     tr.innerHTML = `
                         <td class="px-3 py-3">
                             <p class="font-semibold text-gray-900">${row.product.name || 'Produit'}</p>
+                            <p class="mt-1">${codeHtml}</p>
                             <p class="mt-1 text-xs text-gray-500">Ligne ${row.lineNumber}</p>
                         </td>
                         <td class="px-3 py-3 text-right text-gray-700">${row.quantity}</td>
@@ -16681,9 +16779,11 @@
                 bulkTransferPreviewTbody.innerHTML = '';
                 preview.rows.forEach(row => {
                     const tr = document.createElement('tr');
+                    const codeHtml = getProductInternalCodeMarkup(row.product, { prefix: 'Code' });
                     tr.innerHTML = `
                         <td class="px-3 py-3">
                             <p class="font-semibold text-slate-900">${row.product.name || 'Produit'}</p>
+                            <p class="mt-1">${codeHtml}</p>
                             <p class="mt-1 text-xs text-slate-500">Ligne ${row.lineNumber}</p>
                         </td>
                         <td class="px-3 py-3 text-right text-slate-700">${row.quantity}</td>
@@ -16941,7 +17041,7 @@
                         option.value = product.id;
                         const isMissingSource = !availability.sourceProduct;
                         option.disabled = isMissingSource || availability.maxPackages <= 0;
-                        option.textContent = `${getShopItemDisplayName(product)} (Actuellement : ${formatShopStockBreakdown(getShopStockBaseUnits(product), product, { includeBaseTotal: true })}${isMissingSource ? ' · Source magasin introuvable' : availability.maxPackages <= 0 ? ' · Rupture magasin' : ` · Max: ${availability.maxPackages}`})`;
+                        option.textContent = `${getShopItemDisplayName(product)} · ${getProductInternalCodeText(availability.sourceProduct)} (Actuellement : ${formatShopStockBreakdown(getShopStockBaseUnits(product), product, { includeBaseTotal: true })}${isMissingSource ? ' · Source magasin introuvable' : availability.maxPackages <= 0 ? ' · Rupture magasin' : ` · Max: ${availability.maxPackages}`})`;
                         select.appendChild(option);
                     });
                 });
@@ -16965,7 +17065,7 @@
                 const normalizedSearch = normalizeString(searchTerm);
                 const filteredProducts = products.filter(product => {
                     if (!normalizedSearch) return true;
-                    const label = normalizeString(`${product.name || ''} ${product.description || ''}`);
+                    const label = normalizeString(`${product.name || ''} ${getProductInternalCode(product)} ${product.description || ''}`);
                     return label.includes(normalizedSearch);
                 });
 
@@ -16979,6 +17079,7 @@
                     const canCreateExit = isCompanyFeatureEnabled('store_stock.exit');
                     sortedProducts.forEach(product => {
                         const quantity = Number(product.quantityInStore ?? 0);
+                        const codeMeta = getProductInternalCodeMarkup(product, { prefix: 'Code' });
                         const quantityClass = quantity <= 10
                             ? 'bg-red-100 text-red-700'
                             : quantity <= 50
@@ -17007,7 +17108,10 @@
                             : '';
                         html += `
                             <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${product.name}</td>
+                                <td class="px-6 py-4 text-sm font-medium text-gray-900">
+                                    <div>${product.name}</div>
+                                    <div class="mt-1">${codeMeta}</div>
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.description || ''}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">
                                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${quantityClass}">${quantity}</span>
@@ -17082,7 +17186,7 @@
                     const storeId = isUnassigned ? null : resolveStoreId(rawStoreId);
                     if (!isUnassigned && (!storeId || !allowedStoreIds.has(storeId))) return false;
                     const name = normalizeString(product.name || '');
-                    const code = normalizeString(getBaseProductCode(product));
+                    const code = normalizeString(getProductInternalCode(product));
                     const desc = normalizeString(product.description || '');
                     const categoryName = normalizeString(getCategoryNameById(product.categoryId) || product.categoryName || product.category || product.type || '');
                     return !normalizedSearch || name.includes(normalizedSearch) || code.includes(normalizedSearch) || desc.includes(normalizedSearch) || categoryName.includes(normalizedSearch);
@@ -17102,7 +17206,8 @@
                     const isUnassigned = rawStoreId === UNASSIGNED_STORE_ID;
                     const storeId = isUnassigned ? null : resolveStoreId(rawStoreId);
                     const storeName = storeId ? (getStoreName(storeId) || DEFAULT_STORE_NAME) : 'Aucun magasin';
-                    const baseCode = getBaseProductCode(product);
+                    const baseCode = getProductInternalCode(product);
+                    const codeHint = baseCode ? '' : 'placeholder="Code manquant"';
                     const baseUnitLabel = getProductBaseUnitLabel(product);
                     const packagings = getProductPackagings(product);
                     const primaryPackaging = getPrimaryPackaging(product);
@@ -17136,7 +17241,7 @@
                                 </div>
                             </td>
                             <td class="px-4 py-3">
-                                <input type="text" value="${baseCode}" maxlength="24"
+                                <input type="text" value="${escapeHtml(baseCode)}" maxlength="24" ${codeHint}
                                     data-price-field="baseProductCode"
                                     class="w-28 rounded-lg border border-gray-200 px-2 py-1 text-sm uppercase tracking-wider focus:ring-cyan-500 focus:border-cyan-500" />
                             </td>
@@ -17191,7 +17296,7 @@
                 const row = priceTableTbody?.querySelector(`[data-price-row="${productId}"]`);
                 if (!row) return;
 
-                const baseProductCode = (row.querySelector('[data-price-field="baseProductCode"]')?.value || '').trim().toUpperCase();
+                const internalCode = normalizeInternalProductCode(row.querySelector('[data-price-field="baseProductCode"]')?.value || '');
                 const baseUnitLabel = (row.querySelector('[data-price-field="baseUnitLabel"]')?.value || DEFAULT_BASE_UNIT_LABEL).trim();
                 const currencyInput = row.querySelector('[data-price-field="currency"]');
                 const currency = (currencyInput?.value || 'CFA').trim().toUpperCase();
@@ -17205,10 +17310,6 @@
                 }
                 const legacyFields = buildLegacyFieldsFromPackagings(packagingValidation.packagings);
 
-                if (!baseProductCode) {
-                    showSuccessToast("Code produit invalide.");
-                    return;
-                }
                 if (!baseUnitLabel) {
                     showSuccessToast("Unité de base invalide.");
                     return;
@@ -17220,7 +17321,7 @@
 
                 const pricingSnapshot = {
                     currency,
-                    baseProductCode,
+                    baseProductCode: internalCode,
                     baseUnitLabel,
                     packagings: packagingValidation.packagings
                 };
@@ -17228,13 +17329,23 @@
                     ? PRICING_STATUS_ACTIVE
                     : PRICING_STATUS_PENDING;
 
+                if (internalCode) {
+                    const conflict = findInternalCodeConflict(internalCode, productId);
+                    if (conflict) {
+                        showSuccessToast(`Le code interne ${internalCode} est déjà utilisé par ${conflict.name || 'un autre produit'}.`);
+                        return;
+                    }
+                }
+
                 if (!confirm("Confirmer la mise à jour des prix pour ce produit ?")) {
                     return;
                 }
 
                 const now = new Date().toISOString();
                 const updates = {};
-                updates[`${dbBasePath}/storeProducts/${productId}/baseProductCode`] = baseProductCode;
+                updates[`${dbBasePath}/storeProducts/${productId}/catalogProductId`] = getProductCatalogId(appData.storeProducts?.[productId]) || productId;
+                updates[`${dbBasePath}/storeProducts/${productId}/internalCode`] = internalCode || '';
+                updates[`${dbBasePath}/storeProducts/${productId}/baseProductCode`] = internalCode || '';
                 updates[`${dbBasePath}/storeProducts/${productId}/baseUnitLabel`] = baseUnitLabel;
                 updates[`${dbBasePath}/storeProducts/${productId}/currency`] = currency;
                 updates[`${dbBasePath}/storeProducts/${productId}/categoryId`] = categoryId || null;
@@ -17256,7 +17367,8 @@
                     const packageType = item.packagingType || item.packageCode || 'detail';
                     const productSnapshot = {
                         ...appData.storeProducts?.[productId],
-                        baseProductCode,
+                        internalCode,
+                        baseProductCode: internalCode || '',
                         baseUnitLabel,
                         currency,
                         categoryId: categoryId || null,
@@ -17438,8 +17550,11 @@
                     created += 1;
                     updates[`${dbBasePath}/storeProducts/${newId}`] = {
                         id: newId,
+                        catalogProductId: newId,
                         name: rawName.trim(),
                         description: '',
+                        internalCode: '',
+                        baseProductCode: '',
                         purchaseCost,
                         storeSellingPrice: storePrice,
                         boutiqueSellingPrice: boutiquePrice,
@@ -17595,6 +17710,7 @@
                             const clone = {
                                 ...product,
                                 id: cloneId,
+                                catalogProductId: getProductCatalogId(product) || product.id || cloneId,
                                 storeId,
                                 quantityInStore: 0,
                                 createdAt: now,
@@ -18541,7 +18657,8 @@
                 const filteredStock = Object.values(stock).filter(item => {
                     const matchesBoutique = activeBoutique ? resolveBoutiqueId(item.boutiqueId) === activeBoutique : true;
                     if (!normalizedSearch) return matchesBoutique;
-                    const label = normalizeString(`${item.displayName || ''} ${item.name || ''} ${item.sourceName || ''}`);
+                    const sourceProduct = appData.storeProducts?.[item.sourceProductId];
+                    const label = normalizeString(`${item.displayName || ''} ${item.name || ''} ${item.sourceName || ''} ${getProductInternalCode(sourceProduct)}`);
                     return matchesBoutique && label.includes(normalizedSearch);
                 });
 
@@ -18575,10 +18692,12 @@
                                 </button>`
                             : '';
                         const itemLabel = getShopItemDisplayName(item);
+                        const codeMeta = getProductInternalCodeMarkup(sourceProduct, { prefix: 'Code' });
                         html += `
                             <tr class="hover:bg-gray-50 ${isLowStock ? 'bg-red-50' : ''}">
                                 <td class="px-6 py-4 text-sm font-medium text-gray-900">
                                     <div>${itemLabel}</div>
+                                    <div class="mt-1">${codeMeta}</div>
                                     <div class="text-xs text-gray-400">${getShopItemPackagingLabel(item)}</div>
                                     <div class="text-xs text-cyan-700 mt-1">${lotSummary}</div>
                                 </td>
@@ -19431,7 +19550,7 @@
                     if (normalized) {
                         const haystack = [
                             product.name,
-                            product.baseCode,
+                            getProductInternalCode(product),
                             product.sku,
                             product.description,
                             product.id
@@ -19455,7 +19574,9 @@
                         : getTraceabilityStoreLabel(resolveStoreId(rawStoreId));
                     const option = document.createElement('option');
                     option.value = product.id;
-                    option.textContent = storeLabel ? `${product.name} · ${storeLabel}` : product.name;
+                    const code = getProductInternalCode(product);
+                    const baseLabel = storeLabel ? `${product.name} · ${storeLabel}` : product.name;
+                    option.textContent = code ? `${baseLabel} · ${code}` : `${baseLabel} · Code manquant`;
                     traceabilityProductSelect.appendChild(option);
                 });
                 if (currentSelection && traceabilityProductSelect.querySelector(`option[value="${currentSelection}"]`)) {
@@ -20667,7 +20788,7 @@
                     <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm" data-packaging-row="${safeId}">
                         <div class="grid grid-cols-1 xl:grid-cols-[1fr_1.2fr_1.4fr_0.9fr_1fr_1fr_1fr_auto] gap-3">
                             <label class="block">
-                                <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Code interne</span>
+                                <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Code format</span>
                                 <input type="text" value="${escapeHtml(packaging.code || '')}" data-packaging-field="code"
                                     class="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm uppercase tracking-wider focus:ring-cyan-500 focus:border-cyan-500" placeholder="Optionnel" />
                             </label>
@@ -20845,23 +20966,35 @@
                 }
                 const legacyFields = buildLegacyFieldsFromPackagings(validation.packagings);
                 const row = priceTableTbody?.querySelector(`[data-price-row="${activePricePackagingProductId}"]`);
-                const baseProductCode = ((row?.querySelector('[data-price-field="baseProductCode"]')?.value) || getBaseProductCode(product)).trim().toUpperCase();
+                const internalCode = normalizeInternalProductCode((row?.querySelector('[data-price-field="baseProductCode"]')?.value) || getProductInternalCode(product));
                 const currency = ((row?.querySelector('[data-price-field="currency"]')?.value) || product.currency || 'CFA').trim().toUpperCase();
                 const rawCategoryId = row?.querySelector('[data-price-field="categoryId"]')?.value || product.categoryId || '';
                 const categoryId = canManageCategories() ? rawCategoryId : (product.categoryId || '');
                 const pricingSnapshot = {
                     currency,
-                    baseProductCode,
+                    baseProductCode: internalCode,
                     baseUnitLabel,
                     packagings: validation.packagings
                 };
                 const pricingStatus = computeProductPricingComplete(pricingSnapshot)
                     ? PRICING_STATUS_ACTIVE
                     : PRICING_STATUS_PENDING;
+                if (internalCode) {
+                    const conflict = findInternalCodeConflict(internalCode, activePricePackagingProductId);
+                    if (conflict) {
+                        if (pricePackagingError) {
+                            pricePackagingError.textContent = `Le code interne ${internalCode} est déjà utilisé par ${conflict.name || 'un autre produit'}.`;
+                            pricePackagingError.classList.remove('hidden');
+                        }
+                        return;
+                    }
+                }
                 const now = new Date().toISOString();
                 const updates = {};
                 updates[`${dbBasePath}/storeProducts/${activePricePackagingProductId}/baseUnitLabel`] = baseUnitLabel;
-                updates[`${dbBasePath}/storeProducts/${activePricePackagingProductId}/baseProductCode`] = baseProductCode;
+                updates[`${dbBasePath}/storeProducts/${activePricePackagingProductId}/catalogProductId`] = getProductCatalogId(product) || activePricePackagingProductId;
+                updates[`${dbBasePath}/storeProducts/${activePricePackagingProductId}/internalCode`] = internalCode || '';
+                updates[`${dbBasePath}/storeProducts/${activePricePackagingProductId}/baseProductCode`] = internalCode || '';
                 updates[`${dbBasePath}/storeProducts/${activePricePackagingProductId}/currency`] = currency;
                 updates[`${dbBasePath}/storeProducts/${activePricePackagingProductId}/categoryId`] = categoryId || null;
                 updates[`${dbBasePath}/storeProducts/${activePricePackagingProductId}/packagings`] = validation.packagings;
@@ -20882,7 +21015,8 @@
                     const productSnapshot = {
                         ...product,
                         baseUnitLabel,
-                        baseProductCode,
+                        internalCode,
+                        baseProductCode: internalCode || '',
                         currency,
                         categoryId: categoryId || null,
                         packagings: validation.packagings,
@@ -21580,7 +21714,7 @@
 
                 if (salesQuickSelectionInfo && salesQuickSelectionStock && salesQuickSelectionPrice) {
                     const sellingPrice = getPackageSellingPrice(sourceProduct, selectedPackaging?.code);
-                    salesQuickSelectionStock.textContent = `Stock disponible: ${formatShopStockBreakdown(activeQty, shopItem, { includeBaseTotal: true })}`;
+                    salesQuickSelectionStock.textContent = `Stock disponible: ${formatShopStockBreakdown(activeQty, shopItem, { includeBaseTotal: true })} · ${getProductInternalCodeText(sourceProduct)}`;
                     salesQuickSelectionPrice.textContent = `${selectedPackaging?.label || getProductBaseUnitLabel(sourceProduct)} · ${hasUsableSellingPrice(sellingPrice) ? formatCurrency(sellingPrice, sourceProduct.currency || 'CFA') : 'Prix à définir'} · ${selectedUnits} unité(s)`;
                     salesQuickSelectionInfo.classList.remove('hidden');
                 }
@@ -21615,7 +21749,8 @@
                 const normalizedSearch = normalizeString(searchTerm);
                 const activeBoutique = getActiveBoutiqueId();
                 const stock = Object.values(appData.shopStock || {}).filter(item => {
-                    const name = normalizeString(`${item.displayName || ''} ${item.name || ''} ${item.sourceName || ''}`);
+                    const sourceProduct = appData.storeProducts?.[item.sourceProductId];
+                    const name = normalizeString(`${item.displayName || ''} ${item.name || ''} ${item.sourceName || ''} ${getProductInternalCode(sourceProduct)}`);
                     const category = normalizeString(getShopItemCategory(item));
                     const matchesSearch = !normalizedSearch || name.includes(normalizedSearch) || category.includes(normalizedSearch);
                     const matchesCategory = selectedSalesCategory === 'Tous' || getShopItemCategory(item) === selectedSalesCategory;
@@ -21654,6 +21789,7 @@
                             ? 'bg-yellow-100 text-yellow-700'
                             : 'bg-green-100 text-green-700';
                     const itemLabel = getShopItemDisplayName(item);
+                    const codeMeta = getProductInternalCodeMarkup(sourceProduct, { prefix: 'Code', classes: 'text-[11px] font-semibold uppercase tracking-wide text-slate-400', missingClasses: 'text-[11px] font-semibold text-amber-600' });
                     const hasAnyDirectPrice = packagings.some(packaging => {
                         const unitCount = Number(packaging.unitCount) || 1;
                         return activeQty >= unitCount && hasUsableSellingPrice(getPackageSellingPrice(sourceProduct, packaging.code));
@@ -21683,6 +21819,7 @@
                                 <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${stockClass}">${stockLabel}</span>
                             </div>
                             <h3 class="mt-3 text-base font-semibold text-gray-900">${itemLabel}</h3>
+                            <p class="mt-1">${codeMeta}</p>
                             <p class="mt-1 text-xs text-gray-400">${formatShopStockBreakdown(activeQty, item, { includeBaseTotal: true })}</p>
                             <p class="mt-2 text-xs font-semibold text-cyan-700">${activeLot ? `${activeLot.label} · ${formatBaseUnits(activeQty, getProductBaseUnitLabel(sourceProduct))}` : (pendingLot ? `${pendingLot.label} · en attente de validation` : 'Aucun lot actif')}</p>
                             ${hasAnyDirectPrice ? '' : '<p class="mt-1 text-[11px] font-semibold text-amber-600">Prix à définir avant validation ou facture.</p>'}
@@ -22272,6 +22409,8 @@
                 if (cartItemsList) {
                     cartItemsList.innerHTML = cartItems.map((item, index) => {
                         syncCartItemPriceMetadata(item);
+                        const sourceProduct = item.shopProductId ? appData.storeProducts?.[appData.shopStock?.[item.shopProductId]?.sourceProductId] : null;
+                        const internalCodeText = getProductInternalCodeText(sourceProduct);
                         const hasLinePrice = hasUsableSellingPrice(item.sellingPrice) && item.pricePending !== true;
                         const subtotal = hasLinePrice ? Number(item.sellingPrice) * item.quantity : null;
                         const originalSellingPrice = getCartItemOriginalSellingPrice(item);
@@ -22292,6 +22431,7 @@
                             <div class="border border-gray-200 rounded-xl p-3 flex items-start justify-between gap-3">
                                 <div>
                                     <p class="text-sm font-semibold text-gray-900">${item.name}</p>
+                                    <p class="text-[11px] font-semibold uppercase tracking-wide ${hasProductInternalCode(sourceProduct) ? 'text-slate-400' : 'text-amber-600'} mt-1">${internalCodeText}</p>
                                     ${packageInfo}
                                     ${lotInfo}
                                     <p class="text-xs text-gray-500 mt-1">${hasLinePrice ? `${formatCurrency(item.sellingPrice, item.currency)} x ${item.quantity}` : 'Prix à définir avant validation'}</p>
@@ -25150,7 +25290,7 @@
                 }
                 const canEditPricing = canManagePricing();
                 const name = newProductForm['product-name'].value;
-                const baseProductCode = (productBaseCodeInput?.value || '').trim().toUpperCase();
+                const internalCode = normalizeInternalProductCode(productBaseCodeInput?.value || '');
                 const baseUnitLabel = (productBaseUnitLabelInput?.value || DEFAULT_BASE_UNIT_LABEL).trim();
                 const currency = (productCurrencyInput?.value || 'CFA').trim().toUpperCase();
                 const rawCategoryId = productCategorySelect?.value || '';
@@ -25158,10 +25298,6 @@
                 const packagingValidation = validatePackagingEntries(collectPackagingEditorEntries(newProductPackagingsList), { baseUnitLabel });
                 if (!name) {
                     showSuccessToast("Le nom du produit est requis.");
-                    return;
-                }
-                if (!baseProductCode) {
-                    showSuccessToast("Le code produit est requis.");
                     return;
                 }
                 if (!baseUnitLabel) {
@@ -25180,7 +25316,7 @@
                 const legacyFields = canEditPricing ? baseLegacyFields : stripLegacyPriceFields(baseLegacyFields);
                 const pricingSnapshot = {
                     currency,
-                    baseProductCode,
+                    baseProductCode: internalCode,
                     baseUnitLabel,
                     packagings: packagingValidation.packagings
                 };
@@ -25191,10 +25327,25 @@
                     if (newProductSubmitButton) newProductSubmitButton.disabled = true;
 
                     // LOGIQUE D'AGRÉGATION AUTO (MAGASIN)
-                    const existingProduct = Object.values(appData.storeProducts).find(p =>
+                    const existingProducts = Object.values(appData.storeProducts).filter(p =>
                         p.storeId === UNASSIGNED_STORE_ID &&
-                        p.name.toLowerCase() === name.trim().toLowerCase()
+                        (internalCode
+                            ? getProductInternalCode(p) === internalCode
+                            : p.name.toLowerCase() === name.trim().toLowerCase())
                     );
+                    if (!internalCode && existingProducts.length > 1) {
+                        showSuccessToast("Plusieurs produits portent déjà cette désignation. Renseignez un code interne pour les différencier.");
+                        return;
+                    }
+                    const existingProduct = existingProducts[0] || null;
+
+                    if (internalCode) {
+                        const conflict = findInternalCodeConflict(internalCode, existingProduct?.id || '');
+                        if (conflict) {
+                            showSuccessToast(`Le code interne ${internalCode} est déjà utilisé par ${conflict.name || 'un autre produit'}.`);
+                            return;
+                        }
+                    }
 
                     if (existingProduct) {
                         if (!canEditPricing) {
@@ -25203,7 +25354,10 @@
                         }
                         const updates = {};
                         const now = new Date().toISOString();
-                        updates[`${dbBasePath}/storeProducts/${existingProduct.id}/baseProductCode`] = baseProductCode;
+                        const catalogProductId = getProductCatalogId(existingProduct) || existingProduct.id;
+                        updates[`${dbBasePath}/storeProducts/${existingProduct.id}/catalogProductId`] = catalogProductId;
+                        updates[`${dbBasePath}/storeProducts/${existingProduct.id}/internalCode`] = internalCode || '';
+                        updates[`${dbBasePath}/storeProducts/${existingProduct.id}/baseProductCode`] = internalCode || '';
                         updates[`${dbBasePath}/storeProducts/${existingProduct.id}/baseUnitLabel`] = baseUnitLabel;
                         updates[`${dbBasePath}/storeProducts/${existingProduct.id}/packagings`] = packagingValidation.packagings;
                         updates[`${dbBasePath}/storeProducts/${existingProduct.id}/currency`] = currency;
@@ -25218,7 +25372,9 @@
                             const packageType = item.packagingType || item.packageCode || 'detail';
                             const sourceSnapshot = {
                                 ...existingProduct,
-                                baseProductCode,
+                                catalogProductId,
+                                internalCode,
+                                baseProductCode: internalCode || '',
                                 baseUnitLabel,
                                 currency,
                                 categoryId: categoryId || null,
@@ -25248,9 +25404,11 @@
                         const newRef = push(ref(db, `${dbBasePath}/storeProducts`));
                         const newProd = {
                             id: newRef.key,
+                            catalogProductId: newRef.key,
                             name: name.trim(),
                             description: '',
-                            baseProductCode,
+                            internalCode: internalCode || '',
+                            baseProductCode: internalCode || '',
                             baseUnitLabel,
                             packagings: packagingValidation.packagings,
                             currency,
@@ -25471,6 +25629,7 @@
                         return;
                     }
                     const name = entryNewNameInput ? entryNewNameInput.value.trim() : '';
+                    const internalCode = normalizeInternalProductCode(entryNewCodeInput?.value || '');
                     if (!name) {
                         if (entryError) {
                             entryError.textContent = "Veuillez renseigner le nom du produit.";
@@ -25478,17 +25637,38 @@
                         }
                         return;
                     }
-                    const existingProduct = Object.values(appData.storeProducts || {}).find(product => {
-                        if (normalizeString(product.name) !== normalizeString(name)) return false;
-                        if (product.storeId === UNASSIGNED_STORE_ID) return true;
-                        return resolveStoreId(product.storeId) === storeId;
+                    const existingProducts = Object.values(appData.storeProducts || {}).filter(product => {
+                        const sameStoreScope = product.storeId === UNASSIGNED_STORE_ID || resolveStoreId(product.storeId) === storeId;
+                        if (!sameStoreScope) return false;
+                        if (internalCode) {
+                            return getProductInternalCode(product) === internalCode;
+                        }
+                        return normalizeString(product.name) === normalizeString(name);
                     });
+                    if (!internalCode && existingProducts.length > 1) {
+                        if (entryError) {
+                            entryError.textContent = "Plusieurs produits portent déjà cette désignation. Ajoutez un code interne pour éviter l'ambiguïté.";
+                            entryError.classList.remove('hidden');
+                        }
+                        return;
+                    }
+                    const existingProduct = existingProducts[0] || null;
+                    if (internalCode) {
+                        const conflict = findInternalCodeConflict(internalCode, existingProduct?.id || '');
+                        if (conflict) {
+                            if (entryError) {
+                                entryError.textContent = `Le code interne ${internalCode} est déjà utilisé par ${conflict.name || 'un autre produit'}.`;
+                                entryError.classList.remove('hidden');
+                            }
+                            return;
+                        }
+                    }
                     if (existingProduct) {
                         pid = existingProduct.id;
                         prod = existingProduct;
                     } else {
                         const now = new Date().toISOString();
-                        const baseProductCode = generateEntryProductCode(name);
+                        const baseProductCode = internalCode || '';
                         const baseUnitLabel = DEFAULT_BASE_UNIT_LABEL;
                         const currency = (DEFAULT_SUPPLIER_CURRENCY || 'CFA').toUpperCase();
                         const packagings = [
@@ -25509,8 +25689,10 @@
                         pid = newRef.key;
                         prod = {
                             id: pid,
+                            catalogProductId: pid,
                             name: name.trim(),
                             description: description || '',
+                            internalCode: internalCode || '',
                             baseProductCode,
                             baseUnitLabel,
                             packagings,
@@ -25534,12 +25716,15 @@
                         const isOtherStore = resolvedStoreId && resolvedStoreId !== storeId;
                         if (isOtherStore) {
                             const normalizedName = normalizeString(prod.name || '');
+                            const selectedInternalCode = getProductInternalCode(prod);
                             const existingInStore = Object.values(appData.storeProducts || {}).find(product =>
-                                normalizeString(product.name || '') === normalizedName &&
+                                ((selectedInternalCode && getProductInternalCode(product) === selectedInternalCode)
+                                    || (!selectedInternalCode && normalizeString(product.name || '') === normalizedName)) &&
                                 resolveStoreId(product.storeId) === storeId
                             );
                             const existingUnassigned = Object.values(appData.storeProducts || {}).find(product =>
-                                normalizeString(product.name || '') === normalizedName &&
+                                ((selectedInternalCode && getProductInternalCode(product) === selectedInternalCode)
+                                    || (!selectedInternalCode && normalizeString(product.name || '') === normalizedName)) &&
                                 product.storeId === UNASSIGNED_STORE_ID
                             );
                             if (existingInStore) {
@@ -25554,6 +25739,7 @@
                                 clonePayload = {
                                     ...prod,
                                     id: cloneId,
+                                    catalogProductId: getProductCatalogId(prod) || prod.id || cloneId,
                                     storeId,
                                     quantityInStore: 0,
                                     createdAt: now,
@@ -25584,9 +25770,15 @@
                     const currentStock = Number(prod.quantityInStore) || 0;
                     const baseStock = isUnassigned ? 0 : currentStock;
                     const newStock = baseStock + qty;
+                    const entryInternalCode = isNewMode ? normalizeInternalProductCode(entryNewCodeInput?.value || '') : '';
                     const updates = {};
                     if (clonePayload) {
                         updates[`${dbBasePath}/storeProducts/${clonePayload.id}`] = clonePayload;
+                    }
+                    if (entryInternalCode) {
+                        updates[`${dbBasePath}/storeProducts/${pid}/catalogProductId`] = getProductCatalogId(prod) || pid;
+                        updates[`${dbBasePath}/storeProducts/${pid}/internalCode`] = entryInternalCode;
+                        updates[`${dbBasePath}/storeProducts/${pid}/baseProductCode`] = entryInternalCode;
                     }
                     updates[`${dbBasePath}/storeProducts/${pid}/quantityInStore`] = newStock;
                     if (isUnassigned) {
