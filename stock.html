@@ -836,7 +836,7 @@
                                         <p class="text-sm font-semibold text-gray-800">Panier</p>
                                         <p class="mt-1 text-xs text-gray-500">Les articles ajoutés depuis le catalogue apparaissent ici.</p>
                                     </div>
-                                    <span id="sales-sidebar-cart-count" class="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600">0 ligne</span>
+                                    <span id="sales-sidebar-cart-count" class="inline-flex items-center whitespace-nowrap rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600">0 ligne</span>
                                 </div>
                                 <div id="sales-sidebar-cart-host" class="mt-4"></div>
                             </div>
@@ -23059,6 +23059,7 @@
                 if (cartItemsList) {
                     cartItemsList.innerHTML = cartItems.map((item, index) => {
                         syncCartItemPriceMetadata(item);
+                        const isCompactCartView = salesPosView === 'catalog';
                         const shopProduct = item.shopProductId ? appData.shopStock?.[item.shopProductId] : null;
                         const sourceProduct = shopProduct ? appData.storeProducts?.[shopProduct.sourceProductId] : null;
                         const packageOptions = (shopProduct ? getShopItemSellPackagings(shopProduct) : []).map(packaging => {
@@ -23086,6 +23087,49 @@
                             : '';
                         const packageInfo = item.packageLabel ? `<p class="text-[11px] font-semibold text-slate-500 mt-1">${item.packageLabel} · ${item.quantity}</p>` : '';
                         const lotInfo = item.lotLabel ? `<p class="text-[11px] font-semibold text-cyan-700 mt-1">${item.lotLabel}</p>` : '';
+                        if (isCompactCartView) {
+                            return `
+                                <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-semibold text-gray-900">${item.name}</p>
+                                            <p class="mt-1 text-[11px] font-semibold uppercase tracking-wide ${hasProductInternalCode(sourceProduct) ? 'text-slate-400' : 'text-amber-600'}">${internalCodeText}</p>
+                                            ${packageInfo}
+                                            ${lotInfo}
+                                            ${priceStatus}
+                                        </div>
+                                        <button type="button" data-cart-action="remove" data-index="${index}" class="inline-flex shrink-0 items-center justify-center rounded-lg border border-red-200 px-2.5 py-2 text-[11px] font-semibold text-red-600 hover:bg-red-50">Retirer</button>
+                                    </div>
+                                    <div class="mt-4 grid grid-cols-2 gap-3">
+                                        <label class="col-span-2 block">
+                                            <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Conditionnement</span>
+                                            <select data-cart-package data-index="${index}"
+                                                class="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400">
+                                                ${packageOptions}
+                                            </select>
+                                        </label>
+                                        <label class="block">
+                                            <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Qté</span>
+                                            <input type="number" min="1" step="1" value="${item.quantity}" data-cart-quantity data-index="${index}"
+                                                class="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-center text-gray-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" />
+                                        </label>
+                                        <label class="block">
+                                            <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Prix</span>
+                                            <input type="number" min="0" step="0.01" value="${getCartItemPriceInputValue(item)}" data-cart-price data-index="${index}"
+                                                class="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-right text-gray-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                                                placeholder="${hasOriginalSellingPrice ? formatInputNumber(originalSellingPrice) : 'Prix'}" />
+                                        </label>
+                                        <label class="col-span-2 block">
+                                            <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Total ligne</span>
+                                            <input type="number" min="0" step="0.01" value="${getCartItemLineTotalInputValue(item)}" data-cart-line-total data-index="${index}"
+                                                class="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-right font-semibold ${hasLinePrice ? 'text-gray-900' : 'text-amber-600'} focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                                                placeholder="${hasLinePrice ? formatInputNumber(subtotal) : 'Total'}" />
+                                        </label>
+                                    </div>
+                                    ${resetPriceButton ? `<div class="mt-3 flex justify-start">${resetPriceButton}</div>` : ''}
+                                </div>
+                            `;
+                        }
                         return `
                             <div class="rounded-2xl border border-gray-200 bg-white p-4">
                                 <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
