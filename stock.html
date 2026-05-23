@@ -862,34 +862,30 @@
                                     </div>
                                     <div id="sales-sidebar-cart-host" class="mt-4"></div>
                                 </div>
-                                <div class="space-y-3 px-6 py-5">
-                                    <button type="button" id="sales-open-client-page-button"
-                                        class="flex w-full items-start justify-between gap-3 rounded-2xl border border-cyan-100 bg-cyan-50/60 px-4 py-3 text-left hover:border-cyan-200 hover:bg-cyan-50">
-                                        <div>
-                                            <p class="text-xs font-semibold uppercase tracking-wide text-cyan-700">Client</p>
-                                            <p id="sales-summary-client-value" class="mt-1 text-sm font-semibold text-gray-800">Aucun client sélectionné</p>
-                                            <p id="sales-summary-client-meta" class="mt-1 text-xs text-cyan-800/80">Vente libre</p>
+                                <div class="space-y-4 px-6 py-5">
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                                            <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Lignes</p>
+                                            <p id="sales-summary-lines" class="mt-1 text-xl font-bold text-slate-900">0</p>
                                         </div>
-                                        <span class="text-xs font-semibold text-cyan-700">Ouvrir</span>
-                                    </button>
-                                    <button type="button" id="sales-open-payment-page-button"
-                                        class="flex w-full items-start justify-between gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/50 px-4 py-3 text-left hover:border-emerald-200 hover:bg-emerald-50">
-                                        <div>
-                                            <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">Paiement</p>
-                                            <p id="sales-summary-payment-value" class="mt-1 text-sm font-semibold text-gray-800">Comptant immédiat</p>
-                                            <p id="sales-summary-payment-meta" class="mt-1 text-xs text-emerald-800/80">Aucun crédit client</p>
+                                        <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                                            <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Quantité</p>
+                                            <p id="sales-summary-quantity" class="mt-1 text-xl font-bold text-slate-900">0</p>
                                         </div>
-                                        <span class="text-xs font-semibold text-emerald-700">Ouvrir</span>
-                                    </button>
-                                    <button type="button" id="sales-open-pricing-page-button"
-                                        class="flex w-full items-start justify-between gap-3 rounded-2xl border border-amber-100 bg-amber-50/50 px-4 py-3 text-left hover:border-amber-200 hover:bg-amber-50">
-                                        <div>
-                                            <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Prix & TVA</p>
-                                            <p id="sales-summary-pricing-value" class="mt-1 text-sm font-semibold text-gray-800">TVA active · Aucun ajustement</p>
-                                            <p id="sales-summary-pricing-meta" class="mt-1 text-xs text-amber-800/80">Sous-total et taxe</p>
+                                        <div class="rounded-2xl border border-cyan-100 bg-cyan-50/70 px-4 py-3">
+                                            <p class="text-[11px] font-semibold uppercase tracking-wide text-cyan-700">Total</p>
+                                            <p id="sales-summary-total" class="mt-1 text-base font-bold text-cyan-900">0 FCFA</p>
                                         </div>
-                                        <span class="text-xs font-semibold text-amber-700">Ouvrir</span>
-                                    </button>
+                                        <div class="rounded-2xl border border-amber-100 bg-amber-50/70 px-4 py-3">
+                                            <p class="text-[11px] font-semibold uppercase tracking-wide text-amber-700">Reste</p>
+                                            <p id="sales-summary-remaining" class="mt-1 text-base font-bold text-amber-900">0 FCFA</p>
+                                        </div>
+                                    </div>
+                                    <div id="sales-summary-status-box" class="rounded-2xl border border-gray-200 bg-white px-4 py-3">
+                                        <p id="sales-summary-status-title" class="text-xs font-semibold uppercase tracking-wide text-gray-500">Statut vente</p>
+                                        <p id="sales-summary-status-value" class="mt-1 text-sm font-semibold text-gray-900">Panier vide</p>
+                                        <p id="sales-summary-status-meta" class="mt-1 text-xs text-gray-500">Ajoutez des produits pour commencer.</p>
+                                    </div>
                                 </div>
                             </div>
 
@@ -5590,12 +5586,14 @@
             const salesOpenClientPageButton = document.getElementById('sales-open-client-page-button');
             const salesOpenPaymentPageButton = document.getElementById('sales-open-payment-page-button');
             const salesOpenPricingPageButton = document.getElementById('sales-open-pricing-page-button');
-            const salesSummaryClientValue = document.getElementById('sales-summary-client-value');
-            const salesSummaryClientMeta = document.getElementById('sales-summary-client-meta');
-            const salesSummaryPaymentValue = document.getElementById('sales-summary-payment-value');
-            const salesSummaryPaymentMeta = document.getElementById('sales-summary-payment-meta');
-            const salesSummaryPricingValue = document.getElementById('sales-summary-pricing-value');
-            const salesSummaryPricingMeta = document.getElementById('sales-summary-pricing-meta');
+            const salesSummaryLines = document.getElementById('sales-summary-lines');
+            const salesSummaryQuantity = document.getElementById('sales-summary-quantity');
+            const salesSummaryTotal = document.getElementById('sales-summary-total');
+            const salesSummaryRemaining = document.getElementById('sales-summary-remaining');
+            const salesSummaryStatusBox = document.getElementById('sales-summary-status-box');
+            const salesSummaryStatusTitle = document.getElementById('sales-summary-status-title');
+            const salesSummaryStatusValue = document.getElementById('sales-summary-status-value');
+            const salesSummaryStatusMeta = document.getElementById('sales-summary-status-meta');
 
             // Paiements clients
             const openCustomerPaymentModalButton = document.getElementById('open-customer-payment-modal-button');
@@ -8721,21 +8719,6 @@
                             : `${customerName} · Compte soldé`;
                     }
                 }
-                if (salesSummaryClientValue && salesAccordionClientSummary) {
-                    salesSummaryClientValue.textContent = selectedCustomer
-                        ? (selectedCustomer.fullName || selectedCustomer.name || 'Client')
-                        : salesAccordionClientSummary.textContent;
-                }
-                if (salesSummaryClientMeta) {
-                    if (!selectedCustomer) {
-                        salesSummaryClientMeta.textContent = 'Vente libre';
-                    } else {
-                        const balanceInfo = getCustomerOutstandingBalance(selectedCustomer);
-                        salesSummaryClientMeta.textContent = balanceInfo.amount > 0.01
-                            ? `Solde client: ${formatCurrency(balanceInfo.amount, balanceInfo.currency)}`
-                            : 'Compte client soldé';
-                    }
-                }
 
                 if (salesAccordionPaymentSummary) {
                     const hasItems = cartItems.length > 0;
@@ -8759,41 +8742,6 @@
                         }
                     }
                 }
-                if (salesSummaryPaymentValue && salesAccordionPaymentSummary) {
-                    if (!summary || cartItems.length === 0) {
-                        salesSummaryPaymentValue.textContent = 'Aucun article';
-                    } else if (!selectedCustomer) {
-                        salesSummaryPaymentValue.textContent = `${formatCurrency(summary.total, summary.currency)} encaissé`;
-                    } else {
-                        const paidNow = Math.min(getImmediateSalePaymentAmount(), summary.total);
-                        const remaining = Math.max(0, summary.total - paidNow);
-                        if (paidNow > 0.01 && remaining > 0.01) {
-                            salesSummaryPaymentValue.textContent = `${formatCurrency(paidNow, summary.currency)} versé`;
-                        } else if (remaining <= 0.01) {
-                            salesSummaryPaymentValue.textContent = 'Vente soldée';
-                        } else {
-                            salesSummaryPaymentValue.textContent = 'Aucun acompte';
-                        }
-                    }
-                }
-                if (salesSummaryPaymentMeta) {
-                    if (!summary || cartItems.length === 0) {
-                        salesSummaryPaymentMeta.textContent = 'Ajoutez des produits pour calculer le règlement';
-                    } else if (!selectedCustomer) {
-                        salesSummaryPaymentMeta.textContent = 'Paiement comptant sans crédit client';
-                    } else {
-                        const paidNow = Math.min(getImmediateSalePaymentAmount(), summary.total);
-                        const remaining = Math.max(0, summary.total - paidNow);
-                        const currentDue = getCustomerOutstandingBalance(selectedCustomer);
-                        const futureBalance = currentDue.amount + remaining;
-                        if (remaining > 0.01) {
-                            const dueDateLabel = payLaterDueDateInput?.value ? ` · Échéance ${formatDateOnly(payLaterDueDateInput.value)}` : '';
-                            salesSummaryPaymentMeta.textContent = `Solde après vente: ${formatCurrency(futureBalance, summary.currency)}${dueDateLabel}`;
-                        } else {
-                            salesSummaryPaymentMeta.textContent = `Encaissement immédiat: ${formatCurrency(Math.max(paidNow, summary.total), summary.currency)}`;
-                        }
-                    }
-                }
 
                 if (salesAccordionPricingSummary) {
                     const pricingChunks = [isTaxEnabled ? 'TVA active' : 'TVA inactive'];
@@ -8806,18 +8754,68 @@
                     }
                     salesAccordionPricingSummary.textContent = pricingChunks.join(' · ');
                 }
-                if (salesSummaryPricingValue && salesAccordionPricingSummary) {
-                    salesSummaryPricingValue.textContent = isTaxEnabled ? 'TVA active' : 'TVA inactive';
+
+                const lineCount = cartItems.length;
+                const totalQuantity = cartItems.reduce((sum, item) => sum + (Number(item?.quantity) || 0), 0);
+                const currentDue = selectedCustomer ? getCustomerOutstandingBalance(selectedCustomer) : { amount: 0, currency: summary?.currency || 'CFA', invoicesCount: 0 };
+                const paidNow = summary ? Math.min(getImmediateSalePaymentAmount(), summary.total) : 0;
+                const remaining = summary && selectedCustomer ? Math.max(0, summary.total - paidNow) : 0;
+
+                if (salesSummaryLines) salesSummaryLines.textContent = String(lineCount);
+                if (salesSummaryQuantity) salesSummaryQuantity.textContent = totalQuantity > 0 ? formatInputNumber(totalQuantity) || String(totalQuantity) : '0';
+                if (salesSummaryTotal) {
+                    salesSummaryTotal.textContent = !lineCount
+                        ? '0 FCFA'
+                        : (summary ? formatCurrency(summary.total, summary.currency) : 'Prix à définir');
                 }
-                if (salesSummaryPricingMeta) {
-                    if (!summary) {
-                        salesSummaryPricingMeta.textContent = 'Sous-total et taxe';
-                    } else if (Number(summary.discountAmount || 0) > 0) {
-                        const adjustmentValue = getAdjustmentSignedAmount(summary);
-                        const adjustmentLabel = adjustmentValue < 0 ? 'Réduction' : 'Majoration';
-                        salesSummaryPricingMeta.textContent = `${adjustmentLabel}: ${formatCurrency(Math.abs(adjustmentValue), summary.currency)} · Sous-total ${formatCurrency(summary.subtotal, summary.currency)}`;
+                if (salesSummaryRemaining) {
+                    salesSummaryRemaining.textContent = !lineCount
+                        ? '0 FCFA'
+                        : (summary ? formatCurrency(remaining, summary.currency) : '—');
+                }
+
+                if (salesSummaryStatusBox) {
+                    salesSummaryStatusBox.classList.remove('border-gray-200', 'border-cyan-200', 'border-amber-200', 'border-emerald-200', 'bg-white', 'bg-cyan-50/60', 'bg-amber-50/60', 'bg-emerald-50/60');
+                    if (!lineCount) {
+                        salesSummaryStatusBox.classList.add('border-gray-200', 'bg-white');
+                    } else if (!summary) {
+                        salesSummaryStatusBox.classList.add('border-amber-200', 'bg-amber-50/60');
+                    } else if (selectedCustomer && remaining > 0.01) {
+                        salesSummaryStatusBox.classList.add('border-amber-200', 'bg-amber-50/60');
                     } else {
-                        salesSummaryPricingMeta.textContent = `Sous-total ${formatCurrency(summary.subtotal, summary.currency)} · TVA ${formatCurrency(summary.tax, summary.currency)}`;
+                        salesSummaryStatusBox.classList.add('border-emerald-200', 'bg-emerald-50/60');
+                    }
+                }
+                if (salesSummaryStatusTitle) {
+                    salesSummaryStatusTitle.textContent = !lineCount
+                        ? 'Statut vente'
+                        : (selectedCustomer ? 'Compte client' : 'Encaissement');
+                }
+                if (salesSummaryStatusValue) {
+                    if (!lineCount) {
+                        salesSummaryStatusValue.textContent = 'Panier vide';
+                    } else if (!summary) {
+                        salesSummaryStatusValue.textContent = 'Prix à définir avant validation';
+                    } else if (!selectedCustomer) {
+                        salesSummaryStatusValue.textContent = 'Vente comptant sans client';
+                    } else if (remaining > 0.01) {
+                        salesSummaryStatusValue.textContent = `${selectedCustomer.fullName || selectedCustomer.name || 'Client'} · Solde après vente ${formatCurrency(currentDue.amount + remaining, summary.currency)}`;
+                    } else {
+                        salesSummaryStatusValue.textContent = `${selectedCustomer.fullName || selectedCustomer.name || 'Client'} · Vente soldée`;
+                    }
+                }
+                if (salesSummaryStatusMeta) {
+                    if (!lineCount) {
+                        salesSummaryStatusMeta.textContent = 'Ajoutez des produits pour commencer.';
+                    } else if (!summary) {
+                        salesSummaryStatusMeta.textContent = 'Au moins une ligne a un prix incomplet.';
+                    } else if (!selectedCustomer) {
+                        salesSummaryStatusMeta.textContent = `TVA ${isTaxEnabled ? 'active' : 'inactive'} · ${formatCurrency(summary.total, summary.currency)} à encaisser`;
+                    } else if (remaining > 0.01) {
+                        const dueDateLabel = payLaterDueDateInput?.value ? ` · Échéance ${formatDateOnly(payLaterDueDateInput.value)}` : '';
+                        salesSummaryStatusMeta.textContent = `Solde actuel ${formatCurrency(currentDue.amount, currentDue.currency || summary.currency)} -> ${formatCurrency(currentDue.amount + remaining, summary.currency)}${dueDateLabel}`;
+                    } else {
+                        salesSummaryStatusMeta.textContent = `Encaissement ${formatCurrency(summary.total, summary.currency)} · Compte client soldé`;
                     }
                 }
             }
