@@ -814,7 +814,7 @@
                                     <p class="mt-4 text-sm font-medium text-gray-500">Aucune ligne</p>
                                     <p class="text-xs text-gray-400">Ajoutez un produit depuis le catalogue ou la saisie facture.</p>
                                 </div>
-                                <div id="cart-items-list" class="hidden mt-6 space-y-3"></div>
+                                <div id="cart-items-list" class="hidden mt-6 space-y-2"></div>
                             </div>
                         </div>
                     </div>
@@ -8498,6 +8498,7 @@
                         total: hasLinePrice ? Number(sale.totalAmount || 0) : null,
                         currency: getSaleCurrency(sale) || 'CFA',
                         packageLabel: sale.packageLabel || '',
+                        lineDiscountAmount: Number(sale.lineDiscountAmount || 0) || 0,
                         pricePending: !hasLinePrice
                     });
                 });
@@ -9213,6 +9214,7 @@
                         total: sale.totalAmount || 0,
                         packageLabel: sale.packageLabel || '',
                         packageUnits: sale.packageUnits || 1,
+                        lineDiscountAmount: Number(sale.lineDiscountAmount || 0) || 0,
                         stockUnits: sale.stockUnits || sale.quantity || 0
                     });
                     group.total += sale.totalAmount || 0;
@@ -9738,16 +9740,16 @@
                 const items = group.items.map(item => ({
                     sellingPrice: item.price,
                     quantity: item.quantity,
-                    currency: group.currency
+                    currency: group.currency,
+                    total: item.total,
+                    lineDiscountAmount: item.lineDiscountAmount || 0
                 }));
                 return calculateItemsSummary(items, discountState);
             }
 
             function calculateItemsTotal(items = []) {
                 return items.reduce((sum, item) => {
-                    const price = Number(item.sellingPrice ?? item.price ?? 0);
-                    const quantity = Number(item.quantity ?? 0);
-                    return sum + (price * quantity);
+                    return sum + calculateSaleItemNetSubtotal(item);
                 }, 0);
             }
 
@@ -11375,6 +11377,7 @@
                             price: unitPrice,
                             total: hasLinePrice ? (totalAmount || (unitPrice * quantity)) : null,
                             packageLabel: sale.packageLabel || '',
+                            lineDiscountAmount: Number(sale.lineDiscountAmount || 0) || 0,
                             pricePending: !hasLinePrice
                         }],
                         total: hasLinePrice ? (totalAmount || (unitPrice * quantity)) : null,
@@ -22625,6 +22628,7 @@
                 }
 
                 if (currentSellingPrice === null) {
+                    item.lineDiscountAmount = 0;
                     item.manualSellingPrice = null;
                     item.priceOverridden = false;
                     return item;
@@ -22640,6 +22644,8 @@
                 item.sellingPrice = priceOverridden ? currentSellingPrice : originalSellingPrice;
                 item.manualSellingPrice = priceOverridden ? currentSellingPrice : null;
                 item.priceOverridden = priceOverridden;
+                const maxLineDiscount = calculateSaleItemBaseSubtotal(item);
+                item.lineDiscountAmount = Math.min(Math.max(0, Number(item?.lineDiscountAmount) || 0), maxLineDiscount);
                 return item;
             }
 
@@ -22648,10 +22654,41 @@
                 return formatInputNumber(item.sellingPrice);
             }
 
+            function calculateSaleItemBaseSubtotal(item = {}) {
+                const price = Number(item?.sellingPrice ?? item?.price ?? 0);
+                const quantity = Math.max(1, Number(item?.quantity) || 1);
+                if (!hasUsableSellingPrice(price)) {
+                    return 0;
+                }
+                return roundAmount(price * quantity);
+            }
+
+            function calculateSaleItemLineDiscount(item = {}) {
+                const baseSubtotal = calculateSaleItemBaseSubtotal(item);
+                if (baseSubtotal <= 0) {
+                    return 0;
+                }
+                const rawDiscount = Math.max(0, Number(item?.lineDiscountAmount) || 0);
+                return roundAmount(Math.min(rawDiscount, baseSubtotal));
+            }
+
+            function calculateSaleItemNetSubtotal(item = {}) {
+                const baseSubtotal = calculateSaleItemBaseSubtotal(item);
+                if (baseSubtotal <= 0) {
+                    const fallbackTotal = Number(item?.total);
+                    return Number.isFinite(fallbackTotal) && fallbackTotal > 0 ? roundAmount(fallbackTotal) : 0;
+                }
+                return roundAmount(Math.max(0, baseSubtotal - calculateSaleItemLineDiscount(item)));
+            }
+
+            function getCartItemLineDiscountInputValue(item) {
+                const discountAmount = calculateSaleItemLineDiscount(item);
+                return discountAmount > 0 ? formatInputNumber(discountAmount) : '';
+            }
+
             function getCartItemLineTotalInputValue(item) {
                 if (!hasUsableSellingPrice(item?.sellingPrice) || item?.pricePending === true) return '';
-                const quantity = Math.max(1, Number(item?.quantity) || 1);
-                return formatInputNumber(roundAmount(Number(item.sellingPrice) * quantity));
+                return formatInputNumber(calculateSaleItemNetSubtotal(item));
             }
 
             function buildSaleItemPricingSnapshot(item) {
@@ -22661,6 +22698,8 @@
                     originalSellingPrice: hasUsableSellingPrice(item?.originalSellingPrice) ? Number(item.originalSellingPrice) : null,
                     manualSellingPrice: hasUsableSellingPrice(item?.manualSellingPrice) ? Number(item.manualSellingPrice) : null,
                     priceOverridden: item?.priceOverridden === true,
+                    lineDiscountAmount: calculateSaleItemLineDiscount(item),
+                    lineSubtotal: hasResolvedPrice ? calculateSaleItemNetSubtotal(item) : null,
                     pricePending: !hasResolvedPrice,
                     pricingStatus: item?.pricingStatus || (hasResolvedPrice ? PENDING_SALE_PRICING_READY : PENDING_SALE_PRICING_PENDING)
                 };
@@ -22714,6 +22753,7 @@
                 if (!item) return;
                 const quantity = Math.max(1, Number(item.quantity) || 1);
                 const trimmedValue = String(rawValue ?? '').trim();
+                const currentLineDiscount = calculateSaleItemLineDiscount(item);
 
                 if (!trimmedValue) {
                     updateCartItemSellingPrice(index, '');
@@ -22727,7 +22767,7 @@
                     return;
                 }
 
-                const nextSellingPrice = roundAmount(nextLineTotal / quantity);
+                const nextSellingPrice = roundAmount((nextLineTotal + currentLineDiscount) / quantity);
                 if (!hasUsableSellingPrice(nextSellingPrice)) {
                     showSalesErrorMessage("Impossible de recalculer le prix unitaire.");
                     renderCart();
@@ -22735,6 +22775,47 @@
                 }
 
                 updateCartItemSellingPrice(index, nextSellingPrice);
+            }
+
+            function updateCartItemLineDiscount(index, rawValue) {
+                const item = cartItems[index];
+                if (!item) return;
+                if (!hasUsableSellingPrice(item?.sellingPrice) || item?.pricePending === true) {
+                    showSalesErrorMessage("Définissez d'abord le prix de la ligne avant d'appliquer une remise.");
+                    renderCart();
+                    return;
+                }
+
+                const trimmedValue = String(rawValue ?? '').trim();
+                if (!trimmedValue) {
+                    item.lineDiscountAmount = 0;
+                    renderCart();
+                    return;
+                }
+
+                const nextDiscountAmount = roundAmount(parseNumericInput(trimmedValue));
+                if (nextDiscountAmount < 0) {
+                    showSalesErrorMessage("Saisissez une remise valide.");
+                    renderCart();
+                    return;
+                }
+
+                const baseSubtotal = calculateSaleItemBaseSubtotal(item);
+                if (baseSubtotal <= 0) {
+                    showSalesErrorMessage("Impossible d'appliquer une remise sur cette ligne.");
+                    renderCart();
+                    return;
+                }
+
+                if (nextDiscountAmount > baseSubtotal) {
+                    item.lineDiscountAmount = baseSubtotal;
+                    showSalesErrorMessage(`La remise ne peut pas dépasser ${formatCurrency(baseSubtotal, item.currency)}.`);
+                    renderCart();
+                    return;
+                }
+
+                item.lineDiscountAmount = nextDiscountAmount;
+                renderCart();
             }
 
             function updateCartItemPackage(index, nextPackageCode) {
@@ -22910,6 +22991,7 @@
                         originalSellingPrice: hasResolvedPrice ? Number(sellingPrice) : null,
                         manualSellingPrice: null,
                         priceOverridden: false,
+                        lineDiscountAmount: 0,
                         pricePending: !hasResolvedPrice,
                         pricingStatus: hasResolvedPrice ? PENDING_SALE_PRICING_READY : PENDING_SALE_PRICING_PENDING,
                         quantity: quantityInput,
@@ -22992,9 +23074,7 @@
 
             function calculateCartTotal() {
                 return cartItems.reduce((total, item) => {
-                    const sellingPrice = Number(item?.sellingPrice) || 0;
-                    const quantity = Number(item?.quantity) || 0;
-                    return total + (sellingPrice * quantity);
+                    return total + calculateSaleItemNetSubtotal(item);
                 }, 0);
             }
 
@@ -23088,18 +23168,18 @@
 
             function distributeDiscountAcrossItems(items, discountOnSubtotal, direction = 'discount') {
                 const safeItems = Array.isArray(items) ? items : [];
-                const subtotal = safeItems.reduce((sum, item) => sum + ((Number(item.sellingPrice ?? item.price ?? 0) || 0) * (Number(item.quantity) || 0)), 0);
+                const subtotal = safeItems.reduce((sum, item) => sum + calculateSaleItemNetSubtotal(item), 0);
                 const safeDiscount = Math.max(0, Number(discountOnSubtotal) || 0);
                 if (!safeItems.length) return [];
                 if (!safeDiscount || subtotal <= 0) {
                     return safeItems.map(item => {
-                        const lineSubtotal = (Number(item.sellingPrice ?? item.price ?? 0) || 0) * (Number(item.quantity) || 0);
+                        const lineSubtotal = calculateSaleItemNetSubtotal(item);
                         return { ...item, lineSubtotal, discountShare: 0, discountedTotal: lineSubtotal };
                     });
                 }
                 let remaining = safeDiscount;
                 return safeItems.map((item, index) => {
-                    const lineSubtotal = (Number(item.sellingPrice ?? item.price ?? 0) || 0) * (Number(item.quantity) || 0);
+                    const lineSubtotal = calculateSaleItemNetSubtotal(item);
                     let share = 0;
                     if (lineSubtotal > 0) {
                         if (index === safeItems.length - 1) {
@@ -23235,7 +23315,8 @@
                         }).join('');
                         const internalCodeText = getProductInternalCodeText(sourceProduct);
                         const hasLinePrice = hasUsableSellingPrice(item.sellingPrice) && item.pricePending !== true;
-                        const subtotal = hasLinePrice ? Number(item.sellingPrice) * item.quantity : null;
+                        const lineDiscountAmount = hasLinePrice ? calculateSaleItemLineDiscount(item) : 0;
+                        const lineNetTotal = hasLinePrice ? calculateSaleItemNetSubtotal(item) : null;
                         const originalSellingPrice = getCartItemOriginalSellingPrice(item);
                         const hasOriginalSellingPrice = hasUsableSellingPrice(originalSellingPrice);
                         const priceStatus = item.pricePending === true
@@ -23245,6 +23326,9 @@
                                 : hasOriginalSellingPrice
                                     ? `<p class="mt-1 text-[11px] font-semibold text-emerald-600">Prix standard ${formatCurrency(originalSellingPrice, item.currency)}</p>`
                                     : '<p class="mt-1 text-[11px] font-semibold text-slate-500">Prix saisi manuellement</p>';
+                        const lineDiscountInfo = lineDiscountAmount > 0
+                            ? `<p class="mt-1 text-[11px] font-semibold text-rose-600">Remise ligne ${formatCurrency(lineDiscountAmount, item.currency)}</p>`
+                            : '';
                         const resetPriceButton = item.priceOverridden && hasOriginalSellingPrice
                             ? `<button type="button" data-cart-action="reset-price" data-index="${index}" class="text-[11px] font-semibold text-cyan-600 hover:text-cyan-700">Prix standard</button>`
                             : '';
@@ -23252,7 +23336,7 @@
                         const lotInfo = item.lotLabel ? `<p class="text-[11px] font-semibold text-cyan-700 mt-1">${item.lotLabel}</p>` : '';
                         if (isCompactCartView) {
                             return `
-                                <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                                <div class="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
                                     <div class="flex items-start justify-between gap-3">
                                         <div class="min-w-0">
                                             <p class="text-sm font-semibold text-gray-900">${item.name}</p>
@@ -23260,10 +23344,11 @@
                                             ${packageInfo}
                                             ${lotInfo}
                                             ${priceStatus}
+                                            ${lineDiscountInfo}
                                         </div>
-                                        <button type="button" data-cart-action="remove" data-index="${index}" class="inline-flex shrink-0 items-center justify-center rounded-lg border border-red-200 px-2.5 py-2 text-[11px] font-semibold text-red-600 hover:bg-red-50">Retirer</button>
+                                        <button type="button" data-cart-action="remove" data-index="${index}" class="inline-flex shrink-0 items-center justify-center rounded-lg border border-red-200 px-2.5 py-1.5 text-[11px] font-semibold text-red-600 hover:bg-red-50">Retirer</button>
                                     </div>
-                                    <div class="mt-4 grid grid-cols-2 gap-3">
+                                    <div class="mt-3 grid grid-cols-2 gap-2.5 md:grid-cols-4">
                                         <label class="col-span-2 block">
                                             <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Conditionnement</span>
                                             <select data-cart-package data-index="${index}"
@@ -23282,11 +23367,17 @@
                                                 class="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-right text-gray-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
                                                 placeholder="${hasOriginalSellingPrice ? formatInputNumber(originalSellingPrice) : 'Prix'}" />
                                         </label>
+                                        <label class="block">
+                                            <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Remise</span>
+                                            <input type="number" min="0" step="0.01" value="${getCartItemLineDiscountInputValue(item)}" data-cart-discount data-index="${index}"
+                                                class="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-right text-rose-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                                                placeholder="0" />
+                                        </label>
                                         <label class="col-span-2 block">
                                             <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Total ligne</span>
                                             <input type="number" min="0" step="0.01" value="${getCartItemLineTotalInputValue(item)}" data-cart-line-total data-index="${index}"
                                                 class="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-right font-semibold ${hasLinePrice ? 'text-gray-900' : 'text-amber-600'} focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
-                                                placeholder="${hasLinePrice ? formatInputNumber(subtotal) : 'Total'}" />
+                                                placeholder="${hasLinePrice ? formatInputNumber(lineNetTotal) : 'Total'}" />
                                         </label>
                                     </div>
                                     ${resetPriceButton ? `<div class="mt-3 flex justify-start">${resetPriceButton}</div>` : ''}
@@ -23294,16 +23385,17 @@
                             `;
                         }
                         return `
-                            <div class="rounded-2xl border border-gray-200 bg-white p-4">
-                                <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-                                    <div class="xl:max-w-[34%]">
+                            <div class="rounded-xl border border-gray-200 bg-white p-3">
+                                <div class="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+                                    <div class="xl:max-w-[30%]">
                                         <p class="text-sm font-semibold text-gray-900">${item.name}</p>
                                         <p class="text-[11px] font-semibold uppercase tracking-wide ${hasProductInternalCode(sourceProduct) ? 'text-slate-400' : 'text-amber-600'} mt-1">${internalCodeText}</p>
                                         ${packageInfo}
                                         ${lotInfo}
                                         ${priceStatus}
+                                        ${lineDiscountInfo}
                                     </div>
-                                    <div class="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,1.2fr)_88px_120px_120px_auto] xl:items-end">
+                                    <div class="grid flex-1 grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-[minmax(0,1.1fr)_74px_108px_108px_118px_auto] xl:items-end">
                                         <label class="block">
                                             <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Conditionnement</span>
                                             <select data-cart-package data-index="${index}"
@@ -23322,13 +23414,19 @@
                                                 class="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-right text-gray-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
                                                 placeholder="${hasOriginalSellingPrice ? formatInputNumber(originalSellingPrice) : 'Prix'}" />
                                         </label>
+                                        <label class="block">
+                                            <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Remise</span>
+                                            <input type="number" min="0" step="0.01" value="${getCartItemLineDiscountInputValue(item)}" data-cart-discount data-index="${index}"
+                                                class="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-right text-rose-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                                                placeholder="0" />
+                                        </label>
                                         <div>
                                             <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Total ligne</span>
                                             <input type="number" min="0" step="0.01" value="${getCartItemLineTotalInputValue(item)}" data-cart-line-total data-index="${index}"
                                                 class="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-right font-semibold ${hasLinePrice ? 'text-gray-900' : 'text-amber-600'} focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
-                                                placeholder="${hasLinePrice ? formatInputNumber(subtotal) : 'Total'}" />
+                                                placeholder="${hasLinePrice ? formatInputNumber(lineNetTotal) : 'Total'}" />
                                         </div>
-                                        <div class="flex items-center gap-3 xl:justify-end">
+                                        <div class="flex items-center gap-2 xl:justify-end">
                                             ${resetPriceButton}
                                             <button type="button" data-cart-action="remove" data-index="${index}" class="inline-flex items-center justify-center rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50">Retirer</button>
                                         </div>
@@ -23673,6 +23771,8 @@
                         originalPrice: hasUsableSellingPrice(item?.originalSellingPrice) ? Number(item.originalSellingPrice) : null,
                         manualPrice: hasUsableSellingPrice(item?.manualSellingPrice) ? Number(item.manualSellingPrice) : null,
                         priceOverridden: item?.priceOverridden === true,
+                        lineDiscountAmount: calculateSaleItemLineDiscount(item),
+                        lineSubtotal: item.lineSubtotal ?? calculateSaleItemNetSubtotal(item),
                         total: item.discountedTotal,
                         lotLabel: item.lotLabel || '',
                         packageCode: item.packageCode || 'detail',
@@ -25536,6 +25636,13 @@
                         updateCartItemLineTotal(index, lineTotalInput.value);
                         return;
                     }
+                    const discountInput = event.target.closest('[data-cart-discount]');
+                    if (discountInput) {
+                        const index = parseInt(discountInput.dataset.index, 10);
+                        if (Number.isNaN(index)) return;
+                        updateCartItemLineDiscount(index, discountInput.value);
+                        return;
+                    }
                     const priceInput = event.target.closest('[data-cart-price]');
                     if (!priceInput) return;
                     const index = parseInt(priceInput.dataset.index, 10);
@@ -25561,6 +25668,16 @@
                         lineTotalInput.blur();
                         return;
                     }
+                    const discountInput = event.target.closest('[data-cart-discount]');
+                    if (discountInput) {
+                        if (event.key !== 'Enter') return;
+                        event.preventDefault();
+                        const index = parseInt(discountInput.dataset.index, 10);
+                        if (Number.isNaN(index)) return;
+                        updateCartItemLineDiscount(index, discountInput.value);
+                        discountInput.blur();
+                        return;
+                    }
                     const priceInput = event.target.closest('[data-cart-price]');
                     if (!priceInput || event.key !== 'Enter') return;
                     event.preventDefault();
@@ -25580,6 +25697,13 @@
                         const index = parseInt(lineTotalInput.dataset.index, 10);
                         if (Number.isNaN(index)) return;
                         updateCartItemLineTotal(index, lineTotalInput.value);
+                        return;
+                    }
+                    const discountInput = event.target.closest('[data-cart-discount]');
+                    if (discountInput) {
+                        const index = parseInt(discountInput.dataset.index, 10);
+                        if (Number.isNaN(index)) return;
+                        updateCartItemLineDiscount(index, discountInput.value);
                         return;
                     }
                     const priceInput = event.target.closest('[data-cart-price]');
