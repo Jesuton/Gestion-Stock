@@ -1702,7 +1702,7 @@
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit / lot</th>
                                     <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Magasin</th>
                                     <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Répartition</th>
                                     <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Demandé par</th>
@@ -16969,6 +16969,21 @@
                 if (bulkTransferConfirmButton) bulkTransferConfirmButton.classList.add('hidden');
             }
 
+            function formatTransferBatchShortLabel(batchId) {
+                const value = String(batchId || '').trim();
+                if (!value) return 'LOT';
+                return value.slice(-6).toUpperCase();
+            }
+
+            function summarizeDistinctLabels(values = [], limit = 3) {
+                const uniqueValues = [...new Set((values || [])
+                    .map(value => String(value || '').trim())
+                    .filter(Boolean))];
+                if (!uniqueValues.length) return '';
+                if (uniqueValues.length <= limit) return uniqueValues.join(', ');
+                return `${uniqueValues.slice(0, limit).join(', ')} +${uniqueValues.length - limit}`;
+            }
+
             function markBulkExitDraftDirty() {
                 clearBulkExitError();
                 resetBulkExitPreview();
@@ -17614,22 +17629,30 @@
                     const now = new Date().toISOString();
                     const updates = {};
                     const requesterName = currentUserData?.fullName || currentUser.email || '';
+                    const batchShortLabel = formatTransferBatchShortLabel(batchId);
+                    const batchProductSummary = summarizeDistinctLabels(preview.rows.map(row => row.product?.name || ''), 4);
+                    const batchLineCount = preview.rows.length;
                     Object.entries(preview.finalStocks).forEach(([productId, finalStock]) => {
                         updates[`${dbBasePath}/storeProducts/${productId}/quantityInStore`] = finalStock;
                     });
-                    preview.rows.forEach(row => {
+                    preview.rows.forEach((row, rowIndex) => {
                         const sourcePackaging = getPrimaryPackaging(row.product);
                         const sourcePackageRef = sourcePackaging?.code || null;
                         const sourceVariantCode = getPackageVariantCode(row.product, sourcePackageRef);
                         const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
                         const requestRef = push(ref(db, `${dbBasePath}/shopTransferRequests`));
-                        const transferComment = preview.comment
+                        const baseTransferComment = preview.comment
                             ? `${preview.comment} · ${row.quantity} ${sourceVariantCode} = ${row.plan.summary}`
                             : `Transfert groupé · ${row.quantity} ${sourceVariantCode} = ${row.plan.summary}`;
+                        const transferComment = `${baseTransferComment} · Lot ${batchShortLabel}${batchProductSummary ? ` · Groupe: ${batchProductSummary}` : ''}`;
 
                         updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
                             id: moveKey,
                             batchId,
+                            batchLabel: batchShortLabel,
+                            batchSummary: batchProductSummary,
+                            batchSize: batchLineCount,
+                            batchIndex: rowIndex + 1,
                             productId: row.product.id,
                             productName: row.product.name,
                             storeId: preview.storeId,
@@ -17649,6 +17672,10 @@
                         updates[`${dbBasePath}/shopTransferRequests/${requestRef.key}`] = {
                             id: requestRef.key,
                             batchId,
+                            batchLabel: batchShortLabel,
+                            batchSummary: batchProductSummary,
+                            batchSize: batchLineCount,
+                            batchIndex: rowIndex + 1,
                             requestType: 'transfer',
                             status: EXIT_STATUS_PENDING,
                             storeId: preview.storeId,
@@ -20764,8 +20791,7 @@
                 return allowed.has(boutiqueId);
             }
 
-            function renderPendingShopTransfers() {
-                if (!pendingShopTransferPlaceholder || !pendingShopTransferTableContainer || !pendingShopTransferTbody) return;
+            function getPendingShopTransferGroups() {
                 const activeBoutique = getActiveBoutiqueId();
                 const allowed = new Set(getAccessibleBoutiqueIds());
                 const requests = Object.values(appData.shopTransferRequests || {})
@@ -20778,9 +20804,56 @@
                     })
                     .sort((a, b) => new Date(b.requestedAt || b.date) - new Date(a.requestedAt || a.date));
 
-                if (pendingShopTransferCount) pendingShopTransferCount.textContent = requests.length;
+                const groupsMap = new Map();
+                requests.forEach(request => {
+                    const key = request.batchId || request.id;
+                    if (!groupsMap.has(key)) {
+                        groupsMap.set(key, {
+                            key,
+                            batchId: request.batchId || null,
+                            requests: []
+                        });
+                    }
+                    groupsMap.get(key).requests.push(request);
+                });
 
-                if (!requests.length) {
+                return Array.from(groupsMap.values()).map(group => {
+                    const groupRequests = [...group.requests].sort((a, b) => new Date(b.requestedAt || b.date) - new Date(a.requestedAt || a.date));
+                    const firstRequest = groupRequests[0] || null;
+                    const productNames = groupRequests.map(request => request.sourceProductName || request.productName || '');
+                    const totalUnits = groupRequests.reduce((sum, request) => (
+                        sum + parseNonNegativeInteger(request.totalUnits, parseNonNegativeInteger(request.quantity, 0))
+                    ), 0);
+                    return {
+                        ...group,
+                        requests: groupRequests,
+                        requestIds: groupRequests.map(request => request.id).filter(Boolean),
+                        firstRequest,
+                        lineCount: groupRequests.length,
+                        productSummary: summarizeDistinctLabels(productNames, 4),
+                        requester: firstRequest?.requestedByName || firstRequest?.requestedByEmail || '-',
+                        storeName: getStoreName(resolveStoreId(firstRequest?.storeId)) || '-',
+                        requestedAt: firstRequest?.requestedAt || firstRequest?.date || new Date().toISOString(),
+                        targetSummary: groupRequests.length === 1
+                            ? (firstRequest?.targetSummary || `${parseInt(firstRequest?.sourceCartonQty ?? firstRequest?.quantity, 10) || 0} ${firstRequest?.sourcePackageLabel || 'source'}(s)`)
+                            : `${groupRequests.length} lignes · ${totalUnits} unité(s)`,
+                        batchLabel: firstRequest?.batchLabel || (group.batchId ? formatTransferBatchShortLabel(group.batchId) : ''),
+                        isBatch: !!group.batchId && groupRequests.length > 1
+                    };
+                }).sort((a, b) => new Date(b.requestedAt) - new Date(a.requestedAt));
+            }
+
+            function getPendingShopTransferGroupByKey(groupKey) {
+                return getPendingShopTransferGroups().find(group => group.key === groupKey) || null;
+            }
+
+            function renderPendingShopTransfers() {
+                if (!pendingShopTransferPlaceholder || !pendingShopTransferTableContainer || !pendingShopTransferTbody) return;
+                const groups = getPendingShopTransferGroups();
+
+                if (pendingShopTransferCount) pendingShopTransferCount.textContent = groups.length;
+
+                if (!groups.length) {
                     pendingShopTransferPlaceholder.classList.remove('hidden');
                     pendingShopTransferTableContainer.classList.add('hidden');
                     pendingShopTransferTbody.innerHTML = '';
@@ -20789,25 +20862,33 @@
 
                 pendingShopTransferPlaceholder.classList.add('hidden');
                 pendingShopTransferTableContainer.classList.remove('hidden');
-                pendingShopTransferTbody.innerHTML = requests.map(request => {
-                    const date = request.requestedAt || request.date || new Date().toISOString();
-                    const productLabel = request.sourceProductName || request.productName || '-';
-                    const storeName = getStoreName(resolveStoreId(request.storeId));
-                    const requester = request.requestedByName || request.requestedByEmail || '-';
-                    const qty = request.targetSummary || `${parseInt(request.sourceCartonQty ?? request.quantity, 10) || 0} ${request.sourcePackageLabel || 'source'}(s)`;
+                pendingShopTransferTbody.innerHTML = groups.map(group => {
+                    const productLabel = group.firstRequest?.sourceProductName || group.firstRequest?.productName || '-';
+                    const actionLabel = group.isBatch ? 'Valider le lot' : 'Valider';
+                    const rejectLabel = group.isBatch ? 'Refuser le lot' : 'Refuser';
                     return `
                         <tr class="hover:bg-gray-50">
-                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(date)}</td>
-                            <td class="px-4 py-3 text-sm font-medium text-gray-900">${productLabel}</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${storeName || '-'}</td>
-                            <td class="px-4 py-3 text-sm font-semibold text-gray-700">${qty}</td>
-                            <td class="px-4 py-3 text-sm text-gray-500">${requester}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${formatDateForDisplay(group.requestedAt)}</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">
+                                ${group.isBatch ? `
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <span class="inline-flex items-center rounded-full border border-cyan-200 bg-cyan-50 px-2 py-0.5 text-[11px] font-semibold text-cyan-700">Lot ${escapeHtml(group.batchLabel)}</span>
+                                        <span class="text-xs text-gray-500">${group.lineCount} ligne(s)</span>
+                                    </div>
+                                    <p class="mt-1 font-semibold">${escapeHtml(group.productSummary || productLabel)}</p>
+                                ` : `
+                                    <p class="font-semibold">${escapeHtml(productLabel)}</p>
+                                `}
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${escapeHtml(group.storeName || '-')}</td>
+                            <td class="px-4 py-3 text-sm font-semibold text-gray-700">${escapeHtml(group.targetSummary)}</td>
+                            <td class="px-4 py-3 text-sm text-gray-500">${escapeHtml(group.requester)}</td>
                             <td class="px-4 py-3 whitespace-nowrap text-right">
                                 <div class="inline-flex items-center gap-2">
-                                    <button type="button" data-shop-transfer-approve="${request.id}"
-                                        class="px-3 py-1.5 rounded-lg bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600">Valider</button>
-                                    <button type="button" data-shop-transfer-reject="${request.id}"
-                                        class="px-3 py-1.5 rounded-lg border border-red-200 text-red-600 text-xs font-semibold hover:bg-red-50">Refuser</button>
+                                    <button type="button" data-shop-transfer-approve-group="${escapeHtml(group.key)}"
+                                        class="px-3 py-1.5 rounded-lg bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600">${actionLabel}</button>
+                                    <button type="button" data-shop-transfer-reject-group="${escapeHtml(group.key)}"
+                                        class="px-3 py-1.5 rounded-lg border border-red-200 text-red-600 text-xs font-semibold hover:bg-red-50">${rejectLabel}</button>
                                 </div>
                             </td>
                         </tr>
@@ -20815,267 +20896,342 @@
                 }).join('');
             }
 
-            async function approveShopTransferRequest(requestId) {
+            async function approveShopTransferRequests(requestIds = []) {
                 if (!dbBasePath || !currentUser) return;
-                const request = appData.shopTransferRequests?.[requestId];
-                if (!request || request.status !== EXIT_STATUS_PENDING) {
+                const requests = requestIds
+                    .map(requestId => appData.shopTransferRequests?.[requestId] || null)
+                    .filter(Boolean);
+                if (!requests.length) {
                     showSuccessToast("Cette demande a déjà été traitée.");
                     return;
                 }
-                if (!canAccessShopTransferRequest(request)) {
+                const invalidRequest = requests.find(request => request.status !== EXIT_STATUS_PENDING);
+                if (invalidRequest) {
+                    showSuccessToast("Une ou plusieurs demandes ont déjà été traitées.");
+                    return;
+                }
+                const forbiddenRequest = requests.find(request => !canAccessShopTransferRequest(request));
+                if (forbiddenRequest) {
                     showSuccessToast("Accès refusé pour cette boutique.");
                     return;
                 }
-                const sourceProd = appData.storeProducts?.[request.sourceProductId];
-                if (!sourceProd) {
-                    showSuccessToast("Produit source introuvable.");
-                    return;
-                }
-                const qty = parseInt(request.sourceCartonQty ?? request.quantity, 10) || 0;
-                const requestTargets = Array.isArray(request.targetPackages) && request.targetPackages.length
-                    ? request.targetPackages
-                    : [{
-                        type: 'detail',
-                        label: getPackageLabel('detail', sourceProd),
-                        code: request.productName || sourceProd.name,
-                        displayName: request.productName || sourceProd.name,
-                        quantity: parseInt(request.quantity, 10) || 0,
-                        unitsPerPackage: 1,
-                        totalUnits: parseInt(request.quantity, 10) || 0,
-                        sellingPrice: toNullableFiniteNumber(request.sellingPrice) ?? toNullableFiniteNumber(getPackageSellingPrice(sourceProd, 'detail')),
-                        purchaseCost: toNullableFiniteNumber(request.purchaseCost) ?? toNullableFiniteNumber(getPackagePurchaseCost(sourceProd, 'detail'))
-                    }];
-                    const requestedBaseUnits = parseNonNegativeInteger(
-                        request.totalUnits,
-                        requestTargets.reduce((sum, target) => {
-                            const targetQty = parseNonNegativeInteger(target?.quantity, 0);
-                            const targetUnits = Math.max(1, parseNonNegativeInteger(target?.unitsPerPackage, 1));
-                            return sum + (targetQty * targetUnits);
-                        }, 0)
-                    );
-                    if (qty <= 0 || requestedBaseUnits <= 0) return;
 
                 try {
                     const now = new Date().toISOString();
                     const updates = {};
-                    const storeId = resolveStoreId(request.storeId) || resolveStoreId(sourceProd.storeId) || getActiveStoreId();
-                    const boutiqueId = resolveBoutiqueId(request.boutiqueId);
-                    if (!boutiqueId) {
-                        showSuccessToast("Boutique introuvable.");
-                        return;
-                    }
-                    const boutiqueName = getBoutiqueName(boutiqueId);
+                    const shadowShopStock = { ...(appData.shopStock || {}) };
+                    const linkedStoreCache = {};
 
-                    const shopProductIds = [];
-                    const shopMovementIds = [];
-                    let shopItem = null;
-                    if (request.shopProductId) {
-                        const requestedShopItem = appData.shopStock?.[request.shopProductId] || null;
-                        if (requestedShopItem && (requestedShopItem.stockUnitMode === 'base_unit' || Number(requestedShopItem.stockModelVersion) >= 2)) {
-                            shopItem = requestedShopItem;
+                    for (const request of requests) {
+                        const requestId = request.id;
+                        const sourceProd = appData.storeProducts?.[request.sourceProductId];
+                        if (!sourceProd) {
+                            throw new Error("Produit source introuvable.");
                         }
-                    }
-                    if (!shopItem) {
-                        shopItem = Object.values(appData.shopStock || {}).find(item =>
-                            resolveStoreId(item.sourceStoreId) === storeId &&
-                            resolveBoutiqueId(item.boutiqueId) === boutiqueId &&
-                            item.sourceProductId === request.sourceProductId
+                        const qty = parseInt(request.sourceCartonQty ?? request.quantity, 10) || 0;
+                        const requestTargets = Array.isArray(request.targetPackages) && request.targetPackages.length
+                            ? request.targetPackages
+                            : [{
+                                type: 'detail',
+                                label: getPackageLabel('detail', sourceProd),
+                                code: request.productName || sourceProd.name,
+                                displayName: request.productName || sourceProd.name,
+                                quantity: parseInt(request.quantity, 10) || 0,
+                                unitsPerPackage: 1,
+                                totalUnits: parseInt(request.quantity, 10) || 0,
+                                sellingPrice: toNullableFiniteNumber(request.sellingPrice) ?? toNullableFiniteNumber(getPackageSellingPrice(sourceProd, 'detail')),
+                                purchaseCost: toNullableFiniteNumber(request.purchaseCost) ?? toNullableFiniteNumber(getPackagePurchaseCost(sourceProd, 'detail'))
+                            }];
+                        const requestedBaseUnits = parseNonNegativeInteger(
+                            request.totalUnits,
+                            requestTargets.reduce((sum, target) => {
+                                const targetQty = parseNonNegativeInteger(target?.quantity, 0);
+                                const targetUnits = Math.max(1, parseNonNegativeInteger(target?.unitsPerPackage, 1));
+                                return sum + (targetQty * targetUnits);
+                            }, 0)
                         );
-                    }
+                        if (qty <= 0 || requestedBaseUnits <= 0) continue;
 
-                    const shopId = shopItem ? shopItem.id : push(ref(db, `${dbBasePath}/shopStock`)).key;
-                    const sellingPrice = toNullableFiniteNumber(request.sellingPrice)
-                        ?? toNullableFiniteNumber(getPackageSellingPrice(sourceProd, 'detail'));
-                    const purchaseCost = toNullableFiniteNumber(request.purchaseCost)
-                        ?? toNullableFiniteNumber(getPackagePurchaseCost(sourceProd, 'detail'));
-                    const alertThreshold = Number.isFinite(request.alertThreshold)
-                        ? request.alertThreshold
-                        : (shopItem?.alertThreshold ?? 5);
-                    if (!shopId) {
-                        showSuccessToast("Produit boutique introuvable.");
-                        return;
-                    }
+                        const storeId = resolveStoreId(request.storeId) || resolveStoreId(sourceProd.storeId) || getActiveStoreId();
+                        const boutiqueId = resolveBoutiqueId(request.boutiqueId);
+                        if (!boutiqueId) {
+                            throw new Error("Boutique introuvable.");
+                        }
+                        const boutiqueName = getBoutiqueName(boutiqueId);
 
-                    const baseUnitLabel = getProductBaseUnitLabel(sourceProd);
-                    const baseVariantCode = request.baseProductCode || getBaseProductCode(sourceProd) || getPackageVariantCode(sourceProd, 'detail');
-                    const unifiedProductName = request.sourceProductName || request.productName || sourceProd.name;
-                    const baseShopItem = syncShopItemLotState(shopItem || {
-                        id: shopId,
-                        sourceProductId: request.sourceProductId,
-                        sourceStoreId: storeId,
-                        boutiqueId,
-                        boutiqueName,
-                        displayName: unifiedProductName,
-                        name: baseVariantCode,
-                        sourceName: unifiedProductName,
-                        variantCode: baseVariantCode,
-                        packagingType: 'detail',
-                        packageCode: 'detail',
-                        packageLabel: baseUnitLabel,
-                        unitsPerPackage: 1,
-                        baseUnitLabel,
-                        baseProductCode: baseVariantCode,
-                        categoryId: request.categoryId || sourceProd.categoryId || null,
-                        purchaseCost,
-                        sellingPrice,
-                        quantityInShop: 0,
-                        alertThreshold,
-                        inventory: null,
-                        stockUnitMode: 'base_unit',
-                        stockModelVersion: 2,
-                        createdAt: now,
-                        updatedAt: now,
-                        lotQueue: []
-                    });
-                    const queuedLotResult = queueIncomingShopLot({
-                        ...baseShopItem,
-                        boutiqueId,
-                        boutiqueName,
-                        alertThreshold,
-                        inventory: shopItem?.inventory || baseShopItem.inventory || null,
-                        updatedAt: now
-                    }, {
-                        label: `Lot ${getLotSequenceLabel((baseShopItem.lotQueue || []).length)}`,
-                        remainingQuantity: requestedBaseUnits,
-                        initialQuantity: requestedBaseUnits,
-                        sellingPrice,
-                        purchaseCost,
-                        receivedAt: now,
-                        sourceRequestId: requestId,
-                        requestType: request.requestType || 'transfer'
-                    });
-                    const nextShopItem = queuedLotResult.updatedItem;
-                    const shopOld = Number(baseShopItem.quantityInShop) || 0;
-                    const shopNew = Number(nextShopItem.quantityInShop) || 0;
+                        let shopItem = null;
+                        if (request.shopProductId) {
+                            const requestedShopItem = shadowShopStock[request.shopProductId] || null;
+                            if (requestedShopItem && (requestedShopItem.stockUnitMode === 'base_unit' || Number(requestedShopItem.stockModelVersion) >= 2)) {
+                                shopItem = requestedShopItem;
+                            }
+                        }
+                        if (!shopItem) {
+                            shopItem = Object.values(shadowShopStock).find(item =>
+                                resolveStoreId(item.sourceStoreId) === storeId &&
+                                resolveBoutiqueId(item.boutiqueId) === boutiqueId &&
+                                item.sourceProductId === request.sourceProductId
+                            ) || null;
+                        }
 
-                    updates[`${dbBasePath}/shopStock/${shopId}`] = {
-                        ...nextShopItem,
-                        id: shopId,
-                        sourceProductId: request.sourceProductId,
-                        sourceStoreId: storeId,
-                        boutiqueId,
-                        boutiqueName,
-                        displayName: unifiedProductName,
-                        name: baseVariantCode,
-                        sourceName: unifiedProductName,
-                        variantCode: baseVariantCode,
-                        packagingType: 'detail',
-                        packageCode: 'detail',
-                        packageLabel: baseUnitLabel,
-                        unitsPerPackage: 1,
-                        baseUnitLabel,
-                        baseProductCode: baseVariantCode,
-                        categoryId: request.categoryId || sourceProd.categoryId || null,
-                        alertThreshold,
-                        inventory: shopItem?.inventory || null,
-                        stockUnitMode: 'base_unit',
-                        stockModelVersion: 2,
-                        createdAt: shopItem ? shopItem.createdAt : now,
-                        updatedAt: now
-                    };
+                        const shopId = shopItem ? shopItem.id : push(ref(db, `${dbBasePath}/shopStock`)).key;
+                        const sellingPrice = toNullableFiniteNumber(request.sellingPrice)
+                            ?? toNullableFiniteNumber(getPackageSellingPrice(sourceProd, 'detail'));
+                        const purchaseCost = toNullableFiniteNumber(request.purchaseCost)
+                            ?? toNullableFiniteNumber(getPackagePurchaseCost(sourceProd, 'detail'));
+                        const alertThreshold = Number.isFinite(request.alertThreshold)
+                            ? request.alertThreshold
+                            : (shopItem?.alertThreshold ?? 5);
+                        if (!shopId) {
+                            throw new Error("Produit boutique introuvable.");
+                        }
 
-                    const shmKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
-                    updates[`${dbBasePath}/shopMovements/${shmKey}`] = {
-                        id: shmKey,
-                        shopProductId: shopId,
-                        productName: unifiedProductName,
-                        storeId,
-                        boutiqueId,
-                        boutiqueName,
-                        type: "Entrée",
-                        quantityChange: requestedBaseUnits,
-                        oldStock: shopOld,
-                        newStock: shopNew,
-                        comment: request.comment || "Réception transfert magasin",
-                        date: { ".sv": "timestamp" },
-                        userEmail: currentUser.email || '',
-                        userName: currentUserData?.fullName || currentUser.email || '',
-                        status: EXIT_STATUS_APPROVED
-                    };
-                    shopProductIds.push(shopId);
-                    shopMovementIds.push(shmKey);
+                        const baseUnitLabel = getProductBaseUnitLabel(sourceProd);
+                        const baseVariantCode = request.baseProductCode || getBaseProductCode(sourceProd) || getPackageVariantCode(sourceProd, 'detail');
+                        const unifiedProductName = request.sourceProductName || request.productName || sourceProd.name;
+                        const baseShopItem = syncShopItemLotState(shopItem || {
+                            id: shopId,
+                            sourceProductId: request.sourceProductId,
+                            sourceStoreId: storeId,
+                            boutiqueId,
+                            boutiqueName,
+                            displayName: unifiedProductName,
+                            name: baseVariantCode,
+                            sourceName: unifiedProductName,
+                            variantCode: baseVariantCode,
+                            packagingType: 'detail',
+                            packageCode: 'detail',
+                            packageLabel: baseUnitLabel,
+                            unitsPerPackage: 1,
+                            baseUnitLabel,
+                            baseProductCode: baseVariantCode,
+                            categoryId: request.categoryId || sourceProd.categoryId || null,
+                            purchaseCost,
+                            sellingPrice,
+                            quantityInShop: 0,
+                            alertThreshold,
+                            inventory: null,
+                            stockUnitMode: 'base_unit',
+                            stockModelVersion: 2,
+                            createdAt: now,
+                            updatedAt: now,
+                            lotQueue: []
+                        });
 
-                    if (request.storeMovementId) {
-                        updates[`${dbBasePath}/storeMovements/${request.storeMovementId}/status`] = EXIT_STATUS_APPROVED;
-                        updates[`${dbBasePath}/storeMovements/${request.storeMovementId}/approvedAt`] = now;
-                    }
+                        const queuedLotResult = queueIncomingShopLot({
+                            ...baseShopItem,
+                            boutiqueId,
+                            boutiqueName,
+                            alertThreshold,
+                            inventory: shopItem?.inventory || baseShopItem.inventory || null,
+                            updatedAt: now
+                        }, {
+                            label: `Lot ${getLotSequenceLabel((baseShopItem.lotQueue || []).length)}`,
+                            remainingQuantity: requestedBaseUnits,
+                            initialQuantity: requestedBaseUnits,
+                            sellingPrice,
+                            purchaseCost,
+                            receivedAt: now,
+                            sourceRequestId: requestId,
+                            sourceBatchId: request.batchId || null,
+                            requestType: request.requestType || 'transfer'
+                        });
 
-                    updates[`${dbBasePath}/shopTransferRequests/${requestId}/status`] = EXIT_STATUS_APPROVED;
-                    updates[`${dbBasePath}/shopTransferRequests/${requestId}/validatedAt`] = now;
-                    updates[`${dbBasePath}/shopTransferRequests/${requestId}/validatedBy`] = currentUser.email || currentUserData?.email || '';
-                    updates[`${dbBasePath}/shopTransferRequests/${requestId}/shopProductId`] = shopProductIds[0] || request.shopProductId || null;
-                    updates[`${dbBasePath}/shopTransferRequests/${requestId}/shopProductIds`] = shopProductIds;
-                    updates[`${dbBasePath}/shopTransferRequests/${requestId}/shopMovementId`] = shopMovementIds[0] || null;
-                    updates[`${dbBasePath}/shopTransferRequests/${requestId}/shopMovementIds`] = shopMovementIds;
+                        const nextShopItem = {
+                            ...queuedLotResult.updatedItem,
+                            id: shopId,
+                            sourceProductId: request.sourceProductId,
+                            sourceStoreId: storeId,
+                            boutiqueId,
+                            boutiqueName,
+                            displayName: unifiedProductName,
+                            name: baseVariantCode,
+                            sourceName: unifiedProductName,
+                            variantCode: baseVariantCode,
+                            packagingType: 'detail',
+                            packageCode: 'detail',
+                            packageLabel: baseUnitLabel,
+                            unitsPerPackage: 1,
+                            baseUnitLabel,
+                            baseProductCode: baseVariantCode,
+                            categoryId: request.categoryId || sourceProd.categoryId || null,
+                            alertThreshold,
+                            inventory: shopItem?.inventory || null,
+                            stockUnitMode: 'base_unit',
+                            stockModelVersion: 2,
+                            createdAt: shopItem ? shopItem.createdAt : now,
+                            updatedAt: now
+                        };
+                        shadowShopStock[shopId] = nextShopItem;
 
-                    const boutique = appData.boutiques?.[boutiqueId];
-                    const linkedStoreIds = Array.isArray(boutique?.linkedStoreIds) ? [...new Set(boutique.linkedStoreIds)] : [];
-                    if (storeId && !linkedStoreIds.includes(storeId)) {
-                        linkedStoreIds.push(storeId);
-                        updates[`${dbBasePath}/boutiques/${boutiqueId}/linkedStoreIds`] = linkedStoreIds;
-                        updates[`${dbBasePath}/boutiques/${boutiqueId}/updatedAt`] = now;
+                        const shopOld = Number(baseShopItem.quantityInShop) || 0;
+                        const shopNew = Number(nextShopItem.quantityInShop) || 0;
+                        updates[`${dbBasePath}/shopStock/${shopId}`] = nextShopItem;
+
+                        const shmKey = push(ref(db, `${dbBasePath}/shopMovements`)).key;
+                        updates[`${dbBasePath}/shopMovements/${shmKey}`] = {
+                            id: shmKey,
+                            batchId: request.batchId || null,
+                            batchLabel: request.batchLabel || null,
+                            batchSummary: request.batchSummary || null,
+                            batchSize: request.batchSize || requests.length,
+                            shopProductId: shopId,
+                            productName: unifiedProductName,
+                            storeId,
+                            boutiqueId,
+                            boutiqueName,
+                            type: "Entrée",
+                            quantityChange: requestedBaseUnits,
+                            oldStock: shopOld,
+                            newStock: shopNew,
+                            comment: request.comment || "Réception transfert magasin",
+                            date: { ".sv": "timestamp" },
+                            userEmail: currentUser.email || '',
+                            userName: currentUserData?.fullName || currentUser.email || '',
+                            status: EXIT_STATUS_APPROVED
+                        };
+
+                        if (request.storeMovementId) {
+                            updates[`${dbBasePath}/storeMovements/${request.storeMovementId}/status`] = EXIT_STATUS_APPROVED;
+                            updates[`${dbBasePath}/storeMovements/${request.storeMovementId}/approvedAt`] = now;
+                        }
+
+                        updates[`${dbBasePath}/shopTransferRequests/${requestId}/status`] = EXIT_STATUS_APPROVED;
+                        updates[`${dbBasePath}/shopTransferRequests/${requestId}/validatedAt`] = now;
+                        updates[`${dbBasePath}/shopTransferRequests/${requestId}/validatedBy`] = currentUser.email || currentUserData?.email || '';
+                        updates[`${dbBasePath}/shopTransferRequests/${requestId}/shopProductId`] = shopId;
+                        updates[`${dbBasePath}/shopTransferRequests/${requestId}/shopProductIds`] = [shopId];
+                        updates[`${dbBasePath}/shopTransferRequests/${requestId}/shopMovementId`] = shmKey || null;
+                        updates[`${dbBasePath}/shopTransferRequests/${requestId}/shopMovementIds`] = shmKey ? [shmKey] : [];
+
+                        if (!linkedStoreCache[boutiqueId]) {
+                            const boutique = appData.boutiques?.[boutiqueId];
+                            linkedStoreCache[boutiqueId] = Array.isArray(boutique?.linkedStoreIds)
+                                ? [...new Set(boutique.linkedStoreIds)]
+                                : [];
+                        }
+                        if (storeId && !linkedStoreCache[boutiqueId].includes(storeId)) {
+                            linkedStoreCache[boutiqueId].push(storeId);
+                            updates[`${dbBasePath}/boutiques/${boutiqueId}/linkedStoreIds`] = linkedStoreCache[boutiqueId];
+                            updates[`${dbBasePath}/boutiques/${boutiqueId}/updatedAt`] = now;
+                        }
                     }
 
                     await update(ref(db), updates);
-                    showSuccessToast("Réception confirmée.");
+                    showSuccessToast(requests.length > 1 ? `Lot de ${requests.length} transferts validé.` : "Réception confirmée.");
                 } catch (error) {
                     console.error(error);
-                    showSuccessToast("Impossible de valider cette réception.");
+                    showSuccessToast(requests.length > 1 ? "Impossible de valider ce lot." : "Impossible de valider cette réception.");
+                }
+            }
+
+            async function approveShopTransferRequest(requestId) {
+                return approveShopTransferRequests([requestId]);
+            }
+
+            async function approveShopTransferGroup(groupKey) {
+                const group = getPendingShopTransferGroupByKey(groupKey);
+                if (!group) {
+                    showSuccessToast("Ce lot a déjà été traité.");
+                    return;
+                }
+                return approveShopTransferRequests(group.requestIds);
+            }
+
+            async function rejectShopTransferRequests(requestIds = []) {
+                if (!dbBasePath || !currentUser) return;
+                const requests = requestIds
+                    .map(requestId => appData.shopTransferRequests?.[requestId] || null)
+                    .filter(Boolean);
+                if (!requests.length) {
+                    showSuccessToast("Cette demande a déjà été traitée.");
+                    return;
+                }
+                const invalidRequest = requests.find(request => request.status !== EXIT_STATUS_PENDING);
+                if (invalidRequest) {
+                    showSuccessToast("Une ou plusieurs demandes ont déjà été traitées.");
+                    return;
+                }
+                const forbiddenRequest = requests.find(request => !canAccessShopTransferRequest(request));
+                if (forbiddenRequest) {
+                    showSuccessToast("Accès refusé pour cette boutique.");
+                    return;
+                }
+
+                try {
+                    const now = new Date().toISOString();
+                    const updates = {};
+                    const shadowStoreProducts = {};
+
+                    for (const request of requests) {
+                        const requestId = request.id;
+                        const sourceProd = appData.storeProducts?.[request.sourceProductId] || null;
+                        const qty = parseInt(request.sourceCartonQty ?? request.quantity, 10) || 0;
+                        const shouldRestore = request.stockReserved === true || !!request.storeMovementId;
+
+                        if (shouldRestore && sourceProd && qty > 0) {
+                            if (!shadowStoreProducts[sourceProd.id]) {
+                                shadowStoreProducts[sourceProd.id] = {
+                                    ...sourceProd,
+                                    quantityInStore: Number(sourceProd.quantityInStore) || 0
+                                };
+                            }
+                            const shadowSource = shadowStoreProducts[sourceProd.id];
+                            const oldStock = Number(shadowSource.quantityInStore) || 0;
+                            const newStock = oldStock + qty;
+                            shadowSource.quantityInStore = newStock;
+                            updates[`${dbBasePath}/storeProducts/${sourceProd.id}/quantityInStore`] = newStock;
+
+                            const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
+                            updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
+                                id: moveKey,
+                                batchId: request.batchId || null,
+                                batchLabel: request.batchLabel || null,
+                                batchSummary: request.batchSummary || null,
+                                batchSize: request.batchSize || requests.length,
+                                productId: sourceProd.id,
+                                productName: sourceProd.name,
+                                storeId: resolveStoreId(request.storeId) || resolveStoreId(sourceProd.storeId) || getActiveStoreId(),
+                                type: "Entrée",
+                                quantityChange: qty,
+                                oldStock,
+                                newStock,
+                                comment: request.comment ? `Annulation transfert - ${request.comment}` : "Annulation transfert boutique",
+                                date: { ".sv": "timestamp" },
+                                status: EXIT_STATUS_APPROVED,
+                                userEmail: currentUser.email || '',
+                                userName: currentUserData?.fullName || currentUser.email || ''
+                            };
+                        }
+
+                        if (request.storeMovementId) {
+                            updates[`${dbBasePath}/storeMovements/${request.storeMovementId}/status`] = EXIT_STATUS_REJECTED;
+                            updates[`${dbBasePath}/storeMovements/${request.storeMovementId}/rejectedAt`] = now;
+                        }
+                        updates[`${dbBasePath}/shopTransferRequests/${requestId}/status`] = EXIT_STATUS_REJECTED;
+                        updates[`${dbBasePath}/shopTransferRequests/${requestId}/validatedAt`] = now;
+                        updates[`${dbBasePath}/shopTransferRequests/${requestId}/validatedBy`] = currentUser.email || currentUserData?.email || '';
+                    }
+
+                    await update(ref(db), updates);
+                    showSuccessToast(requests.length > 1 ? `Lot de ${requests.length} transferts refusé.` : "Réception refusée.");
+                } catch (error) {
+                    console.error(error);
+                    showSuccessToast(requests.length > 1 ? "Impossible de refuser ce lot." : "Impossible de refuser cette réception.");
                 }
             }
 
             async function rejectShopTransferRequest(requestId) {
-                if (!dbBasePath || !currentUser) return;
-                const request = appData.shopTransferRequests?.[requestId];
-                if (!request || request.status !== EXIT_STATUS_PENDING) {
-                    showSuccessToast("Cette demande a déjà été traitée.");
+                return rejectShopTransferRequests([requestId]);
+            }
+
+            async function rejectShopTransferGroup(groupKey) {
+                const group = getPendingShopTransferGroupByKey(groupKey);
+                if (!group) {
+                    showSuccessToast("Ce lot a déjà été traité.");
                     return;
                 }
-                if (!canAccessShopTransferRequest(request)) {
-                    showSuccessToast("Accès refusé pour cette boutique.");
-                    return;
-                }
-                const sourceProd = appData.storeProducts?.[request.sourceProductId];
-                const qty = parseInt(request.sourceCartonQty ?? request.quantity, 10) || 0;
-
-                try {
-                    const now = new Date().toISOString();
-                    const updates = {};
-                    const shouldRestore = request.stockReserved === true || !!request.storeMovementId;
-                    if (shouldRestore && sourceProd && qty > 0) {
-                        const newStock = (sourceProd.quantityInStore || 0) + qty;
-                        updates[`${dbBasePath}/storeProducts/${sourceProd.id}/quantityInStore`] = newStock;
-                        const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
-                        updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
-                            id: moveKey,
-                            productId: sourceProd.id,
-                            productName: sourceProd.name,
-                            storeId: resolveStoreId(request.storeId) || resolveStoreId(sourceProd.storeId) || getActiveStoreId(),
-                            type: "Entrée",
-                            quantityChange: qty,
-                            oldStock: sourceProd.quantityInStore,
-                            newStock,
-                            comment: request.comment ? `Annulation transfert - ${request.comment}` : "Annulation transfert boutique",
-                            date: { ".sv": "timestamp" },
-                            status: EXIT_STATUS_APPROVED,
-                            userEmail: currentUser.email || '',
-                            userName: currentUserData?.fullName || currentUser.email || ''
-                        };
-                    }
-                    if (request.storeMovementId) {
-                        updates[`${dbBasePath}/storeMovements/${request.storeMovementId}/status`] = EXIT_STATUS_REJECTED;
-                        updates[`${dbBasePath}/storeMovements/${request.storeMovementId}/rejectedAt`] = now;
-                    }
-                    updates[`${dbBasePath}/shopTransferRequests/${requestId}/status`] = EXIT_STATUS_REJECTED;
-                    updates[`${dbBasePath}/shopTransferRequests/${requestId}/validatedAt`] = now;
-                    updates[`${dbBasePath}/shopTransferRequests/${requestId}/validatedBy`] = currentUser.email || currentUserData?.email || '';
-
-                    await update(ref(db), updates);
-                    showSuccessToast("Réception refusée.");
-                } catch (error) {
-                    console.error(error);
-                    showSuccessToast("Impossible de refuser cette réception.");
-                }
+                return rejectShopTransferRequests(group.requestIds);
             }
 
             function onShopMovementsValue(snapshot) {
@@ -25353,9 +25509,19 @@
             }
             if (pendingShopTransferTbody) {
                 pendingShopTransferTbody.addEventListener('click', (event) => {
+                    const approveGroupButton = event.target.closest('[data-shop-transfer-approve-group]');
+                    if (approveGroupButton) {
+                        approveShopTransferGroup(approveGroupButton.dataset.shopTransferApproveGroup);
+                        return;
+                    }
                     const approveButton = event.target.closest('[data-shop-transfer-approve]');
                     if (approveButton) {
                         approveShopTransferRequest(approveButton.dataset.shopTransferApprove);
+                        return;
+                    }
+                    const rejectGroupButton = event.target.closest('[data-shop-transfer-reject-group]');
+                    if (rejectGroupButton) {
+                        rejectShopTransferGroup(rejectGroupButton.dataset.shopTransferRejectGroup);
                         return;
                     }
                     const rejectButton = event.target.closest('[data-shop-transfer-reject]');
