@@ -19186,8 +19186,8 @@
                         updates[`${dbBasePath}/storeExitRequests/${requestId}/pricePending`] = true;
                     }
                 } else {
-                    const nextPrice = roundAmount(parseNumericInput(trimmedValue));
-                    if (!hasUsableSellingPrice(nextPrice)) {
+                    const nextPrice = normalizeSaleUnitPrice(parseNumericInput(trimmedValue));
+                    if (nextPrice === null) {
                         showSuccessToast("Saisissez un prix valide.");
                         renderSalesHistory();
                         return;
@@ -19268,8 +19268,8 @@
                         updates[`${dbBasePath}/storeMovements/${resolvedMovementId}/approvedAt`] = now;
                     }
                     const saleKey = push(ref(db, `${dbBasePath}/salesHistory`)).key;
-                    const sellingPrice = getStoreSellingPrice(product);
-                    const hasResolvedPrice = Number.isFinite(sellingPrice) && sellingPrice > 0;
+                    const sellingPrice = normalizeSaleUnitPrice(getStoreSellingPrice(product));
+                    const hasResolvedPrice = sellingPrice !== null;
                     const totalAmount = hasResolvedPrice ? sellingPrice * quantity : null;
                     updates[`${dbBasePath}/salesHistory/${saleKey}`] = {
                         id: saleKey,
@@ -19277,11 +19277,11 @@
                         productName: product.name,
                         storeId: resolveStoreId(request.storeId) || resolveStoreId(product.storeId) || getActiveStoreId(),
                         quantity,
-                        sellingPrice: hasResolvedPrice ? sellingPrice : null,
+                        sellingPrice,
                         totalAmount,
                         pricePending: !hasResolvedPrice,
                         pricingStatus: hasResolvedPrice ? PENDING_SALE_PRICING_READY : PENDING_SALE_PRICING_PENDING,
-                        manualSellingPrice: hasResolvedPrice ? sellingPrice : null,
+                        manualSellingPrice: sellingPrice,
                         sellerName,
                         customerId: null,
                         customerName: request.customerName || '',
@@ -19302,7 +19302,7 @@
                     updates[`${dbBasePath}/storeExitRequests/${requestId}/status`] = EXIT_STATUS_APPROVED;
                     updates[`${dbBasePath}/storeExitRequests/${requestId}/validatedAt`] = now;
                     updates[`${dbBasePath}/storeExitRequests/${requestId}/validatedBy`] = currentUser.email || currentUserData?.email || '';
-                    updates[`${dbBasePath}/storeExitRequests/${requestId}/requestedSellingPrice`] = hasResolvedPrice ? sellingPrice : null;
+                    updates[`${dbBasePath}/storeExitRequests/${requestId}/requestedSellingPrice`] = sellingPrice;
                     updates[`${dbBasePath}/storeExitRequests/${requestId}/pricePending`] = !hasResolvedPrice;
                     if (resolvedMovementId) updates[`${dbBasePath}/storeExitRequests/${requestId}/storeMovementId`] = resolvedMovementId;
                     await update(ref(db), updates);
@@ -22775,9 +22775,9 @@
                 packagings.forEach(packaging => {
                     const option = document.createElement('option');
                     const unitCount = Number(packaging.unitCount) || 1;
-                    const sellingPrice = getPackageSellingPrice(sourceProduct, packaging.code);
+                    const sellingPrice = normalizeSaleUnitPrice(getPackageSellingPrice(sourceProduct, packaging.code));
                     option.value = packaging.code || 'detail';
-                    option.textContent = `${packaging.label} — ${hasUsableSellingPrice(sellingPrice) ? formatCurrency(sellingPrice, sourceProduct.currency || 'CFA') : 'Prix à définir'}`;
+                    option.textContent = `${packaging.label} — ${sellingPrice !== null ? formatCurrency(sellingPrice, sourceProduct.currency || 'CFA') : 'Prix à définir'}`;
                     option.dataset.units = String(unitCount);
                     salesQuickPackageSelect.appendChild(option);
                 });
@@ -22801,9 +22801,9 @@
                 }
 
                 if (salesQuickSelectionInfo && salesQuickSelectionStock && salesQuickSelectionPrice) {
-                    const sellingPrice = getPackageSellingPrice(sourceProduct, selectedPackaging?.code);
+                    const sellingPrice = normalizeSaleUnitPrice(getPackageSellingPrice(sourceProduct, selectedPackaging?.code));
                     salesQuickSelectionStock.textContent = `Stock disponible: ${formatShopStockBreakdown(activeQty, shopItem, { includeBaseTotal: true })} · ${getProductInternalCodeText(sourceProduct)}`;
-                    salesQuickSelectionPrice.textContent = `${selectedPackaging?.label || getProductBaseUnitLabel(sourceProduct)} · ${hasUsableSellingPrice(sellingPrice) ? formatCurrency(sellingPrice, sourceProduct.currency || 'CFA') : 'Prix à définir'} · ${selectedUnits} unité(s)`;
+                    salesQuickSelectionPrice.textContent = `${selectedPackaging?.label || getProductBaseUnitLabel(sourceProduct)} · ${sellingPrice !== null ? formatCurrency(sellingPrice, sourceProduct.currency || 'CFA') : 'Prix à définir'} · ${selectedUnits} unité(s)`;
                     salesQuickSelectionInfo.classList.remove('hidden');
                 }
 
@@ -22880,12 +22880,12 @@
                     const codeMeta = getProductInternalCodeMarkup(sourceProduct, { prefix: 'Code', classes: 'text-[11px] font-semibold uppercase tracking-wide text-slate-400', missingClasses: 'text-[11px] font-semibold text-amber-600' });
                     const hasAnyDirectPrice = packagings.some(packaging => {
                         const unitCount = Number(packaging.unitCount) || 1;
-                        return activeQty >= unitCount && hasUsableSellingPrice(getPackageSellingPrice(sourceProduct, packaging.code));
+                        return activeQty >= unitCount && normalizeSaleUnitPrice(getPackageSellingPrice(sourceProduct, packaging.code)) !== null;
                     });
                     const packagingButtons = packagings.map(packaging => {
                         const unitCount = Number(packaging.unitCount) || 1;
-                        const sellingPrice = getPackageSellingPrice(sourceProduct, packaging.code);
-                        const hasPrice = hasUsableSellingPrice(sellingPrice);
+                        const sellingPrice = normalizeSaleUnitPrice(getPackageSellingPrice(sourceProduct, packaging.code));
+                        const hasPrice = sellingPrice !== null;
                         const canAddThisPackaging = !pendingLot && activeQty >= unitCount;
                         const buttonClass = canAddThisPackaging
                             ? (hasPrice
@@ -22962,8 +22962,9 @@
             function getLiveSellingPriceForSaleItem(item) {
                 const shopProduct = item?.shopProductId ? appData.shopStock?.[item.shopProductId] : null;
                 const sourceProduct = shopProduct ? appData.storeProducts?.[shopProduct.sourceProductId] : null;
+                const catalogPrice = sourceProduct ? getPackageSellingPrice(sourceProduct, item?.packageCode || 'detail') : NaN;
                 return {
-                    price: sourceProduct ? getPackageSellingPrice(sourceProduct, item?.packageCode || 'detail') : NaN,
+                    price: normalizeSaleUnitPrice(catalogPrice),
                     currency: sourceProduct?.currency || item?.currency || 'CFA'
                 };
             }
@@ -22971,20 +22972,20 @@
             function resolveSaleItemPricing(item, { mutate = false } = {}) {
                 if (!item || typeof item !== 'object') return item;
                 const target = mutate ? item : { ...item };
-                const hasStoredPrice = hasUsableSellingPrice(target.sellingPrice) && target.pricePending !== true;
+                const storedSellingPrice = target.pricePending === true ? null : normalizeSaleUnitPrice(target.sellingPrice);
                 const livePricing = getLiveSellingPriceForSaleItem(target);
                 target.currency = livePricing.currency || target.currency || 'CFA';
 
-                if (hasStoredPrice) {
-                    target.sellingPrice = Number(target.sellingPrice);
+                if (storedSellingPrice !== null) {
+                    target.sellingPrice = storedSellingPrice;
                     target.pricePending = false;
                     target.pricingStatus = PENDING_SALE_PRICING_READY;
                     syncCartItemPriceMetadata(target);
                     return target;
                 }
 
-                if (hasUsableSellingPrice(livePricing.price)) {
-                    target.sellingPrice = Number(livePricing.price);
+                if (livePricing.price !== null) {
+                    target.sellingPrice = livePricing.price;
                     target.pricePending = false;
                     target.pricingStatus = PENDING_SALE_PRICING_READY;
                 } else {
@@ -23013,14 +23014,14 @@
             }
 
             function getCartItemOriginalSellingPrice(item) {
-                const storedOriginalPrice = Number(item?.originalSellingPrice);
-                if (hasUsableSellingPrice(storedOriginalPrice)) {
-                    return roundAmount(storedOriginalPrice);
+                const storedOriginalPrice = normalizeSaleUnitPrice(item?.originalSellingPrice);
+                if (storedOriginalPrice !== null) {
+                    return storedOriginalPrice;
                 }
 
                 const livePricing = getLiveSellingPriceForSaleItem(item);
-                if (hasUsableSellingPrice(livePricing.price)) {
-                    return roundAmount(Number(livePricing.price));
+                if (livePricing.price !== null) {
+                    return livePricing.price;
                 }
 
                 return null;
@@ -23030,9 +23031,9 @@
                 if (!item || typeof item !== 'object') return item;
 
                 const originalSellingPrice = getCartItemOriginalSellingPrice(item);
-                const currentSellingPrice = hasUsableSellingPrice(item?.sellingPrice) && item?.pricePending !== true
-                    ? roundAmount(Number(item.sellingPrice))
-                    : null;
+                const currentSellingPrice = item?.pricePending === true
+                    ? null
+                    : normalizeSaleUnitPrice(item?.sellingPrice);
 
                 if (originalSellingPrice !== null) {
                     item.originalSellingPrice = originalSellingPrice;
@@ -23142,8 +23143,8 @@
                     return;
                 }
 
-                const nextSellingPrice = roundAmount(parseNumericInput(trimmedValue));
-                if (!hasUsableSellingPrice(nextSellingPrice)) {
+                const nextSellingPrice = normalizeSaleUnitPrice(parseNumericInput(trimmedValue));
+                if (nextSellingPrice === null) {
                     showSalesErrorMessage("Saisissez un prix client valide.");
                     renderCart();
                     return;
@@ -23171,15 +23172,15 @@
                     return;
                 }
 
-                const nextLineTotal = roundAmount(parseNumericInput(trimmedValue));
-                if (nextLineTotal <= 0) {
+                const nextLineTotal = normalizeSaleUnitPrice(parseNumericInput(trimmedValue));
+                if (nextLineTotal === null) {
                     showSalesErrorMessage("Saisissez un total de ligne valide.");
                     renderCart();
                     return;
                 }
 
-                const nextSellingPrice = roundAmount((nextLineTotal + currentLineDiscount) / quantity);
-                if (!hasUsableSellingPrice(nextSellingPrice)) {
+                const nextSellingPrice = normalizeSaleUnitPrice((nextLineTotal + currentLineDiscount) / quantity);
+                if (nextSellingPrice === null) {
                     showSalesErrorMessage("Impossible de recalculer le prix unitaire.");
                     renderCart();
                     return;
@@ -23260,9 +23261,10 @@
                 item.stockUnits = (Number(item.quantity) || 1) * nextUnitCount;
 
                 const nextSellingPrice = getPackageSellingPrice(sourceProduct, item.packageCode);
-                if (hasUsableSellingPrice(nextSellingPrice)) {
-                    item.sellingPrice = Number(nextSellingPrice);
-                    item.originalSellingPrice = Number(nextSellingPrice);
+                const resolvedSellingPrice = normalizeSaleUnitPrice(nextSellingPrice);
+                if (resolvedSellingPrice !== null) {
+                    item.sellingPrice = resolvedSellingPrice;
+                    item.originalSellingPrice = resolvedSellingPrice;
                     item.manualSellingPrice = null;
                     item.priceOverridden = false;
                     item.pricePending = false;
@@ -23335,7 +23337,8 @@
                 const packageUnits = Number(selectedPackaging?.unitCount) || 1;
                 const stockUnitsRequested = quantityInput * packageUnits;
                 const sellingPrice = getPackageSellingPrice(sourceProduct, selectedPackaging?.code);
-                const hasResolvedPrice = hasUsableSellingPrice(sellingPrice);
+                const resolvedSellingPrice = normalizeSaleUnitPrice(sellingPrice);
+                const hasResolvedPrice = resolvedSellingPrice !== null;
                 const activeLot = getShopItemActiveLot(shopProduct);
                 const pendingLot = getShopItemPendingValidationLot(shopProduct);
                 const productBoutiqueId = resolveBoutiqueId(shopProduct.boutiqueId);
@@ -23349,11 +23352,6 @@
                     const cartBoutiqueId = resolveBoutiqueId(cartItems[0]?.boutiqueId);
                     if (cartBoutiqueId && productBoutiqueId && cartBoutiqueId !== productBoutiqueId) {
                         showSalesErrorMessage("Le panier contient des articles d'une autre boutique.");
-                        return false;
-                    }
-                    const cartHasPendingPrice = cartHasPendingPriceItems();
-                    if (cartHasPendingPrice !== !hasResolvedPrice) {
-                        showSalesErrorMessage("Les articles sans prix doivent être mis en attente dans un panier séparé.");
                         return false;
                     }
                 }
@@ -23398,8 +23396,8 @@
                         lotLabel: activeLot.label,
                         lotReceivedAt: activeLot.receivedAt || '',
                         purchaseCostSnapshot: Number.isFinite(Number(activeLot.purchaseCost)) ? Number(activeLot.purchaseCost) : 0,
-                        sellingPrice: hasResolvedPrice ? Number(sellingPrice) : null,
-                        originalSellingPrice: hasResolvedPrice ? Number(sellingPrice) : null,
+                        sellingPrice: resolvedSellingPrice,
+                        originalSellingPrice: resolvedSellingPrice,
                         manualSellingPrice: null,
                         priceOverridden: false,
                         lineDiscountAmount: 0,
@@ -23575,6 +23573,13 @@
 
             function roundAmount(value) {
                 return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
+            }
+
+            function normalizeSaleUnitPrice(value) {
+                const numericValue = Number(value);
+                if (!Number.isFinite(numericValue)) return null;
+                const roundedValue = Math.round(numericValue + Number.EPSILON);
+                return hasUsableSellingPrice(roundedValue) ? roundedValue : null;
             }
 
             function distributeDiscountAcrossItems(items, discountOnSubtotal, direction = 'discount') {
@@ -27531,8 +27536,8 @@
                     }
                     return;
                 }
-                const sellingPrice = getStoreSellingPrice(prod);
-                const hasResolvedPrice = Number.isFinite(sellingPrice) && sellingPrice > 0;
+                const sellingPrice = normalizeSaleUnitPrice(getStoreSellingPrice(prod));
+                const hasResolvedPrice = sellingPrice !== null;
 
                 try {
                     if (exitSubmitButton) exitSubmitButton.disabled = true;
@@ -27579,7 +27584,7 @@
                         requestedByName: currentUserData?.fullName || currentUser.email || '',
                         requestedByEmail: currentUser.email || '',
                         requestedById: currentUser.uid || '',
-                        requestedSellingPrice: hasResolvedPrice ? sellingPrice : null,
+                        requestedSellingPrice: sellingPrice,
                         pricePending: !hasResolvedPrice,
                         stockBefore: prod.quantityInStore,
                         stockAfter: newStock,
@@ -27595,11 +27600,11 @@
                         productName: prod.name,
                         storeId,
                         quantity: qty,
-                        sellingPrice: hasResolvedPrice ? sellingPrice : null,
+                        sellingPrice,
                         totalAmount,
                         pricePending: !hasResolvedPrice,
                         pricingStatus: hasResolvedPrice ? PENDING_SALE_PRICING_READY : PENDING_SALE_PRICING_PENDING,
-                        manualSellingPrice: hasResolvedPrice ? sellingPrice : null,
+                        manualSellingPrice: sellingPrice,
                         sellerName,
                         customerId: null,
                         customerName,
