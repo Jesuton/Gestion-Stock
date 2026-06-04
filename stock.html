@@ -881,6 +881,19 @@
                                             <p id="sales-summary-remaining" class="mt-1 text-base font-bold text-amber-900">0 FCFA</p>
                                         </div>
                                     </div>
+                                    <div id="sales-summary-customer-box" class="hidden rounded-2xl border border-cyan-100 bg-cyan-50/70 px-4 py-3">
+                                        <div class="flex items-start justify-between gap-3">
+                                            <div class="min-w-0">
+                                                <p class="text-[11px] font-semibold uppercase tracking-wide text-cyan-700">Client sélectionné</p>
+                                                <p id="sales-summary-customer-name" class="mt-1 truncate text-sm font-semibold text-gray-900">—</p>
+                                            </div>
+                                            <div class="text-right">
+                                                <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Dû actuel</p>
+                                                <p id="sales-summary-customer-due" class="mt-1 text-sm font-bold text-amber-700">0 FCFA</p>
+                                            </div>
+                                        </div>
+                                        <p id="sales-summary-customer-meta" class="mt-2 text-xs text-gray-500">Aucune facture ouverte.</p>
+                                    </div>
                                     <div id="sales-summary-status-box" class="rounded-2xl border border-gray-200 bg-white px-4 py-3">
                                         <p id="sales-summary-status-title" class="text-xs font-semibold uppercase tracking-wide text-gray-500">Statut vente</p>
                                         <p id="sales-summary-status-value" class="mt-1 text-sm font-semibold text-gray-900">Panier vide</p>
@@ -5701,6 +5714,10 @@
             const salesSummaryQuantity = document.getElementById('sales-summary-quantity');
             const salesSummaryTotal = document.getElementById('sales-summary-total');
             const salesSummaryRemaining = document.getElementById('sales-summary-remaining');
+            const salesSummaryCustomerBox = document.getElementById('sales-summary-customer-box');
+            const salesSummaryCustomerName = document.getElementById('sales-summary-customer-name');
+            const salesSummaryCustomerDue = document.getElementById('sales-summary-customer-due');
+            const salesSummaryCustomerMeta = document.getElementById('sales-summary-customer-meta');
             const salesSummaryStatusBox = document.getElementById('sales-summary-status-box');
             const salesSummaryStatusTitle = document.getElementById('sales-summary-status-title');
             const salesSummaryStatusValue = document.getElementById('sales-summary-status-value');
@@ -8815,6 +8832,41 @@
                 setSalesSidebarPage(panelKey, { scroll: true });
             }
 
+            function updateSalesSelectedCustomerSummary(summary = null) {
+                if (!salesSummaryCustomerBox || !salesSummaryCustomerName || !salesSummaryCustomerDue || !salesSummaryCustomerMeta) return;
+
+                if (!selectedCustomer) {
+                    salesSummaryCustomerBox.classList.add('hidden');
+                    return;
+                }
+
+                const customerName = selectedCustomer.fullName || selectedCustomer.name || 'Client';
+                const balanceInfo = getCustomerOutstandingBalance(selectedCustomer);
+                const paidNow = summary ? Math.min(getImmediateSalePaymentAmount(), summary.total) : 0;
+                const remainingOnSale = summary ? Math.max(0, summary.total - paidNow) : 0;
+
+                salesSummaryCustomerName.textContent = customerName;
+                salesSummaryCustomerDue.textContent = balanceInfo.amount > 0.01
+                    ? formatCurrency(balanceInfo.amount, balanceInfo.currency)
+                    : 'Soldé';
+
+                if (!summary) {
+                    salesSummaryCustomerMeta.textContent = balanceInfo.invoicesCount > 0
+                        ? `${balanceInfo.invoicesCount} facture${balanceInfo.invoicesCount > 1 ? 's' : ''} ouverte${balanceInfo.invoicesCount > 1 ? 's' : ''}.`
+                        : 'Aucune facture ouverte.';
+                } else if (remainingOnSale > 0.01) {
+                    salesSummaryCustomerMeta.textContent =
+                        `${balanceInfo.invoicesCount} facture${balanceInfo.invoicesCount > 1 ? 's' : ''} ouverte${balanceInfo.invoicesCount > 1 ? 's' : ''} · ` +
+                        `Après cette vente: ${formatCurrency(balanceInfo.amount + remainingOnSale, summary.currency)}`;
+                } else {
+                    salesSummaryCustomerMeta.textContent = balanceInfo.invoicesCount > 0
+                        ? `${balanceInfo.invoicesCount} facture${balanceInfo.invoicesCount > 1 ? 's' : ''} ouverte${balanceInfo.invoicesCount > 1 ? 's' : ''} · Aucun nouveau solde si la vente est soldée.`
+                        : 'Aucune facture ouverte.';
+                }
+
+                salesSummaryCustomerBox.classList.remove('hidden');
+            }
+
             function updateSalesAccordionSummaries(summary = null) {
                 if (salesAccordionQuickSummary) {
                     salesAccordionQuickSummary.textContent = 'Produit, conditionnement et quantité';
@@ -8885,6 +8937,8 @@
                         ? '0 FCFA'
                         : (summary ? formatCurrency(remaining, summary.currency) : '—');
                 }
+
+                updateSalesSelectedCustomerSummary(summary);
 
                 if (salesSummaryStatusBox) {
                     salesSummaryStatusBox.classList.remove('border-gray-200', 'border-cyan-200', 'border-amber-200', 'border-emerald-200', 'bg-white', 'bg-cyan-50/60', 'bg-amber-50/60', 'bg-emerald-50/60');
@@ -9000,6 +9054,7 @@
                 if (!customerSelectedCard || !customerSelectedName || !customerSelectedContact) return;
                 if (!selectedCustomer) {
                     customerSelectedCard.classList.add('hidden');
+                    updateSalesSelectedCustomerSummary(cartItems.length && !cartHasPendingPriceItems() ? calculateCartSummary() : null);
                     updateSalePaymentSplitState();
                     return;
                 }
@@ -9025,6 +9080,7 @@
                         : 'Aucune facture ouverte';
                 }
                 customerSelectedCard.classList.remove('hidden');
+                updateSalesSelectedCustomerSummary(cartItems.length && !cartHasPendingPriceItems() ? calculateCartSummary() : null);
                 updateSalePaymentSplitState();
             }
 
