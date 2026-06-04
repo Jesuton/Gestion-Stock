@@ -1381,7 +1381,30 @@
                             <option value="last30">30 derniers jours</option>
                             <option value="thisMonth">Ce mois</option>
                             <option value="lastMonth">Mois précédent</option>
+                            <option value="custom">Période personnalisée</option>
                         </select>
+                    </div>
+                    <div id="sales-history-custom-range-panel"
+                        class="hidden rounded-2xl border border-cyan-100 bg-gradient-to-r from-cyan-50 via-white to-slate-50 p-4 shadow-sm">
+                        <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                            <div class="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2">
+                                <label class="block">
+                                    <span class="text-[11px] font-semibold uppercase tracking-wide text-cyan-700">Du</span>
+                                    <input type="date" id="sales-history-date-start"
+                                        class="mt-1 w-full rounded-xl border border-cyan-100 bg-white px-4 py-3 text-sm text-gray-700 shadow-sm focus:ring-cyan-500 focus:border-cyan-500" />
+                                </label>
+                                <label class="block">
+                                    <span class="text-[11px] font-semibold uppercase tracking-wide text-cyan-700">Au</span>
+                                    <input type="date" id="sales-history-date-end"
+                                        class="mt-1 w-full rounded-xl border border-cyan-100 bg-white px-4 py-3 text-sm text-gray-700 shadow-sm focus:ring-cyan-500 focus:border-cyan-500" />
+                                </label>
+                            </div>
+                            <button type="button" id="sales-history-custom-range-reset"
+                                class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-50">
+                                Réinitialiser
+                            </button>
+                        </div>
+                        <p class="mt-3 text-xs text-gray-500">Plage inclusive: les ventes entre les deux dates sélectionnées sont affichées.</p>
                     </div>
 
                     <div id="sales-history-customers-section" class="hidden space-y-3">
@@ -5322,6 +5345,8 @@
             let salesHistoryTab = 'completed';
             let salesHistorySearch = '';
             let salesHistoryDateFilterValue = 'all';
+            let salesHistoryCustomDateStart = '';
+            let salesHistoryCustomDateEnd = '';
             let isTaxEnabled = true;
             let activeSalesDetailId = null;
             let activeSalesCorrectionGroupId = null;
@@ -5623,6 +5648,10 @@
             const salesHistoryListWrapper = document.getElementById('sales-history-list-wrapper');
             const salesHistorySearchInput = document.getElementById('sales-history-search');
             const salesHistoryDateFilter = document.getElementById('sales-history-date-filter');
+            const salesHistoryCustomRangePanel = document.getElementById('sales-history-custom-range-panel');
+            const salesHistoryDateStartInput = document.getElementById('sales-history-date-start');
+            const salesHistoryDateEndInput = document.getElementById('sales-history-date-end');
+            const salesHistoryCustomRangeResetButton = document.getElementById('sales-history-custom-range-reset');
             const salesHistoryTabCompleted = document.getElementById('sales-history-tab-completed');
             const salesHistoryTabPending = document.getElementById('sales-history-tab-pending');
             const salesHistoryTabPayLater = document.getElementById('sales-history-tab-paylater');
@@ -10004,8 +10033,36 @@
                 return 0;
             }
 
+            function normalizeDateFilterBoundary(dateValue, boundary = 'start') {
+                const parsedDate = parseDateForFilter(dateValue);
+                if (!parsedDate || Number.isNaN(parsedDate.getTime())) return null;
+                const normalized = new Date(parsedDate);
+                if (boundary === 'end') {
+                    normalized.setHours(23, 59, 59, 999);
+                } else {
+                    normalized.setHours(0, 0, 0, 0);
+                }
+                return normalized;
+            }
+
+            function isDateInCustomRange(dateValue, startDateValue = salesHistoryCustomDateStart, endDateValue = salesHistoryCustomDateEnd) {
+                const date = parseDateForFilter(dateValue);
+                if (!date || Number.isNaN(date.getTime())) return false;
+
+                const startDate = normalizeDateFilterBoundary(startDateValue, 'start');
+                const endDate = normalizeDateFilterBoundary(endDateValue, 'end');
+
+                if (!startDate && !endDate) return true;
+                if (startDate && date < startDate) return false;
+                if (endDate && date > endDate) return false;
+                return true;
+            }
+
             function isDateInFilter(dateValue, filterKey) {
                 if (!filterKey || filterKey === 'all') return true;
+                if (filterKey === 'custom') {
+                    return isDateInCustomRange(dateValue);
+                }
                 const date = parseDateForFilter(dateValue);
                 if (!date || Number.isNaN(date.getTime())) return false;
                 const now = new Date();
@@ -10019,6 +10076,29 @@
                     return date.getMonth() === lastMonthDate.getMonth() && date.getFullYear() === lastMonthDate.getFullYear();
                 }
                 return true;
+            }
+
+            function updateSalesHistoryDateFilterUI() {
+                const isCustomRange = salesHistoryDateFilterValue === 'custom';
+
+                if (salesHistoryDateFilter && salesHistoryDateFilter.value !== salesHistoryDateFilterValue) {
+                    salesHistoryDateFilter.value = salesHistoryDateFilterValue;
+                }
+                if (salesHistoryCustomRangePanel) {
+                    salesHistoryCustomRangePanel.classList.toggle('hidden', !isCustomRange);
+                }
+                if (salesHistoryDateStartInput) {
+                    if (salesHistoryDateStartInput.value !== salesHistoryCustomDateStart) {
+                        salesHistoryDateStartInput.value = salesHistoryCustomDateStart;
+                    }
+                    salesHistoryDateStartInput.max = salesHistoryCustomDateEnd || '';
+                }
+                if (salesHistoryDateEndInput) {
+                    if (salesHistoryDateEndInput.value !== salesHistoryCustomDateEnd) {
+                        salesHistoryDateEndInput.value = salesHistoryCustomDateEnd;
+                    }
+                    salesHistoryDateEndInput.min = salesHistoryCustomDateStart || '';
+                }
             }
 
             function getDaysUntil(dateValue) {
@@ -10583,6 +10663,7 @@
                 if (salesHistoryDateFilter) {
                     salesHistoryDateFilterValue = salesHistoryDateFilter.value || 'all';
                 }
+                updateSalesHistoryDateFilterUI();
 
                 const groups = buildSalesHistoryGroups();
                 updateCustomerSelectedCard();
@@ -26291,6 +26372,38 @@
             if (salesHistoryDateFilter) {
                 salesHistoryDateFilter.addEventListener('change', (event) => {
                     salesHistoryDateFilterValue = event.target.value || 'all';
+                    updateSalesHistoryDateFilterUI();
+                    renderSalesHistory();
+                });
+            }
+            if (salesHistoryDateStartInput) {
+                salesHistoryDateStartInput.addEventListener('change', (event) => {
+                    salesHistoryDateFilterValue = 'custom';
+                    salesHistoryCustomDateStart = event.target.value || '';
+                    if (salesHistoryCustomDateEnd && salesHistoryCustomDateStart && salesHistoryCustomDateEnd < salesHistoryCustomDateStart) {
+                        salesHistoryCustomDateEnd = salesHistoryCustomDateStart;
+                    }
+                    updateSalesHistoryDateFilterUI();
+                    renderSalesHistory();
+                });
+            }
+            if (salesHistoryDateEndInput) {
+                salesHistoryDateEndInput.addEventListener('change', (event) => {
+                    salesHistoryDateFilterValue = 'custom';
+                    salesHistoryCustomDateEnd = event.target.value || '';
+                    if (salesHistoryCustomDateStart && salesHistoryCustomDateEnd && salesHistoryCustomDateStart > salesHistoryCustomDateEnd) {
+                        salesHistoryCustomDateStart = salesHistoryCustomDateEnd;
+                    }
+                    updateSalesHistoryDateFilterUI();
+                    renderSalesHistory();
+                });
+            }
+            if (salesHistoryCustomRangeResetButton) {
+                salesHistoryCustomRangeResetButton.addEventListener('click', () => {
+                    salesHistoryCustomDateStart = '';
+                    salesHistoryCustomDateEnd = '';
+                    salesHistoryDateFilterValue = 'all';
+                    updateSalesHistoryDateFilterUI();
                     renderSalesHistory();
                 });
             }
