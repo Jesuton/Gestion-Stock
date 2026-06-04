@@ -9089,10 +9089,19 @@
                 return { amount, currency, invoicesCount };
             }
 
-            function getImmediateSalePaymentAmount() {
+            function getManualImmediateSalePaymentAmount() {
                 const rawAmount = parseFloat(salePaidNowAmountInput?.value || '');
                 if (!Number.isFinite(rawAmount) || rawAmount <= 0) return 0;
                 return rawAmount;
+            }
+
+            function getImmediateSalePaymentAmount(summary = null) {
+                const rawAmount = getManualImmediateSalePaymentAmount();
+                if (rawAmount > 0) return rawAmount;
+                if (!selectedCustomer && summary && Number(summary.total || 0) > 0) {
+                    return Number(summary.total || 0);
+                }
+                return 0;
             }
 
             function resetImmediateSalePaymentInput() {
@@ -9172,7 +9181,7 @@
 
                 const customerName = selectedCustomer.fullName || selectedCustomer.name || 'Client';
                 const balanceInfo = getCustomerOutstandingBalance(selectedCustomer);
-                const paidNow = summary ? Math.min(getImmediateSalePaymentAmount(), summary.total) : 0;
+                const paidNow = summary ? Math.min(getImmediateSalePaymentAmount(summary), summary.total) : 0;
                 const remainingOnSale = summary ? Math.max(0, summary.total - paidNow) : 0;
 
                 salesSummaryCustomerName.textContent = customerName;
@@ -9225,7 +9234,7 @@
                     } else if (!selectedCustomer) {
                         salesAccordionPaymentSummary.textContent = `${formatCurrency(summary.total, summary.currency)} encaissé comptant`;
                     } else {
-                        const paidNow = Math.min(getImmediateSalePaymentAmount(), summary.total);
+                        const paidNow = Math.min(getImmediateSalePaymentAmount(summary), summary.total);
                         const remaining = Math.max(0, summary.total - paidNow);
                         if (paidNow > 0.01 && remaining > 0.01) {
                             salesAccordionPaymentSummary.textContent = `${formatCurrency(paidNow, summary.currency)} versé · ${formatCurrency(remaining, summary.currency)} restant`;
@@ -9252,8 +9261,10 @@
                 const lineCount = cartItems.length;
                 const totalQuantity = cartItems.reduce((sum, item) => sum + (Number(item?.quantity) || 0), 0);
                 const currentDue = selectedCustomer ? getCustomerOutstandingBalance(selectedCustomer) : { amount: 0, currency: summary?.currency || 'CFA', invoicesCount: 0 };
-                const paidNow = summary ? Math.min(getImmediateSalePaymentAmount(), summary.total) : 0;
-                const remaining = summary && selectedCustomer ? Math.max(0, summary.total - paidNow) : 0;
+                const paidNow = summary ? Math.min(getImmediateSalePaymentAmount(summary), summary.total) : 0;
+                const remaining = summary
+                    ? (selectedCustomer ? Math.max(0, summary.total - paidNow) : 0)
+                    : 0;
 
                 if (salesSummaryLines) salesSummaryLines.textContent = String(lineCount);
                 if (salesSummaryQuantity) salesSummaryQuantity.textContent = totalQuantity > 0 ? formatInputNumber(totalQuantity) || String(totalQuantity) : '0';
@@ -9324,9 +9335,9 @@
                 const currentDue = hasCustomer ? getCustomerOutstandingBalance(selectedCustomer) : { amount: 0, currency: 'CFA', invoicesCount: 0 };
                 const currency = summary?.currency || currentDue.currency || 'CFA';
                 const total = summary?.total || 0;
-                const paidNow = getImmediateSalePaymentAmount();
-                const remaining = Math.max(0, total - paidNow);
-                const paidNowDisplayValue = Math.min(paidNow, total);
+                const paidNow = getImmediateSalePaymentAmount(summary);
+                const remaining = hasCustomer ? Math.max(0, total - paidNow) : 0;
+                const paidNowDisplayValue = hasCustomer ? Math.min(paidNow, total) : total;
 
                 if (salePaymentTotalDisplay) salePaymentTotalDisplay.textContent = formatCurrency(total, currency);
                 if (salePaymentPaidDisplay) salePaymentPaidDisplay.textContent = formatCurrency(paidNowDisplayValue, currency);
@@ -24761,7 +24772,7 @@
                 const pricingState = syncSaleItemsPricing(cartItems, { mutate: true });
                 const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
                 const totalLines = cartItems.length;
-                const immediatePaymentAmount = getImmediateSalePaymentAmount();
+                const manualImmediatePaymentAmount = getManualImmediateSalePaymentAmount();
                 if (cartItemsCount) {
                     let label = 'article';
                     if (totalItems === 0) label = 'article(s)';
@@ -24775,7 +24786,7 @@
                 const hasPendingPrice = pricingState.hasPendingPrice;
                 const canGenerateInvoice = !hasItems && !!lastValidatedInvoiceData;
                 const canHold = hasItems && !!selectedCustomer;
-                const requiresCustomerForImmediatePayment = immediatePaymentAmount > 0.01;
+                const requiresCustomerForImmediatePayment = manualImmediatePaymentAmount > 0.01;
                 if (cartTaxRow) cartTaxRow.classList.toggle('hidden', !isTaxEnabled);
                 if (cartEmptyState) cartEmptyState.classList.toggle('hidden', hasItems);
                 if (cartItemsList) cartItemsList.classList.toggle('hidden', !hasItems);
@@ -24999,7 +25010,7 @@
                 }
 
                 const summary = calculateCartSummary();
-                const isImmediatePaymentTooHigh = immediatePaymentAmount > summary.total + 0.01;
+                const isImmediatePaymentTooHigh = manualImmediatePaymentAmount > summary.total + 0.01;
                 if (cartSubtotal) cartSubtotal.textContent = formatCurrency(summary.subtotal, summary.currency);
                 if (cartTax) cartTax.textContent = formatCurrency(summary.tax, summary.currency);
                 if (cartDiscount) {
@@ -25251,9 +25262,9 @@
                 if (payLaterDueDateError) payLaterDueDateError.classList.add('hidden');
 
                 const summary = calculateCartSummary();
-                const immediatePaymentAmount = getImmediateSalePaymentAmount();
+                const manualImmediatePaymentAmount = getManualImmediateSalePaymentAmount();
                 if (salePaymentSplitError) salePaymentSplitError.classList.add('hidden');
-                if (immediatePaymentAmount > 0.01 && !selectedCustomer) {
+                if (manualImmediatePaymentAmount > 0.01 && !selectedCustomer) {
                     openSalesAccordionPanel('client');
                     showSalesErrorMessage("Sélectionnez un client pour enregistrer un paiement partiel.");
                     if (salePaymentSplitError) {
@@ -25262,7 +25273,7 @@
                     }
                     return;
                 }
-                if (immediatePaymentAmount > summary.total + 0.01) {
+                if (manualImmediatePaymentAmount > summary.total + 0.01) {
                     openSalesAccordionPanel('payment');
                     showSalesErrorMessage(`Le montant versé dépasse le total (${formatCurrency(summary.total, summary.currency)}).`);
                     if (salePaymentSplitError) {
@@ -25305,6 +25316,9 @@
                     const discountedItems = distributeDiscountAcrossItems(cartItems, summary.discountOnSubtotal, summary.adjustmentDirection);
                     const totalAmount = summary.total;
                     const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+                    const immediatePaymentAmount = selectedCustomer
+                        ? manualImmediatePaymentAmount
+                        : totalAmount;
                     const remainingBalance = Math.max(0, totalAmount - immediatePaymentAmount);
                     const hasDeferredBalance = remainingBalance > 0.01 || (payLater && immediatePaymentAmount <= 0.01);
                     const amountPaidNow = immediatePaymentAmount > 0.01
@@ -27293,7 +27307,7 @@
                     showSuccessToast(getFeatureRestrictionMessage());
                     return;
                 }
-                if (!selectedCustomer && getImmediateSalePaymentAmount() > 0.01) {
+                if (!selectedCustomer && getManualImmediateSalePaymentAmount() > 0.01) {
                     openSalesAccordionPanel('client');
                 }
                 validateCart();
