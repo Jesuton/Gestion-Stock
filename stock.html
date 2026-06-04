@@ -372,6 +372,11 @@
                     <div data-icon="stats" class="w-5 h-5"></div>
                     <span class="sidebar-text">Historique ventes</span>
                 </button>
+                <button data-page="Rentabilite Caisse"
+                    class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
+                    <div data-icon="chartBar" class="w-5 h-5"></div>
+                    <span class="sidebar-text">Rentabilite &amp; Caisse</span>
+                </button>
                 <button data-page="Messagerie"
                     class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
                     <div data-icon="chat" class="w-5 h-5"></div>
@@ -1539,6 +1544,235 @@
                         </div>
                         <div id="sales-history-list" class="hidden space-y-4"></div>
                     </div>
+                </div>
+            </div>
+
+            <div id="page-Rentabilite-Caisse" class="page-content p-4 md:p-8 hidden">
+                <div class="flex flex-col gap-8">
+                    <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+                        <div>
+                            <h1 class="text-3xl font-bold text-gray-900">Rentabilite &amp; Caisse</h1>
+                            <p class="text-gray-500 mt-1">Suivi des marges produit, des pertes et des fermetures de caisse quotidiennes.</p>
+                        </div>
+                        <div class="inline-flex items-center gap-2 rounded-full border border-cyan-100 bg-cyan-50 px-4 py-2 text-xs font-semibold text-cyan-700">
+                            <span>Ventes sous prix et sous cout incluses</span>
+                        </div>
+                    </div>
+
+                    <section class="bg-white rounded-3xl border border-gray-100 shadow-sm p-5 md:p-6">
+                        <div class="flex flex-col gap-5">
+                            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                                <div>
+                                    <h2 class="text-xl font-semibold text-gray-900">Rentabilite par produit</h2>
+                                    <p class="text-sm text-gray-500 mt-1">Marge brute, pertes declarees, ventes sous prix defini et ventes sous cout d'achat.</p>
+                                </div>
+                                <div class="text-xs text-gray-500 rounded-full border border-gray-200 bg-gray-50 px-3 py-2 w-fit">
+                                    Le resultat net deduit les pertes en stock de la periode.
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1.3fr)_220px_220px] gap-3">
+                                <div class="relative">
+                                    <input type="text" id="profitability-product-search" placeholder="Rechercher un produit..."
+                                        class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-2xl focus:ring-cyan-500 focus:border-cyan-500" />
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <select id="profitability-location-filter"
+                                    class="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-700 focus:ring-cyan-500 focus:border-cyan-500">
+                                </select>
+                                <select id="profitability-date-filter"
+                                    class="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-700 focus:ring-cyan-500 focus:border-cyan-500">
+                                    <option value="today">Aujourd'hui</option>
+                                    <option value="last7">7 derniers jours</option>
+                                    <option value="last30">30 derniers jours</option>
+                                    <option value="thisMonth" selected>Ce mois</option>
+                                    <option value="lastMonth">Mois precedent</option>
+                                    <option value="all">Toute la periode</option>
+                                    <option value="custom">Periode personnalisee</option>
+                                </select>
+                            </div>
+
+                            <div id="profitability-custom-range-panel"
+                                class="hidden rounded-2xl border border-cyan-100 bg-gradient-to-r from-cyan-50 via-white to-slate-50 p-4">
+                                <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                                    <div class="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2">
+                                        <label class="block">
+                                            <span class="text-[11px] font-semibold uppercase tracking-wide text-cyan-700">Du</span>
+                                            <input type="date" id="profitability-date-start"
+                                                class="mt-1 w-full rounded-xl border border-cyan-100 bg-white px-4 py-3 text-sm text-gray-700 shadow-sm focus:ring-cyan-500 focus:border-cyan-500" />
+                                        </label>
+                                        <label class="block">
+                                            <span class="text-[11px] font-semibold uppercase tracking-wide text-cyan-700">Au</span>
+                                            <input type="date" id="profitability-date-end"
+                                                class="mt-1 w-full rounded-xl border border-cyan-100 bg-white px-4 py-3 text-sm text-gray-700 shadow-sm focus:ring-cyan-500 focus:border-cyan-500" />
+                                        </label>
+                                    </div>
+                                    <button type="button" id="profitability-custom-range-reset"
+                                        class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-50">
+                                        Reinitialiser
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                                <div class="rounded-2xl border border-blue-100 bg-blue-50/80 p-4">
+                                    <p class="text-xs uppercase tracking-wide text-blue-600">Chiffre d'affaires</p>
+                                    <p id="profitability-summary-revenue" class="mt-2 text-2xl font-bold text-blue-950">0 FCFA</p>
+                                </div>
+                                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                    <p class="text-xs uppercase tracking-wide text-slate-500">Cout d'achat sorti</p>
+                                    <p id="profitability-summary-cost" class="mt-2 text-2xl font-bold text-slate-900">0 FCFA</p>
+                                </div>
+                                <div class="rounded-2xl border border-emerald-100 bg-emerald-50/80 p-4">
+                                    <p class="text-xs uppercase tracking-wide text-emerald-600">Resultat net</p>
+                                    <p id="profitability-summary-net" class="mt-2 text-2xl font-bold text-emerald-900">0 FCFA</p>
+                                    <p id="profitability-summary-net-meta" class="mt-2 text-xs text-emerald-700">0 produit analyse</p>
+                                </div>
+                                <div class="rounded-2xl border border-rose-100 bg-rose-50/80 p-4">
+                                    <p class="text-xs uppercase tracking-wide text-rose-600">Pertes & ventes sous cout</p>
+                                    <p id="profitability-summary-pressure" class="mt-2 text-2xl font-bold text-rose-900">0</p>
+                                    <p id="profitability-summary-losses" class="mt-2 text-xs text-rose-700">0 FCFA de pertes stock</p>
+                                </div>
+                            </div>
+
+                            <div id="profitability-empty"
+                                class="flex flex-col items-center justify-center text-center text-gray-500 h-32 border border-dashed border-gray-200 rounded-2xl">
+                                <p>Aucune donnee de rentabilite sur cette periode.</p>
+                            </div>
+                            <div id="profitability-table-container" class="hidden overflow-x-auto rounded-2xl border border-gray-200">
+                                <table class="min-w-full bg-white divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
+                                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Vendu</th>
+                                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">CA</th>
+                                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Cout</th>
+                                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Marge brute</th>
+                                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Pertes</th>
+                                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Net</th>
+                                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Sous prix</th>
+                                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Sous cout</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="profitability-tbody" class="divide-y divide-gray-200"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="bg-white rounded-3xl border border-gray-100 shadow-sm p-5 md:p-6">
+                        <div class="flex flex-col gap-5">
+                            <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+                                <div>
+                                    <h2 class="text-xl font-semibold text-gray-900">Fermeture de caisse quotidienne</h2>
+                                    <p class="text-sm text-gray-500 mt-1">Calculez la caisse theorique, notez le montant compte puis enregistrez surplus ou manque.</p>
+                                </div>
+                                <div id="cash-closure-status-badge"
+                                    class="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-600 w-fit">
+                                    <span>Cloture non enregistree</span>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)] gap-3">
+                                <input type="date" id="cash-closure-date"
+                                    class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm text-gray-700 focus:ring-cyan-500 focus:border-cyan-500" />
+                                <select id="cash-closure-location"
+                                    class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm text-gray-700 focus:ring-cyan-500 focus:border-cyan-500">
+                                </select>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                                <div class="rounded-2xl border border-cyan-100 bg-cyan-50/80 p-4">
+                                    <p class="text-xs uppercase tracking-wide text-cyan-700">Ventes encaissees</p>
+                                    <p id="cash-closure-sales-cash" class="mt-2 text-2xl font-bold text-cyan-950">0 FCFA</p>
+                                </div>
+                                <div class="rounded-2xl border border-indigo-100 bg-indigo-50/80 p-4">
+                                    <p class="text-xs uppercase tracking-wide text-indigo-700">Paiements clients cash</p>
+                                    <p id="cash-closure-customer-cash" class="mt-2 text-2xl font-bold text-indigo-950">0 FCFA</p>
+                                </div>
+                                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                    <p class="text-xs uppercase tracking-wide text-slate-500">Caisse theorique</p>
+                                    <p id="cash-closure-theoretical" class="mt-2 text-2xl font-bold text-slate-950">0 FCFA</p>
+                                </div>
+                                <div class="rounded-2xl border border-amber-100 bg-amber-50/80 p-4">
+                                    <p class="text-xs uppercase tracking-wide text-amber-700">Ecart du jour</p>
+                                    <p id="cash-closure-variance" class="mt-2 text-2xl font-bold text-amber-950">0 FCFA</p>
+                                    <p id="cash-closure-variance-meta" class="mt-2 text-xs text-amber-700">Surplus: 0 FCFA · Manque: 0 FCFA</p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-5">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <label class="block">
+                                        <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Fond d'ouverture</span>
+                                        <input type="number" id="cash-closure-opening-float" min="0" step="1" placeholder="0"
+                                            class="mt-2 w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm text-gray-700 focus:ring-cyan-500 focus:border-cyan-500" />
+                                    </label>
+                                    <label class="block">
+                                        <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Entrees diverses</span>
+                                        <input type="number" id="cash-closure-other-cash-in" min="0" step="1" placeholder="0"
+                                            class="mt-2 w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm text-gray-700 focus:ring-cyan-500 focus:border-cyan-500" />
+                                    </label>
+                                    <label class="block">
+                                        <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Sorties diverses</span>
+                                        <input type="number" id="cash-closure-other-cash-out" min="0" step="1" placeholder="0"
+                                            class="mt-2 w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm text-gray-700 focus:ring-cyan-500 focus:border-cyan-500" />
+                                    </label>
+                                    <label class="block">
+                                        <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Montant compte</span>
+                                        <input type="number" id="cash-closure-counted-cash" min="0" step="1" placeholder="0"
+                                            class="mt-2 w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm text-gray-700 focus:ring-cyan-500 focus:border-cyan-500" />
+                                    </label>
+                                </div>
+                                <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                                    <label class="block h-full">
+                                        <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Commentaire</span>
+                                        <textarea id="cash-closure-note" rows="6" placeholder="Ex: retrait pour depense, billet manque, excedent constate au comptage..."
+                                            class="mt-2 w-full rounded-2xl border border-gray-200 bg-white p-3 text-sm text-gray-700 focus:ring-cyan-500 focus:border-cyan-500"></textarea>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <p id="cash-closure-form-meta" class="text-sm text-gray-500">Selectionnez une date et un point de caisse pour preparer la fermeture.</p>
+                                <button type="button" id="cash-closure-save-button"
+                                    class="inline-flex items-center justify-center rounded-2xl bg-cyan-500 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-cyan-600">
+                                    Enregistrer la fermeture
+                                </button>
+                            </div>
+                            <p id="cash-closure-error" class="hidden text-sm text-red-500"></p>
+
+                            <div class="rounded-2xl border border-gray-200 overflow-hidden">
+                                <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50">
+                                    <h3 class="text-sm font-semibold text-gray-800">Historique des fermetures</h3>
+                                    <span id="cash-closure-history-count" class="text-xs font-semibold text-gray-500">0</span>
+                                </div>
+                                <div id="cash-closure-history-empty"
+                                    class="flex items-center justify-center text-sm text-gray-400 h-24 bg-white">
+                                    Aucune fermeture enregistree.
+                                </div>
+                                <div id="cash-closure-history-table-container" class="hidden overflow-x-auto bg-white">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Caisse</th>
+                                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Theorique</th>
+                                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Comptee</th>
+                                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ecart</th>
+                                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="cash-closure-history-tbody" class="divide-y divide-gray-200"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
                 </div>
             </div>
 
@@ -5294,7 +5528,7 @@
             let currentUserData = null;
             let dbBasePath = '';
 
-            const appData = { stores: {}, boutiques: {}, categories: {}, storeProducts: {}, storeMovements: {}, shopStock: {}, shopMovements: {}, shopTransferRequests: {}, salesHistory: {}, saleCorrections: {}, customers: {}, suppliers: {}, supplierInvoices: {}, supplierPayments: {}, customerPayments: {}, storeExitRequests: {}, pendingSales: {}, settings: {}, inventories: {}, losses: {}, companyFeatureAccess: {} };
+            const appData = { stores: {}, boutiques: {}, categories: {}, storeProducts: {}, storeMovements: {}, shopStock: {}, shopMovements: {}, shopTransferRequests: {}, salesHistory: {}, saleCorrections: {}, customers: {}, suppliers: {}, supplierInvoices: {}, supplierPayments: {}, customerPayments: {}, storeExitRequests: {}, pendingSales: {}, settings: {}, inventories: {}, losses: {}, cashClosures: {}, companyFeatureAccess: {} };
             let isSidebarOpen = false;
             let isSidebarCollapsed = false;
             let isCodeLoginMode = false;
@@ -5315,8 +5549,8 @@
             const SALE_SOURCE_MIXED = 'mixed';
 
 
-            let storesListener, boutiquesListener, categoriesListener, storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, shopTransferRequestsListener, salesHistoryListener, saleCorrectionsListener, companyMembersListener, companyCustomersListener, suppliersListener, supplierInvoicesListener, supplierPaymentsListener, customerPaymentsListener, storeExitRequestsListener, pendingSalesListener, settingsListener, inventoriesListener, companyFeatureAccessListener, chatListListener, chatReadsListener, chatMessagesListener;
-            let storesRef, boutiquesRef, categoriesRef, storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, shopTransferRequestsRef, salesHistoryRef, saleCorrectionsRef, companyMembersRef, companyCustomersRef, suppliersRef, supplierInvoicesRef, supplierPaymentsRef, customerPaymentsRef, storeExitRequestsRef, pendingSalesRef, settingsRef, inventoriesRef, companyFeatureAccessRef, chatListRef, chatReadsRef, chatMessagesRef;
+            let storesListener, boutiquesListener, categoriesListener, storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, shopTransferRequestsListener, salesHistoryListener, saleCorrectionsListener, companyMembersListener, companyCustomersListener, suppliersListener, supplierInvoicesListener, supplierPaymentsListener, customerPaymentsListener, storeExitRequestsListener, pendingSalesListener, settingsListener, inventoriesListener, lossesListener, cashClosuresListener, companyFeatureAccessListener, chatListListener, chatReadsListener, chatMessagesListener;
+            let storesRef, boutiquesRef, categoriesRef, storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, shopTransferRequestsRef, salesHistoryRef, saleCorrectionsRef, companyMembersRef, companyCustomersRef, suppliersRef, supplierInvoicesRef, supplierPaymentsRef, customerPaymentsRef, storeExitRequestsRef, pendingSalesRef, settingsRef, inventoriesRef, lossesRef, cashClosuresRef, companyFeatureAccessRef, chatListRef, chatReadsRef, chatMessagesRef;
 
             const accessModules = [
                 'Tableau de bord',
@@ -5347,6 +5581,12 @@
             let salesHistoryDateFilterValue = 'all';
             let salesHistoryCustomDateStart = '';
             let salesHistoryCustomDateEnd = '';
+            let profitabilitySearch = '';
+            let profitabilityDateFilterValue = 'thisMonth';
+            let profitabilityCustomDateStart = '';
+            let profitabilityCustomDateEnd = '';
+            let profitabilityLocationFilterValue = 'all';
+            let activeCashClosureContextKey = '';
             let isTaxEnabled = true;
             let activeSalesDetailId = null;
             let activeSalesCorrectionGroupId = null;
@@ -5679,6 +5919,42 @@
             const salesHistoryRemindersEmpty = document.getElementById('sales-history-reminders-empty');
             const salesHistoryRemindersTableContainer = document.getElementById('sales-history-reminders-table-container');
             const salesHistoryRemindersTbody = document.getElementById('sales-history-reminders-tbody');
+            const profitabilityProductSearchInput = document.getElementById('profitability-product-search');
+            const profitabilityLocationFilter = document.getElementById('profitability-location-filter');
+            const profitabilityDateFilter = document.getElementById('profitability-date-filter');
+            const profitabilityCustomRangePanel = document.getElementById('profitability-custom-range-panel');
+            const profitabilityDateStartInput = document.getElementById('profitability-date-start');
+            const profitabilityDateEndInput = document.getElementById('profitability-date-end');
+            const profitabilityCustomRangeResetButton = document.getElementById('profitability-custom-range-reset');
+            const profitabilitySummaryRevenue = document.getElementById('profitability-summary-revenue');
+            const profitabilitySummaryCost = document.getElementById('profitability-summary-cost');
+            const profitabilitySummaryNet = document.getElementById('profitability-summary-net');
+            const profitabilitySummaryNetMeta = document.getElementById('profitability-summary-net-meta');
+            const profitabilitySummaryPressure = document.getElementById('profitability-summary-pressure');
+            const profitabilitySummaryLosses = document.getElementById('profitability-summary-losses');
+            const profitabilityEmpty = document.getElementById('profitability-empty');
+            const profitabilityTableContainer = document.getElementById('profitability-table-container');
+            const profitabilityTbody = document.getElementById('profitability-tbody');
+            const cashClosureStatusBadge = document.getElementById('cash-closure-status-badge');
+            const cashClosureDateInput = document.getElementById('cash-closure-date');
+            const cashClosureLocationSelect = document.getElementById('cash-closure-location');
+            const cashClosureSalesCash = document.getElementById('cash-closure-sales-cash');
+            const cashClosureCustomerCash = document.getElementById('cash-closure-customer-cash');
+            const cashClosureTheoretical = document.getElementById('cash-closure-theoretical');
+            const cashClosureVariance = document.getElementById('cash-closure-variance');
+            const cashClosureVarianceMeta = document.getElementById('cash-closure-variance-meta');
+            const cashClosureOpeningFloatInput = document.getElementById('cash-closure-opening-float');
+            const cashClosureOtherCashInInput = document.getElementById('cash-closure-other-cash-in');
+            const cashClosureOtherCashOutInput = document.getElementById('cash-closure-other-cash-out');
+            const cashClosureCountedCashInput = document.getElementById('cash-closure-counted-cash');
+            const cashClosureNoteInput = document.getElementById('cash-closure-note');
+            const cashClosureFormMeta = document.getElementById('cash-closure-form-meta');
+            const cashClosureSaveButton = document.getElementById('cash-closure-save-button');
+            const cashClosureError = document.getElementById('cash-closure-error');
+            const cashClosureHistoryCount = document.getElementById('cash-closure-history-count');
+            const cashClosureHistoryEmpty = document.getElementById('cash-closure-history-empty');
+            const cashClosureHistoryTableContainer = document.getElementById('cash-closure-history-table-container');
+            const cashClosureHistoryTbody = document.getElementById('cash-closure-history-tbody');
             const customerHistoryList = document.getElementById('customer-history-list');
             const customerHistoryListEmpty = document.getElementById('customer-history-list-empty');
             const customerHistorySelect = document.getElementById('customer-history-select');
@@ -10101,6 +10377,646 @@
                 }
             }
 
+            function getDateKeyInTimezone(dateValue) {
+                if (!dateValue) return '';
+                const raw = String(dateValue).trim();
+                if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+                const parsed = parseDateForFilter(dateValue);
+                if (!parsed || Number.isNaN(parsed.getTime())) return '';
+                const parts = new Intl.DateTimeFormat('en-CA', {
+                    timeZone: getActiveTimezone(),
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                }).formatToParts(parsed);
+                const year = parts.find(part => part.type === 'year')?.value || '0000';
+                const month = parts.find(part => part.type === 'month')?.value || '00';
+                const day = parts.find(part => part.type === 'day')?.value || '00';
+                return `${year}-${month}-${day}`;
+            }
+
+            function isDateInNamedRange(dateValue, filterKey = 'all', customStart = '', customEnd = '') {
+                if (!filterKey || filterKey === 'all') return true;
+                if (filterKey === 'custom') {
+                    return isDateInCustomRange(dateValue, customStart, customEnd);
+                }
+                return isDateInFilter(dateValue, filterKey);
+            }
+
+            function updateProfitabilityDateFilterUI() {
+                const isCustomRange = profitabilityDateFilterValue === 'custom';
+                if (profitabilityDateFilter && profitabilityDateFilter.value !== profitabilityDateFilterValue) {
+                    profitabilityDateFilter.value = profitabilityDateFilterValue;
+                }
+                if (profitabilityCustomRangePanel) {
+                    profitabilityCustomRangePanel.classList.toggle('hidden', !isCustomRange);
+                }
+                if (profitabilityDateStartInput) {
+                    if (profitabilityDateStartInput.value !== profitabilityCustomDateStart) {
+                        profitabilityDateStartInput.value = profitabilityCustomDateStart;
+                    }
+                    profitabilityDateStartInput.max = profitabilityCustomDateEnd || '';
+                }
+                if (profitabilityDateEndInput) {
+                    if (profitabilityDateEndInput.value !== profitabilityCustomDateEnd) {
+                        profitabilityDateEndInput.value = profitabilityCustomDateEnd;
+                    }
+                    profitabilityDateEndInput.min = profitabilityCustomDateStart || '';
+                }
+            }
+
+            function slugifyProductAnalyticsLabel(value) {
+                return String(value || '')
+                    .toLowerCase()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/^-+|-+$/g, '') || 'produit';
+            }
+
+            function buildAnalyticsLocationOptions({ includeAll = false } = {}) {
+                const options = [];
+                const accessibleBoutiqueIds = getAccessibleBoutiqueIds();
+                const accessibleStoreIds = getAccessibleStoreIds();
+                if (includeAll) {
+                    options.push({ value: 'all', label: 'Tous les points de vente', type: 'all', id: null });
+                }
+                if (getCurrentUserRole() === 'admin' || accessibleStoreIds.length > 0) {
+                    options.push({ value: 'store:direct', label: 'Magasin direct', type: 'store', id: 'direct' });
+                }
+                accessibleBoutiqueIds.forEach(boutiqueId => {
+                    options.push({
+                        value: `boutique:${boutiqueId}`,
+                        label: `Boutique - ${getBoutiqueName(boutiqueId)}`,
+                        type: 'boutique',
+                        id: boutiqueId
+                    });
+                });
+                if (!options.length && includeAll) {
+                    options.push({ value: 'all', label: 'Tous les points de vente', type: 'all', id: null });
+                }
+                return options;
+            }
+
+            function decodeAnalyticsLocationValue(value) {
+                const raw = String(value || 'all').trim();
+                if (!raw || raw === 'all') return { type: 'all', id: null };
+                const [type, ...rest] = raw.split(':');
+                return { type, id: rest.join(':') || null };
+            }
+
+            function ensureProfitabilityLocationOptions() {
+                if (!profitabilityLocationFilter) return;
+                const options = buildAnalyticsLocationOptions({ includeAll: true });
+                const selectedValue = options.some(option => option.value === profitabilityLocationFilterValue)
+                    ? profitabilityLocationFilterValue
+                    : (options[0]?.value || 'all');
+                profitabilityLocationFilterValue = selectedValue;
+                profitabilityLocationFilter.innerHTML = options
+                    .map(option => `<option value="${escapeHtml(option.value)}">${escapeHtml(option.label)}</option>`)
+                    .join('');
+                profitabilityLocationFilter.value = selectedValue;
+            }
+
+            function ensureCashClosureLocationOptions() {
+                if (!cashClosureLocationSelect) return;
+                const options = buildAnalyticsLocationOptions({ includeAll: false });
+                const selectedValue = options.some(option => option.value === cashClosureLocationSelect.value)
+                    ? cashClosureLocationSelect.value
+                    : (options[0]?.value || '');
+                cashClosureLocationSelect.innerHTML = options.length
+                    ? options.map(option => `<option value="${escapeHtml(option.value)}">${escapeHtml(option.label)}</option>`).join('')
+                    : `<option value="">Aucun point disponible</option>`;
+                cashClosureLocationSelect.disabled = options.length === 0;
+                cashClosureLocationSelect.value = selectedValue;
+            }
+
+            function saleMatchesAnalyticsLocation(sale, locationValue = 'all') {
+                const location = decodeAnalyticsLocationValue(locationValue);
+                if (location.type === 'all') return true;
+                const saleSource = getSaleSource(sale);
+                if (location.type === 'store') {
+                    return saleSource === SALE_SOURCE_STORE;
+                }
+                if (location.type === 'boutique') {
+                    return saleSource === SALE_SOURCE_SHOP && getSaleBoutiqueId(sale) === location.id;
+                }
+                return true;
+            }
+
+            function lossMatchesAnalyticsLocation(loss, locationValue = 'all') {
+                const location = decodeAnalyticsLocationValue(locationValue);
+                if (location.type === 'all') return true;
+                if (location.type === 'store') return loss?.source === 'magasin';
+                if (location.type === 'boutique') {
+                    return loss?.source === 'boutique' && resolveBoutiqueId(loss?.boutiqueId) === location.id;
+                }
+                return true;
+            }
+
+            function resolveAnalyticsProductKeyFromSale(sale) {
+                const directStoreProductId = sale?.storeProductId || appData.shopStock?.[sale?.shopProductId || '']?.sourceProductId || '';
+                if (directStoreProductId) return `store:${directStoreProductId}`;
+                if (sale?.shopProductId) return `shop:${sale.shopProductId}`;
+                return `name:${slugifyProductAnalyticsLabel(sale?.productName || 'produit')}`;
+            }
+
+            function resolveAnalyticsProductKeyFromLoss(loss) {
+                if (loss?.source === 'magasin' && loss?.productId) return `store:${loss.productId}`;
+                const sourceProductId = appData.shopStock?.[loss?.productId || '']?.sourceProductId || '';
+                if (sourceProductId) return `store:${sourceProductId}`;
+                if (loss?.productId) return `${loss?.source === 'boutique' ? 'shop' : 'name'}:${loss.productId}`;
+                return `name:${slugifyProductAnalyticsLabel(loss?.productName || 'produit')}`;
+            }
+
+            function getAnalyticsProductLabel(key, fallbackName = 'Produit') {
+                if (!key) return fallbackName;
+                const [type, id] = String(key).split(':');
+                if (type === 'store') return appData.storeProducts?.[id]?.name || fallbackName;
+                if (type === 'shop') return getShopItemDisplayName(appData.shopStock?.[id]) || fallbackName;
+                return fallbackName;
+            }
+
+            function buildProfitabilityReport() {
+                const salesEntries = getCountableSalesEntries().filter(sale =>
+                    isDateInNamedRange(sale?.date, profitabilityDateFilterValue, profitabilityCustomDateStart, profitabilityCustomDateEnd)
+                    && saleMatchesAnalyticsLocation(sale, profitabilityLocationFilterValue)
+                );
+                const lossEntries = Object.values(appData.losses || {}).filter(loss =>
+                    isDateInNamedRange(loss?.declaredAt, profitabilityDateFilterValue, profitabilityCustomDateStart, profitabilityCustomDateEnd)
+                    && lossMatchesAnalyticsLocation(loss, profitabilityLocationFilterValue)
+                );
+                const productMap = new Map();
+
+                const ensureProduct = (key, fallbackName = 'Produit') => {
+                    if (!productMap.has(key)) {
+                        productMap.set(key, {
+                            key,
+                            name: getAnalyticsProductLabel(key, fallbackName),
+                            soldQuantity: 0,
+                            soldStockUnits: 0,
+                            revenue: 0,
+                            cost: 0,
+                            grossMargin: 0,
+                            lossQuantity: 0,
+                            lossValue: 0,
+                            belowReferenceLines: 0,
+                            belowReferenceUnits: 0,
+                            belowCostLines: 0,
+                            belowCostUnits: 0,
+                            minPrice: null,
+                            maxPrice: null,
+                            lastSaleAt: '',
+                            saleCount: 0
+                        });
+                    }
+                    return productMap.get(key);
+                };
+
+                salesEntries.forEach(sale => {
+                    const key = resolveAnalyticsProductKeyFromSale(sale);
+                    const product = ensureProduct(key, sale?.productName || 'Produit');
+                    const quantity = Number(sale?.quantity || 0) || 0;
+                    const stockUnits = Number(sale?.stockUnits || quantity) || 0;
+                    const revenue = Number(sale?.totalAmount || 0) || 0;
+                    const unitSalePrice = Number(sale?.sellingPrice || 0) || 0;
+                    const originalPrice = Number(sale?.originalSellingPrice || 0) || 0;
+                    const costPerStockUnit = Number(sale?.purchaseCostSnapshot || 0) || 0;
+                    const cost = costPerStockUnit * stockUnits;
+                    const effectiveStockUnitRevenue = stockUnits > 0 ? revenue / stockUnits : 0;
+
+                    product.name = product.name || sale?.productName || 'Produit';
+                    product.soldQuantity += quantity;
+                    product.soldStockUnits += stockUnits;
+                    product.revenue += revenue;
+                    product.cost += cost;
+                    product.grossMargin += revenue - cost;
+                    product.saleCount += 1;
+                    product.lastSaleAt = !product.lastSaleAt || new Date(sale.date) > new Date(product.lastSaleAt) ? sale.date : product.lastSaleAt;
+                    product.minPrice = product.minPrice === null ? unitSalePrice : Math.min(product.minPrice, unitSalePrice);
+                    product.maxPrice = product.maxPrice === null ? unitSalePrice : Math.max(product.maxPrice, unitSalePrice);
+
+                    if (originalPrice > 0 && unitSalePrice > 0 && unitSalePrice < originalPrice) {
+                        product.belowReferenceLines += 1;
+                        product.belowReferenceUnits += quantity;
+                    }
+                    if (revenue + 0.01 < cost || (stockUnits > 0 && effectiveStockUnitRevenue + 0.01 < costPerStockUnit)) {
+                        product.belowCostLines += 1;
+                        product.belowCostUnits += stockUnits || quantity;
+                    }
+                });
+
+                lossEntries.forEach(loss => {
+                    const key = resolveAnalyticsProductKeyFromLoss(loss);
+                    const product = ensureProduct(key, loss?.productName || 'Produit');
+                    product.name = product.name || loss?.productName || 'Produit';
+                    product.lossQuantity += Number(loss?.totalUnits || loss?.stockChange || loss?.quantity || 0) || 0;
+                    product.lossValue += Number(loss?.estimatedValue || 0) || 0;
+                });
+
+                let rows = Array.from(productMap.values()).map(product => ({
+                    ...product,
+                    netProfit: product.grossMargin - product.lossValue
+                }));
+
+                const normalizedSearch = String(profitabilitySearch || '').trim().toLowerCase();
+                if (normalizedSearch) {
+                    rows = rows.filter(product => (product.name || '').toLowerCase().includes(normalizedSearch));
+                }
+
+                rows.sort((a, b) => {
+                    if (b.netProfit !== a.netProfit) return b.netProfit - a.netProfit;
+                    if (b.revenue !== a.revenue) return b.revenue - a.revenue;
+                    return (a.name || '').localeCompare(b.name || '');
+                });
+
+                const summary = rows.reduce((acc, row) => {
+                    acc.revenue += row.revenue;
+                    acc.cost += row.cost;
+                    acc.lossValue += row.lossValue;
+                    acc.netProfit += row.netProfit;
+                    acc.products += 1;
+                    acc.belowCostLines += row.belowCostLines;
+                    acc.belowReferenceLines += row.belowReferenceLines;
+                    return acc;
+                }, {
+                    revenue: 0,
+                    cost: 0,
+                    lossValue: 0,
+                    netProfit: 0,
+                    products: 0,
+                    belowCostLines: 0,
+                    belowReferenceLines: 0
+                });
+
+                return { rows, summary };
+            }
+
+            function renderProfitabilityReport() {
+                if (!profitabilityTbody) return;
+                ensureProfitabilityLocationOptions();
+                updateProfitabilityDateFilterUI();
+
+                const report = buildProfitabilityReport();
+                const { rows, summary } = report;
+
+                if (profitabilitySummaryRevenue) profitabilitySummaryRevenue.textContent = formatCurrency(summary.revenue);
+                if (profitabilitySummaryCost) profitabilitySummaryCost.textContent = formatCurrency(summary.cost);
+                if (profitabilitySummaryNet) {
+                    profitabilitySummaryNet.textContent = formatCurrency(summary.netProfit);
+                    profitabilitySummaryNet.className = `mt-2 text-2xl font-bold ${summary.netProfit < 0 ? 'text-rose-900' : 'text-emerald-900'}`;
+                }
+                if (profitabilitySummaryNetMeta) {
+                    profitabilitySummaryNetMeta.textContent = `${summary.products} produit${summary.products > 1 ? 's' : ''} analyse${summary.products > 1 ? 's' : ''}`;
+                }
+                if (profitabilitySummaryPressure) {
+                    profitabilitySummaryPressure.textContent = `${summary.belowReferenceLines + summary.belowCostLines}`;
+                }
+                if (profitabilitySummaryLosses) {
+                    profitabilitySummaryLosses.textContent = `${formatCurrency(summary.lossValue)} de pertes stock`;
+                }
+
+                if (!rows.length) {
+                    profitabilityTbody.innerHTML = '';
+                    if (profitabilityEmpty) profitabilityEmpty.classList.remove('hidden');
+                    if (profitabilityTableContainer) profitabilityTableContainer.classList.add('hidden');
+                    return;
+                }
+
+                if (profitabilityEmpty) profitabilityEmpty.classList.add('hidden');
+                if (profitabilityTableContainer) profitabilityTableContainer.classList.remove('hidden');
+
+                profitabilityTbody.innerHTML = rows.map(row => {
+                    const netClasses = row.netProfit < 0 ? 'text-rose-600' : 'text-emerald-600';
+                    const pressureRef = row.belowReferenceLines
+                        ? `<span class="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">${row.belowReferenceLines}</span>`
+                        : `<span class="text-xs text-gray-300">0</span>`;
+                    const pressureCost = row.belowCostLines
+                        ? `<span class="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-700">${row.belowCostLines}</span>`
+                        : `<span class="text-xs text-gray-300">0</span>`;
+                    return `
+                        <tr>
+                            <td class="px-4 py-3">
+                                <div class="min-w-[220px]">
+                                    <p class="text-sm font-semibold text-gray-900">${escapeHtml(row.name || 'Produit')}</p>
+                                    <p class="mt-1 text-xs text-gray-500">Prix min ${formatCurrency(row.minPrice || 0)} · prix max ${formatCurrency(row.maxPrice || 0)}</p>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 text-right text-sm font-semibold text-gray-700">${row.soldQuantity}</td>
+                            <td class="px-4 py-3 text-right text-sm font-semibold text-gray-900">${formatCurrency(row.revenue)}</td>
+                            <td class="px-4 py-3 text-right text-sm text-gray-600">${formatCurrency(row.cost)}</td>
+                            <td class="px-4 py-3 text-right text-sm font-semibold ${row.grossMargin < 0 ? 'text-rose-600' : 'text-emerald-600'}">${formatCurrency(row.grossMargin)}</td>
+                            <td class="px-4 py-3 text-right text-sm text-rose-600">${formatCurrency(row.lossValue)}</td>
+                            <td class="px-4 py-3 text-right text-sm font-bold ${netClasses}">${formatCurrency(row.netProfit)}</td>
+                            <td class="px-4 py-3 text-center">${pressureRef}</td>
+                            <td class="px-4 py-3 text-center">${pressureCost}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            function getCashClosureLocationMeta(locationValue) {
+                const location = decodeAnalyticsLocationValue(locationValue);
+                if (location.type === 'boutique') {
+                    return {
+                        locationType: 'boutique',
+                        locationId: location.id,
+                        locationName: getBoutiqueName(location.id)
+                    };
+                }
+                return {
+                    locationType: 'store',
+                    locationId: 'direct',
+                    locationName: 'Magasin direct'
+                };
+            }
+
+            function getCashClosureRecordKey(closureDate, locationValue) {
+                const meta = getCashClosureLocationMeta(locationValue);
+                const safeDate = String(closureDate || '').replace(/[^0-9-]/g, '');
+                const safeLocation = `${meta.locationType}-${String(meta.locationId || 'direct')}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+                return `closure-${safeLocation}-${safeDate}`;
+            }
+
+            function buildSaleGroupIndex() {
+                const index = {};
+                buildSalesHistoryGroups().forEach(group => {
+                    index[group.id] = group;
+                });
+                return index;
+            }
+
+            function isCashPaymentMode(mode) {
+                const normalized = String(mode || '').trim().toLowerCase();
+                if (!normalized) return false;
+                return normalized.includes('espece') || normalized.includes('esp') || normalized.includes('cash') || normalized.includes('paiement a la vente') || normalized.includes('paiement à la vente');
+            }
+
+            function groupMatchesCashClosureLocation(group, locationValue) {
+                const location = decodeAnalyticsLocationValue(locationValue);
+                if (location.type === 'store') {
+                    return group?.saleSource === SALE_SOURCE_STORE;
+                }
+                if (location.type === 'boutique') {
+                    return group?.saleSource === SALE_SOURCE_SHOP && group?.boutiqueId === location.id;
+                }
+                return false;
+            }
+
+            function getCashClosureComputedState() {
+                const closureDate = cashClosureDateInput?.value || getDateKeyInTimezone(new Date());
+                const locationValue = cashClosureLocationSelect?.value || '';
+                const openingFloat = Number(parseNumericInput(cashClosureOpeningFloatInput?.value || 0) || 0);
+                const otherCashIn = Number(parseNumericInput(cashClosureOtherCashInInput?.value || 0) || 0);
+                const otherCashOut = Number(parseNumericInput(cashClosureOtherCashOutInput?.value || 0) || 0);
+                const countedCash = Number(parseNumericInput(cashClosureCountedCashInput?.value || 0) || 0);
+                const groupIndex = buildSaleGroupIndex();
+                const payments = Object.values(appData.customerPayments || {});
+
+                let salesCash = 0;
+                let customerCash = 0;
+
+                const paymentsByGroup = payments.reduce((acc, payment) => {
+                    const groupId = payment?.groupId || '';
+                    if (!groupId) return acc;
+                    if (!acc[groupId]) acc[groupId] = [];
+                    acc[groupId].push(payment);
+                    return acc;
+                }, {});
+
+                Object.values(groupIndex).forEach(group => {
+                    if (getDateKeyInTimezone(group?.date) !== closureDate) return;
+                    if (!groupMatchesCashClosureLocation(group, locationValue)) return;
+                    const groupPayments = paymentsByGroup[group.id] || [];
+                    const upfrontPayments = groupPayments.filter(payment =>
+                        getDateKeyInTimezone(payment?.date) === closureDate
+                        && String(payment?.mode || '').trim().toLowerCase().includes('paiement')
+                    );
+                    const upfrontAmount = upfrontPayments.reduce((sum, payment) => sum + (Number(payment?.amount || 0) || 0), 0);
+                    if (upfrontAmount > 0.01) {
+                        salesCash += upfrontAmount;
+                        return;
+                    }
+                    if (!groupPayments.length && group.paymentStatus === 'paid') {
+                        salesCash += Number(group.total || 0) || 0;
+                    }
+                });
+
+                payments.forEach(payment => {
+                    const paymentDate = getDateKeyInTimezone(payment?.date);
+                    if (paymentDate !== closureDate) return;
+                    if (!isCashPaymentMode(payment?.mode)) return;
+                    const group = groupIndex[payment?.groupId || ''];
+                    if (!group || !groupMatchesCashClosureLocation(group, locationValue)) return;
+                    const normalizedMode = String(payment?.mode || '').trim().toLowerCase();
+                    if (normalizedMode.includes('paiement a la vente') || normalizedMode.includes('paiement à la vente')) {
+                        return;
+                    }
+                    customerCash += Number(payment?.amount || 0) || 0;
+                });
+
+                const theoreticalCash = openingFloat + salesCash + customerCash + otherCashIn - otherCashOut;
+                const variance = countedCash - theoreticalCash;
+
+                return {
+                    closureDate,
+                    locationValue,
+                    openingFloat,
+                    otherCashIn,
+                    otherCashOut,
+                    countedCash,
+                    salesCash,
+                    customerCash,
+                    theoreticalCash,
+                    variance,
+                    surplus: variance > 0 ? variance : 0,
+                    shortage: variance < 0 ? Math.abs(variance) : 0
+                };
+            }
+
+            function loadCashClosureForm(force = false) {
+                if (!cashClosureDateInput || !cashClosureLocationSelect) return;
+                const closureDate = cashClosureDateInput.value || getDateKeyInTimezone(new Date());
+                const locationValue = cashClosureLocationSelect.value || '';
+                const contextKey = getCashClosureRecordKey(closureDate, locationValue);
+                if (!force && contextKey === activeCashClosureContextKey) return;
+
+                const record = appData.cashClosures?.[contextKey] || null;
+                activeCashClosureContextKey = contextKey;
+
+                if (cashClosureError) cashClosureError.classList.add('hidden');
+                if (cashClosureOpeningFloatInput) cashClosureOpeningFloatInput.value = record ? Number(record.openingFloat || 0) : '';
+                if (cashClosureOtherCashInInput) cashClosureOtherCashInInput.value = record ? Number(record.otherCashIn || 0) : '';
+                if (cashClosureOtherCashOutInput) cashClosureOtherCashOutInput.value = record ? Number(record.otherCashOut || 0) : '';
+                if (cashClosureCountedCashInput) cashClosureCountedCashInput.value = record ? Number(record.countedCash || 0) : '';
+                if (cashClosureNoteInput) cashClosureNoteInput.value = record?.note || '';
+            }
+
+            function renderCashClosureHistory() {
+                if (!cashClosureHistoryTbody) return;
+                const records = Object.values(appData.cashClosures || {})
+                    .filter(record => {
+                        const locationValue = record?.locationType === 'boutique'
+                            ? `boutique:${record.locationId}`
+                            : 'store:direct';
+                        return buildAnalyticsLocationOptions({ includeAll: false }).some(option => option.value === locationValue);
+                    })
+                    .sort((a, b) => {
+                        const dateDiff = String(b.closureDate || '').localeCompare(String(a.closureDate || ''));
+                        if (dateDiff !== 0) return dateDiff;
+                        return String(a.locationName || '').localeCompare(String(b.locationName || ''));
+                    });
+
+                if (cashClosureHistoryCount) cashClosureHistoryCount.textContent = `${records.length}`;
+                if (!records.length) {
+                    cashClosureHistoryTbody.innerHTML = '';
+                    if (cashClosureHistoryEmpty) cashClosureHistoryEmpty.classList.remove('hidden');
+                    if (cashClosureHistoryTableContainer) cashClosureHistoryTableContainer.classList.add('hidden');
+                    return;
+                }
+
+                if (cashClosureHistoryEmpty) cashClosureHistoryEmpty.classList.add('hidden');
+                if (cashClosureHistoryTableContainer) cashClosureHistoryTableContainer.classList.remove('hidden');
+
+                cashClosureHistoryTbody.innerHTML = records.map(record => {
+                    const variance = Number(record?.variance || 0) || 0;
+                    const varianceClass = variance < 0 ? 'text-rose-600' : (variance > 0 ? 'text-emerald-600' : 'text-gray-600');
+                    const locationValue = record?.locationType === 'boutique'
+                        ? `boutique:${record.locationId}`
+                        : 'store:direct';
+                    return `
+                        <tr>
+                            <td class="px-4 py-3 text-sm text-gray-700">${formatDateOnly(record.closureDate)}</td>
+                            <td class="px-4 py-3 text-sm font-semibold text-gray-900">${escapeHtml(record.locationName || 'Caisse')}</td>
+                            <td class="px-4 py-3 text-right text-sm text-gray-700">${formatCurrency(record.expectedCash || 0)}</td>
+                            <td class="px-4 py-3 text-right text-sm text-gray-700">${formatCurrency(record.countedCash || 0)}</td>
+                            <td class="px-4 py-3 text-right text-sm font-semibold ${varianceClass}">${formatCurrency(variance)}</td>
+                            <td class="px-4 py-3 text-right">
+                                <button type="button" class="inline-flex items-center rounded-xl border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50" data-cash-closure-load="${escapeHtml(record.closureDate || '')}" data-cash-closure-location="${escapeHtml(locationValue)}">
+                                    Charger
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            function renderCashClosureSection() {
+                ensureCashClosureLocationOptions();
+                if (cashClosureDateInput && !cashClosureDateInput.value) {
+                    cashClosureDateInput.value = getDateKeyInTimezone(new Date());
+                }
+                loadCashClosureForm(false);
+
+                const state = getCashClosureComputedState();
+                const recordKey = getCashClosureRecordKey(state.closureDate, state.locationValue);
+                const existingRecord = appData.cashClosures?.[recordKey] || null;
+
+                if (cashClosureSalesCash) cashClosureSalesCash.textContent = formatCurrency(state.salesCash);
+                if (cashClosureCustomerCash) cashClosureCustomerCash.textContent = formatCurrency(state.customerCash);
+                if (cashClosureTheoretical) cashClosureTheoretical.textContent = formatCurrency(state.theoreticalCash);
+                if (cashClosureVariance) {
+                    cashClosureVariance.textContent = formatCurrency(state.variance);
+                    cashClosureVariance.className = `mt-2 text-2xl font-bold ${state.variance < 0 ? 'text-rose-700' : (state.variance > 0 ? 'text-emerald-700' : 'text-amber-950')}`;
+                }
+                if (cashClosureVarianceMeta) {
+                    cashClosureVarianceMeta.textContent = `Surplus: ${formatCurrency(state.surplus)} · Manque: ${formatCurrency(state.shortage)}`;
+                }
+                if (cashClosureFormMeta) {
+                    cashClosureFormMeta.textContent = existingRecord
+                        ? `Cloture deja enregistree pour ${existingRecord.locationName || 'cette caisse'} le ${formatDateOnly(existingRecord.closureDate)}. Vous pouvez la mettre a jour.`
+                        : 'Renseignez le fond d\'ouverture, les mouvements divers puis le montant compte.';
+                }
+                if (cashClosureStatusBadge) {
+                    const label = existingRecord
+                        ? `Cloturee le ${formatDateOnly(existingRecord.closureDate)}`
+                        : 'Cloture non enregistree';
+                    cashClosureStatusBadge.className = `inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-semibold w-fit ${existingRecord ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : 'border border-gray-200 bg-gray-50 text-gray-600'}`;
+                    cashClosureStatusBadge.innerHTML = `<span>${escapeHtml(label)}</span>`;
+                }
+
+                renderCashClosureHistory();
+            }
+
+            function renderProfitabilityAndCashPage() {
+                renderProfitabilityReport();
+                renderCashClosureSection();
+            }
+
+            async function saveCashClosure() {
+                if (!currentUser || !dbBasePath) return;
+                const state = getCashClosureComputedState();
+                if (!state.locationValue) {
+                    if (cashClosureError) {
+                        cashClosureError.textContent = 'Selectionnez un point de caisse.';
+                        cashClosureError.classList.remove('hidden');
+                    }
+                    return;
+                }
+                if (!state.closureDate) {
+                    if (cashClosureError) {
+                        cashClosureError.textContent = 'Selectionnez une date de fermeture.';
+                        cashClosureError.classList.remove('hidden');
+                    }
+                    return;
+                }
+
+                if (cashClosureSaveButton) {
+                    cashClosureSaveButton.disabled = true;
+                    cashClosureSaveButton.textContent = 'Enregistrement...';
+                }
+                if (cashClosureError) cashClosureError.classList.add('hidden');
+
+                const meta = getCashClosureLocationMeta(state.locationValue);
+                const recordKey = getCashClosureRecordKey(state.closureDate, state.locationValue);
+                const now = new Date().toISOString();
+                const existingRecord = appData.cashClosures?.[recordKey] || null;
+                const payload = {
+                    id: recordKey,
+                    closureDate: state.closureDate,
+                    locationType: meta.locationType,
+                    locationId: meta.locationId,
+                    locationName: meta.locationName,
+                    openingFloat: state.openingFloat,
+                    salesCash: state.salesCash,
+                    customerCash: state.customerCash,
+                    otherCashIn: state.otherCashIn,
+                    otherCashOut: state.otherCashOut,
+                    expectedCash: state.theoreticalCash,
+                    countedCash: state.countedCash,
+                    variance: state.variance,
+                    surplus: state.surplus,
+                    shortage: state.shortage,
+                    note: (cashClosureNoteInput?.value || '').trim(),
+                    status: 'closed',
+                    createdAt: existingRecord?.createdAt || now,
+                    createdBy: existingRecord?.createdBy || currentUser.uid || '',
+                    createdByName: existingRecord?.createdByName || currentUserData?.fullName || currentUser.email || '',
+                    updatedAt: now,
+                    updatedBy: currentUser.uid || '',
+                    updatedByName: currentUserData?.fullName || currentUser.email || ''
+                };
+
+                try {
+                    const updates = {};
+                    updates[`${dbBasePath}/cashClosures/${recordKey}`] = payload;
+                    await update(ref(db), updates);
+                    activeCashClosureContextKey = recordKey;
+                    showSuccessToast(existingRecord ? 'Fermeture de caisse mise a jour.' : 'Fermeture de caisse enregistree.');
+                } catch (error) {
+                    console.error('Erreur fermeture de caisse:', error);
+                    if (cashClosureError) {
+                        cashClosureError.textContent = "Impossible d'enregistrer la fermeture pour le moment.";
+                        cashClosureError.classList.remove('hidden');
+                    }
+                } finally {
+                    if (cashClosureSaveButton) {
+                        cashClosureSaveButton.disabled = false;
+                        cashClosureSaveButton.textContent = 'Enregistrer la fermeture';
+                    }
+                }
+            }
+
             function getDaysUntil(dateValue) {
                 const date = parseDateForFilter(dateValue);
                 if (!date || Number.isNaN(date.getTime())) return null;
@@ -13536,6 +14452,7 @@
                 'Tableau de bord': 'Tableau de bord',
                 'Ventes': 'Ventes',
                 'Historique des ventes': 'Historique des ventes',
+                'Rentabilite Caisse': 'Historique des ventes',
                 'Messagerie': 'Messagerie',
                 'Stock Boutique': 'Stock Boutique',
                 'Mon Magasin': 'Mon Magasin',
@@ -13551,6 +14468,7 @@
                 'Tableau de bord': 'dashboard.view',
                 'Ventes': 'sales.view',
                 'Historique des ventes': 'sales_history.view',
+                'Rentabilite Caisse': 'sales_history.view',
                 'Messagerie': 'messaging.view',
                 'Stock Boutique': 'shop_stock.view',
                 'Mon Magasin': 'store_stock.view',
@@ -13767,9 +14685,6 @@
             // ================================================================
             // === MODULE PERTES =============================================
             // ================================================================
-
-            let lossesRef = null;
-            let lossesListener = null;
             let lossModalApproval = null; // { byId, byName, byRole, approvedAt }
 
             // ── Helpers ────────────────────────────────────────────────────
@@ -19541,6 +20456,7 @@
                 renderInventoryLocationOptions();
                 renderInventoryGlobalView();
                 renderTraceabilityPage();
+                renderProfitabilityAndCashPage();
             }
 
             function onBoutiquesValue(snapshot) {
@@ -19578,6 +20494,7 @@
                 renderInventoryLocationOptions();
                 renderInventoryGlobalView();
                 renderTraceabilityPage();
+                renderProfitabilityAndCashPage();
             }
 
             function onCategoriesValue(snapshot) {
@@ -19598,6 +20515,7 @@
                 updateAllStats();
                 renderInventoryGlobalView();
                 renderTraceabilityPage();
+                renderProfitabilityAndCashPage();
             }
 
             function renderShopStock(searchTerm = '') {
@@ -21644,6 +22562,7 @@
                 updateDashboardStats();
                 renderCustomerHistory();
                 renderTraceabilityPage();
+                renderProfitabilityAndCashPage();
             }
 
             function onSaleCorrectionsValue(snapshot) {
@@ -21800,6 +22719,7 @@
                 customerPaymentsListener = onValue(customerPaymentsRef, snap => {
                     appData.customerPayments = snap.val() || {};
                     renderSalesHistory();
+                    renderProfitabilityAndCashPage();
                 });
 
                 inventoriesRef = ref(db, getInventoriesPath());
@@ -21810,6 +22730,13 @@
                     appData.losses = snap.val() || {};
                     renderLossesHistory();
                     updateDashboardStats();
+                    renderProfitabilityAndCashPage();
+                });
+
+                cashClosuresRef = ref(db, `${dbBasePath}/cashClosures`);
+                cashClosuresListener = onValue(cashClosuresRef, snap => {
+                    appData.cashClosures = snap.val() || {};
+                    renderProfitabilityAndCashPage();
                 });
 
                 setupChatListeners();
@@ -21840,12 +22767,13 @@
                 if (customerPaymentsListener && customerPaymentsRef) off(customerPaymentsRef, customerPaymentsListener);
                 if (inventoriesListener && inventoriesRef) off(inventoriesRef, inventoriesListener);
                 if (lossesListener && lossesRef) off(lossesRef, lossesListener);
+                if (cashClosuresListener && cashClosuresRef) off(cashClosuresRef, cashClosuresListener);
                 if (chatListListener && chatListRef) off(chatListRef, chatListListener);
                 if (chatReadsListener && chatReadsRef) off(chatReadsRef, chatReadsListener);
                 if (chatMessagesListener && chatMessagesRef) off(chatMessagesRef, chatMessagesListener);
-                storesListener = null; boutiquesListener = null; categoriesListener = null; storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; shopTransferRequestsListener = null; salesHistoryListener = null; saleCorrectionsListener = null; pendingSalesListener = null; settingsListener = null; companyFeatureAccessListener = null; companyMembersListener = null; companyCustomersListener = null; suppliersListener = null; supplierInvoicesListener = null; supplierPaymentsListener = null; customerPaymentsListener = null; inventoriesListener = null; lossesListener = null; chatListListener = null; chatReadsListener = null; chatMessagesListener = null;
-                chatListRef = null; chatReadsRef = null; chatMessagesRef = null; inventoriesRef = null; saleCorrectionsRef = null; companyFeatureAccessRef = null;
-                appData.stores = {}; appData.boutiques = {}; appData.categories = {}; appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.shopMovements = {}; appData.shopTransferRequests = {}; appData.salesHistory = {}; appData.saleCorrections = {}; appData.customers = {}; appData.suppliers = {}; appData.supplierInvoices = {}; appData.supplierPayments = {}; appData.customerPayments = {}; appData.storeExitRequests = {}; appData.pendingSales = {}; appData.settings = {}; appData.inventories = {}; appData.losses = {}; appData.companyFeatureAccess = {};
+                storesListener = null; boutiquesListener = null; categoriesListener = null; storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; shopTransferRequestsListener = null; salesHistoryListener = null; saleCorrectionsListener = null; pendingSalesListener = null; settingsListener = null; companyFeatureAccessListener = null; companyMembersListener = null; companyCustomersListener = null; suppliersListener = null; supplierInvoicesListener = null; supplierPaymentsListener = null; customerPaymentsListener = null; inventoriesListener = null; lossesListener = null; cashClosuresListener = null; chatListListener = null; chatReadsListener = null; chatMessagesListener = null;
+                chatListRef = null; chatReadsRef = null; chatMessagesRef = null; inventoriesRef = null; saleCorrectionsRef = null; lossesRef = null; cashClosuresRef = null; companyFeatureAccessRef = null;
+                appData.stores = {}; appData.boutiques = {}; appData.categories = {}; appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.shopMovements = {}; appData.shopTransferRequests = {}; appData.salesHistory = {}; appData.saleCorrections = {}; appData.customers = {}; appData.suppliers = {}; appData.supplierInvoices = {}; appData.supplierPayments = {}; appData.customerPayments = {}; appData.storeExitRequests = {}; appData.pendingSales = {}; appData.settings = {}; appData.inventories = {}; appData.losses = {}; appData.cashClosures = {}; appData.companyFeatureAccess = {};
                 inventoriesPathSuffix = 'inventories';
                 selectedCustomer = null;
                 customerOptionLookup = {};
@@ -21942,6 +22870,9 @@
                 renderDashboardAdminRecovery();
                 if (currentPage === 'Traçabilité') {
                     renderTraceabilityPage();
+                }
+                if (currentPage === 'Rentabilite Caisse') {
+                    renderProfitabilityAndCashPage();
                 }
 
                 // Mettre à jour les boutons d'actions rapides
@@ -26405,6 +27336,91 @@
                     salesHistoryDateFilterValue = 'all';
                     updateSalesHistoryDateFilterUI();
                     renderSalesHistory();
+                });
+            }
+            if (profitabilityProductSearchInput) {
+                profitabilityProductSearchInput.addEventListener('input', (event) => {
+                    profitabilitySearch = event.target.value || '';
+                    renderProfitabilityAndCashPage();
+                });
+            }
+            if (profitabilityLocationFilter) {
+                profitabilityLocationFilter.addEventListener('change', (event) => {
+                    profitabilityLocationFilterValue = event.target.value || 'all';
+                    renderProfitabilityAndCashPage();
+                });
+            }
+            if (profitabilityDateFilter) {
+                profitabilityDateFilter.addEventListener('change', (event) => {
+                    profitabilityDateFilterValue = event.target.value || 'thisMonth';
+                    updateProfitabilityDateFilterUI();
+                    renderProfitabilityAndCashPage();
+                });
+            }
+            if (profitabilityDateStartInput) {
+                profitabilityDateStartInput.addEventListener('change', (event) => {
+                    profitabilityDateFilterValue = 'custom';
+                    profitabilityCustomDateStart = event.target.value || '';
+                    if (profitabilityCustomDateEnd && profitabilityCustomDateStart && profitabilityCustomDateEnd < profitabilityCustomDateStart) {
+                        profitabilityCustomDateEnd = profitabilityCustomDateStart;
+                    }
+                    updateProfitabilityDateFilterUI();
+                    renderProfitabilityAndCashPage();
+                });
+            }
+            if (profitabilityDateEndInput) {
+                profitabilityDateEndInput.addEventListener('change', (event) => {
+                    profitabilityDateFilterValue = 'custom';
+                    profitabilityCustomDateEnd = event.target.value || '';
+                    if (profitabilityCustomDateStart && profitabilityCustomDateEnd && profitabilityCustomDateStart > profitabilityCustomDateEnd) {
+                        profitabilityCustomDateStart = profitabilityCustomDateEnd;
+                    }
+                    updateProfitabilityDateFilterUI();
+                    renderProfitabilityAndCashPage();
+                });
+            }
+            if (profitabilityCustomRangeResetButton) {
+                profitabilityCustomRangeResetButton.addEventListener('click', () => {
+                    profitabilityCustomDateStart = '';
+                    profitabilityCustomDateEnd = '';
+                    profitabilityDateFilterValue = 'thisMonth';
+                    updateProfitabilityDateFilterUI();
+                    renderProfitabilityAndCashPage();
+                });
+            }
+            if (cashClosureDateInput) {
+                cashClosureDateInput.addEventListener('change', () => {
+                    activeCashClosureContextKey = '';
+                    loadCashClosureForm(true);
+                    renderCashClosureSection();
+                });
+            }
+            if (cashClosureLocationSelect) {
+                cashClosureLocationSelect.addEventListener('change', () => {
+                    activeCashClosureContextKey = '';
+                    loadCashClosureForm(true);
+                    renderCashClosureSection();
+                });
+            }
+            [cashClosureOpeningFloatInput, cashClosureOtherCashInInput, cashClosureOtherCashOutInput, cashClosureCountedCashInput].filter(Boolean).forEach(input => {
+                input.addEventListener('input', () => {
+                    renderCashClosureSection();
+                });
+            });
+            if (cashClosureSaveButton) {
+                cashClosureSaveButton.addEventListener('click', () => {
+                    saveCashClosure();
+                });
+            }
+            if (cashClosureHistoryTbody) {
+                cashClosureHistoryTbody.addEventListener('click', (event) => {
+                    const button = event.target.closest('[data-cash-closure-load]');
+                    if (!button) return;
+                    if (cashClosureDateInput) cashClosureDateInput.value = button.dataset.cashClosureLoad || '';
+                    if (cashClosureLocationSelect) cashClosureLocationSelect.value = button.dataset.cashClosureLocation || '';
+                    activeCashClosureContextKey = '';
+                    loadCashClosureForm(true);
+                    renderCashClosureSection();
                 });
             }
             if (priceTableSearchInput) {
