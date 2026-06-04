@@ -1559,7 +1559,21 @@
                         </div>
                     </div>
 
-                    <section class="bg-white rounded-3xl border border-gray-100 shadow-sm p-5 md:p-6">
+                    <div class="flex flex-col gap-3">
+                        <div class="inline-flex w-full sm:w-fit rounded-2xl border border-gray-200 bg-gray-50 p-1">
+                            <button type="button" id="rentabilite-caisse-tab-profitability"
+                                class="flex-1 sm:flex-none rounded-xl bg-cyan-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm">
+                                Rentabilite
+                            </button>
+                            <button type="button" id="rentabilite-caisse-tab-cash"
+                                class="flex-1 sm:flex-none rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-600 hover:text-gray-900">
+                                Fermeture de caisse
+                            </button>
+                        </div>
+                        <p class="text-sm text-gray-500">Affichez soit la performance produit, soit la cloture quotidienne, sans melanger les deux lectures.</p>
+                    </div>
+
+                    <section id="rentabilite-caisse-profitability-panel" class="bg-white rounded-3xl border border-gray-100 shadow-sm p-5 md:p-6">
                         <div class="flex flex-col gap-5">
                             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                                 <div>
@@ -1664,7 +1678,7 @@
                         </div>
                     </section>
 
-                    <section class="bg-white rounded-3xl border border-gray-100 shadow-sm p-5 md:p-6">
+                    <section id="rentabilite-caisse-cash-panel" class="hidden bg-white rounded-3xl border border-gray-100 shadow-sm p-5 md:p-6">
                         <div class="flex flex-col gap-5">
                             <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
                                 <div>
@@ -5586,6 +5600,7 @@
             let profitabilityCustomDateStart = '';
             let profitabilityCustomDateEnd = '';
             let profitabilityLocationFilterValue = 'all';
+            let rentabiliteCaisseView = 'profitability';
             let activeCashClosureContextKey = '';
             let isTaxEnabled = true;
             let activeSalesDetailId = null;
@@ -5935,6 +5950,10 @@
             const profitabilityEmpty = document.getElementById('profitability-empty');
             const profitabilityTableContainer = document.getElementById('profitability-table-container');
             const profitabilityTbody = document.getElementById('profitability-tbody');
+            const rentabiliteCaisseTabProfitability = document.getElementById('rentabilite-caisse-tab-profitability');
+            const rentabiliteCaisseTabCash = document.getElementById('rentabilite-caisse-tab-cash');
+            const rentabiliteCaisseProfitabilityPanel = document.getElementById('rentabilite-caisse-profitability-panel');
+            const rentabiliteCaisseCashPanel = document.getElementById('rentabilite-caisse-cash-panel');
             const cashClosureStatusBadge = document.getElementById('cash-closure-status-badge');
             const cashClosureDateInput = document.getElementById('cash-closure-date');
             const cashClosureLocationSelect = document.getElementById('cash-closure-location');
@@ -10938,7 +10957,29 @@
                 renderCashClosureHistory();
             }
 
+            function renderRentabiliteCaisseView() {
+                const isProfitabilityView = rentabiliteCaisseView !== 'cash';
+
+                if (rentabiliteCaisseProfitabilityPanel) {
+                    rentabiliteCaisseProfitabilityPanel.classList.toggle('hidden', !isProfitabilityView);
+                }
+                if (rentabiliteCaisseCashPanel) {
+                    rentabiliteCaisseCashPanel.classList.toggle('hidden', isProfitabilityView);
+                }
+                if (rentabiliteCaisseTabProfitability) {
+                    rentabiliteCaisseTabProfitability.className = isProfitabilityView
+                        ? 'flex-1 sm:flex-none rounded-xl bg-cyan-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm'
+                        : 'flex-1 sm:flex-none rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-600 hover:text-gray-900';
+                }
+                if (rentabiliteCaisseTabCash) {
+                    rentabiliteCaisseTabCash.className = isProfitabilityView
+                        ? 'flex-1 sm:flex-none rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-600 hover:text-gray-900'
+                        : 'flex-1 sm:flex-none rounded-xl bg-cyan-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm';
+                }
+            }
+
             function renderProfitabilityAndCashPage() {
+                renderRentabiliteCaisseView();
                 renderProfitabilityReport();
                 renderCashClosureSection();
             }
@@ -27341,6 +27382,18 @@
             if (profitabilityProductSearchInput) {
                 profitabilityProductSearchInput.addEventListener('input', (event) => {
                     profitabilitySearch = event.target.value || '';
+                    renderProfitabilityAndCashPage();
+                });
+            }
+            if (rentabiliteCaisseTabProfitability) {
+                rentabiliteCaisseTabProfitability.addEventListener('click', () => {
+                    rentabiliteCaisseView = 'profitability';
+                    renderProfitabilityAndCashPage();
+                });
+            }
+            if (rentabiliteCaisseTabCash) {
+                rentabiliteCaisseTabCash.addEventListener('click', () => {
+                    rentabiliteCaisseView = 'cash';
                     renderProfitabilityAndCashPage();
                 });
             }
