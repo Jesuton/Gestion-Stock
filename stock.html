@@ -1585,20 +1585,34 @@
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1.15fr)_minmax(220px,0.95fr)_220px_220px] gap-3">
-                                <div class="relative">
-                                    <input type="text" id="profitability-product-search" placeholder="Rechercher un produit..."
-                                        class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-2xl focus:ring-cyan-500 focus:border-cyan-500" />
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
-                                        </svg>
+                            <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1.25fr)_220px_220px] gap-3">
+                                <div>
+                                    <label for="profitability-product-search" class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Produit boutique</label>
+                                    <div id="profitability-product-combobox" class="relative mt-1">
+                                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
+                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                            </svg>
+                                        </div>
+                                        <input type="text" id="profitability-product-search" autocomplete="off" placeholder="Cliquez pour voir les produits en boutique..."
+                                            class="w-full rounded-2xl border border-gray-200 bg-white py-3 pl-11 pr-12 text-sm text-gray-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400" />
+                                        <button type="button" id="profitability-product-toggle"
+                                            class="absolute inset-y-0 right-0 flex items-center px-4 text-gray-400 transition hover:text-gray-600"
+                                            aria-label="Afficher les produits" aria-expanded="false">
+                                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                            </svg>
+                                        </button>
+                                        <div id="profitability-product-dropdown"
+                                            class="hidden absolute left-0 right-0 top-full z-[120] mt-2 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+                                            <div id="profitability-product-options" class="product-combobox-options-panel max-h-72 space-y-1 overflow-y-auto p-2"></div>
+                                            <div id="profitability-product-empty" class="hidden px-4 py-6 text-sm text-gray-400">Aucun produit boutique disponible.</div>
+                                        </div>
                                     </div>
+                                    <select id="profitability-product-filter" class="hidden">
+                                        <option value="all">Tous les produits</option>
+                                    </select>
                                 </div>
-                                <select id="profitability-product-filter"
-                                    class="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-700 focus:ring-cyan-500 focus:border-cyan-500">
-                                    <option value="all">Tous les produits</option>
-                                </select>
                                 <select id="profitability-location-filter"
                                     class="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-700 focus:ring-cyan-500 focus:border-cyan-500">
                                 </select>
@@ -1679,6 +1693,61 @@
                                     <tbody id="profitability-tbody" class="divide-y divide-gray-200"></tbody>
                                 </table>
                             </div>
+
+                            <div id="profitability-lot-section" class="hidden rounded-2xl border border-gray-200 bg-slate-50/70 p-4 md:p-5">
+                                <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                                    <div>
+                                        <h3 id="profitability-lot-title" class="text-lg font-semibold text-gray-900">Detail par lot</h3>
+                                        <p id="profitability-lot-meta" class="mt-1 text-sm text-gray-500">Selectionnez un produit pour analyser ses lots.</p>
+                                    </div>
+                                    <div class="text-xs text-gray-500 rounded-full border border-gray-200 bg-white px-3 py-2 w-fit">
+                                        La vue lot regroupe les ventes, pertes et le stock restant par boutique.
+                                    </div>
+                                </div>
+
+                                <div class="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+                                    <div class="rounded-2xl border border-gray-200 bg-white p-4">
+                                        <p class="text-xs uppercase tracking-wide text-gray-400">Lots suivis</p>
+                                        <p id="profitability-lot-summary-count" class="mt-2 text-2xl font-bold text-gray-900">0</p>
+                                    </div>
+                                    <div class="rounded-2xl border border-cyan-100 bg-cyan-50/80 p-4">
+                                        <p class="text-xs uppercase tracking-wide text-cyan-700">Stock restant</p>
+                                        <p id="profitability-lot-summary-stock" class="mt-2 text-lg font-bold text-cyan-950">0</p>
+                                    </div>
+                                    <div class="rounded-2xl border border-blue-100 bg-blue-50/80 p-4">
+                                        <p class="text-xs uppercase tracking-wide text-blue-700">CA lots</p>
+                                        <p id="profitability-lot-summary-revenue" class="mt-2 text-2xl font-bold text-blue-950">0 FCFA</p>
+                                    </div>
+                                    <div class="rounded-2xl border border-emerald-100 bg-emerald-50/80 p-4">
+                                        <p class="text-xs uppercase tracking-wide text-emerald-700">Net lots</p>
+                                        <p id="profitability-lot-summary-net" class="mt-2 text-2xl font-bold text-emerald-950">0 FCFA</p>
+                                    </div>
+                                </div>
+
+                                <div id="profitability-lot-empty"
+                                    class="mt-4 flex flex-col items-center justify-center text-center text-gray-500 h-28 border border-dashed border-gray-200 rounded-2xl bg-white">
+                                    <p>Aucun lot disponible pour ce produit sur cette periode.</p>
+                                </div>
+                                <div id="profitability-lot-table-container" class="hidden mt-4 overflow-x-auto rounded-2xl border border-gray-200 bg-white">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Boutique</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lot</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Stock restant</th>
+                                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Vendu</th>
+                                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">CA</th>
+                                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Cout</th>
+                                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Pertes</th>
+                                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Net</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Derniere vente</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="profitability-lot-tbody" class="divide-y divide-gray-200"></tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </section>
 
@@ -1686,8 +1755,8 @@
                         <div class="flex flex-col gap-5">
                             <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
                                 <div>
-                                    <h2 class="text-xl font-semibold text-gray-900">Fermeture de caisse quotidienne</h2>
-                                    <p class="text-sm text-gray-500 mt-1">Calculez la caisse theorique, notez le montant compte puis enregistrez surplus ou manque.</p>
+                                    <h2 class="text-xl font-semibold text-gray-900">Ouverture / fermeture de caisse</h2>
+                                    <p class="text-sm text-gray-500 mt-1">Affichez le CA du jour, saisissez le montant compte et laissez l'ecart se calculer automatiquement.</p>
                                 </div>
                                 <div id="cash-closure-status-badge"
                                     class="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-600 w-fit">
@@ -1705,16 +1774,18 @@
 
                             <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                                 <div class="rounded-2xl border border-cyan-100 bg-cyan-50/80 p-4">
-                                    <p class="text-xs uppercase tracking-wide text-cyan-700">Ventes encaissees</p>
+                                    <p class="text-xs uppercase tracking-wide text-cyan-700">CA du jour</p>
                                     <p id="cash-closure-sales-cash" class="mt-2 text-2xl font-bold text-cyan-950">0 FCFA</p>
                                 </div>
                                 <div class="rounded-2xl border border-indigo-100 bg-indigo-50/80 p-4">
-                                    <p class="text-xs uppercase tracking-wide text-indigo-700">Paiements clients cash</p>
+                                    <p class="text-xs uppercase tracking-wide text-indigo-700">Reglements clients cash</p>
                                     <p id="cash-closure-customer-cash" class="mt-2 text-2xl font-bold text-indigo-950">0 FCFA</p>
                                 </div>
-                                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                                    <p class="text-xs uppercase tracking-wide text-slate-500">Caisse theorique</p>
-                                    <p id="cash-closure-theoretical" class="mt-2 text-2xl font-bold text-slate-950">0 FCFA</p>
+                                <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                                    <label for="cash-closure-counted-cash" class="text-xs font-semibold uppercase tracking-wide text-slate-500">Montant compte</label>
+                                    <input type="number" id="cash-closure-counted-cash" min="0" step="1" placeholder="0"
+                                        class="mt-3 w-full rounded-2xl border border-gray-200 px-4 py-3 text-lg font-semibold text-slate-900 focus:ring-cyan-500 focus:border-cyan-500" />
+                                    <p class="mt-2 text-xs text-gray-500">Espèces retrouvees en caisse.</p>
                                 </div>
                                 <div class="rounded-2xl border border-amber-100 bg-amber-50/80 p-4">
                                     <p class="text-xs uppercase tracking-wide text-amber-700">Ecart du jour</p>
@@ -1723,37 +1794,54 @@
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-5">
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <label class="block">
-                                        <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Fond d'ouverture</span>
-                                        <input type="number" id="cash-closure-opening-float" min="0" step="1" placeholder="0"
-                                            class="mt-2 w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm text-gray-700 focus:ring-cyan-500 focus:border-cyan-500" />
-                                    </label>
-                                    <label class="block">
-                                        <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Entrees diverses</span>
-                                        <input type="number" id="cash-closure-other-cash-in" min="0" step="1" placeholder="0"
-                                            class="mt-2 w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm text-gray-700 focus:ring-cyan-500 focus:border-cyan-500" />
-                                    </label>
-                                    <label class="block">
-                                        <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Sorties diverses</span>
-                                        <input type="number" id="cash-closure-other-cash-out" min="0" step="1" placeholder="0"
-                                            class="mt-2 w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm text-gray-700 focus:ring-cyan-500 focus:border-cyan-500" />
-                                    </label>
-                                    <label class="block">
-                                        <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Montant compte</span>
-                                        <input type="number" id="cash-closure-counted-cash" min="0" step="1" placeholder="0"
-                                            class="mt-2 w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm text-gray-700 focus:ring-cyan-500 focus:border-cyan-500" />
-                                    </label>
-                                </div>
-                                <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4">
-                                    <label class="block h-full">
-                                        <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Commentaire</span>
-                                        <textarea id="cash-closure-note" rows="6" placeholder="Ex: retrait pour depense, billet manque, excedent constate au comptage..."
-                                            class="mt-2 w-full rounded-2xl border border-gray-200 bg-white p-3 text-sm text-gray-700 focus:ring-cyan-500 focus:border-cyan-500"></textarea>
-                                    </label>
+                            <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                                <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                                    <div>
+                                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Caisse theorique</p>
+                                        <p id="cash-closure-theoretical" class="mt-1 text-2xl font-bold text-slate-950">0 FCFA</p>
+                                    </div>
+                                    <p class="text-sm text-gray-500 max-w-2xl">La theorie additionne le fond d'ouverture, le CA du jour, les reglements cash clients et les ajustements optionnels.</p>
                                 </div>
                             </div>
+
+                            <details class="rounded-2xl border border-gray-200 bg-white group">
+                                <summary class="flex items-center justify-between cursor-pointer list-none px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-2xl">
+                                    <span>Ajustements optionnels</span>
+                                    <span class="text-gray-400 transition group-open:rotate-180">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </span>
+                                </summary>
+                                <div class="border-t border-gray-100 px-4 py-4">
+                                    <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-5">
+                                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <label class="block">
+                                                <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Fond d'ouverture</span>
+                                                <input type="number" id="cash-closure-opening-float" min="0" step="1" placeholder="0"
+                                                    class="mt-2 w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm text-gray-700 focus:ring-cyan-500 focus:border-cyan-500" />
+                                            </label>
+                                            <label class="block">
+                                                <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Entrees diverses</span>
+                                                <input type="number" id="cash-closure-other-cash-in" min="0" step="1" placeholder="0"
+                                                    class="mt-2 w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm text-gray-700 focus:ring-cyan-500 focus:border-cyan-500" />
+                                            </label>
+                                            <label class="block">
+                                                <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Sorties diverses</span>
+                                                <input type="number" id="cash-closure-other-cash-out" min="0" step="1" placeholder="0"
+                                                    class="mt-2 w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm text-gray-700 focus:ring-cyan-500 focus:border-cyan-500" />
+                                            </label>
+                                        </div>
+                                        <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                                            <label class="block h-full">
+                                                <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Commentaire</span>
+                                                <textarea id="cash-closure-note" rows="5" placeholder="Ex: retrait pour depense, billet manque, excedent constate au comptage..."
+                                                    class="mt-2 w-full rounded-2xl border border-gray-200 bg-white p-3 text-sm text-gray-700 focus:ring-cyan-500 focus:border-cyan-500"></textarea>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </details>
 
                             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                 <p id="cash-closure-form-meta" class="text-sm text-gray-500">Selectionnez une date et un point de caisse pour preparer la fermeture.</p>
@@ -5654,7 +5742,8 @@
                 exit: { query: '', isOpen: false },
                 salesQuick: { query: '', isOpen: false },
                 restock: { query: '', isOpen: false },
-                traceability: { query: '', isOpen: false }
+                traceability: { query: '', isOpen: false },
+                profitability: { query: '', isOpen: false }
             };
             window.addEventListener('resize', () => {
                 Object.keys(productComboboxStates).forEach(key => {
@@ -5939,7 +6028,12 @@
             const salesHistoryRemindersEmpty = document.getElementById('sales-history-reminders-empty');
             const salesHistoryRemindersTableContainer = document.getElementById('sales-history-reminders-table-container');
             const salesHistoryRemindersTbody = document.getElementById('sales-history-reminders-tbody');
+            const profitabilityProductCombobox = document.getElementById('profitability-product-combobox');
             const profitabilityProductSearchInput = document.getElementById('profitability-product-search');
+            const profitabilityProductToggle = document.getElementById('profitability-product-toggle');
+            const profitabilityProductDropdown = document.getElementById('profitability-product-dropdown');
+            const profitabilityProductOptions = document.getElementById('profitability-product-options');
+            const profitabilityProductEmpty = document.getElementById('profitability-product-empty');
             const profitabilityProductFilter = document.getElementById('profitability-product-filter');
             const profitabilityLocationFilter = document.getElementById('profitability-location-filter');
             const profitabilityDateFilter = document.getElementById('profitability-date-filter');
@@ -5956,6 +6050,16 @@
             const profitabilityEmpty = document.getElementById('profitability-empty');
             const profitabilityTableContainer = document.getElementById('profitability-table-container');
             const profitabilityTbody = document.getElementById('profitability-tbody');
+            const profitabilityLotSection = document.getElementById('profitability-lot-section');
+            const profitabilityLotTitle = document.getElementById('profitability-lot-title');
+            const profitabilityLotMeta = document.getElementById('profitability-lot-meta');
+            const profitabilityLotSummaryCount = document.getElementById('profitability-lot-summary-count');
+            const profitabilityLotSummaryStock = document.getElementById('profitability-lot-summary-stock');
+            const profitabilityLotSummaryRevenue = document.getElementById('profitability-lot-summary-revenue');
+            const profitabilityLotSummaryNet = document.getElementById('profitability-lot-summary-net');
+            const profitabilityLotEmpty = document.getElementById('profitability-lot-empty');
+            const profitabilityLotTableContainer = document.getElementById('profitability-lot-table-container');
+            const profitabilityLotTbody = document.getElementById('profitability-lot-tbody');
             const rentabiliteCaisseTabProfitability = document.getElementById('rentabilite-caisse-tab-profitability');
             const rentabiliteCaisseTabCash = document.getElementById('rentabilite-caisse-tab-cash');
             const rentabiliteCaisseProfitabilityPanel = document.getElementById('rentabilite-caisse-profitability-panel');
@@ -7801,6 +7905,87 @@
                 });
             }
 
+            function getProfitabilitySelectableProducts(search = '') {
+                const normalized = normalizeString(search);
+                const location = decodeAnalyticsLocationValue(profitabilityLocationFilterValue);
+                const accessibleBoutiqueIds = new Set(getAccessibleBoutiqueIds());
+                const canSeeAllBoutiques = getCurrentUserRole() === 'admin';
+                if (!canSeeAllBoutiques && !accessibleBoutiqueIds.size) return [];
+                const productMap = new Map();
+
+                Object.values(appData.shopStock || {}).forEach(rawItem => {
+                    if (!rawItem) return;
+                    const boutiqueId = resolveBoutiqueId(rawItem.boutiqueId);
+                    if (!boutiqueId || (!canSeeAllBoutiques && !accessibleBoutiqueIds.has(boutiqueId))) return;
+                    if (location.type === 'boutique' && location.id && boutiqueId !== location.id) return;
+
+                    const item = syncShopItemLotState(rawItem);
+                    const sourceProduct = getShopItemSourceProduct(item);
+                    const key = sourceProduct?.id ? `store:${sourceProduct.id}` : (item.id ? `shop:${item.id}` : '');
+                    if (!key) return;
+
+                    const stockUnits = getShopStockBaseUnits(item, sourceProduct);
+                    if (stockUnits <= 0) return;
+
+                    const name = (sourceProduct?.name || getShopItemDisplayName(item) || 'Produit').toString().trim() || 'Produit';
+                    const category = getShopItemCategory(item);
+                    const code = getProductInternalCode(sourceProduct);
+                    const description = (sourceProduct?.description || item?.description || '').toString().trim();
+                    const haystack = [
+                        name,
+                        category,
+                        code,
+                        description,
+                        boutiqueId ? getBoutiqueName(boutiqueId) : '',
+                        item.sourceName,
+                        item.name,
+                        item.id
+                    ].map(normalizeString).join(' ');
+                    if (normalized && !haystack.includes(normalized)) return;
+
+                    if (!productMap.has(key)) {
+                        productMap.set(key, {
+                            key,
+                            name,
+                            code,
+                            category,
+                            description,
+                            stockUnits: 0,
+                            boutiqueIds: new Set(),
+                            sourceProduct
+                        });
+                    }
+
+                    const entry = productMap.get(key);
+                    entry.stockUnits += stockUnits;
+                    entry.boutiqueIds.add(boutiqueId);
+                    if (!entry.code && code) entry.code = code;
+                    if (!entry.category && category) entry.category = category;
+                    if (!entry.description && description) entry.description = description;
+                    if (!entry.sourceProduct && sourceProduct) entry.sourceProduct = sourceProduct;
+                });
+
+                return Array.from(productMap.values())
+                    .map(entry => ({
+                        ...entry,
+                        boutiqueCount: entry.boutiqueIds.size,
+                        displayLabel: entry.code ? `${entry.name} · ${entry.code}` : entry.name
+                    }))
+                    .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'fr', { sensitivity: 'base' }));
+            }
+
+            function getProfitabilityProductComboboxItems(search = '') {
+                return getProfitabilitySelectableProducts(search).map(product => ({
+                    value: product.key,
+                    title: product.name || 'Produit',
+                    meta: product.sourceProduct ? getProductInternalCodeText(product.sourceProduct) : (product.code ? `Code ${product.code}` : ''),
+                    description: `${formatProductStockBreakdown(product.stockUnits, product.sourceProduct, { includeBaseTotal: true })}${product.category ? ` · ${product.category}` : ''}`,
+                    badge: `${product.boutiqueCount} boutique${product.boutiqueCount > 1 ? 's' : ''}`,
+                    badgeClasses: 'bg-cyan-50 text-cyan-700',
+                    displayLabel: product.displayLabel
+                }));
+            }
+
             function getProductComboboxConfig(key) {
                 const configs = {
                     entry: {
@@ -7852,6 +8037,16 @@
                         empty: traceabilityProductEmpty,
                         select: traceabilityProductSelect,
                         getItems: () => getTraceabilityProductComboboxItems(productComboboxStates.traceability.query)
+                    },
+                    profitability: {
+                        combobox: profitabilityProductCombobox,
+                        input: profitabilityProductSearchInput,
+                        toggle: profitabilityProductToggle,
+                        dropdown: profitabilityProductDropdown,
+                        options: profitabilityProductOptions,
+                        empty: profitabilityProductEmpty,
+                        select: profitabilityProductFilter,
+                        getItems: () => getProfitabilityProductComboboxItems(productComboboxStates.profitability.query)
                     }
                 };
                 return configs[key] || null;
@@ -7892,6 +8087,12 @@
                     const code = getProductInternalCode(product);
                     const baseLabel = storeLabel ? `${product.name || 'Produit'} · ${storeLabel}` : (product.name || 'Produit');
                     return code ? `${baseLabel} · ${code}` : `${baseLabel} · Code manquant`;
+                }
+                if (key === 'profitability') {
+                    if (value === 'all') return '';
+                    const product = getProfitabilitySelectableProducts().find(entry => entry.key === value);
+                    if (!product) return getAnalyticsProductLabel(value, '');
+                    return product.displayLabel || product.name || '';
                 }
                 return '';
             }
@@ -10573,6 +10774,206 @@
                 return fallbackName;
             }
 
+            function getAnalyticsSourceProduct(key) {
+                if (!key) return null;
+                const [type, id] = String(key).split(':');
+                if (type === 'store') return appData.storeProducts?.[id] || null;
+                if (type === 'shop') {
+                    const item = appData.shopStock?.[id];
+                    return item ? getShopItemSourceProduct(item) : null;
+                }
+                return null;
+            }
+
+            function getProfitabilityLotStatusMeta(status = '') {
+                const normalized = String(status || '').trim().toLowerCase();
+                if (normalized === SHOP_LOT_STATUS_ACTIVE) {
+                    return { label: 'Actif', classes: 'bg-emerald-50 text-emerald-700' };
+                }
+                if (normalized === SHOP_LOT_STATUS_PENDING_VALIDATION) {
+                    return { label: 'Validation', classes: 'bg-amber-50 text-amber-700' };
+                }
+                if (normalized === SHOP_LOT_STATUS_SCHEDULED) {
+                    return { label: 'Planifié', classes: 'bg-sky-50 text-sky-700' };
+                }
+                if (normalized === SHOP_LOT_STATUS_CLOSED) {
+                    return { label: 'Épuisé', classes: 'bg-slate-100 text-slate-600' };
+                }
+                if (normalized === 'historical') {
+                    return { label: 'Historique', classes: 'bg-violet-50 text-violet-700' };
+                }
+                return { label: '—', classes: 'bg-gray-100 text-gray-500' };
+            }
+
+            function buildProfitabilityLotReport(selectedProductKey, salesEntries = [], lossEntries = []) {
+                const sourceProduct = getAnalyticsSourceProduct(selectedProductKey);
+                const productName = getAnalyticsProductLabel(selectedProductKey, 'Produit');
+                const location = decodeAnalyticsLocationValue(profitabilityLocationFilterValue);
+                const accessibleBoutiqueIds = new Set(getAccessibleBoutiqueIds());
+                const canSeeAllBoutiques = getCurrentUserRole() === 'admin';
+                const lotMap = new Map();
+
+                const ensureLot = (rowKey, payload = {}) => {
+                    if (!lotMap.has(rowKey)) {
+                        lotMap.set(rowKey, {
+                            key: rowKey,
+                            locationKey: payload.locationKey || '',
+                            locationLabel: payload.locationLabel || 'Boutique',
+                            lotId: payload.lotId || '',
+                            lotLabel: payload.lotLabel || 'Lot non précisé',
+                            status: payload.status || '',
+                            currentStockUnits: 0,
+                            soldStockUnits: 0,
+                            revenue: 0,
+                            cost: 0,
+                            lossUnits: 0,
+                            lossValue: 0,
+                            saleCount: 0,
+                            lastSaleAt: '',
+                            purchaseCost: Number.isFinite(Number(payload.purchaseCost)) ? Number(payload.purchaseCost) : null,
+                            currentSellingPrice: Number.isFinite(Number(payload.currentSellingPrice)) ? Number(payload.currentSellingPrice) : null,
+                            receivedAt: payload.receivedAt || ''
+                        });
+                    }
+                    const row = lotMap.get(rowKey);
+                    if (payload.locationLabel && !row.locationLabel) row.locationLabel = payload.locationLabel;
+                    if (payload.lotLabel && (!row.lotLabel || row.lotLabel === 'Lot non précisé')) row.lotLabel = payload.lotLabel;
+                    if (payload.status && (!row.status || row.status === 'historical')) row.status = payload.status;
+                    if (payload.receivedAt && (!row.receivedAt || new Date(payload.receivedAt) < new Date(row.receivedAt))) row.receivedAt = payload.receivedAt;
+                    if (Number.isFinite(Number(payload.purchaseCost)) && row.purchaseCost === null) row.purchaseCost = Number(payload.purchaseCost);
+                    if (Number.isFinite(Number(payload.currentSellingPrice)) && row.currentSellingPrice === null) row.currentSellingPrice = Number(payload.currentSellingPrice);
+                    return row;
+                };
+
+                salesEntries
+                    .filter(sale => resolveAnalyticsProductKeyFromSale(sale) === selectedProductKey)
+                    .forEach(sale => {
+                        const saleSource = getSaleSource(sale);
+                        const boutiqueId = getSaleBoutiqueId(sale);
+                        const locationKey = saleSource === SALE_SOURCE_STORE ? 'store:direct' : `boutique:${boutiqueId || 'unknown'}`;
+                        const locationLabel = saleSource === SALE_SOURCE_STORE
+                            ? 'Magasin direct'
+                            : (getSaleBoutiqueLabel(sale) || getBoutiqueName(boutiqueId));
+                        const lotId = sale?.lotId || '';
+                        const rowKey = `${locationKey}::${lotId || `sale:${sale.id || sale.date || Date.now()}`}`;
+                        const row = ensureLot(rowKey, {
+                            locationKey,
+                            locationLabel,
+                            lotId,
+                            lotLabel: sale?.lotLabel || (saleSource === SALE_SOURCE_STORE ? 'Magasin direct' : 'Lot non précisé'),
+                            status: saleSource === SALE_SOURCE_STORE ? 'historical' : '',
+                            purchaseCost: sale?.purchaseCostSnapshot,
+                            currentSellingPrice: sale?.sellingPrice,
+                            receivedAt: sale?.lotReceivedAt || ''
+                        });
+                        const stockUnits = Number(sale?.stockUnits || sale?.quantity || 0) || 0;
+                        row.soldStockUnits += stockUnits;
+                        row.revenue += Number(sale?.totalAmount || 0) || 0;
+                        row.cost += (Number(sale?.purchaseCostSnapshot || 0) || 0) * stockUnits;
+                        row.saleCount += 1;
+                        row.lastSaleAt = !row.lastSaleAt || new Date(sale?.date || 0) > new Date(row.lastSaleAt || 0)
+                            ? (sale?.date || row.lastSaleAt)
+                            : row.lastSaleAt;
+                    });
+
+                lossEntries
+                    .filter(loss => resolveAnalyticsProductKeyFromLoss(loss) === selectedProductKey)
+                    .forEach(loss => {
+                        const isStoreLoss = loss?.source === 'magasin';
+                        const boutiqueId = resolveBoutiqueId(loss?.boutiqueId);
+                        const locationKey = isStoreLoss ? 'store:direct' : `boutique:${boutiqueId || 'unknown'}`;
+                        const locationLabel = isStoreLoss ? 'Magasin direct' : getBoutiqueName(boutiqueId);
+                        const rawLotId = loss?.lotId || '';
+                        const lotId = rawLotId && rawLotId !== loss?.productId ? rawLotId : '';
+                        const rowKey = `${locationKey}::${lotId || `loss:${loss.id || loss.declaredAt || Date.now()}`}`;
+                        const row = ensureLot(rowKey, {
+                            locationKey,
+                            locationLabel,
+                            lotId,
+                            lotLabel: lotId || (isStoreLoss ? 'Magasin direct' : 'Lot non précisé'),
+                            status: isStoreLoss ? 'historical' : ''
+                        });
+                        row.lossUnits += Number(loss?.totalUnits || loss?.stockChange || loss?.quantity || 0) || 0;
+                        row.lossValue += Number(loss?.estimatedValue || 0) || 0;
+                    });
+
+                Object.values(appData.shopStock || {}).forEach(rawItem => {
+                    if (!rawItem) return;
+                    const boutiqueId = resolveBoutiqueId(rawItem.boutiqueId);
+                    if (!boutiqueId || (!canSeeAllBoutiques && !accessibleBoutiqueIds.has(boutiqueId))) return;
+                    if (location.type === 'boutique' && location.id && boutiqueId !== location.id) return;
+
+                    const item = syncShopItemLotState(rawItem);
+                    const itemKey = item.sourceProductId ? `store:${item.sourceProductId}` : `shop:${item.id}`;
+                    if (itemKey !== selectedProductKey) return;
+
+                    const locationKey = `boutique:${boutiqueId}`;
+                    const locationLabel = getBoutiqueName(boutiqueId);
+                    const lots = Array.isArray(item?.lotQueue) && item.lotQueue.length
+                        ? item.lotQueue.filter(lot => lot?.status !== SHOP_LOT_STATUS_CANCELLED)
+                        : [];
+
+                    if (!lots.length) {
+                        const fallbackRow = ensureLot(`${locationKey}::fallback:${item.id || locationLabel}`, {
+                            locationKey,
+                            locationLabel,
+                            lotId: '',
+                            lotLabel: item?.activeLotLabel || 'Stock actuel',
+                            status: item?.hasPendingLotValidation ? SHOP_LOT_STATUS_PENDING_VALIDATION : SHOP_LOT_STATUS_ACTIVE,
+                            purchaseCost: item?.purchaseCost,
+                            currentSellingPrice: getShopItemEffectiveSellingPrice(item),
+                            receivedAt: item?.updatedAt || item?.createdAt || ''
+                        });
+                        fallbackRow.currentStockUnits += getShopStockBaseUnits(item, sourceProduct);
+                        return;
+                    }
+
+                    lots.forEach(lot => {
+                        const row = ensureLot(`${locationKey}::${lot.id || lot.label || item.id}`, {
+                            locationKey,
+                            locationLabel,
+                            lotId: lot?.id || '',
+                            lotLabel: lot?.label || 'Lot',
+                            status: lot?.status || '',
+                            purchaseCost: lot?.purchaseCost,
+                            currentSellingPrice: Number.isFinite(Number(lot?.sellingPrice)) ? Number(lot.sellingPrice) : getShopItemEffectiveSellingPrice(item),
+                            receivedAt: lot?.receivedAt || lot?.activatedAt || lot?.updatedAt || ''
+                        });
+                        row.currentStockUnits += Number(lot?.remainingQuantity || 0) || 0;
+                    });
+                });
+
+                const rows = Array.from(lotMap.values())
+                    .map(row => ({
+                        ...row,
+                        grossMargin: row.revenue - row.cost,
+                        netProfit: row.revenue - row.cost - row.lossValue
+                    }))
+                    .sort((a, b) => {
+                        if (b.currentStockUnits !== a.currentStockUnits) return b.currentStockUnits - a.currentStockUnits;
+                        if ((b.lastSaleAt || '') !== (a.lastSaleAt || '')) return String(b.lastSaleAt || '').localeCompare(String(a.lastSaleAt || ''));
+                        if ((a.locationLabel || '') !== (b.locationLabel || '')) return (a.locationLabel || '').localeCompare(b.locationLabel || '', 'fr', { sensitivity: 'base' });
+                        return (a.lotLabel || '').localeCompare(b.lotLabel || '', 'fr', { sensitivity: 'base' });
+                    });
+
+                const summary = rows.reduce((acc, row) => {
+                    acc.lots += 1;
+                    acc.stockUnits += row.currentStockUnits;
+                    acc.revenue += row.revenue;
+                    acc.netProfit += row.netProfit;
+                    acc.lossValue += row.lossValue;
+                    return acc;
+                }, {
+                    lots: 0,
+                    stockUnits: 0,
+                    revenue: 0,
+                    netProfit: 0,
+                    lossValue: 0
+                });
+
+                return { rows, summary, productName, sourceProduct };
+            }
+
             function buildProfitabilityReport() {
                 const salesEntries = getCountableSalesEntries().filter(sale =>
                     isDateInNamedRange(sale?.date, profitabilityDateFilterValue, profitabilityCustomDateStart, profitabilityCustomDateEnd)
@@ -10650,28 +11051,19 @@
                     product.lossValue += Number(loss?.estimatedValue || 0) || 0;
                 });
 
-                const availableProducts = Array.from(productMap.values())
-                    .map(product => ({
-                        key: product.key,
-                        name: product.name || 'Produit'
-                    }))
-                    .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'fr', { sensitivity: 'base' }));
+                const availableProducts = getProfitabilitySelectableProducts();
+                const effectiveSelectedProductKey = profitabilitySelectedProductKey === 'all'
+                    || availableProducts.some(product => product.key === profitabilitySelectedProductKey)
+                    ? profitabilitySelectedProductKey
+                    : 'all';
 
                 let rows = Array.from(productMap.values()).map(product => ({
                     ...product,
                     netProfit: product.grossMargin - product.lossValue
                 }));
 
-                const selectedProductExists = profitabilitySelectedProductKey === 'all'
-                    || availableProducts.some(product => product.key === profitabilitySelectedProductKey);
-
-                if (profitabilitySelectedProductKey && profitabilitySelectedProductKey !== 'all' && selectedProductExists) {
-                    rows = rows.filter(product => product.key === profitabilitySelectedProductKey);
-                }
-
-                const normalizedSearch = String(profitabilitySearch || '').trim().toLowerCase();
-                if (normalizedSearch) {
-                    rows = rows.filter(product => (product.name || '').toLowerCase().includes(normalizedSearch));
+                if (effectiveSelectedProductKey && effectiveSelectedProductKey !== 'all') {
+                    rows = rows.filter(product => product.key === effectiveSelectedProductKey);
                 }
 
                 rows.sort((a, b) => {
@@ -10699,7 +11091,11 @@
                     belowReferenceLines: 0
                 });
 
-                return { rows, summary, availableProducts };
+                const lotReport = effectiveSelectedProductKey !== 'all'
+                    ? buildProfitabilityLotReport(effectiveSelectedProductKey, salesEntries, lossEntries)
+                    : { rows: [], summary: { lots: 0, stockUnits: 0, revenue: 0, netProfit: 0, lossValue: 0 }, productName: '', sourceProduct: null };
+
+                return { rows, summary, availableProducts, selectedProductKey: effectiveSelectedProductKey, lotReport };
             }
 
             function renderProfitabilityReport() {
@@ -10708,7 +11104,8 @@
                 updateProfitabilityDateFilterUI();
 
                 const report = buildProfitabilityReport();
-                const { rows, summary, availableProducts } = report;
+                const { rows, summary, availableProducts, selectedProductKey, lotReport } = report;
+                profitabilitySelectedProductKey = selectedProductKey || 'all';
 
                 if (profitabilityProductFilter) {
                     const hasCurrentValue = availableProducts.some(product => product.key === profitabilitySelectedProductKey);
@@ -10720,6 +11117,10 @@
                         ...availableProducts.map(product => `<option value="${escapeHtml(product.key)}">${escapeHtml(product.name || 'Produit')}</option>`)
                     ].join('');
                     profitabilityProductFilter.value = profitabilitySelectedProductKey;
+                }
+                syncProductComboboxInput('profitability');
+                if (productComboboxStates.profitability?.isOpen) {
+                    renderProductCombobox('profitability');
                 }
 
                 if (profitabilitySummaryRevenue) profitabilitySummaryRevenue.textContent = formatCurrency(summary.revenue);
@@ -10742,39 +11143,109 @@
                     profitabilityTbody.innerHTML = '';
                     if (profitabilityEmpty) profitabilityEmpty.classList.remove('hidden');
                     if (profitabilityTableContainer) profitabilityTableContainer.classList.add('hidden');
-                    return;
+                } else {
+                    if (profitabilityEmpty) profitabilityEmpty.classList.add('hidden');
+                    if (profitabilityTableContainer) profitabilityTableContainer.classList.remove('hidden');
+
+                    profitabilityTbody.innerHTML = rows.map(row => {
+                        const netClasses = row.netProfit < 0 ? 'text-rose-600' : 'text-emerald-600';
+                        const pressureRef = row.belowReferenceLines
+                            ? `<span class="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">${row.belowReferenceLines}</span>`
+                            : `<span class="text-xs text-gray-300">0</span>`;
+                        const pressureCost = row.belowCostLines
+                            ? `<span class="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-700">${row.belowCostLines}</span>`
+                            : `<span class="text-xs text-gray-300">0</span>`;
+                        return `
+                            <tr>
+                                <td class="px-4 py-3">
+                                    <div class="min-w-[220px]">
+                                        <p class="text-sm font-semibold text-gray-900">${escapeHtml(row.name || 'Produit')}</p>
+                                        <p class="mt-1 text-xs text-gray-500">Prix min ${formatCurrency(row.minPrice || 0)} · prix max ${formatCurrency(row.maxPrice || 0)}</p>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3 text-right text-sm font-semibold text-gray-700">${row.soldQuantity}</td>
+                                <td class="px-4 py-3 text-right text-sm font-semibold text-gray-900">${formatCurrency(row.revenue)}</td>
+                                <td class="px-4 py-3 text-right text-sm text-gray-600">${formatCurrency(row.cost)}</td>
+                                <td class="px-4 py-3 text-right text-sm font-semibold ${row.grossMargin < 0 ? 'text-rose-600' : 'text-emerald-600'}">${formatCurrency(row.grossMargin)}</td>
+                                <td class="px-4 py-3 text-right text-sm text-rose-600">${formatCurrency(row.lossValue)}</td>
+                                <td class="px-4 py-3 text-right text-sm font-bold ${netClasses}">${formatCurrency(row.netProfit)}</td>
+                                <td class="px-4 py-3 text-center">${pressureRef}</td>
+                                <td class="px-4 py-3 text-center">${pressureCost}</td>
+                            </tr>
+                        `;
+                    }).join('');
                 }
 
-                if (profitabilityEmpty) profitabilityEmpty.classList.add('hidden');
-                if (profitabilityTableContainer) profitabilityTableContainer.classList.remove('hidden');
+                if (profitabilityLotSection) {
+                    const selectedProduct = profitabilitySelectedProductKey !== 'all'
+                        ? availableProducts.find(product => product.key === profitabilitySelectedProductKey)
+                        : null;
+                    const selectedSourceProduct = lotReport?.sourceProduct || (selectedProduct ? selectedProduct.sourceProduct : null);
+                    const stockLabel = selectedSourceProduct
+                        ? formatProductStockBreakdown(lotReport?.summary?.stockUnits || 0, selectedSourceProduct, { includeBaseTotal: true })
+                        : `${lotReport?.summary?.stockUnits || 0} u. base`;
 
-                profitabilityTbody.innerHTML = rows.map(row => {
-                    const netClasses = row.netProfit < 0 ? 'text-rose-600' : 'text-emerald-600';
-                    const pressureRef = row.belowReferenceLines
-                        ? `<span class="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">${row.belowReferenceLines}</span>`
-                        : `<span class="text-xs text-gray-300">0</span>`;
-                    const pressureCost = row.belowCostLines
-                        ? `<span class="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-700">${row.belowCostLines}</span>`
-                        : `<span class="text-xs text-gray-300">0</span>`;
-                    return `
-                        <tr>
-                            <td class="px-4 py-3">
-                                <div class="min-w-[220px]">
-                                    <p class="text-sm font-semibold text-gray-900">${escapeHtml(row.name || 'Produit')}</p>
-                                    <p class="mt-1 text-xs text-gray-500">Prix min ${formatCurrency(row.minPrice || 0)} · prix max ${formatCurrency(row.maxPrice || 0)}</p>
-                                </div>
-                            </td>
-                            <td class="px-4 py-3 text-right text-sm font-semibold text-gray-700">${row.soldQuantity}</td>
-                            <td class="px-4 py-3 text-right text-sm font-semibold text-gray-900">${formatCurrency(row.revenue)}</td>
-                            <td class="px-4 py-3 text-right text-sm text-gray-600">${formatCurrency(row.cost)}</td>
-                            <td class="px-4 py-3 text-right text-sm font-semibold ${row.grossMargin < 0 ? 'text-rose-600' : 'text-emerald-600'}">${formatCurrency(row.grossMargin)}</td>
-                            <td class="px-4 py-3 text-right text-sm text-rose-600">${formatCurrency(row.lossValue)}</td>
-                            <td class="px-4 py-3 text-right text-sm font-bold ${netClasses}">${formatCurrency(row.netProfit)}</td>
-                            <td class="px-4 py-3 text-center">${pressureRef}</td>
-                            <td class="px-4 py-3 text-center">${pressureCost}</td>
-                        </tr>
-                    `;
-                }).join('');
+                    profitabilityLotSection.classList.toggle('hidden', !selectedProduct);
+                    if (selectedProduct) {
+                        if (profitabilityLotTitle) profitabilityLotTitle.textContent = `Détail des lots · ${selectedProduct.name || lotReport?.productName || 'Produit'}`;
+                        if (profitabilityLotMeta) {
+                            profitabilityLotMeta.textContent = lotReport?.rows?.length
+                                ? `${lotReport.rows.length} lot${lotReport.rows.length > 1 ? 's' : ''} retrouvé${lotReport.rows.length > 1 ? 's' : ''} pour ce produit sur la période sélectionnée.`
+                                : 'Aucun lot actif ou historique sur cette période pour ce produit.';
+                        }
+                        if (profitabilityLotSummaryCount) profitabilityLotSummaryCount.textContent = `${lotReport?.summary?.lots || 0}`;
+                        if (profitabilityLotSummaryStock) profitabilityLotSummaryStock.textContent = stockLabel;
+                        if (profitabilityLotSummaryRevenue) profitabilityLotSummaryRevenue.textContent = formatCurrency(lotReport?.summary?.revenue || 0);
+                        if (profitabilityLotSummaryNet) {
+                            profitabilityLotSummaryNet.textContent = formatCurrency(lotReport?.summary?.netProfit || 0);
+                            profitabilityLotSummaryNet.className = `mt-2 text-2xl font-bold ${(lotReport?.summary?.netProfit || 0) < 0 ? 'text-rose-950' : 'text-emerald-950'}`;
+                        }
+
+                        if (!lotReport?.rows?.length) {
+                            if (profitabilityLotEmpty) profitabilityLotEmpty.classList.remove('hidden');
+                            if (profitabilityLotTableContainer) profitabilityLotTableContainer.classList.add('hidden');
+                            if (profitabilityLotTbody) profitabilityLotTbody.innerHTML = '';
+                        } else {
+                            if (profitabilityLotEmpty) profitabilityLotEmpty.classList.add('hidden');
+                            if (profitabilityLotTableContainer) profitabilityLotTableContainer.classList.remove('hidden');
+                            if (profitabilityLotTbody) {
+                                profitabilityLotTbody.innerHTML = lotReport.rows.map(row => {
+                                    const statusMeta = getProfitabilityLotStatusMeta(row.status);
+                                    const netClasses = row.netProfit < 0 ? 'text-rose-600' : 'text-emerald-600';
+                                    const rowStockLabel = selectedSourceProduct
+                                        ? formatProductStockBreakdown(row.currentStockUnits || 0, selectedSourceProduct, { includeBaseTotal: true })
+                                        : `${row.currentStockUnits || 0} u. base`;
+                                    const soldLabel = selectedSourceProduct
+                                        ? formatProductStockBreakdown(row.soldStockUnits || 0, selectedSourceProduct, { includeBaseTotal: true })
+                                        : `${row.soldStockUnits || 0} u. base`;
+                                    const lotMeta = [
+                                        Number.isFinite(Number(row.purchaseCost)) ? `Achat ${formatCurrency(row.purchaseCost)}` : '',
+                                        Number.isFinite(Number(row.currentSellingPrice)) ? `Vente ${formatCurrency(row.currentSellingPrice)}` : ''
+                                    ].filter(Boolean).join(' · ');
+                                    return `
+                                        <tr>
+                                            <td class="px-4 py-3 text-sm font-semibold text-gray-900">${escapeHtml(row.locationLabel || 'Boutique')}</td>
+                                            <td class="px-4 py-3">
+                                                <div class="min-w-[180px]">
+                                                    <p class="text-sm font-semibold text-gray-900">${escapeHtml(row.lotLabel || 'Lot non précisé')}</p>
+                                                    <p class="mt-1 text-xs text-gray-500">${escapeHtml(lotMeta || 'Aucun prix enregistré')}</p>
+                                                </div>
+                                            </td>
+                                            <td class="px-4 py-3"><span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${statusMeta.classes}">${statusMeta.label}</span></td>
+                                            <td class="px-4 py-3 text-right text-sm font-semibold text-gray-700">${escapeHtml(rowStockLabel)}</td>
+                                            <td class="px-4 py-3 text-right text-sm text-gray-700">${escapeHtml(soldLabel)}</td>
+                                            <td class="px-4 py-3 text-right text-sm font-semibold text-gray-900">${formatCurrency(row.revenue)}</td>
+                                            <td class="px-4 py-3 text-right text-sm text-gray-600">${formatCurrency(row.cost)}</td>
+                                            <td class="px-4 py-3 text-right text-sm text-rose-600">${formatCurrency(row.lossValue)}</td>
+                                            <td class="px-4 py-3 text-right text-sm font-bold ${netClasses}">${formatCurrency(row.netProfit)}</td>
+                                            <td class="px-4 py-3 text-sm text-gray-500">${row.lastSaleAt ? escapeHtml(formatDateForDisplay(row.lastSaleAt)) : '—'}</td>
+                                        </tr>
+                                    `;
+                                }).join('');
+                            }
+                        }
+                    }
+                }
             }
 
             function getCashClosureLocationMeta(locationValue) {
@@ -10831,7 +11302,9 @@
                 const openingFloat = Number(parseNumericInput(cashClosureOpeningFloatInput?.value || 0) || 0);
                 const otherCashIn = Number(parseNumericInput(cashClosureOtherCashInInput?.value || 0) || 0);
                 const otherCashOut = Number(parseNumericInput(cashClosureOtherCashOutInput?.value || 0) || 0);
-                const countedCash = Number(parseNumericInput(cashClosureCountedCashInput?.value || 0) || 0);
+                const countedCashRawValue = cashClosureCountedCashInput?.value ?? '';
+                const hasCountedCash = String(countedCashRawValue).trim() !== '';
+                const countedCash = Number(parseNumericInput(countedCashRawValue || 0) || 0);
                 const groupIndex = buildSaleGroupIndex();
                 const payments = Object.values(appData.customerPayments || {});
 
@@ -10878,7 +11351,7 @@
                 });
 
                 const theoreticalCash = openingFloat + salesCash + customerCash + otherCashIn - otherCashOut;
-                const variance = countedCash - theoreticalCash;
+                const variance = hasCountedCash ? countedCash - theoreticalCash : 0;
 
                 return {
                     closureDate,
@@ -10887,6 +11360,7 @@
                     otherCashIn,
                     otherCashOut,
                     countedCash,
+                    hasCountedCash,
                     salesCash,
                     customerCash,
                     theoreticalCash,
@@ -10978,16 +11452,18 @@
                 if (cashClosureCustomerCash) cashClosureCustomerCash.textContent = formatCurrency(state.customerCash);
                 if (cashClosureTheoretical) cashClosureTheoretical.textContent = formatCurrency(state.theoreticalCash);
                 if (cashClosureVariance) {
-                    cashClosureVariance.textContent = formatCurrency(state.variance);
-                    cashClosureVariance.className = `mt-2 text-2xl font-bold ${state.variance < 0 ? 'text-rose-700' : (state.variance > 0 ? 'text-emerald-700' : 'text-amber-950')}`;
+                    cashClosureVariance.textContent = state.hasCountedCash ? formatCurrency(state.variance) : '—';
+                    cashClosureVariance.className = `mt-2 text-2xl font-bold ${!state.hasCountedCash ? 'text-amber-950' : (state.variance < 0 ? 'text-rose-700' : (state.variance > 0 ? 'text-emerald-700' : 'text-amber-950'))}`;
                 }
                 if (cashClosureVarianceMeta) {
-                    cashClosureVarianceMeta.textContent = `Surplus: ${formatCurrency(state.surplus)} · Manque: ${formatCurrency(state.shortage)}`;
+                    cashClosureVarianceMeta.textContent = state.hasCountedCash
+                        ? `Surplus: ${formatCurrency(state.surplus)} · Manque: ${formatCurrency(state.shortage)}`
+                        : 'Saisissez le montant compté pour calculer l’écart.';
                 }
                 if (cashClosureFormMeta) {
                     cashClosureFormMeta.textContent = existingRecord
                         ? `Cloture deja enregistree pour ${existingRecord.locationName || 'cette caisse'} le ${formatDateOnly(existingRecord.closureDate)}. Vous pouvez la mettre a jour.`
-                        : 'Renseignez le fond d\'ouverture, les mouvements divers puis le montant compte.';
+                        : 'Le montant compté déclenche le calcul. Les autres champs servent uniquement à ajuster la théorie si besoin.';
                 }
                 if (cashClosureStatusBadge) {
                     const label = existingRecord
@@ -11040,6 +11516,13 @@
                 if (!state.closureDate) {
                     if (cashClosureError) {
                         cashClosureError.textContent = 'Selectionnez une date de fermeture.';
+                        cashClosureError.classList.remove('hidden');
+                    }
+                    return;
+                }
+                if (!state.hasCountedCash) {
+                    if (cashClosureError) {
+                        cashClosureError.textContent = 'Renseignez le montant compté avant d’enregistrer la fermeture.';
                         cashClosureError.classList.remove('hidden');
                     }
                     return;
@@ -27425,15 +27908,10 @@
                     renderSalesHistory();
                 });
             }
-            if (profitabilityProductSearchInput) {
-                profitabilityProductSearchInput.addEventListener('input', (event) => {
-                    profitabilitySearch = event.target.value || '';
-                    renderProfitabilityAndCashPage();
-                });
-            }
             if (profitabilityProductFilter) {
                 profitabilityProductFilter.addEventListener('change', (event) => {
                     profitabilitySelectedProductKey = event.target.value || 'all';
+                    profitabilitySearch = '';
                     renderProfitabilityAndCashPage();
                 });
             }
@@ -29572,6 +30050,7 @@
             bindProductCombobox('salesQuick');
             bindProductCombobox('restock');
             bindProductCombobox('traceability');
+            bindProductCombobox('profitability');
 
             if (entryProductSelect) {
                 entryProductSelect.addEventListener('change', () => {
