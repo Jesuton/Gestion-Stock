@@ -1585,7 +1585,7 @@
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1.3fr)_220px_220px] gap-3">
+                            <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1.15fr)_minmax(220px,0.95fr)_220px_220px] gap-3">
                                 <div class="relative">
                                     <input type="text" id="profitability-product-search" placeholder="Rechercher un produit..."
                                         class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-2xl focus:ring-cyan-500 focus:border-cyan-500" />
@@ -1595,6 +1595,10 @@
                                         </svg>
                                     </div>
                                 </div>
+                                <select id="profitability-product-filter"
+                                    class="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-700 focus:ring-cyan-500 focus:border-cyan-500">
+                                    <option value="all">Tous les produits</option>
+                                </select>
                                 <select id="profitability-location-filter"
                                     class="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-700 focus:ring-cyan-500 focus:border-cyan-500">
                                 </select>
@@ -5600,6 +5604,7 @@
             let profitabilityCustomDateStart = '';
             let profitabilityCustomDateEnd = '';
             let profitabilityLocationFilterValue = 'all';
+            let profitabilitySelectedProductKey = 'all';
             let rentabiliteCaisseView = 'profitability';
             let activeCashClosureContextKey = '';
             let isTaxEnabled = true;
@@ -5935,6 +5940,7 @@
             const salesHistoryRemindersTableContainer = document.getElementById('sales-history-reminders-table-container');
             const salesHistoryRemindersTbody = document.getElementById('sales-history-reminders-tbody');
             const profitabilityProductSearchInput = document.getElementById('profitability-product-search');
+            const profitabilityProductFilter = document.getElementById('profitability-product-filter');
             const profitabilityLocationFilter = document.getElementById('profitability-location-filter');
             const profitabilityDateFilter = document.getElementById('profitability-date-filter');
             const profitabilityCustomRangePanel = document.getElementById('profitability-custom-range-panel');
@@ -10633,10 +10639,24 @@
                     product.lossValue += Number(loss?.estimatedValue || 0) || 0;
                 });
 
+                const availableProducts = Array.from(productMap.values())
+                    .map(product => ({
+                        key: product.key,
+                        name: product.name || 'Produit'
+                    }))
+                    .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'fr', { sensitivity: 'base' }));
+
                 let rows = Array.from(productMap.values()).map(product => ({
                     ...product,
                     netProfit: product.grossMargin - product.lossValue
                 }));
+
+                const selectedProductExists = profitabilitySelectedProductKey === 'all'
+                    || availableProducts.some(product => product.key === profitabilitySelectedProductKey);
+
+                if (profitabilitySelectedProductKey && profitabilitySelectedProductKey !== 'all' && selectedProductExists) {
+                    rows = rows.filter(product => product.key === profitabilitySelectedProductKey);
+                }
 
                 const normalizedSearch = String(profitabilitySearch || '').trim().toLowerCase();
                 if (normalizedSearch) {
@@ -10668,7 +10688,7 @@
                     belowReferenceLines: 0
                 });
 
-                return { rows, summary };
+                return { rows, summary, availableProducts };
             }
 
             function renderProfitabilityReport() {
@@ -10677,7 +10697,19 @@
                 updateProfitabilityDateFilterUI();
 
                 const report = buildProfitabilityReport();
-                const { rows, summary } = report;
+                const { rows, summary, availableProducts } = report;
+
+                if (profitabilityProductFilter) {
+                    const hasCurrentValue = availableProducts.some(product => product.key === profitabilitySelectedProductKey);
+                    if (profitabilitySelectedProductKey !== 'all' && !hasCurrentValue) {
+                        profitabilitySelectedProductKey = 'all';
+                    }
+                    profitabilityProductFilter.innerHTML = [
+                        '<option value="all">Tous les produits</option>',
+                        ...availableProducts.map(product => `<option value="${escapeHtml(product.key)}">${escapeHtml(product.name || 'Produit')}</option>`)
+                    ].join('');
+                    profitabilityProductFilter.value = profitabilitySelectedProductKey;
+                }
 
                 if (profitabilitySummaryRevenue) profitabilitySummaryRevenue.textContent = formatCurrency(summary.revenue);
                 if (profitabilitySummaryCost) profitabilitySummaryCost.textContent = formatCurrency(summary.cost);
@@ -27382,6 +27414,12 @@
             if (profitabilityProductSearchInput) {
                 profitabilityProductSearchInput.addEventListener('input', (event) => {
                     profitabilitySearch = event.target.value || '';
+                    renderProfitabilityAndCashPage();
+                });
+            }
+            if (profitabilityProductFilter) {
+                profitabilityProductFilter.addEventListener('change', (event) => {
+                    profitabilitySelectedProductKey = event.target.value || 'all';
                     renderProfitabilityAndCashPage();
                 });
             }
