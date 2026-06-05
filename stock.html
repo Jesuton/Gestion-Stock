@@ -2753,6 +2753,10 @@
                         <div class="flex items-center justify-start xl:justify-end gap-2 flex-wrap">
                             <button id="open-entry-modal-button"
                                 class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2 whitespace-nowrap">Entrée</button>
+                            <button id="open-grouped-entry-modal-button"
+                                class="px-4 py-2 border border-emerald-200 bg-emerald-50 text-emerald-700 font-semibold rounded-lg shadow-sm hover:bg-emerald-100 transition-colors flex items-center gap-2 whitespace-nowrap">
+                                Entrées groupées
+                            </button>
                             <button id="open-exit-modal-button"
                                 class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2 whitespace-nowrap">Sortie</button>
                             <button id="open-bulk-exit-modal-button"
@@ -4625,6 +4629,101 @@
                             class="flex-1 bg-emerald-600 text-white font-semibold py-2.5 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
                             Valider l'entrée
                         </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="grouped-entry-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/55 backdrop-blur-sm p-4">
+        <div class="w-full max-w-6xl overflow-hidden rounded-3xl border border-white/70 bg-white shadow-2xl">
+            <div class="flex items-start justify-between gap-4 border-b border-gray-100 px-6 py-5">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-600">Réceptions magasin</p>
+                    <h2 class="mt-2 text-2xl font-bold text-gray-900">Entrée groupée</h2>
+                    <p class="mt-1 text-sm text-gray-500">Ajoutez plusieurs produits dans un seul document d'entrée.</p>
+                </div>
+                <button id="close-grouped-entry-modal-button" type="button"
+                    class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <form id="grouped-entry-form" class="flex max-h-[min(88vh,58rem)] flex-col">
+                <div class="flex-1 overflow-y-auto px-6 py-5">
+                    <div class="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_260px]">
+                        <div>
+                            <label for="grouped-entry-supplier-select" class="block text-sm font-medium text-gray-700">Fournisseur *</label>
+                            <select id="grouped-entry-supplier-select"
+                                class="mt-1 w-full rounded-xl border border-gray-300 px-4 py-3 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400">
+                                <option value="">Sélectionnez un fournisseur</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="grouped-entry-reference" class="block text-sm font-medium text-gray-700">Référence document</label>
+                            <input type="text" id="grouped-entry-reference" placeholder="Ex: BL-2026-001"
+                                class="mt-1 w-full rounded-xl border border-gray-300 px-4 py-3 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400" />
+                        </div>
+                        <div>
+                            <label for="grouped-entry-delivery-name" class="block text-sm font-medium text-gray-700">Livreur</label>
+                            <input type="text" id="grouped-entry-delivery-name" placeholder="Nom du livreur"
+                                class="mt-1 w-full rounded-xl border border-gray-300 px-4 py-3 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400" />
+                        </div>
+                    </div>
+
+                    <div class="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4 text-sm text-emerald-800">
+                        Utilisez cette saisie pour les réceptions multi-produits. Pour créer un nouveau produit, gardez la fenêtre `Entrée` classique.
+                    </div>
+
+                    <div class="mt-4">
+                        <label for="grouped-entry-comment" class="block text-sm font-medium text-gray-700">Commentaire global</label>
+                        <textarea id="grouped-entry-comment" rows="2" placeholder="Ex: Réception du camion du matin"
+                            class="mt-1 w-full rounded-xl border border-gray-300 p-3 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400"></textarea>
+                    </div>
+
+                    <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">Lignes produits</h3>
+                            <p class="text-sm text-gray-500">Chaque ligne met à jour le stock et génère sa facture d'entrée fournisseur.</p>
+                        </div>
+                        <button id="grouped-entry-add-line-button" type="button"
+                            class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700">
+                            <svg class="h-4.5 w-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            Ajouter une ligne
+                        </button>
+                    </div>
+
+                    <div id="grouped-entry-lines-empty"
+                        class="mt-4 hidden flex items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-4 py-10 text-center text-sm text-gray-400">
+                        Aucune ligne produit.
+                    </div>
+                    <div id="grouped-entry-lines-list" class="mt-4 space-y-3"></div>
+                    <p id="grouped-entry-error" class="mt-4 hidden text-sm text-red-500"></p>
+                </div>
+
+                <div class="border-t border-gray-100 bg-gray-50 px-6 py-4">
+                    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                        <div class="flex flex-wrap items-center gap-3 text-sm text-gray-600">
+                            <span class="inline-flex items-center rounded-full border border-gray-200 bg-white px-3 py-1 font-semibold text-gray-700">
+                                Lignes: <span id="grouped-entry-summary-lines" class="ml-1">0</span>
+                            </span>
+                            <span class="inline-flex items-center rounded-full border border-gray-200 bg-white px-3 py-1 font-semibold text-gray-700">
+                                Quantité totale: <span id="grouped-entry-summary-quantity" class="ml-1">0</span>
+                            </span>
+                        </div>
+                        <div class="flex flex-col gap-3 sm:flex-row">
+                            <button id="grouped-entry-cancel-button" type="button"
+                                class="rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 border border-gray-200 hover:bg-gray-100">
+                                Annuler
+                            </button>
+                            <button id="grouped-entry-submit-button" type="submit"
+                                class="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700">
+                                Valider l'entrée groupée
+                            </button>
+                        </div>
                     </div>
                 </div>
             </form>
@@ -6750,6 +6849,23 @@
             const entrySubmitButton = document.getElementById('entry-submit-button');
             const entryCancelButton = document.getElementById('entry-cancel-button');
             let entryMode = 'existing';
+            const openGroupedEntryModalButton = document.getElementById('open-grouped-entry-modal-button');
+            const groupedEntryModal = document.getElementById('grouped-entry-modal');
+            const closeGroupedEntryModalButton = document.getElementById('close-grouped-entry-modal-button');
+            const groupedEntryForm = document.getElementById('grouped-entry-form');
+            const groupedEntrySupplierSelect = document.getElementById('grouped-entry-supplier-select');
+            const groupedEntryReferenceInput = document.getElementById('grouped-entry-reference');
+            const groupedEntryDeliveryNameInput = document.getElementById('grouped-entry-delivery-name');
+            const groupedEntryCommentInput = document.getElementById('grouped-entry-comment');
+            const groupedEntryAddLineButton = document.getElementById('grouped-entry-add-line-button');
+            const groupedEntryLinesEmpty = document.getElementById('grouped-entry-lines-empty');
+            const groupedEntryLinesList = document.getElementById('grouped-entry-lines-list');
+            const groupedEntrySummaryLines = document.getElementById('grouped-entry-summary-lines');
+            const groupedEntrySummaryQuantity = document.getElementById('grouped-entry-summary-quantity');
+            const groupedEntryError = document.getElementById('grouped-entry-error');
+            const groupedEntryCancelButton = document.getElementById('grouped-entry-cancel-button');
+            const groupedEntrySubmitButton = document.getElementById('grouped-entry-submit-button');
+            let groupedEntryLines = [];
 
             const supplierModal = document.getElementById('supplier-modal');
             const supplierForm = document.getElementById('supplier-form');
@@ -7379,23 +7495,25 @@
             }
 
             function renderSupplierSelect() {
-                if (!entrySupplierSelect) return;
                 const suppliers = getSuppliersSorted();
-                const currentValue = entrySupplierSelect.value || '';
-                entrySupplierSelect.innerHTML = '';
-                const option = document.createElement('option');
-                option.value = '';
-                option.textContent = 'Sélectionnez un fournisseur';
-                entrySupplierSelect.appendChild(option);
-                suppliers.forEach(supplier => {
-                    const supplierOption = document.createElement('option');
-                    supplierOption.value = supplier.id;
-                    supplierOption.textContent = supplier.name || 'Fournisseur';
-                    entrySupplierSelect.appendChild(supplierOption);
+                [entrySupplierSelect, groupedEntrySupplierSelect].forEach(select => {
+                    if (!select) return;
+                    const currentValue = select.value || '';
+                    select.innerHTML = '';
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = 'Sélectionnez un fournisseur';
+                    select.appendChild(option);
+                    suppliers.forEach(supplier => {
+                        const supplierOption = document.createElement('option');
+                        supplierOption.value = supplier.id;
+                        supplierOption.textContent = supplier.name || 'Fournisseur';
+                        select.appendChild(supplierOption);
+                    });
+                    if (currentValue && suppliers.some(supplier => supplier.id === currentValue)) {
+                        select.value = currentValue;
+                    }
                 });
-                if (currentValue && suppliers.some(supplier => supplier.id === currentValue)) {
-                    entrySupplierSelect.value = currentValue;
-                }
             }
 
             function getSupplierById(supplierId) {
@@ -15568,11 +15686,14 @@
                 applyFeatureState(openBulkTransferModalButton, 'store_stock.transfer');
                 applyFeatureState(openRestockModalButton, 'store_stock.restock');
                 applyFeatureState(openEntryModalButton, 'store_stock.entry');
+                applyFeatureState(openGroupedEntryModalButton, 'store_stock.entry');
                 applyFeatureState(openExitModalButton, 'store_stock.exit');
                 applyFeatureState(openBulkExitModalButton, 'store_stock.exit');
                 applyFeatureState(openNewProductModalButton, 'store_stock.new_product');
                 applyFeatureState(entrySubmitButton, 'store_modal_entry_validate', { hide: false, disable: true });
                 applyFeatureState(entryCancelButton, 'store_modal_entry_cancel', { hide: false, disable: true });
+                applyFeatureState(groupedEntrySubmitButton, 'store_modal_entry_validate', { hide: false, disable: true });
+                applyFeatureState(groupedEntryCancelButton, 'store_modal_entry_cancel', { hide: false, disable: true });
                 applyFeatureState(exitSubmitButton, 'store_modal_exit_submit', { hide: false, disable: true });
                 applyFeatureState(exitCancelButton, 'store_modal_exit_cancel', { hide: false, disable: true });
                 applyFeatureState(bulkExitPreviewButton, 'store_modal_exit_submit', { hide: false, disable: true });
@@ -19043,6 +19164,161 @@
                 updateEntryProductInfo(productId ? getEntryProductById(productId) : null);
                 renderSupplierSelect();
                 entryModal.classList.remove('hidden');
+            }
+
+            function createGroupedEntryLineDraft() {
+                return {
+                    id: `grouped-entry-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                    productId: '',
+                    quantity: '',
+                    description: '',
+                    expirationDate: ''
+                };
+            }
+
+            function isGroupedEntryLineEmpty(line) {
+                if (!line) return true;
+                return !String(line.productId || '').trim()
+                    && !String(line.quantity || '').trim()
+                    && !String(line.description || '').trim()
+                    && !String(line.expirationDate || '').trim();
+            }
+
+            function setGroupedEntryError(message = '') {
+                if (!groupedEntryError) return;
+                if (!message) {
+                    groupedEntryError.textContent = '';
+                    groupedEntryError.classList.add('hidden');
+                    return;
+                }
+                groupedEntryError.textContent = message;
+                groupedEntryError.classList.remove('hidden');
+            }
+
+            function getGroupedEntryProductStockLabel(product) {
+                if (!product) return 'Sélectionnez un produit pour voir le stock actuel.';
+                const rawStoreId = product.storeId;
+                const isUnassigned = rawStoreId === UNASSIGNED_STORE_ID;
+                const resolvedStoreId = isUnassigned ? null : resolveStoreId(rawStoreId);
+                const storeLabel = resolvedStoreId ? (getStoreName(resolvedStoreId) || DEFAULT_STORE_NAME) : '';
+                const activeStoreId = getActiveStoreId();
+                const isOtherStore = resolvedStoreId && activeStoreId && resolvedStoreId !== activeStoreId;
+                const stockValue = Number(product.quantityInStore) || 0;
+                if (isUnassigned) {
+                    return `Stock actuel: ${stockValue} (non assigné)`;
+                }
+                if (isOtherStore) {
+                    return `Stock actuel: ${stockValue} (${storeLabel || 'autre magasin'})`;
+                }
+                return `Stock actuel: ${stockValue}`;
+            }
+
+            function renderGroupedEntryRows() {
+                if (!groupedEntryLinesList || !groupedEntryLinesEmpty) return;
+                const products = getEntrySelectableProducts()
+                    .slice()
+                    .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+                if (!groupedEntryLines.length) {
+                    groupedEntryLinesEmpty.classList.remove('hidden');
+                    groupedEntryLinesList.innerHTML = '';
+                } else {
+                    groupedEntryLinesEmpty.classList.add('hidden');
+                    groupedEntryLinesList.innerHTML = groupedEntryLines.map((line, index) => {
+                        const product = line.productId ? getEntryProductById(line.productId) : null;
+                        const stockLabel = getGroupedEntryProductStockLabel(product);
+                        const productOptions = ['<option value="">Sélectionnez un produit</option>']
+                            .concat(products.map((item) => {
+                                const rawStoreId = item.storeId;
+                                const isUnassigned = rawStoreId === UNASSIGNED_STORE_ID;
+                                const resolvedStoreId = isUnassigned ? null : resolveStoreId(rawStoreId);
+                                const storeLabel = resolvedStoreId ? (getStoreName(resolvedStoreId) || DEFAULT_STORE_NAME) : '';
+                                const activeStoreId = getActiveStoreId();
+                                const isOtherStore = resolvedStoreId && activeStoreId && resolvedStoreId !== activeStoreId;
+                                const qty = Number(item.quantityInStore) || 0;
+                                const scopeLabel = isUnassigned
+                                    ? 'Non assigné'
+                                    : (isOtherStore ? (storeLabel || 'Autre magasin') : `Stock: ${qty}`);
+                                const selected = item.id === line.productId ? 'selected' : '';
+                                return `<option value="${escapeShopDocumentValue(item.id)}" ${selected}>${escapeShopDocumentValue(item.name || 'Produit')} · ${escapeShopDocumentValue(getProductInternalCodeText(item))} · ${escapeShopDocumentValue(scopeLabel)}</option>`;
+                            }))
+                            .join('');
+
+                        return `
+                            <article data-grouped-entry-row-id="${escapeShopDocumentValue(line.id)}" class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                                <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                                    <div>
+                                        <p class="text-sm font-semibold text-gray-900">Ligne ${index + 1}</p>
+                                        <p class="mt-1 text-xs text-gray-500">${escapeShopDocumentValue(stockLabel)}</p>
+                                    </div>
+                                    <button type="button" data-grouped-entry-remove="${escapeShopDocumentValue(line.id)}"
+                                        class="inline-flex items-center justify-center rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-100">
+                                        Retirer
+                                    </button>
+                                </div>
+                                <div class="mt-4 grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1.45fr)_140px_190px]">
+                                    <div>
+                                        <label class="text-xs font-semibold uppercase tracking-wide text-gray-500">Produit *</label>
+                                        <select data-grouped-entry-field="productId"
+                                            class="mt-1 w-full rounded-xl border border-gray-300 px-3 py-3 text-sm focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400">
+                                            ${productOptions}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-semibold uppercase tracking-wide text-gray-500">Quantité *</label>
+                                        <input type="number" min="1" step="1" data-grouped-entry-field="quantity" value="${escapeShopDocumentValue(line.quantity || '')}"
+                                            class="mt-1 w-full rounded-xl border border-gray-300 px-3 py-3 text-sm focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400" />
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-semibold uppercase tracking-wide text-gray-500">Date d'expiration</label>
+                                        <input type="date" data-grouped-entry-field="expirationDate" value="${escapeShopDocumentValue(line.expirationDate || '')}"
+                                            class="mt-1 w-full rounded-xl border border-gray-300 px-3 py-3 text-sm focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400" />
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <label class="text-xs font-semibold uppercase tracking-wide text-gray-500">Description / note produit</label>
+                                    <textarea rows="2" data-grouped-entry-field="description"
+                                        class="mt-1 w-full rounded-xl border border-gray-300 p-3 text-sm focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400"
+                                        placeholder="Description à appliquer sur ce produit si besoin...">${escapeShopDocumentValue(line.description || '')}</textarea>
+                                </div>
+                            </article>
+                        `;
+                    }).join('');
+                }
+
+                const nonEmptyLines = groupedEntryLines.filter((line) => !isGroupedEntryLineEmpty(line));
+                const totalQuantity = nonEmptyLines.reduce((sum, line) => {
+                    const qty = parseInt(line.quantity, 10);
+                    return sum + (Number.isFinite(qty) && qty > 0 ? qty : 0);
+                }, 0);
+                if (groupedEntrySummaryLines) groupedEntrySummaryLines.textContent = `${nonEmptyLines.length}`;
+                if (groupedEntrySummaryQuantity) groupedEntrySummaryQuantity.textContent = `${totalQuantity}`;
+            }
+
+            function resetGroupedEntryForm() {
+                if (groupedEntryForm) groupedEntryForm.reset();
+                groupedEntryLines = [createGroupedEntryLineDraft()];
+                renderSupplierSelect();
+                setGroupedEntryError('');
+                renderGroupedEntryRows();
+            }
+
+            function openGroupedEntryModal() {
+                if (!groupedEntryModal) return;
+                if (!getActiveStoreId()) {
+                    showSuccessToast('Veuillez créer ou sélectionner un magasin.');
+                    return;
+                }
+                resetGroupedEntryForm();
+                groupedEntryModal.classList.remove('hidden');
+                groupedEntryModal.classList.add('flex');
+            }
+
+            function closeGroupedEntryModal() {
+                if (!groupedEntryModal) return;
+                groupedEntryModal.classList.add('hidden');
+                groupedEntryModal.classList.remove('flex');
+                setGroupedEntryError('');
             }
 
             function openExitModalForProduct(productId = null) {
@@ -29837,6 +30113,282 @@
                 }
             });
 
+            if (groupedEntryForm) groupedEntryForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!currentUser || !dbBasePath) return;
+                const storeId = getActiveStoreId();
+                if (!storeId) {
+                    showSuccessToast('Veuillez créer ou sélectionner un magasin.');
+                    return;
+                }
+
+                setGroupedEntryError('');
+                const supplierId = groupedEntrySupplierSelect?.value || '';
+                if (!supplierId) {
+                    setGroupedEntryError('Veuillez sélectionner un fournisseur.');
+                    return;
+                }
+
+                const supplier = getSupplierById(supplierId);
+                if (!supplier) {
+                    setGroupedEntryError('Fournisseur invalide.');
+                    return;
+                }
+
+                const activeLines = groupedEntryLines.filter((line) => !isGroupedEntryLineEmpty(line));
+                if (!activeLines.length) {
+                    setGroupedEntryError('Ajoutez au moins une ligne produit.');
+                    return;
+                }
+
+                const now = new Date().toISOString();
+                const groupId = push(ref(db, `${dbBasePath}/storeEntryGroups`)).key;
+                const fallbackReference = `ENT-${now.slice(0, 10).replace(/-/g, '')}-${String(groupId || '').slice(-4).toUpperCase()}`;
+                const reference = (groupedEntryReferenceInput?.value || '').trim() || fallbackReference;
+                const deliveryName = (groupedEntryDeliveryNameInput?.value || '').trim();
+                const globalComment = (groupedEntryCommentInput?.value || '').trim();
+                const updates = {};
+                const entryGroupItems = {};
+                const stockTracker = new Map();
+                const cloneTracker = new Map();
+                const validationErrors = [];
+                let totalQuantity = 0;
+                let lineCount = 0;
+
+                for (let index = 0; index < activeLines.length; index += 1) {
+                    const line = activeLines[index];
+                    const lineNumber = index + 1;
+                    const productId = line.productId || '';
+                    const qty = parseInt(line.quantity, 10);
+                    const description = (line.description || '').trim();
+                    const expirationDate = (line.expirationDate || '').trim();
+
+                    if (!productId) {
+                        validationErrors.push(`Ligne ${lineNumber}: produit manquant.`);
+                        continue;
+                    }
+                    if (!Number.isFinite(qty) || qty <= 0) {
+                        validationErrors.push(`Ligne ${lineNumber}: quantité invalide.`);
+                        continue;
+                    }
+
+                    let product = getEntryProductById(productId);
+                    if (!product) {
+                        validationErrors.push(`Ligne ${lineNumber}: produit introuvable.`);
+                        continue;
+                    }
+
+                    const purchaseCost = Number(product?.purchaseCost);
+                    const storePrice = Number(product?.storeSellingPrice);
+                    const boutiquePrice = Number(product?.boutiqueSellingPrice);
+                    if (!Number.isFinite(purchaseCost) || !Number.isFinite(storePrice) || !Number.isFinite(boutiquePrice)) {
+                        validationErrors.push(`Ligne ${lineNumber}: prix non définis pour "${product.name || 'ce produit'}".`);
+                        continue;
+                    }
+
+                    const originalProductId = product.id;
+                    const rawStoreId = product.storeId || UNASSIGNED_STORE_ID;
+                    const resolvedStoreId = rawStoreId === UNASSIGNED_STORE_ID ? null : resolveStoreId(rawStoreId);
+                    const isOtherStore = resolvedStoreId && resolvedStoreId !== storeId;
+
+                    if (isOtherStore) {
+                        if (cloneTracker.has(originalProductId)) {
+                            product = cloneTracker.get(originalProductId);
+                        } else {
+                            const normalizedName = normalizeString(product.name || '');
+                            const selectedInternalCode = getProductInternalCode(product);
+                            const existingInStore = Object.values(appData.storeProducts || {}).find((item) =>
+                                ((selectedInternalCode && getProductInternalCode(item) === selectedInternalCode)
+                                    || (!selectedInternalCode && normalizeString(item.name || '') === normalizedName))
+                                && resolveStoreId(item.storeId) === storeId
+                            );
+                            const existingUnassigned = Object.values(appData.storeProducts || {}).find((item) =>
+                                ((selectedInternalCode && getProductInternalCode(item) === selectedInternalCode)
+                                    || (!selectedInternalCode && normalizeString(item.name || '') === normalizedName))
+                                && item.storeId === UNASSIGNED_STORE_ID
+                            );
+
+                            if (existingInStore) {
+                                product = existingInStore;
+                            } else if (existingUnassigned) {
+                                product = existingUnassigned;
+                            } else {
+                                const cloneId = push(ref(db, `${dbBasePath}/storeProducts`)).key;
+                                const clone = {
+                                    ...product,
+                                    id: cloneId,
+                                    catalogProductId: getProductCatalogId(product) || product.id || cloneId,
+                                    storeId,
+                                    quantityInStore: 0,
+                                    createdAt: now,
+                                    updatedAt: now
+                                };
+                                delete clone.expirationDate;
+                                updates[`${dbBasePath}/storeProducts/${cloneId}`] = clone;
+                                product = clone;
+                            }
+                            cloneTracker.set(originalProductId, product);
+                        }
+                    }
+
+                    const isUnassigned = product.storeId === UNASSIGNED_STORE_ID;
+                    const currentStock = Number(product.quantityInStore) || 0;
+                    const baseStock = stockTracker.has(product.id)
+                        ? stockTracker.get(product.id)
+                        : (isUnassigned ? 0 : currentStock);
+                    const newStock = baseStock + qty;
+                    stockTracker.set(product.id, newStock);
+
+                    updates[`${dbBasePath}/storeProducts/${product.id}/quantityInStore`] = newStock;
+                    updates[`${dbBasePath}/storeProducts/${product.id}/updatedAt`] = now;
+                    if (isUnassigned) {
+                        updates[`${dbBasePath}/storeProducts/${product.id}/storeId`] = storeId;
+                    }
+                    if (description) {
+                        updates[`${dbBasePath}/storeProducts/${product.id}/description`] = description;
+                    }
+                    if (expirationDate) {
+                        updates[`${dbBasePath}/storeProducts/${product.id}/expirationDate`] = expirationDate;
+                    }
+                    if (!product.supplierId && supplier.id) {
+                        updates[`${dbBasePath}/storeProducts/${product.id}/supplierId`] = supplier.id;
+                    }
+
+                    const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
+                    const movementComment = [reference, globalComment].filter(Boolean).join(' · ') || 'Entrée groupée';
+                    updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
+                        id: moveKey,
+                        productId: product.id,
+                        productName: product.name,
+                        storeId,
+                        type: 'Entrée',
+                        quantityChange: qty,
+                        oldStock: baseStock,
+                        newStock,
+                        deliveryName,
+                        comment: movementComment,
+                        supplierId: supplier.id,
+                        supplierName: supplier.name || '',
+                        expirationDate: expirationDate || null,
+                        entryGroupId: groupId,
+                        entryGroupReference: reference,
+                        date: { ".sv": "timestamp" },
+                        userEmail: currentUser.email || '',
+                        userName: currentUserData?.fullName || currentUser.email || ''
+                    };
+
+                    const supplierCurrency = (getSupplierCurrency(supplier) || DEFAULT_SUPPLIER_CURRENCY).toUpperCase();
+                    const productCurrency = (product.currency || DEFAULT_SUPPLIER_CURRENCY).toUpperCase();
+                    const rawRate = Number(getSupplierConversionRate(supplier));
+                    const conversionRate = Number.isFinite(rawRate) && rawRate > 0 ? rawRate : 1;
+                    const unitCost = purchaseCost;
+                    const totalProduct = roundAmount(unitCost * qty);
+                    let totalSupplier = totalProduct;
+                    let baseTotal = totalProduct;
+                    if (supplierCurrency !== DEFAULT_SUPPLIER_CURRENCY) {
+                        if (productCurrency === DEFAULT_SUPPLIER_CURRENCY) {
+                            totalSupplier = roundAmount(totalProduct / conversionRate);
+                            baseTotal = totalProduct;
+                        } else {
+                            totalSupplier = totalProduct;
+                            baseTotal = roundAmount(totalSupplier * conversionRate);
+                        }
+                    }
+
+                    const invoiceKey = push(ref(db, `${dbBasePath}/supplierInvoices`)).key;
+                    updates[`${dbBasePath}/supplierInvoices/${invoiceKey}`] = {
+                        id: invoiceKey,
+                        supplierId: supplier.id,
+                        supplierName: supplier.name || '',
+                        productId: product.id,
+                        productName: product.name || '',
+                        quantity: qty,
+                        unitCost,
+                        productCurrency,
+                        currency: supplierCurrency,
+                        conversionRate,
+                        baseTotal,
+                        total: totalSupplier,
+                        paidAmount: 0,
+                        status: 'open',
+                        deliveryName,
+                        storeId,
+                        date: { ".sv": "timestamp" },
+                        createdAt: now,
+                        source: 'grouped_entry',
+                        entryGroupId: groupId,
+                        entryGroupReference: reference
+                    };
+
+                    entryGroupItems[`item-${lineNumber}`] = {
+                        id: `item-${lineNumber}`,
+                        productId: product.id,
+                        productName: product.name || '',
+                        quantity: qty,
+                        oldStock: baseStock,
+                        newStock,
+                        description,
+                        expirationDate: expirationDate || '',
+                        unitCost,
+                        productCurrency,
+                        supplierCurrency,
+                        conversionRate,
+                        baseTotal,
+                        total: totalSupplier,
+                        moveKey,
+                        invoiceKey
+                    };
+
+                    totalQuantity += qty;
+                    lineCount += 1;
+                }
+
+                if (validationErrors.length) {
+                    setGroupedEntryError(validationErrors.slice(0, 4).join(' '));
+                    return;
+                }
+                if (!lineCount) {
+                    setGroupedEntryError('Aucune ligne valide à enregistrer.');
+                    return;
+                }
+
+                updates[`${dbBasePath}/storeEntryGroups/${groupId}`] = {
+                    id: groupId,
+                    reference,
+                    storeId,
+                    storeName: getStoreName(storeId) || DEFAULT_STORE_NAME,
+                    supplierId: supplier.id,
+                    supplierName: supplier.name || '',
+                    deliveryName,
+                    comment: globalComment,
+                    lineCount,
+                    totalQuantity,
+                    createdAt: now,
+                    createdByName: currentUserData?.fullName || currentUser.email || '',
+                    createdByEmail: currentUser.email || '',
+                    status: 'validated',
+                    source: 'manual_grouped_entry',
+                    items: entryGroupItems
+                };
+                updates[`${dbBasePath}/suppliers/${supplier.id}/updatedAt`] = now;
+
+                if (!confirm(`Valider cette entrée groupée de ${lineCount} ligne(s) pour ${totalQuantity} unité(s) ?`)) {
+                    return;
+                }
+
+                try {
+                    if (groupedEntrySubmitButton) groupedEntrySubmitButton.disabled = true;
+                    await update(ref(db), updates);
+                    closeGroupedEntryModal();
+                    showSuccessToast(`Entrée groupée enregistrée (${lineCount} ligne(s)).`);
+                } catch (error) {
+                    console.error(error);
+                    setGroupedEntryError("Impossible d'enregistrer l'entrée groupée.");
+                } finally {
+                    if (groupedEntrySubmitButton) groupedEntrySubmitButton.disabled = false;
+                }
+            });
+
             if (exitForm) exitForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 if (!currentUser || !dbBasePath) return;
@@ -30339,6 +30891,13 @@
                 }
                 openEntryModalForProduct();
             });
+            if (openGroupedEntryModalButton) openGroupedEntryModalButton.addEventListener('click', () => {
+                if (!isCompanyFeatureEnabled('store_stock.entry')) {
+                    showSuccessToast(getFeatureRestrictionMessage());
+                    return;
+                }
+                openGroupedEntryModal();
+            });
             if (entryTabExistingButton) entryTabExistingButton.addEventListener('click', () => setEntryMode('existing'));
             if (entryTabNewButton) entryTabNewButton.addEventListener('click', () => setEntryMode('new'));
             if (entryCreateFromSearchButton) entryCreateFromSearchButton.addEventListener('click', () => {
@@ -30346,6 +30905,44 @@
                 if (!query) return;
                 closeProductCombobox('entry');
                 setEntryMode('new', { prefillName: query });
+            });
+            if (groupedEntryAddLineButton) groupedEntryAddLineButton.addEventListener('click', () => {
+                groupedEntryLines.push(createGroupedEntryLineDraft());
+                renderGroupedEntryRows();
+            });
+            if (groupedEntryLinesList) groupedEntryLinesList.addEventListener('input', (event) => {
+                const row = event.target.closest('[data-grouped-entry-row-id]');
+                const field = event.target.dataset.groupedEntryField;
+                if (!row || !field) return;
+                const targetLine = groupedEntryLines.find((line) => line.id === row.dataset.groupedEntryRowId);
+                if (!targetLine) return;
+                targetLine[field] = event.target.value;
+                if (field === 'productId') {
+                    renderGroupedEntryRows();
+                } else {
+                    const nonEmptyLines = groupedEntryLines.filter((line) => !isGroupedEntryLineEmpty(line));
+                    const totalQuantity = nonEmptyLines.reduce((sum, line) => {
+                        const qty = parseInt(line.quantity, 10);
+                        return sum + (Number.isFinite(qty) && qty > 0 ? qty : 0);
+                    }, 0);
+                    if (groupedEntrySummaryLines) groupedEntrySummaryLines.textContent = `${nonEmptyLines.length}`;
+                    if (groupedEntrySummaryQuantity) groupedEntrySummaryQuantity.textContent = `${totalQuantity}`;
+                }
+            });
+            if (groupedEntryLinesList) groupedEntryLinesList.addEventListener('change', (event) => {
+                const row = event.target.closest('[data-grouped-entry-row-id]');
+                const field = event.target.dataset.groupedEntryField;
+                if (!row || !field) return;
+                const targetLine = groupedEntryLines.find((line) => line.id === row.dataset.groupedEntryRowId);
+                if (!targetLine) return;
+                targetLine[field] = event.target.value;
+                renderGroupedEntryRows();
+            });
+            if (groupedEntryLinesList) groupedEntryLinesList.addEventListener('click', (event) => {
+                const removeButton = event.target.closest('[data-grouped-entry-remove]');
+                if (!removeButton) return;
+                groupedEntryLines = groupedEntryLines.filter((line) => line.id !== removeButton.dataset.groupedEntryRemove);
+                renderGroupedEntryRows();
             });
             if (openExitModalButton) openExitModalButton.addEventListener('click', () => {
                 if (!isCompanyFeatureEnabled('store_stock.exit')) {
@@ -30453,6 +31050,7 @@
                 setEntryMode('existing');
                 entryModal.classList.add('hidden');
             });
+            if (closeGroupedEntryModalButton) closeGroupedEntryModalButton.addEventListener('click', closeGroupedEntryModal);
             if (closeExitModalButton) closeExitModalButton.addEventListener('click', () => {
                 closeProductCombobox('exit', { restoreSelection: true });
                 exitModal.classList.add('hidden');
@@ -30462,6 +31060,12 @@
                 closeProductCombobox('entry', { restoreSelection: true });
                 setEntryMode('existing');
                 entryModal.classList.add('hidden');
+            });
+            if (groupedEntryCancelButton) groupedEntryCancelButton.addEventListener('click', closeGroupedEntryModal);
+            if (groupedEntryModal) groupedEntryModal.addEventListener('click', (event) => {
+                if (event.target === groupedEntryModal) {
+                    closeGroupedEntryModal();
+                }
             });
             if (exitCancelButton) exitCancelButton.addEventListener('click', () => {
                 closeProductCombobox('exit', { restoreSelection: true });
