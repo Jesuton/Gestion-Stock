@@ -201,7 +201,55 @@
             overscroll-behavior: contain;
             -webkit-overflow-scrolling: touch;
         }
+
+        .responsive-number {
+            min-width: 0;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-variant-numeric: tabular-nums;
+        }
+
+        @media (min-width: 768px) and (max-width: 1279px) {
+            #page-Ventes .sales-tablet-summary-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            }
+
+            #page-Ventes .sales-tablet-payment-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            #page-Ventes .sales-tablet-amount-lg {
+                font-size: 1.125rem !important;
+                line-height: 1.4 !important;
+            }
+        }
         
+        .responsive-number {
+            display: block;
+            min-width: 0;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .metric-card-safe {
+            min-width: 0;
+        }
+
+        .sales-tight-grid > * {
+            min-width: 0;
+        }
+
+        @media (max-width: 1279px) {
+            .sales-sidebar-tabs {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
     </style>
     <script type="importmap">
 {
@@ -977,8 +1025,8 @@
 
             <!-- Page: Ventes -->
             <div id="page-Ventes" class="page-content p-2.5 md:p-3.5 lg:p-4 hidden">
-                <div class="flex flex-col lg:flex-row gap-2.5 lg:gap-3">
-                    <div class="flex-1 space-y-2.5">
+                <div class="flex flex-col xl:flex-row gap-2.5 lg:gap-3">
+                    <div class="min-w-0 flex-1 space-y-2.5">
                         <div class="bg-white p-3 lg:p-3.5 rounded-2xl shadow-sm border border-gray-100">
                             <div class="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
                                 <div>
@@ -1127,7 +1175,7 @@
                         </div>
                     </div>
 
-                    <div class="lg:w-[320px] xl:w-[360px] 2xl:w-[400px] space-y-6 lg:sticky lg:top-6 lg:self-start">
+                    <div class="sales-sidebar-shell w-full xl:w-[360px] 2xl:w-[400px] space-y-6 xl:sticky xl:top-6 xl:self-start">
                         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                             <div class="p-6 border-b border-gray-100">
                                 <h2 class="text-lg font-semibold text-gray-900">Facture en cours</h2>
@@ -1139,7 +1187,7 @@
                                 </div>
                             </div>
                             <div class="border-b border-gray-100 bg-gray-50/80 px-4 py-3">
-                                <div class="grid grid-cols-4 gap-2">
+                                <div class="sales-sidebar-tabs grid grid-cols-2 sm:grid-cols-4 gap-2">
                                     <button type="button" id="sales-sidebar-page-summary-button"
                                         class="rounded-xl bg-cyan-500 px-3 py-2 text-xs font-semibold text-white shadow-sm">
                                         Vue
@@ -1171,22 +1219,22 @@
                                     <div id="sales-sidebar-cart-host" class="mt-4"></div>
                                 </div>
                                 <div class="space-y-4 px-6 py-5">
-                                    <div class="grid grid-cols-2 gap-3">
-                                        <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                                    <div class="sales-tight-grid grid grid-cols-2 gap-3">
+                                        <div class="metric-card-safe rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
                                             <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Lignes</p>
                                             <p id="sales-summary-lines" class="mt-1 text-xl font-bold text-slate-900">0</p>
                                         </div>
-                                        <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                                        <div class="metric-card-safe rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
                                             <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Quantité</p>
                                             <p id="sales-summary-quantity" class="mt-1 text-xl font-bold text-slate-900">0</p>
                                         </div>
-                                        <div class="rounded-2xl border border-cyan-100 bg-cyan-50/70 px-4 py-3">
+                                        <div class="metric-card-safe rounded-2xl border border-cyan-100 bg-cyan-50/70 px-4 py-3">
                                             <p class="text-[11px] font-semibold uppercase tracking-wide text-cyan-700">Total</p>
-                                            <p id="sales-summary-total" class="mt-1 text-base font-bold text-cyan-900">0 FCFA</p>
+                                            <p id="sales-summary-total" class="responsive-number mt-1 text-base font-bold text-cyan-900">0 FCFA</p>
                                         </div>
-                                        <div class="rounded-2xl border border-amber-100 bg-amber-50/70 px-4 py-3">
+                                        <div class="metric-card-safe rounded-2xl border border-amber-100 bg-amber-50/70 px-4 py-3">
                                             <p class="text-[11px] font-semibold uppercase tracking-wide text-amber-700">Reste</p>
-                                            <p id="sales-summary-remaining" class="mt-1 text-base font-bold text-amber-900">0 FCFA</p>
+                                            <p id="sales-summary-remaining" class="responsive-number mt-1 text-base font-bold text-amber-900">0 FCFA</p>
                                         </div>
                                     </div>
                                     <div id="sales-summary-customer-box" class="hidden rounded-2xl border border-cyan-100 bg-cyan-50/70 px-4 py-3">
@@ -1197,7 +1245,7 @@
                                             </div>
                                             <div class="text-right">
                                                 <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Dû actuel</p>
-                                                <p id="sales-summary-customer-due" class="mt-1 text-sm font-bold text-amber-700">0 FCFA</p>
+                                                <p id="sales-summary-customer-due" class="responsive-number mt-1 text-sm font-bold text-amber-700">0 FCFA</p>
                                             </div>
                                         </div>
                                         <p id="sales-summary-customer-meta" class="mt-2 text-xs text-gray-500">Aucune facture ouverte.</p>
@@ -1272,23 +1320,23 @@
                                             </div>
                                         </div>
                                         <div class="px-4 py-4">
-                                            <div class="grid grid-cols-2 gap-2.5">
-                                                <div class="col-span-2 rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-3.5">
+                                            <div class="sales-tight-grid grid grid-cols-2 gap-2.5">
+                                                <div class="metric-card-safe col-span-2 rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-3.5">
                                                     <div class="flex items-center justify-between gap-3">
                                                         <div class="min-w-0">
                                                             <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Total facture</p>
                                                             <p class="mt-1 text-xs text-gray-400">Montant actuel de la vente</p>
                                                         </div>
-                                                        <p id="sale-payment-total-display" class="shrink-0 whitespace-nowrap text-lg font-bold leading-tight tracking-tight text-gray-900 sm:text-xl">0 FCFA</p>
+                                                        <p id="sale-payment-total-display" class="responsive-number shrink-0 text-lg font-bold leading-tight tracking-tight text-gray-900 sm:text-xl">0 FCFA</p>
                                                     </div>
                                                 </div>
                                                 <div class="min-w-0 rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 py-3">
                                                     <p class="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Versé maintenant</p>
-                                                    <p id="sale-payment-paid-display" class="mt-1 whitespace-nowrap text-base font-bold leading-tight tracking-tight text-emerald-700 sm:text-lg">0 FCFA</p>
+                                                    <p id="sale-payment-paid-display" class="responsive-number mt-1 text-base font-bold leading-tight tracking-tight text-emerald-700 sm:text-lg">0 FCFA</p>
                                                 </div>
                                                 <div class="min-w-0 rounded-xl border border-amber-100 bg-amber-50/70 px-3 py-3">
                                                     <p class="text-[11px] font-semibold uppercase tracking-wide text-amber-700">Reste dû</p>
-                                                    <p id="sale-payment-remaining-display" class="mt-1 whitespace-nowrap text-base font-bold leading-tight tracking-tight text-amber-700 sm:text-lg">0 FCFA</p>
+                                                    <p id="sale-payment-remaining-display" class="responsive-number mt-1 text-base font-bold leading-tight tracking-tight text-amber-700 sm:text-lg">0 FCFA</p>
                                                 </div>
                                             </div>
                                             <div class="mt-4">
@@ -1401,15 +1449,15 @@
                                     </div>
                                     <div class="flex items-center justify-between text-sm text-gray-600">
                                         <span>Sous-total</span>
-                                        <span id="cart-subtotal">0 FCFA</span>
+                                        <span id="cart-subtotal" class="responsive-number">0 FCFA</span>
                                     </div>
                                     <div id="cart-tax-row" class="flex items-center justify-between text-sm text-gray-400">
                                         <span>TVA (20%)</span>
-                                        <span id="cart-tax">0 FCFA</span>
+                                        <span id="cart-tax" class="responsive-number">0 FCFA</span>
                                     </div>
                                     <div id="cart-discount-row" class="flex items-center justify-between text-sm text-gray-500 hidden">
                                         <span id="cart-discount-label">Réduction</span>
-                                        <span id="cart-discount">0 FCFA</span>
+                                        <span id="cart-discount" class="responsive-number">0 FCFA</span>
                                     </div>
                                 </div>
                             </div>
@@ -1417,7 +1465,7 @@
                             <div class="p-6">
                                 <div class="flex items-center justify-between text-base font-semibold text-gray-900 border-t border-gray-200 pt-3">
                                     <span>Total</span>
-                                    <span id="cart-total" class="text-lg text-cyan-600">0 FCFA</span>
+                                    <span id="cart-total" class="responsive-number text-lg text-cyan-600">0 FCFA</span>
                                 </div>
                                 <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <button id="validate-cart-button"
