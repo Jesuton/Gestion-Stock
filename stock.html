@@ -19204,12 +19204,31 @@
                     }
                 }
 
-                if (!memberData) return null;
+                if (!memberData) {
+                    const reconstructedMemberKey = authUser.uid || storedProfile.id || '';
+                    const reconstructedUserData = normalizeMemberSecurity({
+                        ...storedProfile,
+                        uid: authUser.uid,
+                        id: reconstructedMemberKey || authUser.uid,
+                        email: authUser.email || storedProfile.email || '',
+                        fullName: storedProfile.fullName || storedProfile.name || authUser.email || 'Utilisateur',
+                        status: storedProfile.status || 'actif',
+                        companyId
+                    });
+                    return {
+                        companyId,
+                        companyName: companyData.companyName || companyData.name || storedProfile.companyName || '',
+                        memberKey: reconstructedMemberKey,
+                        shouldRecreateMember: Boolean(reconstructedMemberKey),
+                        userData: reconstructedUserData
+                    };
+                }
 
                 return {
                     companyId,
                     companyName: companyData.companyName || companyData.name || storedProfile.companyName || '',
                     memberKey,
+                    shouldRecreateMember: false,
                     userData: normalizeMemberSecurity({
                         ...storedProfile,
                         ...memberData,
@@ -32887,11 +32906,31 @@
                                 currentUserData.role = currentUserData.role || 'consultation';
                                 dbBasePath = `companies/${storedContext.companyId}`;
                                 try {
-                                    await set(ref(db, `users/${user.uid}`), {
+                                    const profilePayload = {
                                         ...currentUserData,
                                         companyId: storedContext.companyId,
                                         companyName: storedContext.companyName
-                                    });
+                                    };
+                                    const writes = {
+                                        [`users/${user.uid}`]: profilePayload
+                                    };
+                                    if (storedContext.shouldRecreateMember && storedContext.memberKey) {
+                                        writes[`companies/${storedContext.companyId}/members/${storedContext.memberKey}`] = {
+                                            id: storedContext.memberKey,
+                                            fullName: currentUserData.fullName || currentUserData.name || user.email || 'Utilisateur',
+                                            email: currentUserData.email || user.email || '',
+                                            role: currentUserData.role || 'consultation',
+                                            status: currentUserData.status || 'actif',
+                                            permissions: normalizePermissions(currentUserData.permissions),
+                                            storeAccess: Array.isArray(currentUserData.storeAccess) ? currentUserData.storeAccess : [],
+                                            boutiqueAccess: Array.isArray(currentUserData.boutiqueAccess) ? currentUserData.boutiqueAccess : [],
+                                            accessCode: currentUserData.accessCode || '',
+                                            createdAt: currentUserData.createdAt || new Date().toISOString(),
+                                            restoredAt: new Date().toISOString(),
+                                            restoredFromUserProfile: true
+                                        };
+                                    }
+                                    await update(ref(db), writes);
                                 } catch (persistError) {
                                     console.warn('Impossible de resynchroniser le profil utilisateur:', persistError);
                                 }
