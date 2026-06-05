@@ -19183,63 +19183,88 @@
 
             async function resolveStoredUserCompanyContext(authUser, storedProfile = {}) {
                 if (!authUser) return null;
+
                 const companyId = (storedProfile.companyId || '').trim();
-                if (!companyId) return null;
-
-                const companySnapshot = await get(ref(db, `companies/${companyId}`));
-                if (!companySnapshot.exists()) return null;
-
-                const companyData = companySnapshot.val() || {};
-                const members = companyData.members || {};
                 const normalizedEmail = (authUser.email || storedProfile.email || '').trim().toLowerCase();
+                const fallbackMatch = normalizedEmail ? await findMemberByEmail(normalizedEmail) : null;
 
-                let memberKey = authUser.uid && members[authUser.uid] ? authUser.uid : '';
-                let memberData = memberKey ? members[memberKey] : null;
+                if (companyId) {
+                    const companySnapshot = await get(ref(db, `companies/${companyId}`));
+                    if (companySnapshot.exists()) {
+                        const companyData = companySnapshot.val() || {};
+                        const members = companyData.members || {};
 
-                if (!memberData && normalizedEmail) {
-                    const emailMatchKey = Object.keys(members).find(key => (members[key]?.email || '').trim().toLowerCase() === normalizedEmail);
-                    if (emailMatchKey) {
-                        memberKey = emailMatchKey;
-                        memberData = members[emailMatchKey];
+                        let memberKey = authUser.uid && members[authUser.uid] ? authUser.uid : '';
+                        let memberData = memberKey ? members[memberKey] : null;
+
+                        if (!memberData && normalizedEmail) {
+                            const emailMatchKey = Object.keys(members).find(key => (members[key]?.email || '').trim().toLowerCase() === normalizedEmail);
+                            if (emailMatchKey) {
+                                memberKey = emailMatchKey;
+                                memberData = members[emailMatchKey];
+                            }
+                        }
+
+                        if (memberData) {
+                            return {
+                                companyId,
+                                companyName: companyData.companyName || companyData.name || storedProfile.companyName || '',
+                                memberKey,
+                                shouldPersistProfile: true,
+                                userData: normalizeMemberSecurity({
+                                    ...storedProfile,
+                                    ...memberData,
+                                    uid: authUser.uid,
+                                    id: memberData.id || memberKey || authUser.uid,
+                                    email: authUser.email || memberData.email || storedProfile.email || '',
+                                    fullName: memberData.fullName || memberData.name || storedProfile.fullName || storedProfile.name || authUser.email || 'Utilisateur',
+                                    status: memberData.status || storedProfile.status || 'actif',
+                                    companyId
+                                })
+                            };
+                        }
+
+                        if (!fallbackMatch?.member) {
+                            return {
+                                companyId,
+                                companyName: companyData.companyName || companyData.name || storedProfile.companyName || '',
+                                memberKey: '',
+                                shouldPersistProfile: false,
+                                userData: normalizeMemberSecurity({
+                                    ...storedProfile,
+                                    uid: authUser.uid,
+                                    id: storedProfile.id || authUser.uid,
+                                    email: authUser.email || storedProfile.email || '',
+                                    fullName: storedProfile.fullName || storedProfile.name || authUser.email || 'Utilisateur',
+                                    status: storedProfile.status || 'actif',
+                                    companyId
+                                })
+                            };
+                        }
                     }
                 }
 
-                if (!memberData) {
-                    const reconstructedMemberKey = authUser.uid || storedProfile.id || '';
-                    const reconstructedUserData = normalizeMemberSecurity({
-                        ...storedProfile,
-                        uid: authUser.uid,
-                        id: reconstructedMemberKey || authUser.uid,
-                        email: authUser.email || storedProfile.email || '',
-                        fullName: storedProfile.fullName || storedProfile.name || authUser.email || 'Utilisateur',
-                        status: storedProfile.status || 'actif',
-                        companyId
-                    });
+                if (fallbackMatch?.member) {
                     return {
-                        companyId,
-                        companyName: companyData.companyName || companyData.name || storedProfile.companyName || '',
-                        memberKey: reconstructedMemberKey,
-                        shouldRecreateMember: Boolean(reconstructedMemberKey),
-                        userData: reconstructedUserData
+                        companyId: fallbackMatch.companyId,
+                        companyName: fallbackMatch.companyName || '',
+                        memberKey: fallbackMatch.memberId || authUser.uid || '',
+                        shouldPersistProfile: true,
+                        userData: normalizeMemberSecurity({
+                            ...storedProfile,
+                            ...fallbackMatch.member,
+                            uid: authUser.uid,
+                            id: fallbackMatch.member.id || fallbackMatch.memberId || authUser.uid,
+                            email: authUser.email || fallbackMatch.member.email || storedProfile.email || '',
+                            fullName: fallbackMatch.member.fullName || fallbackMatch.member.name || storedProfile.fullName || storedProfile.name || authUser.email || 'Utilisateur',
+                            status: fallbackMatch.member.status || storedProfile.status || 'actif',
+                            companyId: fallbackMatch.companyId,
+                            companyName: fallbackMatch.companyName || ''
+                        })
                     };
                 }
 
-                return {
-                    companyId,
-                    companyName: companyData.companyName || companyData.name || storedProfile.companyName || '',
-                    memberKey,
-                    shouldRecreateMember: false,
-                    userData: normalizeMemberSecurity({
-                        ...storedProfile,
-                        ...memberData,
-                        uid: authUser.uid,
-                        id: memberData.id || memberKey || authUser.uid,
-                        email: authUser.email || memberData.email || storedProfile.email || '',
-                        fullName: memberData.fullName || memberData.name || storedProfile.fullName || storedProfile.name || authUser.email || 'Utilisateur',
-                        status: memberData.status || storedProfile.status || 'actif',
-                        companyId
-                    })
-                };
+                return null;
             }
 
             async function handleAccessCodeLogin(email, code) {
@@ -32906,31 +32931,16 @@
                                 currentUserData.role = currentUserData.role || 'consultation';
                                 dbBasePath = `companies/${storedContext.companyId}`;
                                 try {
-                                    const profilePayload = {
-                                        ...currentUserData,
-                                        companyId: storedContext.companyId,
-                                        companyName: storedContext.companyName
-                                    };
-                                    const writes = {
-                                        [`users/${user.uid}`]: profilePayload
-                                    };
-                                    if (storedContext.shouldRecreateMember && storedContext.memberKey) {
-                                        writes[`companies/${storedContext.companyId}/members/${storedContext.memberKey}`] = {
-                                            id: storedContext.memberKey,
-                                            fullName: currentUserData.fullName || currentUserData.name || user.email || 'Utilisateur',
-                                            email: currentUserData.email || user.email || '',
-                                            role: currentUserData.role || 'consultation',
-                                            status: currentUserData.status || 'actif',
-                                            permissions: normalizePermissions(currentUserData.permissions),
-                                            storeAccess: Array.isArray(currentUserData.storeAccess) ? currentUserData.storeAccess : [],
-                                            boutiqueAccess: Array.isArray(currentUserData.boutiqueAccess) ? currentUserData.boutiqueAccess : [],
-                                            accessCode: currentUserData.accessCode || '',
-                                            createdAt: currentUserData.createdAt || new Date().toISOString(),
-                                            restoredAt: new Date().toISOString(),
-                                            restoredFromUserProfile: true
+                                    if (storedContext.shouldPersistProfile) {
+                                        const profilePayload = {
+                                            ...currentUserData,
+                                            companyId: storedContext.companyId,
+                                            companyName: storedContext.companyName
                                         };
+                                        await update(ref(db), {
+                                            [`users/${user.uid}`]: profilePayload
+                                        });
                                     }
-                                    await update(ref(db), writes);
                                 } catch (persistError) {
                                     console.warn('Impossible de resynchroniser le profil utilisateur:', persistError);
                                 }
