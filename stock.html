@@ -895,7 +895,7 @@
                             <p id="stat-monthly-losses-count" class="text-xs text-gray-400 mt-1">0 déclaration ce mois</p>
                         </div>
                     </div>
-                    <button type="button" onclick="openLossModal()"
+                    <button type="button" id="dashboard-open-loss-modal"
                         class="flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition-colors">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
@@ -3587,6 +3587,36 @@
 
                             <div>
                                 <div class="flex items-center justify-between">
+                                    <div>
+                                        <h3 class="text-sm font-semibold text-gray-800">Arrivages</h3>
+                                        <p class="text-xs text-gray-400 mt-1">Dette regroupée par arrivage fournisseur.</p>
+                                    </div>
+                                    <span id="supplier-arrivals-count" class="text-xs font-semibold text-gray-500">0</span>
+                                </div>
+                                <div id="supplier-arrivals-empty"
+                                    class="mt-3 text-sm text-gray-400 border border-dashed border-gray-200 rounded-xl p-4 hidden">Aucun arrivage.</div>
+                                <div id="supplier-arrivals-table"
+                                    class="mt-3 overflow-x-auto rounded-xl border border-gray-200 hidden">
+                                    <table class="min-w-full bg-white divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Arrivage</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lignes</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payé</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Solde</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="supplier-arrivals-tbody" class="divide-y divide-gray-200"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex items-center justify-between">
                                     <h3 class="text-sm font-semibold text-gray-800">Factures d'entrée</h3>
                                     <span id="supplier-invoices-count" class="text-xs font-semibold text-gray-500">0</span>
                                 </div>
@@ -6215,6 +6245,58 @@
         </div>
     </div>
 
+    <div id="supplier-arrival-regularization-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl p-6 m-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-900">Régulariser un arrivage</h2>
+                    <p id="supplier-arrival-regularization-meta" class="text-sm text-gray-500 mt-1">—</p>
+                </div>
+                <button id="close-supplier-arrival-regularization-modal-button" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="mt-5 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                Cette régularisation met à jour uniquement la dette fournisseur de cet arrivage précis.
+            </div>
+
+            <div id="supplier-arrival-regularization-empty" class="hidden mt-5 rounded-2xl border border-dashed border-gray-200 p-6 text-center text-sm text-gray-400">
+                Aucun article à régulariser pour cet arrivage.
+            </div>
+
+            <div id="supplier-arrival-regularization-table-container" class="mt-5 overflow-x-auto rounded-xl border border-gray-200">
+                <table class="min-w-full bg-white divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qté</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coût actuel</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nouveau coût</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nouveau total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="supplier-arrival-regularization-tbody" class="divide-y divide-gray-200"></tbody>
+                </table>
+            </div>
+
+            <p id="supplier-arrival-regularization-error" class="hidden mt-4 text-sm text-red-500"></p>
+
+            <div class="mt-6 flex flex-col sm:flex-row gap-3">
+                <button id="supplier-arrival-regularization-cancel-button" type="button"
+                    class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50">
+                    Fermer
+                </button>
+                <button id="supplier-arrival-regularization-submit-button" type="button"
+                    class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700">
+                    Enregistrer la régularisation
+                </button>
+            </div>
+        </div>
+    </div>
+
 
 
     <!-- jsPDF Libraries for Invoice Generation -->
@@ -6305,14 +6387,14 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             const firebaseConfig = {
-                apiKey: "AIzaSyB65Iye8YMpxXsPthdBYmNojBMpaTPZS3A",
+                apiKey: "AIzaSyAwT-plakQsFQ3Nu2n4OIxehenAuznW7Q0",
                 authDomain: "gestion-stock-c9484.firebaseapp.com",
                 databaseURL: "https://gestion-stock-c9484-default-rtdb.firebaseio.com",
                 projectId: "gestion-stock-c9484",
                 storageBucket: "gestion-stock-c9484.firebasestorage.app",
                 messagingSenderId: "834033352449",
-                appId: "1:834033352449:web:b86ff5b60c816bb469e500",
-                measurementId: "G-5VKP3S88F8"
+                appId: "1:834033352449:web:c2b336b176a12b4b69e500",
+                measurementId: "G-YD4PK13QJY"
             };
 
             const app = initializeApp(firebaseConfig);
@@ -6401,6 +6483,7 @@
             let boutiqueMigrationDone = false;
             let activeAccessScopeMemberId = null;
             let supplierSearchQuery = '';
+            let activeSupplierArrivalRegularizationKey = null;
             let activeSupplierId = null;
             let activeSupplierPaymentDetailId = null;
             let chatListState = {};
@@ -7172,6 +7255,10 @@
             const supplierDetailDebt = document.getElementById('supplier-detail-debt');
             const supplierDetailCurrency = document.getElementById('supplier-detail-currency');
             const supplierDetailOpen = document.getElementById('supplier-detail-open');
+            const supplierArrivalsCount = document.getElementById('supplier-arrivals-count');
+            const supplierArrivalsEmpty = document.getElementById('supplier-arrivals-empty');
+            const supplierArrivalsTable = document.getElementById('supplier-arrivals-table');
+            const supplierArrivalsTbody = document.getElementById('supplier-arrivals-tbody');
             const supplierInvoicesCount = document.getElementById('supplier-invoices-count');
             const supplierInvoicesEmpty = document.getElementById('supplier-invoices-empty');
             const supplierInvoicesTable = document.getElementById('supplier-invoices-table');
@@ -7385,6 +7472,15 @@
             const supplierInvoiceDetailSignatureEmpty = document.getElementById('supplier-invoice-detail-signature-empty');
             const supplierInvoiceDetailSummary = document.getElementById('supplier-invoice-detail-summary');
             const supplierInvoiceDetailPrint = document.getElementById('supplier-invoice-detail-print');
+            const supplierArrivalRegularizationModal = document.getElementById('supplier-arrival-regularization-modal');
+            const supplierArrivalRegularizationMeta = document.getElementById('supplier-arrival-regularization-meta');
+            const supplierArrivalRegularizationEmpty = document.getElementById('supplier-arrival-regularization-empty');
+            const supplierArrivalRegularizationTableContainer = document.getElementById('supplier-arrival-regularization-table-container');
+            const supplierArrivalRegularizationTbody = document.getElementById('supplier-arrival-regularization-tbody');
+            const supplierArrivalRegularizationError = document.getElementById('supplier-arrival-regularization-error');
+            const closeSupplierArrivalRegularizationModalButton = document.getElementById('close-supplier-arrival-regularization-modal-button');
+            const supplierArrivalRegularizationCancelButton = document.getElementById('supplier-arrival-regularization-cancel-button');
+            const supplierArrivalRegularizationSubmitButton = document.getElementById('supplier-arrival-regularization-submit-button');
 
             // Paramètres & accès
             const settingsRestrictedState = document.getElementById('settings-restricted-state');
@@ -7840,6 +7936,143 @@
                 return `FAC-${id.slice(-6).toUpperCase()}`;
             }
 
+            function isSupplierInvoicePricingPending(invoice) {
+                if (!invoice) return true;
+                if (invoice.pricingPending === true) return true;
+                const unitCost = Number(invoice.unitCost);
+                return !Number.isFinite(unitCost) || unitCost <= 0;
+            }
+
+            function getSupplierArrivalKey(invoice) {
+                if (!invoice) return '';
+                return invoice.entryGroupId
+                    ? `group:${invoice.entryGroupId}`
+                    : `invoice:${invoice.id || ''}`;
+            }
+
+            function getSupplierArrivalReference(invoice) {
+                if (!invoice) return 'Arrivage';
+                return invoice.entryGroupReference
+                    || invoice.deliveryName
+                    || getSupplierInvoiceLabel(invoice);
+            }
+
+            function getSupplierArrivalGroups(supplierId) {
+                const grouped = new Map();
+                getSupplierInvoices(supplierId).forEach((invoice) => {
+                    const key = getSupplierArrivalKey(invoice);
+                    if (!key) return;
+                    const existing = grouped.get(key);
+                    const balance = getInvoiceBalance(invoice);
+                    if (existing) {
+                        existing.items.push(invoice);
+                        existing.quantity += Number(invoice.quantity || 0);
+                        existing.total += Number(invoice.total || 0);
+                        existing.paid += Number(invoice.paidAmount || 0);
+                        existing.balance += balance;
+                        existing.hasPendingPricing = existing.hasPendingPricing || isSupplierInvoicePricingPending(invoice);
+                        existing.dateValue = Math.max(existing.dateValue, new Date(invoice.date || invoice.createdAt || 0).getTime() || 0);
+                        existing.storeNames.add(getStoreName(resolveStoreId(invoice.storeId)) || DEFAULT_STORE_NAME);
+                        if (!existing.deliveryName && invoice.deliveryName) {
+                            existing.deliveryName = invoice.deliveryName;
+                        }
+                    } else {
+                        grouped.set(key, {
+                            key,
+                            id: invoice.entryGroupId || invoice.id || '',
+                            reference: getSupplierArrivalReference(invoice),
+                            deliveryName: invoice.deliveryName || '',
+                            items: [invoice],
+                            quantity: Number(invoice.quantity || 0),
+                            total: Number(invoice.total || 0),
+                            paid: Number(invoice.paidAmount || 0),
+                            balance,
+                            hasPendingPricing: isSupplierInvoicePricingPending(invoice),
+                            dateValue: new Date(invoice.date || invoice.createdAt || 0).getTime() || 0,
+                            storeNames: new Set([getStoreName(resolveStoreId(invoice.storeId)) || DEFAULT_STORE_NAME])
+                        });
+                    }
+                });
+
+                return Array.from(grouped.values())
+                    .map((group) => {
+                        const status = group.hasPendingPricing
+                            ? 'pending_pricing'
+                            : group.balance <= 0
+                                ? 'paid'
+                                : group.paid > 0
+                                    ? 'partial'
+                                    : 'open';
+                        return {
+                            ...group,
+                            total: roundAmount(group.total),
+                            paid: roundAmount(group.paid),
+                            balance: roundAmount(group.balance),
+                            lineCount: group.items.length,
+                            status,
+                            storeLabel: Array.from(group.storeNames).filter(Boolean).join(', ')
+                        };
+                    })
+                    .sort((a, b) => b.dateValue - a.dateValue);
+            }
+
+            function getSupplierArrivalStatusMeta(arrival) {
+                if (!arrival) {
+                    return {
+                        label: 'Inconnu',
+                        className: 'bg-gray-100 text-gray-600'
+                    };
+                }
+                if (arrival.status === 'pending_pricing') {
+                    return {
+                        label: 'Prix en attente',
+                        className: 'bg-amber-50 text-amber-700'
+                    };
+                }
+                if (arrival.status === 'paid') {
+                    return {
+                        label: 'Soldé',
+                        className: 'bg-emerald-50 text-emerald-700'
+                    };
+                }
+                if (arrival.status === 'partial') {
+                    return {
+                        label: 'Partiel',
+                        className: 'bg-cyan-50 text-cyan-700'
+                    };
+                }
+                return {
+                    label: 'Ouvert',
+                    className: 'bg-gray-100 text-gray-600'
+                };
+            }
+
+            function computeSupplierInvoiceTotals(invoice, unitCost, supplier = null) {
+                const relatedSupplier = supplier || getSupplierById(invoice?.supplierId);
+                const supplierCurrency = (invoice?.currency || getSupplierCurrency(relatedSupplier) || DEFAULT_SUPPLIER_CURRENCY).toUpperCase();
+                const productCurrency = (invoice?.productCurrency || DEFAULT_SUPPLIER_CURRENCY).toUpperCase();
+                const rawRate = Number(invoice?.conversionRate || getSupplierConversionRate(relatedSupplier) || 1);
+                const conversionRate = Number.isFinite(rawRate) && rawRate > 0 ? rawRate : 1;
+                const qty = Number(invoice?.quantity || 0);
+                let baseTotal = roundAmount(qty * unitCost);
+                let total = baseTotal;
+                if (supplierCurrency !== DEFAULT_SUPPLIER_CURRENCY) {
+                    if (productCurrency === DEFAULT_SUPPLIER_CURRENCY) {
+                        total = roundAmount(baseTotal / conversionRate);
+                    } else {
+                        total = baseTotal;
+                        baseTotal = roundAmount(total * conversionRate);
+                    }
+                }
+                return {
+                    supplierCurrency,
+                    productCurrency,
+                    conversionRate,
+                    baseTotal,
+                    total
+                };
+            }
+
             function getInvoiceBalance(invoice) {
                 const total = Number(invoice?.total || 0);
                 const paid = Number(invoice?.paidAmount || 0);
@@ -7946,6 +8179,7 @@
                 const currency = getSupplierCurrency(supplier);
                 const invoices = getSupplierInvoices(supplier.id);
                 const payments = getSupplierPayments(supplier.id);
+                const arrivals = getSupplierArrivalGroups(supplier.id);
                 const debt = calculateSupplierDebt(supplier.id);
                 const openCount = invoices.filter(inv => (inv.status || 'open') !== 'paid').length;
 
@@ -7963,10 +8197,42 @@
                 if (supplierDetailCurrency) supplierDetailCurrency.textContent = currency;
                 if (supplierDetailOpen) supplierDetailOpen.textContent = `${openCount}`;
                 if (openSupplierPaymentModal) {
-                    const canPay = openCount > 0;
+                    const canPay = invoices.some(inv => !isSupplierInvoicePricingPending(inv) && getInvoiceBalance(inv) > 0);
                     openSupplierPaymentModal.disabled = !canPay;
                     openSupplierPaymentModal.classList.toggle('opacity-60', !canPay);
                     openSupplierPaymentModal.classList.toggle('cursor-not-allowed', !canPay);
+                }
+
+                if (supplierArrivalsCount) supplierArrivalsCount.textContent = `${arrivals.length}`;
+                if (supplierArrivalsEmpty) supplierArrivalsEmpty.classList.toggle('hidden', arrivals.length > 0);
+                if (supplierArrivalsTable) supplierArrivalsTable.classList.toggle('hidden', arrivals.length === 0);
+                if (supplierArrivalsTbody) {
+                    supplierArrivalsTbody.innerHTML = arrivals.map((arrival) => {
+                        const statusMeta = getSupplierArrivalStatusMeta(arrival);
+                        const arrivalDate = arrival.dateValue ? formatDateOnly(new Date(arrival.dateValue).toISOString()) : '—';
+                        const actionLabel = arrival.hasPendingPricing ? 'Régulariser' : 'Ajuster coût';
+                        return `
+                            <tr>
+                                <td class="px-4 py-3 text-sm text-gray-500">${arrivalDate}</td>
+                                <td class="px-4 py-3 text-sm text-gray-700">
+                                    <div>
+                                        <p class="font-semibold text-gray-900">${escapeHtml(arrival.reference || 'Arrivage')}</p>
+                                        <p class="text-xs text-gray-400 mt-1">${escapeHtml(arrival.deliveryName || arrival.storeLabel || '—')}</p>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3 text-sm text-gray-700">${arrival.lineCount} ligne(s)</td>
+                                <td class="px-4 py-3 text-sm text-gray-700">${formatCurrency(arrival.total || 0, currency)}</td>
+                                <td class="px-4 py-3 text-sm text-gray-700">${formatCurrency(arrival.paid || 0, currency)}</td>
+                                <td class="px-4 py-3 text-sm font-semibold text-gray-900">${formatCurrency(arrival.balance || 0, currency)}</td>
+                                <td class="px-4 py-3">
+                                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${statusMeta.className}">${statusMeta.label}</span>
+                                </td>
+                                <td class="px-4 py-3 text-right">
+                                    <button type="button" data-arrival-regularize="${arrival.key}" class="text-emerald-600 font-semibold text-xs hover:text-emerald-700">${actionLabel}</button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
                 }
 
                 if (supplierInvoicesCount) supplierInvoicesCount.textContent = `${invoices.length}`;
@@ -7975,13 +8241,22 @@
                 if (supplierInvoicesTbody) {
                     supplierInvoicesTbody.innerHTML = invoices.map(inv => {
                         const invCurrency = inv.currency || currency;
+                        const pricingPending = isSupplierInvoicePricingPending(inv);
                         const status = inv.status || 'open';
-                        const statusLabel = status === 'paid' ? 'Payée' : status === 'partial' ? 'Partielle' : 'Ouverte';
-                        const badgeClass = status === 'paid'
-                            ? 'bg-emerald-50 text-emerald-600'
-                            : status === 'partial'
-                                ? 'bg-amber-50 text-amber-600'
-                                : 'bg-gray-100 text-gray-600';
+                        const statusLabel = pricingPending
+                            ? 'Prix en attente'
+                            : status === 'paid'
+                                ? 'Payée'
+                                : status === 'partial'
+                                    ? 'Partielle'
+                                    : 'Ouverte';
+                        const badgeClass = pricingPending
+                            ? 'bg-amber-50 text-amber-700'
+                            : status === 'paid'
+                                ? 'bg-emerald-50 text-emerald-600'
+                                : status === 'partial'
+                                    ? 'bg-amber-50 text-amber-600'
+                                    : 'bg-gray-100 text-gray-600';
                         return `
                             <tr>
                                 <td class="px-4 py-3 text-sm text-gray-500">${formatDateOnly(inv.date || inv.createdAt || '')}</td>
@@ -8110,9 +8385,12 @@
                 if (!supplierPaymentModal || !supplierPaymentForm) return;
                 const supplier = getSupplierById(activeSupplierId);
                 if (!supplier) return;
-                const invoices = getSupplierInvoices(supplier.id).filter(inv => (inv.status || 'open') !== 'paid');
+                const invoices = getSupplierInvoices(supplier.id)
+                    .filter(inv => (inv.status || 'open') !== 'paid')
+                    .filter(inv => !isSupplierInvoicePricingPending(inv))
+                    .filter(inv => getInvoiceBalance(inv) > 0);
                 if (!invoices.length) {
-                    showSuccessToast("Aucune facture ouverte pour ce fournisseur.");
+                    showSuccessToast("Aucune facture payable pour ce fournisseur.");
                     return;
                 }
                 if (supplierPaymentInvoiceSelect) {
@@ -14456,6 +14734,147 @@
                 activeSupplierPaymentDetailId = null;
             }
 
+            function getActiveSupplierArrivalByKey(arrivalKey = activeSupplierArrivalRegularizationKey) {
+                if (!arrivalKey || !activeSupplierId) return null;
+                return getSupplierArrivalGroups(activeSupplierId).find((arrival) => arrival.key === arrivalKey) || null;
+            }
+
+            function closeSupplierArrivalRegularizationModal() {
+                if (!supplierArrivalRegularizationModal) return;
+                supplierArrivalRegularizationModal.classList.add('hidden');
+                activeSupplierArrivalRegularizationKey = null;
+                if (supplierArrivalRegularizationError) supplierArrivalRegularizationError.classList.add('hidden');
+            }
+
+            function openSupplierArrivalRegularizationModal(arrivalKey) {
+                if (!supplierArrivalRegularizationModal || !arrivalKey) return;
+                const arrival = getActiveSupplierArrivalByKey(arrivalKey);
+                const supplier = getSupplierById(activeSupplierId);
+                if (!arrival || !supplier) return;
+                activeSupplierArrivalRegularizationKey = arrivalKey;
+                const currency = getSupplierCurrency(supplier);
+                const pendingCount = arrival.items.filter(isSupplierInvoicePricingPending).length;
+                if (supplierArrivalRegularizationMeta) {
+                    const segments = [
+                        arrival.reference || 'Arrivage',
+                        `${arrival.lineCount} ligne(s)`,
+                        `${arrival.quantity} unité(s)`,
+                        formatCurrency(arrival.balance || 0, currency)
+                    ];
+                    if (pendingCount > 0) {
+                        segments.push(`${pendingCount} prix en attente`);
+                    }
+                    supplierArrivalRegularizationMeta.textContent = segments.join(' · ');
+                }
+                if (supplierArrivalRegularizationError) supplierArrivalRegularizationError.classList.add('hidden');
+                if (supplierArrivalRegularizationEmpty) supplierArrivalRegularizationEmpty.classList.toggle('hidden', arrival.items.length > 0);
+                if (supplierArrivalRegularizationTableContainer) supplierArrivalRegularizationTableContainer.classList.toggle('hidden', arrival.items.length === 0);
+                if (supplierArrivalRegularizationTbody) {
+                    supplierArrivalRegularizationTbody.innerHTML = arrival.items.map((invoice) => {
+                        const currentCost = Number(invoice.unitCost);
+                        const qty = Number(invoice.quantity || 0);
+                        const hasCost = Number.isFinite(currentCost) && currentCost > 0;
+                        const totals = hasCost ? computeSupplierInvoiceTotals(invoice, currentCost, supplier) : null;
+                        return `
+                            <tr data-arrival-invoice-row="${invoice.id}">
+                                <td class="px-4 py-3 text-sm text-gray-800">
+                                    <div>
+                                        <p class="font-semibold text-gray-900">${escapeHtml(invoice.productName || 'Produit')}</p>
+                                        <p class="text-xs text-gray-400 mt-1">${escapeHtml(invoice.deliveryName || arrival.deliveryName || arrival.storeLabel || '—')}</p>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3 text-sm text-gray-700">${qty}</td>
+                                <td class="px-4 py-3 text-sm ${hasCost ? 'text-gray-700' : 'text-amber-700 font-semibold'}">${hasCost ? formatCurrency(currentCost, invoice.productCurrency || currency) : 'En attente'}</td>
+                                <td class="px-4 py-3 text-sm text-gray-700">
+                                    <input type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value="${hasCost ? currentCost : ''}"
+                                        data-arrival-unit-cost-input="${invoice.id}"
+                                        class="w-32 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:ring-emerald-400 focus:border-emerald-400" />
+                                </td>
+                                <td class="px-4 py-3 text-sm font-semibold text-gray-900" data-arrival-line-total="${invoice.id}">${totals ? formatCurrency(totals.total, totals.supplierCurrency) : formatCurrency(0, currency)}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+                supplierArrivalRegularizationModal.classList.remove('hidden');
+            }
+
+            async function saveSupplierArrivalRegularization() {
+                if (!dbBasePath || !currentUser) return;
+                const arrival = getActiveSupplierArrivalByKey();
+                const supplier = getSupplierById(activeSupplierId);
+                if (!arrival || !supplier) return;
+                if (supplierArrivalRegularizationError) supplierArrivalRegularizationError.classList.add('hidden');
+
+                const updates = {};
+                const now = new Date().toISOString();
+                let hasChanges = false;
+
+                for (const invoice of arrival.items) {
+                    const input = supplierArrivalRegularizationTbody?.querySelector(`[data-arrival-unit-cost-input="${invoice.id}"]`);
+                    const rawValue = input?.value ?? '';
+                    const nextUnitCost = Number(rawValue);
+                    if (!rawValue.trim()) {
+                        if (supplierArrivalRegularizationError) {
+                            supplierArrivalRegularizationError.textContent = `Renseignez le coût d'achat pour ${invoice.productName || 'ce produit'}.`;
+                            supplierArrivalRegularizationError.classList.remove('hidden');
+                        }
+                        return;
+                    }
+                    if (!Number.isFinite(nextUnitCost) || nextUnitCost < 0) {
+                        if (supplierArrivalRegularizationError) {
+                            supplierArrivalRegularizationError.textContent = `Coût invalide pour ${invoice.productName || 'ce produit'}.`;
+                            supplierArrivalRegularizationError.classList.remove('hidden');
+                        }
+                        return;
+                    }
+
+                    const qty = Number(invoice.quantity || 0);
+                    if (!Number.isFinite(qty) || qty <= 0) continue;
+
+                    const currentUnitCost = Number(invoice.unitCost);
+                    const totals = computeSupplierInvoiceTotals(invoice, nextUnitCost, supplier);
+                    const paidAmount = Number(invoice.paidAmount || 0);
+                    const status = paidAmount >= totals.total && totals.total > 0 ? 'paid' : paidAmount > 0 ? 'partial' : 'open';
+                    const costChanged = !Number.isFinite(currentUnitCost) || roundAmount(currentUnitCost) !== roundAmount(nextUnitCost);
+                    const totalChanged = roundAmount(Number(invoice.total || 0)) !== roundAmount(totals.total);
+                    if (!costChanged && !totalChanged && invoice.pricingPending !== true) {
+                        continue;
+                    }
+
+                    updates[`${dbBasePath}/supplierInvoices/${invoice.id}/unitCost`] = nextUnitCost;
+                    updates[`${dbBasePath}/supplierInvoices/${invoice.id}/baseTotal`] = totals.baseTotal;
+                    updates[`${dbBasePath}/supplierInvoices/${invoice.id}/total`] = totals.total;
+                    updates[`${dbBasePath}/supplierInvoices/${invoice.id}/status`] = status;
+                    updates[`${dbBasePath}/supplierInvoices/${invoice.id}/pricingPending`] = nextUnitCost <= 0;
+                    updates[`${dbBasePath}/supplierInvoices/${invoice.id}/updatedAt`] = now;
+                    hasChanges = true;
+                }
+
+                if (!hasChanges) {
+                    closeSupplierArrivalRegularizationModal();
+                    showSuccessToast('Aucune modification à enregistrer.');
+                    return;
+                }
+
+                try {
+                    if (supplierArrivalRegularizationSubmitButton) supplierArrivalRegularizationSubmitButton.disabled = true;
+                    await update(ref(db), updates);
+                    closeSupplierArrivalRegularizationModal();
+                    showSuccessToast('Arrivage régularisé.');
+                } catch (error) {
+                    console.error(error);
+                    if (supplierArrivalRegularizationError) {
+                        supplierArrivalRegularizationError.textContent = "Impossible d'enregistrer la régularisation.";
+                        supplierArrivalRegularizationError.classList.remove('hidden');
+                    }
+                } finally {
+                    if (supplierArrivalRegularizationSubmitButton) supplierArrivalRegularizationSubmitButton.disabled = false;
+                }
+            }
+
             function openCustomerSelectModal() {
                 if (customerSelectSearchInput) customerSelectSearchInput.value = '';
                 renderCustomerSelectList('');
@@ -16902,6 +17321,7 @@
             document.addEventListener('DOMContentLoaded', () => {}, false); // guard
             (function wireLossModalEvents() {
                 // Ouvrir/fermer
+                document.getElementById('dashboard-open-loss-modal')?.addEventListener('click', openLossModal);
                 document.getElementById('open-loss-modal')?.addEventListener('click', openLossModal);
                 document.getElementById('loss-modal-close')?.addEventListener('click', closeLossModal);
                 document.getElementById('loss-modal-cancel')?.addEventListener('click', closeLossModal);
@@ -21038,6 +21458,7 @@
                     updates[`${dbBasePath}/supplierInvoices/${invoiceId}/baseTotal`] = baseTotal;
                     updates[`${dbBasePath}/supplierInvoices/${invoiceId}/total`] = total;
                     updates[`${dbBasePath}/supplierInvoices/${invoiceId}/status`] = status;
+                    updates[`${dbBasePath}/supplierInvoices/${invoiceId}/pricingPending`] = unitCost <= 0;
                     updates[`${dbBasePath}/supplierInvoices/${invoiceId}/updatedAt`] = now;
                     if (!invoice.productCurrency) {
                         updates[`${dbBasePath}/supplierInvoices/${invoiceId}/productCurrency`] = normalizedCurrency;
@@ -24806,6 +25227,7 @@
                 lastDiscountApprovalCode = '';
                 activeSupplierId = null;
                 activeSupplierPaymentDetailId = null;
+                activeSupplierArrivalRegularizationKey = null;
                 supplierSearchQuery = '';
                 chatListState = {};
                 chatReadsState = {};
@@ -30728,6 +31150,7 @@
                         total: invoiceBaseTotal,
                         paidAmount: 0,
                         status: 'open',
+                        pricingPending: safePurchaseCost <= 0,
                         deliveryName,
                         storeId: storeId,
                         currency: invoiceCurrency,
@@ -31047,6 +31470,7 @@
                         total: totalSupplier,
                         paidAmount: 0,
                         status: 'open',
+                        pricingPending: unitCost <= 0,
                         deliveryName,
                         storeId,
                         date: { ".sv": "timestamp" },
@@ -32053,6 +32477,13 @@
                     }
                 });
             }
+            if (supplierArrivalsTbody) {
+                supplierArrivalsTbody.addEventListener('click', (event) => {
+                    const regularizeButton = event.target.closest('[data-arrival-regularize]');
+                    if (!regularizeButton) return;
+                    openSupplierArrivalRegularizationModal(regularizeButton.dataset.arrivalRegularize);
+                });
+            }
             if (supplierPaymentsTbody) {
                 supplierPaymentsTbody.addEventListener('click', (event) => {
                     const detailBtn = event.target.closest('[data-payment-detail]');
@@ -32086,16 +32517,41 @@
                     }
                 });
             }
+            if (supplierArrivalRegularizationTbody) {
+                supplierArrivalRegularizationTbody.addEventListener('input', (event) => {
+                    const input = event.target.closest('[data-arrival-unit-cost-input]');
+                    if (!input) return;
+                    const invoiceId = input.dataset.arrivalUnitCostInput;
+                    const arrival = getActiveSupplierArrivalByKey();
+                    const invoice = arrival?.items.find((item) => item.id === invoiceId);
+                    if (!invoice) return;
+                    const totalCell = supplierArrivalRegularizationTbody.querySelector(`[data-arrival-line-total="${invoiceId}"]`);
+                    if (!totalCell) return;
+                    const nextUnitCost = Number(input.value);
+                    const supplier = getSupplierById(activeSupplierId);
+                    if (!Number.isFinite(nextUnitCost) || nextUnitCost < 0) {
+                        totalCell.textContent = formatCurrency(0, invoice.currency || getSupplierCurrency(supplier) || DEFAULT_SUPPLIER_CURRENCY);
+                        return;
+                    }
+                    const totals = computeSupplierInvoiceTotals(invoice, nextUnitCost, supplier);
+                    totalCell.textContent = formatCurrency(totals.total, totals.supplierCurrency);
+                });
+            }
+            if (closeSupplierArrivalRegularizationModalButton) closeSupplierArrivalRegularizationModalButton.addEventListener('click', closeSupplierArrivalRegularizationModal);
+            if (supplierArrivalRegularizationCancelButton) supplierArrivalRegularizationCancelButton.addEventListener('click', closeSupplierArrivalRegularizationModal);
+            if (supplierArrivalRegularizationSubmitButton) supplierArrivalRegularizationSubmitButton.addEventListener('click', saveSupplierArrivalRegularization);
             attachSupplierSignatureEvents();
 
             // Background Modal Close
-            [newProductModal, entryModal, exitModal, bulkExitModal, transferModal, bulkTransferModal, restockModal, accessScopeModal, supplierPaymentModal, pricePackagingModal, priceLotModal].forEach(m => {
+            [newProductModal, entryModal, exitModal, bulkExitModal, transferModal, bulkTransferModal, restockModal, accessScopeModal, supplierPaymentModal, supplierArrivalRegularizationModal, pricePackagingModal, priceLotModal].forEach(m => {
                 if (m) m.addEventListener('click', e => {
                     if (e.target !== m) return;
                     if (m === pricePackagingModal) {
                         closePricePackagingModal();
                     } else if (m === priceLotModal) {
                         closePriceLotModal();
+                    } else if (m === supplierArrivalRegularizationModal) {
+                        closeSupplierArrivalRegularizationModal();
                     } else {
                         if (m === entryModal) closeProductCombobox('entry', { restoreSelection: true });
                         if (m === exitModal) closeProductCombobox('exit', { restoreSelection: true });
