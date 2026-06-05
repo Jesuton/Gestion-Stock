@@ -6412,7 +6412,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             const firebaseConfig = {
-                apiKey: "AIzaSyAwT-plakQsFQ3Nu2n4OIxehenAuznW7Q0",
+                apiKey: "AIzaSyB65Iye8YMpxXsPthdBYmNojBMpaTPZS3A",
                 authDomain: "gestion-stock-c9484.firebaseapp.com",
                 databaseURL: "https://gestion-stock-c9484-default-rtdb.firebaseio.com",
                 projectId: "gestion-stock-c9484",
@@ -6623,6 +6623,40 @@
             const storeSearchInput = document.getElementById('store-search-input');
             const shopSearchInput = document.getElementById('shop-search-input');
             const storeSelector = document.getElementById('store-selector');
+
+            function getFriendlyAuthErrorMessage(error) {
+                const code = error?.code || '';
+                if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found' || code === 'auth/invalid-email') {
+                    return "Email ou mot de passe incorrect.";
+                }
+                if (code === 'auth/too-many-requests') {
+                    return "Trop de tentatives. Réessayez plus tard.";
+                }
+                if (code === 'auth/network-request-failed') {
+                    return "Erreur réseau. Vérifiez la connexion internet.";
+                }
+                if (code === 'auth/operation-not-allowed') {
+                    return "La connexion par email/mot de passe n'est pas activée sur Firebase.";
+                }
+                if (code === 'auth/invalid-api-key') {
+                    return "Configuration Firebase invalide (API key).";
+                }
+                return error?.message || "Connexion impossible pour le moment.";
+            }
+
+            function showLocalFileProtocolWarning() {
+                if (window.location.protocol !== 'file:' || document.getElementById('local-file-warning')) return;
+                const authCard = document.querySelector('#auth-page-container .max-w-md');
+                const authToggleBar = document.querySelector('#auth-page-container .w-full.bg-gray-100.rounded-lg.p-1.flex.mb-6');
+                if (!authCard || !authToggleBar) return;
+                const warning = document.createElement('div');
+                warning.id = 'local-file-warning';
+                warning.className = 'mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800';
+                warning.innerHTML = "Mode local detecte (`file:///`). Ouvrez l'application via `http://localhost` ou l'URL hebergee Firebase, sinon le navigateur peut bloquer une partie du flux d'authentification.";
+                authCard.insertBefore(warning, authToggleBar);
+            }
+
+            showLocalFileProtocolWarning();
             const storeSelectorMovements = document.getElementById('store-selector-movements');
             const traceabilityProductCombobox = document.getElementById('traceability-product-combobox');
             const traceabilityProductSearch = document.getElementById('traceability-product-search');
@@ -30616,8 +30650,9 @@
                         if (loginSubmitButton) loginSubmitButton.disabled = true;
                         await signInWithEmailAndPassword(auth, email, password);
                     } catch (error) {
+                        console.error('Erreur Firebase login:', error?.code || error, error?.message || '');
                         if (loginError) {
-                            loginError.textContent = "Email ou mot de passe incorrect.";
+                            loginError.textContent = getFriendlyAuthErrorMessage(error);
                             loginError.classList.remove('hidden');
                         }
                     } finally {
