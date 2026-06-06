@@ -23234,10 +23234,8 @@
                         continue;
                     }
 
-                    const purchaseCost = Number(product?.purchaseCost);
-                    const storePrice = Number(product?.storeSellingPrice);
-                    const boutiquePrice = Number(product?.boutiqueSellingPrice);
-                    if (!Number.isFinite(purchaseCost) || !Number.isFinite(storePrice) || !Number.isFinite(boutiquePrice)) {
+                    const purchaseCost = getPackagePurchaseCost(product, getPrimaryPackaging(product)?.code || null);
+                    if (!isProductPricingComplete(product)) {
                         errors.push(`Ligne ${lineNumber}: prix non définis pour "${rawName}".`);
                         continue;
                     }
@@ -32917,10 +32915,8 @@
                 }
 
                 if (!prod || qty <= 0) return;
-                const purchaseCost = Number(prod?.purchaseCost);
-                const storePrice = Number(prod?.storeSellingPrice);
-                const boutiquePrice = Number(prod?.boutiqueSellingPrice);
-                if (!isNewMode && (!Number.isFinite(purchaseCost) || !Number.isFinite(storePrice) || !Number.isFinite(boutiquePrice))) {
+                const purchaseCost = getPackagePurchaseCost(prod, getPrimaryPackaging(prod)?.code || null);
+                if (!isNewMode && !isProductPricingComplete(prod)) {
                     showSuccessToast("Veuillez définir les prix dans le tableau des prix avant d'ajouter du stock.");
                     return;
                 }
@@ -33208,10 +33204,8 @@
                         }
                     }
 
-                    const purchaseCost = Number(product?.purchaseCost);
-                    const storePrice = Number(product?.storeSellingPrice);
-                    const boutiquePrice = Number(product?.boutiqueSellingPrice);
-                    if (!isNewModeLine && (!Number.isFinite(purchaseCost) || !Number.isFinite(storePrice) || !Number.isFinite(boutiquePrice))) {
+                    const purchaseCost = getPackagePurchaseCost(product, getPrimaryPackaging(product)?.code || null);
+                    if (!isNewModeLine && !isProductPricingComplete(product)) {
                         validationErrors.push(`Ligne ${lineNumber}: prix non définis pour "${product.name || 'ce produit'}".`);
                         continue;
                     }
