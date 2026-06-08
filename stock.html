@@ -1091,86 +1091,137 @@
                             </div>
                         </div>
 
+                        <!-- ── Saisie facture : barre compacte + bouton d'ajout rapide ── -->
                         <div id="sales-line-builder-pane" class="hidden relative space-y-2.5">
-                            <div id="sales-accordion-quick-add" data-sales-accordion-item data-sales-accordion-group="invoice" class="relative z-30 overflow-visible rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-                                <div class="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                                    <div>
-                                        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-700">Ajout rapide</p>
-                                        <p id="sales-accordion-quick-summary" class="text-xs text-gray-500">Produit, lot, conditionnement, quantité et prix avant ajout au panier.</p>
+                            <div id="sales-accordion-quick-add" data-sales-accordion-item data-sales-accordion-group="invoice" class="relative z-30 overflow-visible rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm">
+                                <div class="flex items-center gap-2">
+                                    <!-- Combobox produit inline (compact) -->
+                                    <div id="sales-quick-product-combobox" class="relative flex-1 min-w-0">
+                                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                                            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                            </svg>
+                                        </div>
+                                        <input type="text" id="sales-quick-product-search" autocomplete="off"
+                                            placeholder="Rechercher un produit..."
+                                            class="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-9 text-sm text-slate-800 shadow-sm focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-400">
+                                        <button type="button" id="sales-quick-product-toggle"
+                                            class="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 transition hover:text-slate-600"
+                                            aria-label="Afficher les produits" aria-expanded="false">
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                            </svg>
+                                        </button>
+                                        <div id="sales-quick-product-dropdown"
+                                            class="hidden absolute left-0 right-0 top-full z-[120] mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl">
+                                            <div id="sales-quick-product-options" class="product-combobox-options-panel max-h-72 space-y-1 overflow-y-auto p-2"></div>
+                                            <div id="sales-quick-product-empty" class="hidden px-4 py-6 text-sm text-slate-400">Aucun produit correspondant.</div>
+                                        </div>
                                     </div>
+                                    <select id="sales-quick-product-select" class="hidden">
+                                        <option value="">Sélectionnez un produit</option>
+                                    </select>
+                                    <!-- Bouton ouvrir modale -->
+                                    <button id="sales-quick-open-modal-btn" type="button"
+                                        title="Configurer et ajouter ce produit"
+                                        class="flex-shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-cyan-500 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-cyan-600 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-300">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
+                                        </svg>
+                                        <span class="hidden sm:inline">Ajouter</span>
+                                    </button>
                                 </div>
-                                <div class="space-y-4">
-                                    <div>
-                                        <label for="sales-quick-product-search" class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Produit</label>
-                                        <div id="sales-quick-product-combobox" class="relative mt-2">
-                                            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
-                                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
-                                                </svg>
+                                <!-- Info stock rapide sous la barre -->
+                                <div id="sales-quick-selection-info" class="hidden mt-2 rounded-lg border border-cyan-100 bg-cyan-50/70 px-3 py-2 shadow-sm">
+                                    <p id="sales-quick-selection-stock" class="text-xs font-semibold text-cyan-700">—</p>
+                                    <p id="sales-quick-selection-price" class="mt-0.5 text-xs text-slate-600">—</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ══ Modale ajout rapide produit ══ -->
+                        <div id="sales-quick-add-modal" class="fixed inset-0 z-[200] hidden" role="dialog" aria-modal="true" aria-labelledby="sqam-title">
+                            <!-- Backdrop -->
+                            <div id="sales-quick-add-modal-backdrop" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+                            <!-- Panneau -->
+                            <div class="relative flex min-h-full items-end justify-center sm:items-center p-0 sm:p-4">
+                                <div class="relative w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[90dvh] overflow-hidden">
+                                    <!-- En-tête modale -->
+                                    <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                                        <div>
+                                            <p id="sqam-title" class="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-700">Ajout au panier</p>
+                                            <p id="sqam-product-name" class="text-sm font-semibold text-gray-900 mt-0.5">—</p>
+                                        </div>
+                                        <button id="sales-quick-modal-close" type="button"
+                                            class="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition active:scale-95"
+                                            aria-label="Fermer">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <!-- Corps modale -->
+                                    <div class="overflow-y-auto flex-1 px-5 py-4 space-y-4">
+                                        <!-- Lot + Conditionnement -->
+                                        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                            <div>
+                                                <label for="sales-quick-lot-select" class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Lot</label>
+                                                <select id="sales-quick-lot-select"
+                                                    class="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-800 shadow-sm focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-400">
+                                                    <option value="">Sélectionnez un produit</option>
+                                                </select>
                                             </div>
-                                            <input type="text" id="sales-quick-product-search" autocomplete="off" placeholder="Rechercher ou sélectionner un produit..."
-                                                class="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-12 text-sm text-slate-800 shadow-sm focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-400">
-                                            <button type="button" id="sales-quick-product-toggle"
-                                                class="absolute inset-y-0 right-0 flex items-center px-4 text-slate-400 transition hover:text-slate-600"
-                                                aria-label="Afficher les produits" aria-expanded="false">
-                                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                                </svg>
-                                            </button>
-                                            <div id="sales-quick-product-dropdown"
-                                                class="hidden absolute left-0 right-0 top-full z-[120] mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl">
-                                                <div id="sales-quick-product-options" class="product-combobox-options-panel max-h-72 space-y-1 overflow-y-auto p-2"></div>
-                                                <div id="sales-quick-product-empty" class="hidden px-4 py-6 text-sm text-slate-400">Aucun produit correspondant.</div>
+                                            <div>
+                                                <label for="sales-quick-package-select" class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Conditionnement</label>
+                                                <select id="sales-quick-package-select"
+                                                    class="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-800 shadow-sm focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-400">
+                                                    <option value="">Sélectionnez un produit</option>
+                                                </select>
                                             </div>
                                         </div>
-                                        <select id="sales-quick-product-select" class="hidden">
-                                            <option value="">Sélectionnez un produit</option>
-                                        </select>
-                                    </div>
-                                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                                        <div>
-                                            <label for="sales-quick-lot-select" class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Lot</label>
-                                            <select id="sales-quick-lot-select"
-                                                class="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-800 shadow-sm focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-400">
-                                                <option value="">Sélectionnez un produit</option>
-                                            </select>
+                                        <!-- Quantité + Prix unitaire -->
+                                        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                            <div>
+                                                <label for="sales-quick-quantity" class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Quantité</label>
+                                                <input type="number" id="sales-quick-quantity" min="1" value="1"
+                                                    class="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-800 shadow-sm focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-400">
+                                            </div>
+                                            <div>
+                                                <label for="sales-quick-unit-price" class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Prix unitaire</label>
+                                                <input type="number" id="sales-quick-unit-price" min="0" step="0.01" placeholder="0"
+                                                    class="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-800 shadow-sm focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-400">
+                                            </div>
                                         </div>
-                                        <div>
-                                            <label for="sales-quick-package-select" class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Conditionnement</label>
-                                            <select id="sales-quick-package-select"
-                                                class="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-800 shadow-sm focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-400">
-                                                <option value="">Sélectionnez un produit</option>
-                                            </select>
+                                        <!-- Remise + Total ligne -->
+                                        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                            <div>
+                                                <label for="sales-quick-line-discount" class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Remise ligne</label>
+                                                <input type="number" id="sales-quick-line-discount" min="0" step="0.01" placeholder="0"
+                                                    class="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-800 shadow-sm focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-400">
+                                            </div>
+                                            <div>
+                                                <label for="sales-quick-line-total" class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Total ligne</label>
+                                                <input type="number" id="sales-quick-line-total" min="0" step="0.01" placeholder="0"
+                                                    class="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-800 shadow-sm focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-400">
+                                            </div>
                                         </div>
-                                        <div>
-                                            <label for="sales-quick-quantity" class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Quantité</label>
-                                            <input type="number" id="sales-quick-quantity" min="1" value="1"
-                                                class="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-800 shadow-sm focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-400">
-                                        </div>
-                                        <div>
-                                            <label for="sales-quick-unit-price" class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Prix unitaire</label>
-                                            <input type="number" id="sales-quick-unit-price" min="0" step="0.01" placeholder="0"
-                                                class="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-800 shadow-sm focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-400">
-                                        </div>
-                                        <div>
-                                            <label for="sales-quick-line-discount" class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Remise ligne</label>
-                                            <input type="number" id="sales-quick-line-discount" min="0" step="0.01" placeholder="0"
-                                                class="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-800 shadow-sm focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-400">
-                                        </div>
-                                        <div>
-                                            <label for="sales-quick-line-total" class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Total ligne</label>
-                                            <input type="number" id="sales-quick-line-total" min="0" step="0.01" placeholder="0"
-                                                class="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-800 shadow-sm focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-400">
+                                        <!-- Info stock dans la modale -->
+                                        <div id="sqam-selection-info" class="hidden rounded-xl border border-cyan-100 bg-cyan-50/70 px-4 py-3 shadow-sm">
+                                            <p id="sqam-selection-stock" class="text-xs font-semibold text-cyan-700">—</p>
+                                            <p id="sqam-selection-price" class="mt-1 text-xs text-slate-600">—</p>
                                         </div>
                                     </div>
-                                    <div id="sales-quick-selection-info" class="hidden rounded-xl border border-cyan-100 bg-cyan-50/70 px-4 py-3 shadow-sm">
-                                        <p id="sales-quick-selection-stock" class="text-xs font-semibold text-cyan-700">—</p>
-                                        <p id="sales-quick-selection-price" class="mt-1 text-xs text-slate-600">—</p>
-                                    </div>
-                                    <div class="flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
-                                        <p class="text-xs text-slate-500">Renseignez la ligne puis cliquez sur Ajouter. Tous les champs restent modifiables dans le panier.</p>
+                                    <!-- Pied modale -->
+                                    <div class="px-5 py-4 border-t border-gray-100 flex flex-col sm:flex-row gap-2.5 sm:justify-end">
+                                        <button id="sales-quick-modal-cancel" type="button"
+                                            class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-600 shadow-sm transition hover:bg-gray-50 active:scale-95">
+                                            Annuler
+                                        </button>
                                         <button id="sales-quick-add-button" type="button"
-                                            class="inline-flex items-center justify-center rounded-xl bg-cyan-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-cyan-600 disabled:cursor-not-allowed disabled:bg-slate-300">
+                                            class="inline-flex items-center justify-center gap-1.5 rounded-xl bg-cyan-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-cyan-600 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-300">
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
+                                            </svg>
                                             Ajouter au panier
                                         </button>
                                     </div>
@@ -7196,6 +7247,16 @@
             const salesQuickSelectionInfo = document.getElementById('sales-quick-selection-info');
             const salesQuickSelectionStock = document.getElementById('sales-quick-selection-stock');
             const salesQuickSelectionPrice = document.getElementById('sales-quick-selection-price');
+            // Modale ajout rapide
+            const salesQuickAddModal = document.getElementById('sales-quick-add-modal');
+            const salesQuickAddModalBackdrop = document.getElementById('sales-quick-add-modal-backdrop');
+            const salesQuickOpenModalBtn = document.getElementById('sales-quick-open-modal-btn');
+            const salesQuickModalClose = document.getElementById('sales-quick-modal-close');
+            const salesQuickModalCancel = document.getElementById('sales-quick-modal-cancel');
+            const sqamProductName = document.getElementById('sqam-product-name');
+            const sqamSelectionInfo = document.getElementById('sqam-selection-info');
+            const sqamSelectionStock = document.getElementById('sqam-selection-stock');
+            const sqamSelectionPrice = document.getElementById('sqam-selection-price');
             const salesHistoryEmpty = document.getElementById('sales-history-empty');
             const salesHistoryList = document.getElementById('sales-history-list');
             const salesHistoryListWrapper = document.getElementById('sales-history-list-wrapper');
@@ -9924,6 +9985,8 @@
                     setProductComboboxSelection(key, option.dataset.productOption);
                     if (key === 'salesQuick') {
                         updateSalesQuickLotOptions();
+                        // Ouvre automatiquement la modale dès qu'un produit est sélectionné
+                        setTimeout(() => openSalesQuickAddModal(), 80);
                     }
                 });
             }
@@ -28378,6 +28441,8 @@
                     salesQuickPackageSelect.innerHTML = '<option value="">Sélectionnez un produit</option>';
                     salesQuickPackageSelect.disabled = true;
                     if (salesQuickSelectionInfo) salesQuickSelectionInfo.classList.add('hidden');
+                    if (sqamSelectionInfo) sqamSelectionInfo.classList.add('hidden');
+                    if (sqamProductName) sqamProductName.textContent = '—';
                     if (salesQuickUnitPriceInput) salesQuickUnitPriceInput.value = '';
                     if (salesQuickLineDiscountInput) salesQuickLineDiscountInput.value = '';
                     if (salesQuickLineTotalInput) salesQuickLineTotalInput.value = '';
@@ -28418,6 +28483,21 @@
                     salesQuickSelectionStock.textContent = `Lot ${selectedLot.label || '—'} · Stock disponible: ${formatShopStockBreakdown(activeQty, shopItem, { includeBaseTotal: true })} · ${getProductInternalCodeText(sourceProduct)}`;
                     salesQuickSelectionPrice.textContent = `${selectedPackaging?.label || getProductBaseUnitLabel(sourceProduct)} · ${sellingPrice !== null ? formatCurrency(sellingPrice, sourceProduct.currency || 'CFA') : 'Prix à définir'} · ${selectedUnits} unité(s)`;
                     salesQuickSelectionInfo.classList.remove('hidden');
+                    // Sync bloc info dans la modale
+                    if (sqamSelectionInfo && sqamSelectionStock && sqamSelectionPrice) {
+                        sqamSelectionStock.textContent = salesQuickSelectionStock.textContent;
+                        sqamSelectionPrice.textContent = salesQuickSelectionPrice.textContent;
+                        sqamSelectionInfo.classList.remove('hidden');
+                    }
+                    // Sync nom produit dans l'en-tête de la modale
+                    if (sqamProductName) {
+                        const selOpt = salesQuickProductSelect
+                            ? salesQuickProductSelect.options[salesQuickProductSelect.selectedIndex]
+                            : null;
+                        sqamProductName.textContent = selOpt && selOpt.value
+                            ? (selOpt.dataset.label || selOpt.text || '—')
+                            : '—';
+                    }
                 }
 
                 resetSalesQuickPricingInputs();
@@ -34968,6 +35048,85 @@
                     addSelectedSalesQuickProduct({ quantityOverride: quantity, packageRef, lotId, silent: false, focusSearch: true });
                 });
             }
+
+            // ── Logique modale ajout rapide ──────────────────────────────────
+            function openSalesQuickAddModal() {
+                if (!salesQuickAddModal) return;
+                // Si pas de produit sélectionné, focus sur la recherche
+                if (!salesQuickProductSelect?.value) {
+                    if (salesQuickProductSearchInput) {
+                        salesQuickProductSearchInput.focus();
+                        salesQuickProductSearchInput.classList.add('ring-2', 'ring-cyan-400', 'border-cyan-400');
+                        setTimeout(() => salesQuickProductSearchInput.classList.remove('ring-2', 'ring-cyan-400', 'border-cyan-400'), 1200);
+                    }
+                    return;
+                }
+                // Synchronise le nom du produit dans l'en-tête
+                const selectedOption = salesQuickProductSelect
+                    ? salesQuickProductSelect.options[salesQuickProductSelect.selectedIndex]
+                    : null;
+                const productLabel = selectedOption && selectedOption.value
+                    ? (selectedOption.dataset.label || selectedOption.text || '—')
+                    : '—';
+                if (sqamProductName) sqamProductName.textContent = productLabel;
+                // Synchronise le bloc info stock dans la modale
+                if (sqamSelectionInfo && salesQuickSelectionInfo) {
+                    const isVisible = !salesQuickSelectionInfo.classList.contains('hidden');
+                    sqamSelectionInfo.classList.toggle('hidden', !isVisible);
+                    if (isVisible) {
+                        if (sqamSelectionStock && salesQuickSelectionStock)
+                            sqamSelectionStock.textContent = salesQuickSelectionStock.textContent;
+                        if (sqamSelectionPrice && salesQuickSelectionPrice)
+                            sqamSelectionPrice.textContent = salesQuickSelectionPrice.textContent;
+                    }
+                }
+                salesQuickAddModal.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+                // Focus sur la quantité si produit déjà sélectionné
+                if (salesQuickProductSelect?.value && salesQuickQuantityInput) {
+                    setTimeout(() => salesQuickQuantityInput.focus(), 80);
+                }
+            }
+
+            function closeSalesQuickAddModal() {
+                if (!salesQuickAddModal) return;
+                salesQuickAddModal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+                // Remet le focus sur la recherche produit
+                if (salesQuickProductSearchInput) salesQuickProductSearchInput.focus();
+            }
+
+            if (salesQuickOpenModalBtn) {
+                salesQuickOpenModalBtn.addEventListener('click', openSalesQuickAddModal);
+            }
+            if (salesQuickModalClose) {
+                salesQuickModalClose.addEventListener('click', closeSalesQuickAddModal);
+            }
+            if (salesQuickModalCancel) {
+                salesQuickModalCancel.addEventListener('click', closeSalesQuickAddModal);
+            }
+            if (salesQuickAddModalBackdrop) {
+                salesQuickAddModalBackdrop.addEventListener('click', closeSalesQuickAddModal);
+            }
+            // Fermeture clavier (Escape)
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && salesQuickAddModal && !salesQuickAddModal.classList.contains('hidden')) {
+                    closeSalesQuickAddModal();
+                }
+            });
+            // Fermer la modale après ajout réussi : on ajoute un 2ème listener sur le bouton
+            // qui s'exécute après le 1er (qui fait l'ajout effectif) grâce au délai
+            if (salesQuickAddButton) {
+                salesQuickAddButton.addEventListener('click', () => {
+                    if (!salesQuickAddModal || salesQuickAddModal.classList.contains('hidden')) return;
+                    setTimeout(() => {
+                        const errEl = document.getElementById('sales-error');
+                        const hasError = errEl && !errEl.classList.contains('hidden') && errEl.textContent.trim();
+                        if (!hasError) closeSalesQuickAddModal();
+                    }, 60);
+                });
+            }
+            // ─────────────────────────────────────────────────────────────────
             if (closeStoreValidationEditorButton) {
                 closeStoreValidationEditorButton.addEventListener('click', closeStoreValidationEditor);
             }
