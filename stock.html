@@ -1137,7 +1137,17 @@
                     <div class="sales-sidebar-shell w-full xl:w-[360px] 2xl:w-[400px] space-y-6 xl:sticky xl:top-6 xl:self-start">
                         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                             <div class="p-6 border-b border-gray-100">
-                                <h2 class="text-lg font-semibold text-gray-900">Facture en cours</h2>
+                                <div class="flex items-center justify-between gap-2">
+                                    <h2 class="text-lg font-semibold text-gray-900">Facture en cours</h2>
+                                    <button type="button" id="clear-cart-button"
+                                        class="hidden items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-rose-500 border border-rose-200 bg-rose-50 hover:bg-rose-100 hover:border-rose-300 transition"
+                                        title="Vider le panier">
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                        Vider
+                                    </button>
+                                </div>
                                 <div class="mt-3 flex items-center gap-2 text-xs text-gray-500">
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
@@ -6341,8 +6351,8 @@
         <div class="flex max-h-[90vh] w-full max-w-sm flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
             <div class="flex items-center justify-between border-b border-gray-100 px-6 py-5">
                 <div>
-                    <h2 class="text-lg font-bold text-gray-900">Envoyer vers le panier</h2>
-                    <p id="send-to-cart-subtitle" class="mt-0.5 text-xs text-gray-500">Choisissez la destination pour compléter ou modifier cette facture.</p>
+                    <h2 class="text-lg font-bold text-gray-900">Traiter la facture</h2>
+                    <p id="send-to-cart-subtitle" class="mt-0.5 text-xs text-gray-500">Choisissez comment traiter les lignes de cette facture.</p>
                 </div>
                 <button type="button" id="close-send-to-cart-modal"
                     class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600">
@@ -6365,8 +6375,8 @@
                         </svg>
                     </div>
                     <div>
-                        <p class="text-sm font-semibold text-purple-900">Panier Magasin</p>
-                        <p class="mt-0.5 text-xs text-purple-600">Ouvre les lignes dans le POS magasin direct</p>
+                        <p class="text-sm font-semibold text-purple-900">Sortie Magasin groupée</p>
+                        <p class="mt-0.5 text-xs text-purple-600">Ouvre les sorties dans le formulaire groupé pré-rempli</p>
                     </div>
                     <svg class="ml-auto h-4 w-4 text-purple-400 group-hover:text-purple-600 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 </button>
@@ -22247,6 +22257,66 @@
                 bulkExitModal.classList.remove('hidden');
             }
 
+            // Ouvre la sortie groupée pré-remplie depuis une facture validation magasin
+            function openBulkExitFromValidation(groupId) {
+                if (!bulkExitModal) return;
+                if (!getActiveStoreId()) {
+                    showSuccessToast('Veuillez créer ou sélectionner un magasin.');
+                    return;
+                }
+                const group = buildStoreValidationGroups().find(g => g.id === groupId);
+                if (!group) {
+                    showSuccessToast("Cette facture n'est plus en attente.");
+                    return;
+                }
+
+                // Reset complet du modal
+                resetBulkExitModalState();
+
+                // Pré-remplir les infos client & logistique
+                if (bulkExitCustomerNameInput)  bulkExitCustomerNameInput.value  = group.customerName  || '';
+                if (bulkExitCustomerPhoneInput)  bulkExitCustomerPhoneInput.value  = group.customerPhone || '';
+                if (bulkExitCustomerEmailInput)  bulkExitCustomerEmailInput.value  = group.customerEmail || '';
+                if (bulkExitDeliveryNameInput)   bulkExitDeliveryNameInput.value   = group.deliveryName  || '';
+                if (bulkExitStorekeeperNameInput) bulkExitStorekeeperNameInput.value = group.storekeeperName || '';
+                if (bulkExitCommentInput)         bulkExitCommentInput.value        =
+                    (group.comment || '') || `Facture ${group.id ? group.id.slice(-6).toUpperCase() : ''}`;
+
+                // Vider les lignes vides créées par resetBulkExitModalState et créer une ligne par item
+                if (bulkExitRowsTbody) {
+                    bulkExitRowsTbody.innerHTML = '';
+                    const items = group.items || [];
+                    items.forEach(item => {
+                        const row = buildBulkExitRow();
+                        if (!row) return;
+                        // Pré-remplir la recherche avec le nom du produit pour déclencher la résolution
+                        const searchInput = row.querySelector('input[data-bulk-exit-field="search"]');
+                        const qtyInput    = row.querySelector('input[data-bulk-exit-field="quantity"]');
+                        if (searchInput) searchInput.value = item.name || item.productName || '';
+                        if (qtyInput)    qtyInput.value    = item.quantity || 1;
+                        // Peupler le datalist puis forcer la résolution
+                        refreshBulkExitRowProductOptions(row, { preserveSelection: false });
+                        // Tentative de pré-sélection directe par storeProductId
+                        const productSelect = row.querySelector('select[data-bulk-exit-field="product"]');
+                        if (productSelect && item.storeProductId) {
+                            // Ajouter l'option si absente
+                            if (!productSelect.querySelector(`option[value="${item.storeProductId}"]`)) {
+                                const opt = document.createElement('option');
+                                opt.value = item.storeProductId;
+                                opt.textContent = item.name || item.productName || item.storeProductId;
+                                productSelect.appendChild(opt);
+                            }
+                            productSelect.value = item.storeProductId;
+                        }
+                    });
+                    // Garantir au moins une ligne vide si aucun item
+                    if ((group.items || []).length === 0) ensureBulkExitRows(1);
+                }
+
+                closeSendToCartModal();
+                bulkExitModal.classList.remove('hidden');
+            }
+
             function closeBulkExitModal() {
                 if (!bulkExitModal) return;
                 bulkExitModal.classList.add('hidden');
@@ -29292,6 +29362,11 @@
                 if (cartTaxRow) cartTaxRow.classList.toggle('hidden', !isTaxEnabled);
                 if (cartEmptyState) cartEmptyState.classList.toggle('hidden', hasItems);
                 if (cartItemsList) cartItemsList.classList.toggle('hidden', !hasItems);
+                const clearCartBtn = document.getElementById('clear-cart-button');
+                if (clearCartBtn) {
+                    clearCartBtn.classList.toggle('hidden', !hasItems);
+                    clearCartBtn.classList.toggle('flex', hasItems);
+                }
                 if (holdCommentError) holdCommentError.classList.add('hidden');
                 if (payLaterDueDateError) payLaterDueDateError.classList.add('hidden');
 
@@ -34836,6 +34911,15 @@
             if (closeSendToCartModalBtn) {
                 closeSendToCartModalBtn.addEventListener('click', closeSendToCartModal);
             }
+            const clearCartBtn = document.getElementById('clear-cart-button');
+            if (clearCartBtn) {
+                clearCartBtn.addEventListener('click', () => {
+                    if (!cartItems.length) return;
+                    if (!confirm('Vider le panier ? Toutes les lignes en cours seront supprimées.')) return;
+                    cartItems = [];
+                    renderCart();
+                });
+            }
             if (sendToCartModalEl) {
                 sendToCartModalEl.addEventListener('click', (event) => {
                     if (event.target === sendToCartModalEl) closeSendToCartModal();
@@ -34843,7 +34927,7 @@
             }
             if (sendToCartStoreBtn) {
                 sendToCartStoreBtn.addEventListener('click', () => {
-                    sendValidationToCart(sendToCartGroupId, 'store', null);
+                    if (sendToCartGroupId) openBulkExitFromValidation(sendToCartGroupId);
                 });
             }
             if (sendToCartShopBtn) {
