@@ -28733,11 +28733,16 @@
                 const reservedQty = item.stockReservedFromPending
                     ? (Number(item.reservedQuantity ?? item.stockUnits ?? item.quantity) || 0)
                     : 0;
+                // Cherche d'abord par lotId, sinon utilise le lot actif de la réconciliation
                 const targetLot = item.lotId
                     ? lotState.queue.find(lot => lot.id === item.lotId)
                     : lotState.activeLot;
-                if (targetLot) return reservedQty + (Number(targetLot.remainingQuantity) || 0);
-                return reservedQty + (Number(shopProduct.quantityInShop) || 0);
+                if (targetLot && (Number(targetLot.remainingQuantity) || 0) > 0) {
+                    return reservedQty + (Number(targetLot.remainingQuantity) || 0);
+                }
+                // Fallback: retourne la quantité totale active reconciliée (plus fiable que quantityInShop)
+                const activeAvailable = lotState.activeQty || (Number(shopProduct.quantityInShop) || 0);
+                return reservedQty + activeAvailable;
             }
 
             function getCartItemUnitCount(item) {
@@ -29280,8 +29285,13 @@
                     removeFromCart(index);
                     return;
                 }
-                const maxQty = getCartItemMaxSelectableQuantity(item) || item.quantity;
-                if (newQty > maxQty) {
+                const shopProduct = item.shopProductId ? appData.shopStock?.[item.shopProductId] : null;
+                const rawMax = getCartItemMaxSelectableQuantity(item);
+                // Si rawMax vaut 0 (lot non trouvé), utilise la quantité active réconciliée
+                const maxQty = rawMax > 0
+                    ? rawMax
+                    : (shopProduct ? Math.floor(getShopItemAvailableSaleQuantity(shopProduct) / getCartItemUnitCount(item)) : item.quantity);
+                if (maxQty > 0 && newQty > maxQty) {
                     showSalesErrorMessage(`Stock insuffisant. Disponible: ${maxQty}`);
                     return;
                 }
@@ -29314,8 +29324,13 @@
                         return;
                     }
 
-                    const maxQty = getCartItemMaxSelectableQuantity(item) || item.quantity;
-                    if (desiredQty > maxQty) {
+                    const shopProduct = item.shopProductId ? appData.shopStock?.[item.shopProductId] : null;
+                    const rawMax = getCartItemMaxSelectableQuantity(item);
+                    // Si rawMax vaut 0 (lot non trouvé), utilise la quantité active réconciliée
+                    const maxQty = rawMax > 0
+                        ? rawMax
+                        : (shopProduct ? Math.floor(getShopItemAvailableSaleQuantity(shopProduct) / getCartItemUnitCount(item)) : item.quantity);
+                    if (maxQty > 0 && desiredQty > maxQty) {
                         showSalesErrorMessage(`Stock insuffisant. Disponible: ${maxQty}`);
                         input.value = item.quantity;
                         return;
@@ -35007,7 +35022,27 @@
                 });
             }
             if (salesQuickQuantityInput) {
+                // Sur input: permet l'état vide (pour effacer et retaper) mais clamp les valeurs > max
                 salesQuickQuantityInput.addEventListener('input', () => {
+                    const rawValue = salesQuickQuantityInput.value;
+                    if (rawValue === '' || rawValue === '-') {
+                        // Laisse l'utilisateur effacer pour retaper un nouveau nombre
+                        syncSalesQuickLineTotalPreview();
+                        return;
+                    }
+                    const parsed = parseInt(rawValue, 10);
+                    if (Number.isFinite(parsed)) {
+                        const maxQty = parseNonNegativeInteger(salesQuickQuantityInput.max, 0);
+                        if (maxQty > 0 && parsed > maxQty) {
+                            salesQuickQuantityInput.value = String(maxQty);
+                        } else if (parsed < 1) {
+                            salesQuickQuantityInput.value = '1';
+                        }
+                    }
+                    syncSalesQuickLineTotalPreview();
+                });
+                // Sur blur: valide et assure qu'on a un entier valide
+                salesQuickQuantityInput.addEventListener('change', () => {
                     const maxQty = parseNonNegativeInteger(salesQuickQuantityInput.max, 1);
                     const nextQty = Math.max(1, Math.min(parseNonNegativeInteger(salesQuickQuantityInput.value, 1), maxQty));
                     salesQuickQuantityInput.value = String(nextQty);
