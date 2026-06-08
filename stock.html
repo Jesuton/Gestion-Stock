@@ -1092,20 +1092,88 @@
                         </div>
 
                         <div id="sales-line-builder-pane" class="hidden relative space-y-2.5">
-                            <div id="sales-accordion-quick-add" data-sales-accordion-item data-sales-accordion-group="invoice" class="relative z-30 flex justify-end overflow-visible">
-                                <div class="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white/95 pl-3 pr-1.5 py-1.5 shadow-sm backdrop-blur">
-                                    <div class="hidden sm:block">
+                            <div id="sales-accordion-quick-add" data-sales-accordion-item data-sales-accordion-group="invoice" class="relative z-30 overflow-visible rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                                <div class="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
                                         <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-700">Ajout rapide</p>
-                                        <p id="sales-accordion-quick-summary" class="text-[10px] text-gray-500">Fenetre compacte pour saisir une ligne.</p>
+                                        <p id="sales-accordion-quick-summary" class="text-xs text-gray-500">Produit, lot, conditionnement, quantité et prix avant ajout au panier.</p>
                                     </div>
-                                    <button type="button" id="sales-open-quick-product-modal-button"
-                                        class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-cyan-500 text-white shadow-sm transition hover:bg-cyan-600"
-                                        aria-label="Ouvrir la fenêtre d'ajout rapide produit"
-                                        title="Ajouter un produit">
-                                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m7-7H5" />
-                                        </svg>
-                                    </button>
+                                </div>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label for="sales-quick-product-search" class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Produit</label>
+                                        <div id="sales-quick-product-combobox" class="relative mt-2">
+                                            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
+                                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                                </svg>
+                                            </div>
+                                            <input type="text" id="sales-quick-product-search" autocomplete="off" placeholder="Rechercher ou sélectionner un produit..."
+                                                class="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-12 text-sm text-slate-800 shadow-sm focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-400">
+                                            <button type="button" id="sales-quick-product-toggle"
+                                                class="absolute inset-y-0 right-0 flex items-center px-4 text-slate-400 transition hover:text-slate-600"
+                                                aria-label="Afficher les produits" aria-expanded="false">
+                                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                                </svg>
+                                            </button>
+                                            <div id="sales-quick-product-dropdown"
+                                                class="hidden absolute left-0 right-0 top-full z-[120] mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl">
+                                                <div id="sales-quick-product-options" class="product-combobox-options-panel max-h-72 space-y-1 overflow-y-auto p-2"></div>
+                                                <div id="sales-quick-product-empty" class="hidden px-4 py-6 text-sm text-slate-400">Aucun produit correspondant.</div>
+                                            </div>
+                                        </div>
+                                        <select id="sales-quick-product-select" class="hidden">
+                                            <option value="">Sélectionnez un produit</option>
+                                        </select>
+                                    </div>
+                                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                                        <div>
+                                            <label for="sales-quick-lot-select" class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Lot</label>
+                                            <select id="sales-quick-lot-select"
+                                                class="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-800 shadow-sm focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-400">
+                                                <option value="">Sélectionnez un produit</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="sales-quick-package-select" class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Conditionnement</label>
+                                            <select id="sales-quick-package-select"
+                                                class="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-800 shadow-sm focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-400">
+                                                <option value="">Sélectionnez un produit</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="sales-quick-quantity" class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Quantité</label>
+                                            <input type="number" id="sales-quick-quantity" min="1" value="1"
+                                                class="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-800 shadow-sm focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-400">
+                                        </div>
+                                        <div>
+                                            <label for="sales-quick-unit-price" class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Prix unitaire</label>
+                                            <input type="number" id="sales-quick-unit-price" min="0" step="0.01" placeholder="0"
+                                                class="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-800 shadow-sm focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-400">
+                                        </div>
+                                        <div>
+                                            <label for="sales-quick-line-discount" class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Remise ligne</label>
+                                            <input type="number" id="sales-quick-line-discount" min="0" step="0.01" placeholder="0"
+                                                class="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-800 shadow-sm focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-400">
+                                        </div>
+                                        <div>
+                                            <label for="sales-quick-line-total" class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Total ligne</label>
+                                            <input type="number" id="sales-quick-line-total" min="0" step="0.01" placeholder="0"
+                                                class="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-800 shadow-sm focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-400">
+                                        </div>
+                                    </div>
+                                    <div id="sales-quick-selection-info" class="hidden rounded-xl border border-cyan-100 bg-cyan-50/70 px-4 py-3 shadow-sm">
+                                        <p id="sales-quick-selection-stock" class="text-xs font-semibold text-cyan-700">—</p>
+                                        <p id="sales-quick-selection-price" class="mt-1 text-xs text-slate-600">—</p>
+                                    </div>
+                                    <div class="flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                                        <p class="text-xs text-slate-500">Renseignez la ligne puis cliquez sur Ajouter. Tous les champs restent modifiables dans le panier.</p>
+                                        <button id="sales-quick-add-button" type="button"
+                                            class="inline-flex items-center justify-center rounded-xl bg-cyan-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-cyan-600 disabled:cursor-not-allowed disabled:bg-slate-300">
+                                            Ajouter au panier
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -6231,121 +6299,6 @@
         </div>
     </div>
 
-    <div id="sales-quick-product-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/55 p-3 sm:p-4">
-        <div class="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-[2rem] border border-white/60 bg-white shadow-[0_32px_80px_rgba(15,23,42,0.28)]">
-            <div class="relative overflow-hidden border-b border-slate-100 bg-[radial-gradient(circle_at_top_left,_rgba(34,211,238,0.22),_transparent_38%),linear-gradient(135deg,_#ffffff,_#f8fafc_62%,_#ecfeff)] px-5 py-5 sm:px-7 sm:py-6">
-                <div class="absolute right-20 top-0 h-24 w-24 rounded-full bg-cyan-200/25 blur-2xl"></div>
-                <div class="relative flex items-start justify-between gap-4">
-                    <div class="max-w-2xl">
-                        <div class="inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan-700">
-                            Ligne express
-                        </div>
-                        <h2 class="mt-3 text-2xl font-bold tracking-tight text-slate-950">Ajouter un produit a la facture</h2>
-                        <p class="mt-2 max-w-xl text-sm leading-6 text-slate-600">Choisissez le produit, ajustez le conditionnement et la quantite, puis envoyez la ligne au panier sans quitter la saisie.</p>
-                    </div>
-                    <button type="button" id="close-sales-quick-product-modal-button"
-                        class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-400 transition hover:border-slate-300 hover:text-slate-600"
-                        aria-label="Fermer la fenêtre d'ajout produit">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-            <div class="overflow-y-auto px-5 py-5 sm:px-7 sm:py-6">
-                <div class="space-y-5">
-                    <div class="rounded-[1.75rem] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-                        <div class="flex items-center gap-3">
-                            <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-600">
-                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                            <div>
-                                <p class="text-sm font-semibold text-slate-900">Produit</p>
-                                <p class="text-xs text-slate-500">Choisissez un produit puis renseignez directement toute la ligne.</p>
-                            </div>
-                        </div>
-                        <div class="mt-4">
-                            <label for="sales-quick-product-select" class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Selection</label>
-                            <div id="sales-quick-product-combobox" class="relative mt-2">
-                                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
-                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
-                                    </svg>
-                                </div>
-                                <input type="text" id="sales-quick-product-search" autocomplete="off" placeholder="Rechercher ou selectionner un produit..."
-                                    class="w-full rounded-[1.35rem] border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-12 text-sm text-slate-800 shadow-sm focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-400">
-                                <button type="button" id="sales-quick-product-toggle"
-                                    class="absolute inset-y-0 right-0 flex items-center px-4 text-slate-400 transition hover:text-slate-600"
-                                    aria-label="Afficher les produits" aria-expanded="false">
-                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                    </svg>
-                                </button>
-                                <div id="sales-quick-product-dropdown"
-                                    class="hidden absolute left-0 right-0 top-full z-[120] mt-2 overflow-hidden rounded-[1.35rem] border border-slate-200 bg-white shadow-2xl">
-                                    <div id="sales-quick-product-options" class="product-combobox-options-panel max-h-72 space-y-1 overflow-y-auto p-2"></div>
-                                    <div id="sales-quick-product-empty" class="hidden px-4 py-6 text-sm text-slate-400">Aucun produit correspondant.</div>
-                                </div>
-                            </div>
-                            <select id="sales-quick-product-select" class="hidden">
-                                <option value="">Selectionnez un produit</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="rounded-[1.75rem] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-                        <div class="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.2fr)_140px_160px]">
-                            <div>
-                                <label for="sales-quick-package-select" class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Conditionnement</label>
-                                <select id="sales-quick-package-select"
-                                    class="mt-2 w-full rounded-[1.15rem] border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm text-slate-800 shadow-sm focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-400">
-                                    <option value="">Selectionnez un produit</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label for="sales-quick-quantity" class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Quantite</label>
-                                <input type="number" id="sales-quick-quantity" min="1" value="1"
-                                    class="mt-2 w-full rounded-[1.15rem] border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm font-semibold text-slate-800 shadow-sm focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-400">
-                            </div>
-                            <div>
-                                <label for="sales-quick-unit-price" class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Prix unitaire</label>
-                                <input type="number" id="sales-quick-unit-price" min="0" step="1" placeholder="0"
-                                    class="mt-2 w-full rounded-[1.15rem] border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm font-semibold text-slate-800 shadow-sm focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-400">
-                            </div>
-                        </div>
-                        <div class="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
-                            <div>
-                                <label for="sales-quick-line-discount" class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Remise ligne</label>
-                                <input type="number" id="sales-quick-line-discount" min="0" step="1" placeholder="0"
-                                    class="mt-2 w-full rounded-[1.15rem] border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm font-semibold text-slate-800 shadow-sm focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-400">
-                            </div>
-                            <div>
-                                <label for="sales-quick-line-total" class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Total ligne</label>
-                                <input type="number" id="sales-quick-line-total" min="0" step="1" placeholder="0"
-                                    class="mt-2 w-full rounded-[1.15rem] border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm font-semibold text-slate-800 shadow-sm focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-400">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="sales-quick-selection-info" class="hidden rounded-[1.5rem] border border-cyan-100 bg-cyan-50/70 px-4 py-3 shadow-sm">
-                        <p id="sales-quick-selection-stock" class="text-xs font-semibold text-cyan-700">—</p>
-                        <p id="sales-quick-selection-price" class="mt-1 text-xs text-slate-600">—</p>
-                    </div>
-
-                    <div class="flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
-                        <p class="text-xs text-slate-500">Le produit ajoute remonte en tete du panier. Les champs restent encore modifiables ensuite dans le panier.</p>
-                        <button id="sales-quick-add-button" type="button"
-                            class="inline-flex items-center justify-center rounded-[1.15rem] bg-cyan-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-cyan-600 disabled:cursor-not-allowed disabled:bg-slate-300">
-                            Ajouter au panier
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Modal: Envoyer vers panier (depuis validation magasin) -->
     <div id="send-to-cart-modal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/50 p-4">
         <div class="flex max-h-[90vh] w-full max-w-sm flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
@@ -7233,6 +7186,7 @@
             const salesQuickProductOptions = document.getElementById('sales-quick-product-options');
             const salesQuickProductEmpty = document.getElementById('sales-quick-product-empty');
             const salesQuickProductSelect = document.getElementById('sales-quick-product-select');
+            const salesQuickLotSelect = document.getElementById('sales-quick-lot-select');
             const salesQuickPackageSelect = document.getElementById('sales-quick-package-select');
             const salesQuickQuantityInput = document.getElementById('sales-quick-quantity');
             const salesQuickUnitPriceInput = document.getElementById('sales-quick-unit-price');
@@ -7562,10 +7516,7 @@
 
             // Modals
             const openNewProductModalButton = document.getElementById('open-new-product-modal-button');
-            const salesOpenQuickProductModalButton = document.getElementById('sales-open-quick-product-modal-button');
             const newProductModal = document.getElementById('new-product-modal');
-            const salesQuickProductModal = document.getElementById('sales-quick-product-modal');
-            const closeSalesQuickProductModalButton = document.getElementById('close-sales-quick-product-modal-button');
             const storeValidationEditorModal = document.getElementById('store-validation-editor-modal');
             const closeStoreValidationEditorButton = document.getElementById('close-store-validation-editor-button');
             // Send-to-cart modal elements
@@ -9942,7 +9893,7 @@
                             event.preventDefault();
                             setProductComboboxSelection(key, firstOption.dataset.productOption);
                             if (key === 'salesQuick') {
-                                addSelectedSalesQuickProduct({ silent: true, focusSearch: true });
+                                updateSalesQuickLotOptions();
                             }
                         }
                     }
@@ -9972,7 +9923,7 @@
                     if (!option || option.hasAttribute('disabled')) return;
                     setProductComboboxSelection(key, option.dataset.productOption);
                     if (key === 'salesQuick') {
-                        addSelectedSalesQuickProduct({ silent: true, focusSearch: true });
+                        updateSalesQuickLotOptions();
                     }
                 });
             }
@@ -11827,7 +11778,10 @@
 
             function openSalesAccordionPanel(panelKey) {
                 if (panelKey === 'quick') {
-                    openSalesQuickProductModal();
+                    if (salesAccordionQuickAdd && typeof salesAccordionQuickAdd.scrollIntoView === 'function') {
+                        salesAccordionQuickAdd.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                    requestAnimationFrame(() => focusSalesQuickSearch({ selectText: true }));
                     return;
                 }
                 setSalesSidebarPage(panelKey, { scroll: true });
@@ -11870,7 +11824,7 @@
 
             function updateSalesAccordionSummaries(summary = null) {
                 if (salesAccordionQuickSummary) {
-                    salesAccordionQuickSummary.textContent = 'Produit, conditionnement et quantité';
+                    salesAccordionQuickSummary.textContent = 'Produit, lot, conditionnement, quantité et prix';
                 }
 
                 if (salesAccordionClientSummary) {
@@ -17124,6 +17078,24 @@
 
             function getShopItemAvailableSaleQuantity(item) {
                 return reconcileShopLotQueueToQuantity(item).activeQty;
+            }
+
+            function getShopItemSellableLots(item) {
+                const lotState = reconcileShopLotQueueToQuantity(item);
+                return (lotState.queue || []).filter(lot =>
+                    lot.status === SHOP_LOT_STATUS_ACTIVE && (Number(lot.remainingQuantity) || 0) > 0
+                );
+            }
+
+            function resolveShopLotById(item, lotId) {
+                if (!item) return null;
+                if (!lotId) return getShopItemActiveLot(item);
+                const lotState = reconcileShopLotQueueToQuantity(item);
+                return (lotState.queue || []).find(lot =>
+                    lot.id === lotId &&
+                    lot.status === SHOP_LOT_STATUS_ACTIVE &&
+                    (Number(lot.remainingQuantity) || 0) > 0
+                ) || null;
             }
 
             function queueIncomingShopLot(item, lotPayload = {}) {
@@ -28341,12 +28313,58 @@
                 }).join('');
             }
 
+            function updateSalesQuickLotOptions() {
+                if (!salesQuickLotSelect) {
+                    updateSalesQuickPackageOptions();
+                    return;
+                }
+                const shopProductId = salesQuickProductSelect?.value || '';
+                const shopItem = shopProductId ? appData.shopStock?.[shopProductId] : null;
+                const sourceProduct = shopItem ? appData.storeProducts?.[shopItem.sourceProductId] : null;
+                const previousValue = salesQuickLotSelect.value || '';
+                salesQuickLotSelect.innerHTML = '';
+
+                if (!shopItem || !sourceProduct) {
+                    salesQuickLotSelect.innerHTML = '<option value="">Sélectionnez un produit</option>';
+                    salesQuickLotSelect.disabled = true;
+                    updateSalesQuickPackageOptions();
+                    return;
+                }
+
+                const sellableLots = getShopItemSellableLots(shopItem);
+                if (!sellableLots.length) {
+                    salesQuickLotSelect.innerHTML = '<option value="">Aucun lot disponible</option>';
+                    salesQuickLotSelect.disabled = true;
+                    updateSalesQuickPackageOptions();
+                    return;
+                }
+
+                sellableLots.forEach(lot => {
+                    const option = document.createElement('option');
+                    const remaining = Number(lot.remainingQuantity) || 0;
+                    option.value = lot.id || '';
+                    option.textContent = `${lot.label || 'Lot'} · ${formatBaseUnits(remaining, getProductBaseUnitLabel(sourceProduct))}`;
+                    salesQuickLotSelect.appendChild(option);
+                });
+
+                salesQuickLotSelect.disabled = false;
+                const hasPrevious = sellableLots.some(lot => lot.id === previousValue);
+                salesQuickLotSelect.value = hasPrevious ? previousValue : (sellableLots[0]?.id || '');
+                updateSalesQuickPackageOptions();
+            }
+
+            function getSalesQuickSelectedLot(shopItem) {
+                if (!shopItem) return null;
+                return resolveShopLotById(shopItem, salesQuickLotSelect?.value || '') || getShopItemActiveLot(shopItem);
+            }
+
             function updateSalesQuickPackageOptions() {
                 if (!salesQuickPackageSelect) return;
                 const shopProductId = salesQuickProductSelect?.value || '';
                 const shopItem = shopProductId ? appData.shopStock?.[shopProductId] : null;
                 const sourceProduct = shopItem ? appData.storeProducts?.[shopItem.sourceProductId] : null;
-                const activeQty = shopItem ? getShopItemAvailableSaleQuantity(shopItem) : 0;
+                const selectedLot = getSalesQuickSelectedLot(shopItem);
+                const activeQty = selectedLot ? (Number(selectedLot.remainingQuantity) || 0) : 0;
                 const packagings = shopItem
                     ? getShopItemSellPackagings(shopItem).filter(packaging => {
                         const unitCount = Number(packaging.unitCount) || 1;
@@ -28356,7 +28374,7 @@
                 const previousValue = salesQuickPackageSelect.value || '';
                 salesQuickPackageSelect.innerHTML = '';
 
-                if (!shopItem || !sourceProduct || !packagings.length) {
+                if (!shopItem || !sourceProduct || !packagings.length || !selectedLot) {
                     salesQuickPackageSelect.innerHTML = '<option value="">Sélectionnez un produit</option>';
                     salesQuickPackageSelect.disabled = true;
                     if (salesQuickSelectionInfo) salesQuickSelectionInfo.classList.add('hidden');
@@ -28397,7 +28415,7 @@
 
                 if (salesQuickSelectionInfo && salesQuickSelectionStock && salesQuickSelectionPrice) {
                     const sellingPrice = normalizeSaleUnitPrice(getPackageSellingPrice(sourceProduct, selectedPackaging?.code));
-                    salesQuickSelectionStock.textContent = `Stock disponible: ${formatShopStockBreakdown(activeQty, shopItem, { includeBaseTotal: true })} · ${getProductInternalCodeText(sourceProduct)}`;
+                    salesQuickSelectionStock.textContent = `Lot ${selectedLot.label || '—'} · Stock disponible: ${formatShopStockBreakdown(activeQty, shopItem, { includeBaseTotal: true })} · ${getProductInternalCodeText(sourceProduct)}`;
                     salesQuickSelectionPrice.textContent = `${selectedPackaging?.label || getProductBaseUnitLabel(sourceProduct)} · ${sellingPrice !== null ? formatCurrency(sellingPrice, sourceProduct.currency || 'CFA') : 'Prix à définir'} · ${selectedUnits} unité(s)`;
                     salesQuickSelectionInfo.classList.remove('hidden');
                 }
@@ -28413,12 +28431,14 @@
                 if (!shopItem || !sourceProduct) return null;
 
                 const selectedPackaging = findPackagingByRef(sourceProduct, salesQuickPackageSelect?.value || '') || null;
+                const selectedLot = getSalesQuickSelectedLot(shopItem);
                 const quantity = Math.max(1, parseNonNegativeInteger(salesQuickQuantityInput?.value, 1));
                 const defaultUnitPrice = normalizeSaleUnitPrice(getPackageSellingPrice(sourceProduct, selectedPackaging?.code));
                 return {
                     shopItem,
                     sourceProduct,
                     selectedPackaging,
+                    selectedLot,
                     quantity,
                     defaultUnitPrice
                 };
@@ -28531,7 +28551,7 @@
                 }
                 syncProductComboboxInput('salesQuick');
                 renderProductCombobox('salesQuick');
-                updateSalesQuickPackageOptions();
+                updateSalesQuickLotOptions();
             }
 
             function renderSalesProducts(searchTerm = '') {
@@ -28985,18 +29005,39 @@
                 renderCart();
             }
 
-            function openSalesQuickProductModal() {
-                if (!salesQuickProductModal) return;
-                salesQuickProductModal.classList.remove('hidden');
-                salesQuickProductModal.classList.add('flex');
-                requestAnimationFrame(() => focusSalesQuickSearch({ selectText: true }));
-            }
+            function updateCartItemLot(index, nextLotId) {
+                const item = cartItems[index];
+                if (!item?.shopProductId) return;
+                const shopProduct = appData.shopStock?.[item.shopProductId];
+                const sourceProduct = shopProduct ? appData.storeProducts?.[shopProduct.sourceProductId] : null;
+                if (!shopProduct || !sourceProduct) return;
 
-            function closeSalesQuickProductModal() {
-                if (!salesQuickProductModal) return;
-                closeProductCombobox('salesQuick');
-                salesQuickProductModal.classList.add('hidden');
-                salesQuickProductModal.classList.remove('flex');
+                const nextLot = resolveShopLotById(shopProduct, nextLotId);
+                if (!nextLot) {
+                    showSalesErrorMessage("Lot introuvable ou indisponible.");
+                    renderCart();
+                    return;
+                }
+
+                if ((item.lotId || '') === (nextLot.id || '')) return;
+
+                const nextUnitCount = getCartItemUnitCount(item);
+                const maxQty = Math.max(0, Math.floor((Number(nextLot.remainingQuantity) || 0) / nextUnitCount));
+                if (maxQty <= 0) {
+                    showSalesErrorMessage("Stock insuffisant sur ce lot.");
+                    renderCart();
+                    return;
+                }
+
+                item.lotId = nextLot.id;
+                item.lotLabel = nextLot.label || '';
+                item.lotReceivedAt = nextLot.receivedAt || '';
+                item.purchaseCostSnapshot = Number.isFinite(Number(nextLot.purchaseCost)) ? Number(nextLot.purchaseCost) : 0;
+                if ((Number(item.quantity) || 1) > maxQty) {
+                    item.quantity = maxQty;
+                }
+                item.stockUnits = (Number(item.quantity) || 1) * nextUnitCount;
+                renderCart();
             }
 
             function focusSalesQuickSearch({ selectText = false, keepDropdownClosed = false } = {}) {
@@ -29016,7 +29057,7 @@
                 closeProductCombobox('salesQuick');
                 syncProductComboboxInput('salesQuick');
                 renderProductCombobox('salesQuick');
-                updateSalesQuickPackageOptions();
+                updateSalesQuickLotOptions();
                 if (salesQuickQuantityInput) salesQuickQuantityInput.value = '1';
                 if (salesQuickUnitPriceInput) salesQuickUnitPriceInput.value = '';
                 if (salesQuickLineDiscountInput) salesQuickLineDiscountInput.value = '';
@@ -29026,15 +29067,24 @@
                 }
             }
 
-            function addSelectedSalesQuickProduct({ quantityOverride = 1, packageRef = null, silent = true, focusSearch = true } = {}) {
+            function addSelectedSalesQuickProduct({ quantityOverride = 1, packageRef = null, lotId = null, silent = true, focusSearch = true } = {}) {
                 const shopProductId = salesQuickProductSelect?.value || '';
                 const resolvedPackageRef = packageRef || salesQuickPackageSelect?.value || '';
+                const resolvedLotId = lotId || salesQuickLotSelect?.value || '';
                 const quantity = Math.max(1, parseNonNegativeInteger(quantityOverride, 1));
                 if (!shopProductId) {
                     showSalesErrorMessage("Sélectionnez un produit.");
                     return false;
                 }
-                const didAdd = addToCart(shopProductId, quantity, resolvedPackageRef, { silent });
+                if (!resolvedPackageRef) {
+                    showSalesErrorMessage("Sélectionnez un conditionnement.");
+                    return false;
+                }
+                if (!resolvedLotId) {
+                    showSalesErrorMessage("Sélectionnez un lot.");
+                    return false;
+                }
+                const didAdd = addToCart(shopProductId, quantity, resolvedPackageRef, { silent, lotId: resolvedLotId });
                 if (!didAdd) return false;
                 applySalesQuickDraftToCartHead();
                 resetSalesQuickSelection({ focusSearch });
@@ -29042,7 +29092,7 @@
             }
 
             function addToCart(productId = null, quantityOverride = null, packageRef = null, options = {}) {
-                const { silent = false } = options || {};
+                const { silent = false, lotId = null } = options || {};
                 const shopProductId = productId;
                 const quantityInput = Number.isFinite(quantityOverride) ? quantityOverride : 1;
 
@@ -29060,8 +29110,8 @@
                 const sellingPrice = getPackageSellingPrice(sourceProduct, selectedPackaging?.code);
                 const resolvedSellingPrice = normalizeSaleUnitPrice(sellingPrice);
                 const hasResolvedPrice = resolvedSellingPrice !== null;
-                const activeLot = getShopItemActiveLot(shopProduct);
                 const pendingLot = getShopItemPendingValidationLot(shopProduct);
+                const targetLot = resolveShopLotById(shopProduct, lotId);
                 const productBoutiqueId = resolveBoutiqueId(shopProduct.boutiqueId);
                 const activeBoutique = getActiveBoutiqueId();
                 if (activeBoutique && productBoutiqueId && productBoutiqueId !== activeBoutique) {
@@ -29080,22 +29130,22 @@
                     showSalesErrorMessage(`Le ${pendingLot.label} attend une validation avant activation.`);
                     return false;
                 }
-                if (!activeLot || getShopItemAvailableSaleQuantity(shopProduct) <= 0) {
+                if (!targetLot || (Number(targetLot.remainingQuantity) || 0) <= 0) {
                     showSalesErrorMessage("Stock insuffisant pour ce produit.");
                     return false;
                 }
 
                 const existingItemIndex = cartItems.findIndex(item =>
                     item.shopProductId === shopProductId &&
-                    (item.lotId || '') === (activeLot.id || '') &&
+                    (item.lotId || '') === (targetLot.id || '') &&
                     (item.packageCode || '') === ((selectedPackaging?.code || '').toString())
                 );
                 const existingQty = existingItemIndex !== -1 ? getCartItemStockUnits(cartItems[existingItemIndex]) : 0;
                 const maxQty = existingItemIndex !== -1
                     ? getCartItemAvailableQuantity(cartItems[existingItemIndex])
-                    : (Number(activeLot.remainingQuantity) || 0);
+                    : (Number(targetLot.remainingQuantity) || 0);
                 if (existingQty + stockUnitsRequested > maxQty) {
-                    showSalesErrorMessage(`Stock insuffisant sur ${activeLot.label}. Disponible: ${formatBaseUnits(maxQty, getProductBaseUnitLabel(sourceProduct))}`);
+                    showSalesErrorMessage(`Stock insuffisant sur ${targetLot.label}. Disponible: ${formatBaseUnits(maxQty, getProductBaseUnitLabel(sourceProduct))}`);
                     return false;
                 }
 
@@ -29117,10 +29167,10 @@
                         packageLabel: selectedPackaging?.label || getProductBaseUnitLabel(sourceProduct),
                         packageUnits,
                         stockUnits: stockUnitsRequested,
-                        lotId: activeLot.id,
-                        lotLabel: activeLot.label,
-                        lotReceivedAt: activeLot.receivedAt || '',
-                        purchaseCostSnapshot: Number.isFinite(Number(activeLot.purchaseCost)) ? Number(activeLot.purchaseCost) : 0,
+                        lotId: targetLot.id,
+                        lotLabel: targetLot.label,
+                        lotReceivedAt: targetLot.receivedAt || '',
+                        purchaseCostSnapshot: Number.isFinite(Number(targetLot.purchaseCost)) ? Number(targetLot.purchaseCost) : 0,
                         sellingPrice: resolvedSellingPrice,
                         originalSellingPrice: resolvedSellingPrice,
                         manualSellingPrice: null,
@@ -29458,6 +29508,17 @@
                             const disabled = !isSelected && maxQtyForPackaging <= 0;
                             return `<option value="${escapeHtml(optionCode)}" ${isSelected ? 'selected' : ''} ${disabled ? 'disabled' : ''}>${escapeHtml(packaging?.label || getProductBaseUnitLabel(sourceProduct))}</option>`;
                         }).join('');
+                        const lotOptions = (() => {
+                            const sellableLots = shopProduct ? getShopItemSellableLots(shopProduct) : [];
+                            if (!sellableLots.length && item.lotId) {
+                                return `<option value="${escapeHtml(item.lotId)}" selected>${escapeHtml(item.lotLabel || 'Lot')}</option>`;
+                            }
+                            return sellableLots.map(lot => {
+                                const isSelected = (lot.id || '') === (item.lotId || '');
+                                const remaining = Number(lot.remainingQuantity) || 0;
+                                return `<option value="${escapeHtml(lot.id || '')}" ${isSelected ? 'selected' : ''}>${escapeHtml(lot.label || 'Lot')} · ${remaining}</option>`;
+                            }).join('');
+                        })();
                         const internalCodeText = getProductInternalCodeText(sourceProduct);
                         const hasLinePrice = hasUsableSellingPrice(item.sellingPrice) && item.pricePending !== true;
                         const lineDiscountAmount = hasLinePrice ? calculateSaleItemLineDiscount(item) : 0;
@@ -29474,23 +29535,23 @@
                         const resetPriceButton = item.priceOverridden && hasOriginalSellingPrice
                             ? `<button type="button" data-cart-action="reset-price" data-index="${index}" class="text-[11px] font-semibold text-cyan-600 hover:text-cyan-700">Prix standard</button>`
                             : '';
-                        const lotBadge = item.lotLabel
-                            ? `<span class="text-[11px] font-semibold text-cyan-700">${item.lotLabel}</span>`
-                            : '';
                         return `
                             <div class="border-b border-gray-200 last:border-b-0">
-                                <div class="hidden xl:grid xl:grid-cols-[180px_minmax(0,1.15fr)_64px_96px_96px_110px_86px] xl:items-center xl:gap-2 px-3 py-2.5">
+                                <div class="hidden xl:grid xl:grid-cols-[minmax(0,1fr)_120px_minmax(0,1fr)_64px_96px_96px_110px_86px] xl:items-center xl:gap-2 px-3 py-2.5">
                                     <div class="min-w-0">
                                         <p class="truncate text-sm font-semibold text-gray-900">${item.name}</p>
                                         <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
                                             <span class="text-[11px] font-semibold uppercase tracking-wide ${hasProductInternalCode(sourceProduct) ? 'text-slate-400' : 'text-amber-600'}">${internalCodeText}</span>
-                                            ${lotBadge}
                                         </div>
                                         <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
                                             ${priceStatusBadge}
                                             ${lineDiscountAmount > 0 ? `<span class="text-[11px] font-semibold text-rose-600">Remise ${formatCurrency(lineDiscountAmount, item.currency)}</span>` : ''}
                                         </div>
                                     </div>
+                                    <select data-cart-lot data-index="${index}"
+                                        class="h-9 w-full rounded-lg border border-gray-200 bg-white px-2 text-sm text-gray-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400">
+                                        ${lotOptions}
+                                    </select>
                                     <select data-cart-package data-index="${index}"
                                         class="h-9 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400">
                                         ${packageOptions}
@@ -29517,13 +29578,19 @@
                                             <p class="text-sm font-semibold text-gray-900">${item.name}</p>
                                             <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
                                                 <span class="text-[11px] font-semibold uppercase tracking-wide ${hasProductInternalCode(sourceProduct) ? 'text-slate-400' : 'text-amber-600'}">${internalCodeText}</span>
-                                                ${lotBadge}
                                                 ${priceStatusBadge}
                                             </div>
                                         </div>
                                         <button type="button" data-cart-action="remove" data-index="${index}" class="inline-flex shrink-0 items-center justify-center rounded-lg border border-red-200 px-2.5 py-1.5 text-[11px] font-semibold text-red-600 hover:bg-red-50">Retirer</button>
                                     </div>
                                     <div class="mt-3 grid grid-cols-2 gap-2">
+                                        <label class="col-span-2 block">
+                                            <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Lot</span>
+                                            <select data-cart-lot data-index="${index}"
+                                                class="mt-1 h-9 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400">
+                                                ${lotOptions}
+                                            </select>
+                                        </label>
                                         <label class="col-span-2 block">
                                             <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Conditionnement</span>
                                             <select data-cart-package data-index="${index}"
@@ -29561,8 +29628,9 @@
                         `;
                     }).join('');
                     const cartHeaderHtml = `
-                        <div class="hidden xl:grid xl:grid-cols-[180px_minmax(0,1.15fr)_64px_96px_96px_110px_86px] xl:gap-2 border-b border-gray-200 bg-gray-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                        <div class="hidden xl:grid xl:grid-cols-[minmax(0,1fr)_120px_minmax(0,1fr)_64px_96px_96px_110px_86px] xl:gap-2 border-b border-gray-200 bg-gray-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
                             <span>Produit</span>
+                            <span>Lot</span>
                             <span>Conditionnement</span>
                             <span class="text-center">Qté</span>
                             <span class="text-right">Prix unitaire</span>
@@ -31811,6 +31879,13 @@
                     if (action === 'reset-price') updateCartItemSellingPrice(index, '');
                 });
                 cartItemsList.addEventListener('change', (event) => {
+                    const lotSelect = event.target.closest('[data-cart-lot]');
+                    if (lotSelect) {
+                        const index = parseInt(lotSelect.dataset.index, 10);
+                        if (Number.isNaN(index)) return;
+                        updateCartItemLot(index, lotSelect.value);
+                        return;
+                    }
                     const packageSelect = event.target.closest('[data-cart-package]');
                     if (packageSelect) {
                         const index = parseInt(packageSelect.dataset.index, 10);
@@ -34841,6 +34916,11 @@
                 salesQuickProductSelect.addEventListener('change', () => {
                     syncProductComboboxInput('salesQuick');
                     renderProductCombobox('salesQuick');
+                    updateSalesQuickLotOptions();
+                });
+            }
+            if (salesQuickLotSelect) {
+                salesQuickLotSelect.addEventListener('change', () => {
                     updateSalesQuickPackageOptions();
                 });
             }
@@ -34872,30 +34952,20 @@
                     applySalesQuickLineTotalInput();
                 });
             }
-            if (salesOpenQuickProductModalButton) {
-                salesOpenQuickProductModalButton.addEventListener('click', () => {
-                    openSalesQuickProductModal();
-                });
-            }
-            if (closeSalesQuickProductModalButton) {
-                closeSalesQuickProductModalButton.addEventListener('click', closeSalesQuickProductModal);
-            }
-            if (salesQuickProductModal) {
-                salesQuickProductModal.addEventListener('click', (event) => {
-                    if (event.target === salesQuickProductModal) {
-                        closeSalesQuickProductModal();
-                    }
-                });
-            }
             if (salesQuickAddButton) {
                 salesQuickAddButton.addEventListener('click', () => {
                     const quantity = parseNonNegativeInteger(salesQuickQuantityInput?.value, 1);
                     const packageRef = salesQuickPackageSelect?.value || '';
+                    const lotId = salesQuickLotSelect?.value || '';
                     if (!packageRef) {
                         showSalesErrorMessage("Sélectionnez un conditionnement.");
                         return;
                     }
-                    addSelectedSalesQuickProduct({ quantityOverride: quantity, packageRef, silent: false, focusSearch: true });
+                    if (!lotId) {
+                        showSalesErrorMessage("Sélectionnez un lot.");
+                        return;
+                    }
+                    addSelectedSalesQuickProduct({ quantityOverride: quantity, packageRef, lotId, silent: false, focusSearch: true });
                 });
             }
             if (closeStoreValidationEditorButton) {
