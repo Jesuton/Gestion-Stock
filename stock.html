@@ -1028,41 +1028,43 @@
                 <div class="flex flex-col xl:flex-row gap-2.5 lg:gap-3">
                     <div class="min-w-0 flex-1 space-y-2.5">
                         <div class="bg-white p-3 lg:p-3.5 rounded-2xl shadow-sm border border-gray-100">
-                            <div class="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
-                                <div>
-                                    <h1 class="text-lg lg:text-xl font-bold text-gray-900">Point de Vente</h1>
+                            <!-- Ligne 1 : Titre + badges/actions -->
+                            <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                <div class="min-w-0">
+                                    <h1 class="text-lg lg:text-xl font-bold text-gray-900 truncate">Point de Vente</h1>
                                     <p class="text-[11px] md:text-xs text-gray-500 mt-0.5">Choisissez le mode puis ajoutez rapidement vos lignes.</p>
                                 </div>
-                                <div class="flex flex-wrap items-center gap-1.5">
-                                    <span class="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-100">Stock Boutique</span>
-                                    <div class="flex items-center gap-1.5 px-2.5 h-7 rounded-full bg-white border border-gray-200">
-                                        <span class="text-[10px] font-semibold text-gray-500">Boutique</span>
+                                <div class="flex flex-wrap items-center gap-1.5 flex-shrink-0">
+                                    <span class="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-100 whitespace-nowrap">Stock Boutique</span>
+                                    <div class="flex items-center gap-1.5 px-2.5 h-7 rounded-full bg-white border border-gray-200 min-w-0">
+                                        <span class="text-[10px] font-semibold text-gray-500 whitespace-nowrap">Boutique</span>
                                         <select id="boutique-selector-sales"
-                                            class="bg-transparent text-[10px] font-semibold text-gray-700 focus:outline-none">
+                                            class="bg-transparent text-[10px] font-semibold text-gray-700 focus:outline-none max-w-[120px] truncate">
                                             <option value="">Chargement...</option>
                                         </select>
                                     </div>
                                     <button id="open-loss-modal" type="button"
-                                        class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-50 text-red-600 border border-red-200 text-[10px] font-semibold hover:bg-red-100 active:scale-95 transition-all">
-                                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-50 text-red-600 border border-red-200 text-[10px] font-semibold hover:bg-red-100 active:scale-95 transition-all whitespace-nowrap">
+                                        <svg class="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                         </svg>
                                         Déclarer une perte
                                     </button>
                                 </div>
                             </div>
-                            <div id="sales-pos-mode-toolbar" class="mt-2.5 flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
-                                <div class="inline-flex rounded-xl border border-gray-200 bg-gray-50 p-0.5">
+                            <!-- Ligne 2 : Mode catalogue / saisie facture -->
+                            <div id="sales-pos-mode-toolbar" class="mt-2.5 flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
+                                <div class="inline-flex rounded-xl border border-gray-200 bg-gray-50 p-0.5 self-start">
                                     <button type="button" id="sales-pos-mode-catalog-button"
-                                        class="px-3 py-1 rounded-lg text-xs font-semibold bg-cyan-500 text-white shadow-sm">
+                                        class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500 text-white shadow-sm">
                                         Catalogue
                                     </button>
                                     <button type="button" id="sales-pos-mode-line-button"
-                                        class="px-3 py-1 rounded-lg text-xs font-semibold text-gray-600 hover:text-gray-900">
+                                        class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 hover:text-gray-900">
                                         Saisie facture
                                     </button>
                                 </div>
-                                <p id="sales-pos-mode-description" class="text-[11px] text-gray-500 md:text-right lg:max-w-lg">Ajoutez depuis le catalogue, puis ajustez la facture.</p>
+                                <p id="sales-pos-mode-description" class="text-[11px] text-gray-500 sm:text-right">Ajoutez depuis le catalogue, puis ajustez la facture.</p>
                             </div>
                             <p id="sales-error" class="text-red-500 text-sm mt-3 hidden"></p>
                         </div>
@@ -9499,11 +9501,8 @@
                         const activeQty = getShopItemAvailableSaleQuantity(item);
                         const pendingLot = getShopItemPendingValidationLot(item);
                         if (pendingLot || activeQty <= 0) return false;
-                        const sellablePackagings = getShopItemSellPackagings(item).filter(packaging => {
-                            const unitCount = Number(packaging.unitCount) || 1;
-                            return activeQty >= unitCount;
-                        });
-                        if (!sellablePackagings.length) return false;
+                        // Affiche le produit si du stock est disponible (l'unité de base est toujours vendable)
+                        if (!getShopItemSellPackagings(item).length) return false;
                         if (!normalized) return true;
                         const haystack = [
                             getShopItemDisplayName(item),
@@ -28362,7 +28361,7 @@
                     const classes = isActive
                         ? 'bg-blue-600 text-white shadow'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200';
-                    return `<button type="button" data-sales-category="${category}" class="px-4 py-2 rounded-full text-sm font-semibold transition ${classes}">${category}</button>`;
+                    return `<button type="button" data-sales-category="${category}" class="px-3 py-1 rounded-full text-xs font-semibold transition ${classes}">${category}</button>`;
                 }).join('');
             }
 
@@ -28416,18 +28415,16 @@
                 const shopProductId = salesQuickProductSelect?.value || '';
                 const shopItem = shopProductId ? appData.shopStock?.[shopProductId] : null;
                 const sourceProduct = shopItem ? appData.storeProducts?.[shopItem.sourceProductId] : null;
+                // Utilise la quantité disponible consolidée (unités de base) comme source de vérité
+                const activeQty = shopItem ? getShopItemAvailableSaleQuantity(shopItem) : 0;
                 const selectedLot = getSalesQuickSelectedLot(shopItem);
-                const activeQty = selectedLot ? (Number(selectedLot.remainingQuantity) || 0) : 0;
-                const packagings = shopItem
-                    ? getShopItemSellPackagings(shopItem).filter(packaging => {
-                        const unitCount = Number(packaging.unitCount) || 1;
-                        return activeQty >= unitCount;
-                    })
-                    : [];
+                // Affiche TOUS les conditionnements vendables, sans filtrer par stock
+                // (l'utilisateur peut vendre des pièces même si le stock est en cartons)
+                const packagings = shopItem ? getShopItemSellPackagings(shopItem) : [];
                 const previousValue = salesQuickPackageSelect.value || '';
                 salesQuickPackageSelect.innerHTML = '';
 
-                if (!shopItem || !sourceProduct || !packagings.length || !selectedLot) {
+                if (!shopItem || !sourceProduct || !packagings.length) {
                     salesQuickPackageSelect.innerHTML = '<option value="">Sélectionnez un produit</option>';
                     salesQuickPackageSelect.disabled = true;
                     if (salesQuickSelectionInfo) salesQuickSelectionInfo.classList.add('hidden');
@@ -28444,9 +28441,13 @@
                     const option = document.createElement('option');
                     const unitCount = Number(packaging.unitCount) || 1;
                     const sellingPrice = normalizeSaleUnitPrice(getPackageSellingPrice(sourceProduct, packaging.code));
+                    const canFulfill = activeQty >= unitCount;
                     option.value = packaging.code || 'detail';
-                    option.textContent = `${packaging.label} — ${sellingPrice !== null ? formatCurrency(sellingPrice, sourceProduct.currency || 'CFA') : 'Prix à définir'}`;
+                    option.textContent = `${packaging.label}${
+                        sellingPrice !== null ? ' — ' + formatCurrency(sellingPrice, sourceProduct.currency || 'CFA') : ' — Prix à définir'
+                    }${!canFulfill ? ' (stock insuffisant)' : ''}`;
                     option.dataset.units = String(unitCount);
+                    // Pas de disabled — laisser choisir, on bloque au submit si besoin
                     salesQuickPackageSelect.appendChild(option);
                 });
 
@@ -29140,7 +29141,6 @@
             function addSelectedSalesQuickProduct({ quantityOverride = 1, packageRef = null, lotId = null, silent = true, focusSearch = true } = {}) {
                 const shopProductId = salesQuickProductSelect?.value || '';
                 const resolvedPackageRef = packageRef || salesQuickPackageSelect?.value || '';
-                const resolvedLotId = lotId || salesQuickLotSelect?.value || '';
                 const quantity = Math.max(1, parseNonNegativeInteger(quantityOverride, 1));
                 if (!shopProductId) {
                     showSalesErrorMessage("Sélectionnez un produit.");
@@ -29150,8 +29150,15 @@
                     showSalesErrorMessage("Sélectionnez un conditionnement.");
                     return false;
                 }
+                // Utilise le lot fourni, sinon le lot sélectionné dans l'UI, sinon le lot actif automatiquement
+                const shopItem = appData.shopStock?.[shopProductId];
+                let resolvedLotId = lotId || salesQuickLotSelect?.value || '';
+                if (!resolvedLotId && shopItem) {
+                    const fallbackLot = getShopItemActiveLot(shopItem);
+                    resolvedLotId = fallbackLot?.id || '';
+                }
                 if (!resolvedLotId) {
-                    showSalesErrorMessage("Sélectionnez un lot.");
+                    showSalesErrorMessage("Aucun lot actif disponible pour ce produit.");
                     return false;
                 }
                 const didAdd = addToCart(shopProductId, quantity, resolvedPackageRef, { silent, lotId: resolvedLotId });
@@ -35026,13 +35033,20 @@
                 salesQuickAddButton.addEventListener('click', () => {
                     const quantity = parseNonNegativeInteger(salesQuickQuantityInput?.value, 1);
                     const packageRef = salesQuickPackageSelect?.value || '';
-                    const lotId = salesQuickLotSelect?.value || '';
                     if (!packageRef) {
                         showSalesErrorMessage("Sélectionnez un conditionnement.");
                         return;
                     }
+                    // Utilise le lot du select, ou fallback sur le lot actif du produit
+                    const shopProductId = salesQuickProductSelect?.value || '';
+                    const shopItem = shopProductId ? appData.shopStock?.[shopProductId] : null;
+                    let lotId = salesQuickLotSelect?.value || '';
+                    if (!lotId && shopItem) {
+                        const fallbackLot = getShopItemActiveLot(shopItem);
+                        lotId = fallbackLot?.id || '';
+                    }
                     if (!lotId) {
-                        showSalesErrorMessage("Sélectionnez un lot.");
+                        showSalesErrorMessage("Aucun lot actif disponible pour ce produit.");
                         return;
                     }
                     addSelectedSalesQuickProduct({ quantityOverride: quantity, packageRef, lotId, silent: false, focusSearch: true });
