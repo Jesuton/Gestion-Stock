@@ -6336,6 +6336,69 @@
         </div>
     </div>
 
+    <!-- Modal: Envoyer vers panier (depuis validation magasin) -->
+    <div id="send-to-cart-modal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/50 p-4">
+        <div class="flex max-h-[90vh] w-full max-w-sm flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+            <div class="flex items-center justify-between border-b border-gray-100 px-6 py-5">
+                <div>
+                    <h2 class="text-lg font-bold text-gray-900">Envoyer vers le panier</h2>
+                    <p id="send-to-cart-subtitle" class="mt-0.5 text-xs text-gray-500">Choisissez la destination pour compléter ou modifier cette facture.</p>
+                </div>
+                <button type="button" id="close-send-to-cart-modal"
+                    class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="overflow-y-auto px-6 py-5 space-y-3">
+                <!-- Avertissement panier non vide -->
+                <div id="send-to-cart-warning" class="hidden rounded-2xl bg-amber-50 border border-amber-100 px-4 py-3 text-sm text-amber-800">
+                    ⚠️ Le panier actuel contient des articles. Ils seront <strong>remplacés</strong> par les lignes de cette facture.
+                </div>
+                <!-- Destination Magasin -->
+                <button type="button" id="send-to-cart-store"
+                    class="w-full flex items-center gap-4 rounded-2xl border border-purple-100 bg-purple-50 px-5 py-4 text-left transition hover:border-purple-300 hover:bg-purple-100 group">
+                    <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-purple-600 text-white">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 7h18M3 11h18M5 7v10a2 2 0 002 2h10a2 2 0 002-2V7"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-purple-900">Panier Magasin</p>
+                        <p class="mt-0.5 text-xs text-purple-600">Ouvre les lignes dans le POS magasin direct</p>
+                    </div>
+                    <svg class="ml-auto h-4 w-4 text-purple-400 group-hover:text-purple-600 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </button>
+                <!-- Destination Boutique -->
+                <div class="rounded-2xl border border-cyan-100 bg-cyan-50 p-4">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-cyan-600 text-white">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 11H4L5 9z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-cyan-900">Panier Boutique</p>
+                            <p class="mt-0.5 text-xs text-cyan-600">Sélectionnez la boutique de destination</p>
+                        </div>
+                    </div>
+                    <select id="send-to-cart-boutique-select"
+                        class="w-full rounded-xl border border-cyan-200 bg-white px-3 py-2.5 text-sm text-gray-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
+                        <option value="">Sélectionner une boutique…</option>
+                    </select>
+                    <button type="button" id="send-to-cart-shop"
+                        class="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:opacity-40 disabled:cursor-not-allowed">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                        </svg>
+                        Envoyer vers cette boutique
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="store-validation-editor-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-50 p-4">
         <div class="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
             <div class="flex items-start justify-between gap-4 border-b border-gray-100 px-6 py-5">
@@ -7495,6 +7558,12 @@
             const closeSalesQuickProductModalButton = document.getElementById('close-sales-quick-product-modal-button');
             const storeValidationEditorModal = document.getElementById('store-validation-editor-modal');
             const closeStoreValidationEditorButton = document.getElementById('close-store-validation-editor-button');
+            // Send-to-cart modal elements
+            const sendToCartModalEl = document.getElementById('send-to-cart-modal');
+            const closeSendToCartModalBtn = document.getElementById('close-send-to-cart-modal');
+            const sendToCartStoreBtn = document.getElementById('send-to-cart-store');
+            const sendToCartShopBtn = document.getElementById('send-to-cart-shop');
+            const sendToCartBoutiqueSelect = document.getElementById('send-to-cart-boutique-select');
             const storeValidationEditorTitle = document.getElementById('store-validation-editor-title');
             const storeValidationEditorSummary = document.getElementById('store-validation-editor-summary');
             const storeValidationEditorLines = document.getElementById('store-validation-editor-lines');
@@ -11397,6 +11466,151 @@
                 storeValidationEditorSelectedKey = '';
             }
 
+            // ─── Send-to-cart modal (depuis validation magasin) ──────────────
+            let sendToCartGroupId = null;
+
+            function openSendToCartModal(groupId) {
+                if (!groupId) return;
+                const group = buildStoreValidationGroups().find(g => g.id === groupId);
+                if (!group) {
+                    showSuccessToast("Cette facture n'est plus en attente de validation.");
+                    return;
+                }
+                sendToCartGroupId = groupId;
+
+                // Avertissement si panier non vide
+                const warnEl = document.getElementById('send-to-cart-warning');
+                if (warnEl) warnEl.classList.toggle('hidden', cartItems.length === 0);
+
+                // Remplir les boutiques
+                const boutiqueSelect = document.getElementById('send-to-cart-boutique-select');
+                if (boutiqueSelect) {
+                    const boutiques = Object.values(appData.boutiques || {}).filter(b => b.id && b.name);
+                    boutiqueSelect.innerHTML = '<option value="">Sélectionner une boutique…</option>' +
+                        boutiques.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+                    // Pré-sélectionner la boutique de la facture si dispo
+                    if (group.boutiqueId) boutiqueSelect.value = group.boutiqueId;
+                }
+
+                const modal = document.getElementById('send-to-cart-modal');
+                if (modal) {
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                }
+            }
+
+            function closeSendToCartModal() {
+                const modal = document.getElementById('send-to-cart-modal');
+                if (modal) {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }
+                sendToCartGroupId = null;
+            }
+
+            function sendValidationToCart(groupId, destination, targetBoutiqueId) {
+                const group = buildStoreValidationGroups().find(g => g.id === groupId);
+                if (!group || !group.items || group.items.length === 0) {
+                    showSuccessToast("Aucune ligne à envoyer.");
+                    return;
+                }
+
+                // Construire les cartItems depuis les lignes de la facture
+                const newCartItems = [];
+                for (const item of group.items) {
+                    if (destination === 'shop') {
+                        // Ligne boutique : cherche dans shopStock
+                        const shopProduct = appData.shopStock?.[item.shopProductId];
+                        if (!shopProduct) {
+                            showSuccessToast(`Produit boutique introuvable : ${item.name}. Ligne ignorée.`);
+                            continue;
+                        }
+                        const boutiqueId = targetBoutiqueId || resolveBoutiqueId(shopProduct.boutiqueId);
+                        const sourceProduct = appData.storeProducts?.[shopProduct.sourceProductId];
+                        const activeLot = getShopItemActiveLot(shopProduct);
+                        const packageUnits = Number(item.packageUnits) || 1;
+                        const sellingPrice = normalizeSaleUnitPrice(
+                            item.price ?? getPackageSellingPrice(sourceProduct, item.packageCode)
+                        );
+                        newCartItems.push({
+                            shopProductId: item.shopProductId,
+                            boutiqueId,
+                            boutiqueName: getBoutiqueName(boutiqueId),
+                            name: item.name,
+                            packageCode: item.packageCode || 'DTL',
+                            packageLabel: item.packageLabel || getProductBaseUnitLabel(sourceProduct),
+                            packageUnits,
+                            quantity: item.quantity,
+                            stockUnits: Number(item.stockUnits) || (item.quantity * packageUnits),
+                            lotId: item.lotId || activeLot?.id || null,
+                            lotLabel: item.lotLabel || activeLot?.label || '',
+                            price: sellingPrice,
+                            pricePending: sellingPrice === null,
+                            currency: item.currency || 'CFA',
+                            purchaseCostSnapshot: Number(item.purchaseCostSnapshot) || 0,
+                            lineDiscountAmount: Number(item.lineDiscountAmount) || 0,
+                            saleSource: SALE_SOURCE_SHOP
+                        });
+                    } else {
+                        // Ligne magasin direct
+                        const storeProduct = appData.storeProducts?.[item.storeProductId];
+                        if (!storeProduct) {
+                            showSuccessToast(`Produit magasin introuvable : ${item.name}. Ligne ignorée.`);
+                            continue;
+                        }
+                        const sellingPrice = normalizeSaleUnitPrice(item.price ?? storeProduct.sellingPrice);
+                        newCartItems.push({
+                            storeProductId: item.storeProductId,
+                            name: item.name,
+                            quantity: item.quantity,
+                            stockUnits: Number(item.stockUnits) || item.quantity,
+                            price: sellingPrice,
+                            pricePending: sellingPrice === null,
+                            currency: item.currency || 'CFA',
+                            packageCode: item.packageCode || '',
+                            packageLabel: item.packageLabel || '',
+                            packageUnits: Number(item.packageUnits) || 1,
+                            lotId: item.lotId || null,
+                            lotLabel: item.lotLabel || '',
+                            purchaseCostSnapshot: Number(item.purchaseCostSnapshot) || 0,
+                            lineDiscountAmount: Number(item.lineDiscountAmount) || 0,
+                            saleSource: SALE_SOURCE_STORE
+                        });
+                    }
+                }
+
+                if (newCartItems.length === 0) {
+                    showSuccessToast("Aucune ligne valide à charger dans le panier.");
+                    return;
+                }
+
+                // Charger le client si dispo
+                if (group.customerId && appData.customers?.[group.customerId]) {
+                    selectedCustomer = appData.customers[group.customerId];
+                } else if (group.customerName) {
+                    selectedCustomer = {
+                        id: group.customerId || null,
+                        fullName: group.customerName,
+                        name: group.customerName,
+                        phone: group.customerPhone || '',
+                        email: group.customerEmail || ''
+                    };
+                }
+                updateCustomerSelectedCard();
+
+                // Charger si boutique, activer la boutique cible
+                if (destination === 'shop' && targetBoutiqueId) {
+                    setActiveBoutiqueId(targetBoutiqueId);
+                }
+
+                cartItems = newCartItems;
+                closeSendToCartModal();
+                currentPage = 'Ventes';
+                updateUI();
+                renderCart();
+                showSuccessToast(`${newCartItems.length} ligne(s) chargée(s) dans le panier — vous pouvez modifier et finaliser.`);
+            }
+
             function getCountableSalesEntries() {
                 return Object.values(appData.salesHistory || {}).filter(sale => {
                     if (isStoreValidationPending(sale)) return false;
@@ -14695,12 +14909,19 @@
                                 </svg>
                                 A payer plus tard
                             </button>
+                            <button type="button" data-store-validation-send="${group.id}"
+                                class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                Envoyer vers panier
+                            </button>
                             <button type="button" data-store-validation-edit="${group.id}"
-                                class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-slate-700 text-white font-semibold hover:bg-slate-800">
+                                class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-slate-600 text-white font-semibold hover:bg-slate-700">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                 </svg>
-                                Modifier
+                                Éditeur lignes
                             </button>
                             <button type="button" data-store-validation-id="${group.id}" data-store-validation-action="cancel"
                                 class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-rose-600 text-white font-semibold hover:bg-rose-700">
@@ -15207,7 +15428,7 @@
                                         </svg>
                                         ${group.hasPendingPrice ? 'Prix requis' : 'Valider'}
                                     </button>
-                                    <button type="button" ${group.hasPendingPrice ? 'disabled' : ''} data-history-action="mark-paylater" data-history-id="${group.id}"
+                                    <button type="button" data-history-action="mark-paylater" data-history-id="${group.id}"
                                         class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-purple-600 text-white font-semibold hover:bg-purple-700">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 11h18M5 7v10a2 2 0 002 2h10a2 2 0 002-2V7" />
@@ -32063,6 +32284,12 @@
                         if (groupId) openStoreValidationEditor(groupId);
                         return;
                     }
+                    const storeValidationSendButton = event.target.closest('[data-store-validation-send]');
+                    if (storeValidationSendButton) {
+                        const groupId = storeValidationSendButton.dataset.storeValidationSend;
+                        if (groupId) openSendToCartModal(groupId);
+                        return;
+                    }
                     const validateButton = event.target.closest('[data-pending-validate]');
                     if (validateButton) {
                         validatePendingSale(validateButton.dataset.pendingValidate);
@@ -34602,6 +34829,34 @@
                 storeValidationEditorModal.addEventListener('click', (event) => {
                     if (event.target === storeValidationEditorModal) {
                         closeStoreValidationEditor();
+                    }
+                });
+            }
+            // --- Send-to-cart modal wiring ---
+            if (closeSendToCartModalBtn) {
+                closeSendToCartModalBtn.addEventListener('click', closeSendToCartModal);
+            }
+            if (sendToCartModalEl) {
+                sendToCartModalEl.addEventListener('click', (event) => {
+                    if (event.target === sendToCartModalEl) closeSendToCartModal();
+                });
+            }
+            if (sendToCartStoreBtn) {
+                sendToCartStoreBtn.addEventListener('click', () => {
+                    sendValidationToCart(sendToCartGroupId, 'store', null);
+                });
+            }
+            if (sendToCartShopBtn) {
+                sendToCartShopBtn.addEventListener('click', () => {
+                    const boutiqueId = sendToCartBoutiqueSelect ? sendToCartBoutiqueSelect.value : '';
+                    if (!boutiqueId) { showErrorToast('Veuillez sélectionner une boutique.'); return; }
+                    sendValidationToCart(sendToCartGroupId, 'shop', boutiqueId);
+                });
+            }
+            if (sendToCartBoutiqueSelect) {
+                sendToCartBoutiqueSelect.addEventListener('change', () => {
+                    if (sendToCartShopBtn) {
+                        sendToCartShopBtn.disabled = !sendToCartBoutiqueSelect.value;
                     }
                 });
             }
