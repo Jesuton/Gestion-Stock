@@ -4568,14 +4568,22 @@
                         <label for="price-packaging-base-unit-label" class="block text-sm font-medium text-gray-700">Unité de base *</label>
                         <div class="suggestion-combobox relative mt-1" data-suggestion-combobox data-suggestions="base-unit">
                             <input type="text" id="price-packaging-base-unit-label" data-suggestion-input autocomplete="off"
-                                class="w-full p-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                                class="w-full p-3 pr-16 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
                                 placeholder="Ex: Pièce, Kg, Litre">
-                            <button type="button" tabindex="-1" data-suggestion-toggle aria-label="Afficher les unités"
-                                class="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 transition hover:text-slate-600">
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                </svg>
-                            </button>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-1">
+                                <button type="button" tabindex="-1" data-suggestion-clear aria-label="Effacer la sélection"
+                                    class="hidden flex items-center justify-center w-7 h-7 rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600">
+                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                                <button type="button" tabindex="-1" data-suggestion-toggle aria-label="Afficher les unités"
+                                    class="flex items-center justify-center w-8 h-8 text-slate-400 transition hover:text-slate-600">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </button>
+                            </div>
                             <div class="suggestion-combobox-dropdown hidden absolute left-0 right-0 top-full z-40 mt-1 max-h-48 overflow-y-auto rounded-xl border border-gray-200 bg-white py-1 shadow-lg"
                                 data-suggestion-dropdown></div>
                         </div>
@@ -16527,52 +16535,72 @@
                 inputId = '',
                 dataField = '',
                 placeholder = '',
-                inputClass = 'w-full rounded-xl border border-gray-200 px-3 py-2 pr-10 text-sm focus:ring-cyan-500 focus:border-cyan-500',
+                inputClass = 'w-full rounded-xl border border-gray-200 px-3 py-2 pr-16 text-sm focus:ring-cyan-500 focus:border-cyan-500',
                 wrapperClass = 'suggestion-combobox relative mt-2'
             } = {}) {
                 const idAttr = inputId ? ` id="${inputId}"` : '';
                 const fieldAttr = dataField ? ` data-packaging-field="${dataField}"` : '';
+                const clearHidden = (value || '').toString().trim() ? '' : 'hidden';
                 return `
                     <div class="${wrapperClass}" data-suggestion-combobox data-suggestions="${suggestionsKey}">
                         <input type="text" value="${escapeHtml(value)}" data-suggestion-input${idAttr}${fieldAttr}
                             autocomplete="off" placeholder="${escapeHtml(placeholder)}"
                             class="${inputClass}" />
-                        <button type="button" tabindex="-1" data-suggestion-toggle aria-label="Afficher les suggestions"
-                            class="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 transition hover:text-slate-600">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </button>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-1">
+                            <button type="button" tabindex="-1" data-suggestion-clear aria-label="Effacer la sélection"
+                                class="${clearHidden} flex items-center justify-center w-7 h-7 rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600">
+                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                            <button type="button" tabindex="-1" data-suggestion-toggle aria-label="Afficher les suggestions"
+                                class="flex items-center justify-center w-8 h-8 text-slate-400 transition hover:text-slate-600">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                        </div>
                         <div class="suggestion-combobox-dropdown hidden absolute left-0 right-0 top-full z-40 mt-1 max-h-48 overflow-y-auto rounded-xl border border-gray-200 bg-white py-1 shadow-lg"
                             data-suggestion-dropdown></div>
                     </div>
                 `;
             }
 
-            function renderSuggestionComboboxDropdown(combobox) {
+            function updateSuggestionComboboxClearState(combobox) {
+                const input = combobox?.querySelector('[data-suggestion-input]');
+                const clearButton = combobox?.querySelector('[data-suggestion-clear]');
+                if (!input || !clearButton) return;
+                clearButton.classList.toggle('hidden', !(input.value || '').toString().trim());
+            }
+
+            function renderSuggestionComboboxDropdown(combobox, { filter = false } = {}) {
                 const input = combobox?.querySelector('[data-suggestion-input]');
                 const dropdown = combobox?.querySelector('[data-suggestion-dropdown]');
                 if (!input || !dropdown) return;
                 const query = normalizeSuggestionKey(input.value);
                 const suggestions = getSuggestionOptions(combobox.dataset.suggestions || '');
-                const filtered = query
+                const filtered = filter && query
                     ? suggestions.filter(item => normalizeSuggestionKey(item).includes(query))
                     : suggestions;
+                const currentValue = (input.value || '').toString().trim();
                 if (!filtered.length) {
                     dropdown.innerHTML = '<p class="px-3 py-2 text-sm text-gray-400">Aucune suggestion</p>';
                     return;
                 }
-                dropdown.innerHTML = filtered.map(item => `
-                    <button type="button" data-suggestion-option="${escapeHtml(item)}"
-                        class="block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-cyan-50 focus:bg-cyan-50 focus:outline-none">
-                        ${escapeHtml(item)}
-                    </button>
-                `).join('');
+                dropdown.innerHTML = filtered.map(item => {
+                    const isSelected = currentValue && item === currentValue;
+                    return `
+                        <button type="button" data-suggestion-option="${escapeHtml(item)}"
+                            class="block w-full px-3 py-2 text-left text-sm ${isSelected ? 'bg-cyan-50 font-semibold text-cyan-700' : 'text-gray-700 hover:bg-cyan-50'} focus:bg-cyan-50 focus:outline-none">
+                            ${escapeHtml(item)}
+                        </button>
+                    `;
+                }).join('');
             }
 
-            function openSuggestionCombobox(combobox) {
+            function openSuggestionCombobox(combobox, { filter = false } = {}) {
                 if (!combobox) return;
-                renderSuggestionComboboxDropdown(combobox);
+                renderSuggestionComboboxDropdown(combobox, { filter });
                 const dropdown = combobox.querySelector('[data-suggestion-dropdown]');
                 if (dropdown) dropdown.classList.remove('hidden');
                 combobox.dataset.open = 'true';
@@ -16597,9 +16625,26 @@
                 root.querySelectorAll('[data-suggestion-combobox]:not([data-suggestion-bound])').forEach(combobox => {
                     combobox.dataset.suggestionBound = 'true';
                     const input = combobox.querySelector('[data-suggestion-input]');
+                    const clearButton = combobox.querySelector('[data-suggestion-clear]');
                     const toggle = combobox.querySelector('[data-suggestion-toggle]');
                     const dropdown = combobox.querySelector('[data-suggestion-dropdown]');
                     if (!input || !dropdown) return;
+
+                    updateSuggestionComboboxClearState(combobox);
+
+                    if (clearButton) {
+                        clearButton.addEventListener('mousedown', (event) => event.preventDefault());
+                        clearButton.addEventListener('click', (event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            input.value = '';
+                            updateSuggestionComboboxClearState(combobox);
+                            input.dispatchEvent(new Event('change', { bubbles: true }));
+                            closeAllSuggestionComboboxes(combobox);
+                            input.focus();
+                            openSuggestionCombobox(combobox, { filter: false });
+                        });
+                    }
 
                     if (toggle) {
                         toggle.addEventListener('mousedown', (event) => event.preventDefault());
@@ -16612,18 +16657,19 @@
                             }
                             closeAllSuggestionComboboxes(combobox);
                             input.focus();
-                            openSuggestionCombobox(combobox);
+                            openSuggestionCombobox(combobox, { filter: false });
                         });
                     }
 
                     input.addEventListener('focus', () => {
                         closeAllSuggestionComboboxes(combobox);
-                        openSuggestionCombobox(combobox);
+                        openSuggestionCombobox(combobox, { filter: false });
                     });
 
                     input.addEventListener('input', () => {
+                        updateSuggestionComboboxClearState(combobox);
                         if (combobox.dataset.open === 'true') {
-                            renderSuggestionComboboxDropdown(combobox);
+                            renderSuggestionComboboxDropdown(combobox, { filter: true });
                         }
                     });
 
@@ -16638,6 +16684,7 @@
                         const option = event.target.closest('[data-suggestion-option]');
                         if (!option) return;
                         input.value = option.dataset.suggestionOption || '';
+                        updateSuggestionComboboxClearState(combobox);
                         input.dispatchEvent(new Event('change', { bubbles: true }));
                         closeSuggestionCombobox(combobox);
                     });
@@ -27798,6 +27845,7 @@
                 }
                 if (pricePackagingBaseUnitLabelInput) {
                     pricePackagingBaseUnitLabelInput.value = getProductBaseUnitLabel(product);
+                    updateSuggestionComboboxClearState(pricePackagingBaseUnitLabelInput.closest('[data-suggestion-combobox]'));
                 }
                 renderPackagingEditorList(pricePackagingsList, getProductPackagings(product), 'price-modal');
                 if (pricePackagingError) pricePackagingError.classList.add('hidden');
