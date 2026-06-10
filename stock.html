@@ -202,6 +202,11 @@
             -webkit-overflow-scrolling: touch;
         }
 
+        .suggestion-combobox-dropdown {
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+        }
+
         .responsive-number {
             min-width: 0;
             max-width: 100%;
@@ -4561,9 +4566,19 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label for="price-packaging-base-unit-label" class="block text-sm font-medium text-gray-700">Unité de base *</label>
-                        <input type="text" id="price-packaging-base-unit-label" list="base-unit-suggestions"
-                            class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
-                            placeholder="Ex: Pièce, Kg, Litre">
+                        <div class="suggestion-combobox relative mt-1" data-suggestion-combobox data-suggestions="base-unit">
+                            <input type="text" id="price-packaging-base-unit-label" data-suggestion-input autocomplete="off"
+                                class="w-full p-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                                placeholder="Ex: Pièce, Kg, Litre">
+                            <button type="button" tabindex="-1" data-suggestion-toggle aria-label="Afficher les unités"
+                                class="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 transition hover:text-slate-600">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                            <div class="suggestion-combobox-dropdown hidden absolute left-0 right-0 top-full z-40 mt-1 max-h-48 overflow-y-auto rounded-xl border border-gray-200 bg-white py-1 shadow-lg"
+                                data-suggestion-dropdown></div>
+                        </div>
                     </div>
                     <div class="flex items-end justify-start md:justify-end">
                         <button type="button" id="price-packaging-add-button"
@@ -16500,6 +16515,135 @@
                     .replace(/[\u0300-\u036f]/g, '');
             }
 
+            function getSuggestionOptions(key = '') {
+                if (key === 'base-unit') return BASE_UNIT_SUGGESTIONS;
+                if (key === 'packaging-label') return PACKAGING_LABEL_SUGGESTIONS;
+                return [];
+            }
+
+            function getSuggestionComboboxMarkup({
+                suggestionsKey,
+                value = '',
+                inputId = '',
+                dataField = '',
+                placeholder = '',
+                inputClass = 'w-full rounded-xl border border-gray-200 px-3 py-2 pr-10 text-sm focus:ring-cyan-500 focus:border-cyan-500',
+                wrapperClass = 'suggestion-combobox relative mt-2'
+            } = {}) {
+                const idAttr = inputId ? ` id="${inputId}"` : '';
+                const fieldAttr = dataField ? ` data-packaging-field="${dataField}"` : '';
+                return `
+                    <div class="${wrapperClass}" data-suggestion-combobox data-suggestions="${suggestionsKey}">
+                        <input type="text" value="${escapeHtml(value)}" data-suggestion-input${idAttr}${fieldAttr}
+                            autocomplete="off" placeholder="${escapeHtml(placeholder)}"
+                            class="${inputClass}" />
+                        <button type="button" tabindex="-1" data-suggestion-toggle aria-label="Afficher les suggestions"
+                            class="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 transition hover:text-slate-600">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="suggestion-combobox-dropdown hidden absolute left-0 right-0 top-full z-40 mt-1 max-h-48 overflow-y-auto rounded-xl border border-gray-200 bg-white py-1 shadow-lg"
+                            data-suggestion-dropdown></div>
+                    </div>
+                `;
+            }
+
+            function renderSuggestionComboboxDropdown(combobox) {
+                const input = combobox?.querySelector('[data-suggestion-input]');
+                const dropdown = combobox?.querySelector('[data-suggestion-dropdown]');
+                if (!input || !dropdown) return;
+                const query = normalizeSuggestionKey(input.value);
+                const suggestions = getSuggestionOptions(combobox.dataset.suggestions || '');
+                const filtered = query
+                    ? suggestions.filter(item => normalizeSuggestionKey(item).includes(query))
+                    : suggestions;
+                if (!filtered.length) {
+                    dropdown.innerHTML = '<p class="px-3 py-2 text-sm text-gray-400">Aucune suggestion</p>';
+                    return;
+                }
+                dropdown.innerHTML = filtered.map(item => `
+                    <button type="button" data-suggestion-option="${escapeHtml(item)}"
+                        class="block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-cyan-50 focus:bg-cyan-50 focus:outline-none">
+                        ${escapeHtml(item)}
+                    </button>
+                `).join('');
+            }
+
+            function openSuggestionCombobox(combobox) {
+                if (!combobox) return;
+                renderSuggestionComboboxDropdown(combobox);
+                const dropdown = combobox.querySelector('[data-suggestion-dropdown]');
+                if (dropdown) dropdown.classList.remove('hidden');
+                combobox.dataset.open = 'true';
+            }
+
+            function closeSuggestionCombobox(combobox) {
+                if (!combobox) return;
+                const dropdown = combobox.querySelector('[data-suggestion-dropdown]');
+                if (dropdown) dropdown.classList.add('hidden');
+                delete combobox.dataset.open;
+            }
+
+            function closeAllSuggestionComboboxes(except = null) {
+                document.querySelectorAll('[data-suggestion-combobox][data-open]').forEach(combobox => {
+                    if (except && combobox === except) return;
+                    closeSuggestionCombobox(combobox);
+                });
+            }
+
+            function bindSuggestionComboboxes(root = document) {
+                if (!root?.querySelectorAll) return;
+                root.querySelectorAll('[data-suggestion-combobox]:not([data-suggestion-bound])').forEach(combobox => {
+                    combobox.dataset.suggestionBound = 'true';
+                    const input = combobox.querySelector('[data-suggestion-input]');
+                    const toggle = combobox.querySelector('[data-suggestion-toggle]');
+                    const dropdown = combobox.querySelector('[data-suggestion-dropdown]');
+                    if (!input || !dropdown) return;
+
+                    if (toggle) {
+                        toggle.addEventListener('mousedown', (event) => event.preventDefault());
+                        toggle.addEventListener('click', (event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            if (combobox.dataset.open === 'true') {
+                                closeSuggestionCombobox(combobox);
+                                return;
+                            }
+                            closeAllSuggestionComboboxes(combobox);
+                            input.focus();
+                            openSuggestionCombobox(combobox);
+                        });
+                    }
+
+                    input.addEventListener('focus', () => {
+                        closeAllSuggestionComboboxes(combobox);
+                        openSuggestionCombobox(combobox);
+                    });
+
+                    input.addEventListener('input', () => {
+                        if (combobox.dataset.open === 'true') {
+                            renderSuggestionComboboxDropdown(combobox);
+                        }
+                    });
+
+                    input.addEventListener('keydown', (event) => {
+                        if (event.key === 'Escape') {
+                            closeSuggestionCombobox(combobox);
+                        }
+                    });
+
+                    dropdown.addEventListener('mousedown', (event) => event.preventDefault());
+                    dropdown.addEventListener('click', (event) => {
+                        const option = event.target.closest('[data-suggestion-option]');
+                        if (!option) return;
+                        input.value = option.dataset.suggestionOption || '';
+                        input.dispatchEvent(new Event('change', { bubbles: true }));
+                        closeSuggestionCombobox(combobox);
+                    });
+                });
+            }
+
             function sanitizePackagingCode(rawValue, fallback = 'PKG') {
                 const normalized = (rawValue || '')
                     .toString()
@@ -27512,8 +27656,12 @@
                             </label>
                             <label class="block">
                                 <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Nom du format</span>
-                                <input type="text" value="${escapeHtml(packaging.label || '')}" data-packaging-field="label" list="packaging-label-suggestions"
-                                    class="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-cyan-500 focus:border-cyan-500" placeholder="Ex: Carton, Douzaine, Lot, Palette" />
+                                ${getSuggestionComboboxMarkup({
+                                    suggestionsKey: 'packaging-label',
+                                    value: packaging.label || '',
+                                    dataField: 'label',
+                                    placeholder: 'Ex: Carton, Douzaine, Lot, Palette'
+                                })}
                             </label>
                             <label class="block">
                                 <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Nom affiche en boutique</span>
@@ -27573,6 +27721,7 @@
                 if (!container) return;
                 const safePackagings = packagings.length ? packagings : [buildPackagingDraft()];
                 container.innerHTML = safePackagings.map(packaging => getPackagingEditorRowHtml(packaging, scope)).join('');
+                bindSuggestionComboboxes(container);
             }
 
             function collectPackagingEditorEntries(container) {
@@ -27657,7 +27806,10 @@
             }
 
             function closePricePackagingModal() {
-                if (pricePackagingModal) pricePackagingModal.classList.add('hidden');
+                if (pricePackagingModal) {
+                    closeAllSuggestionComboboxes();
+                    pricePackagingModal.classList.add('hidden');
+                }
                 activePricePackagingProductId = null;
                 if (pricePackagingError) pricePackagingError.classList.add('hidden');
             }
@@ -34771,6 +34923,12 @@
                 populateShopDirectEntryProductSelect();
                 updateShopDirectEntryFormState();
                 clearShopDirectEntryError();
+            });
+
+            bindSuggestionComboboxes(document);
+            document.addEventListener('click', (event) => {
+                if (event.target.closest('[data-suggestion-combobox]')) return;
+                closeAllSuggestionComboboxes();
             });
 
             // Modals Close
