@@ -249,6 +249,44 @@
             min-width: 0;
         }
 
+        .sales-cart-scroll {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .sales-cart-table {
+            min-width: 1120px;
+        }
+
+        .sales-cart-grid {
+            display: grid;
+            grid-template-columns:
+                minmax(150px, 1.35fr)
+                minmax(108px, 0.95fr)
+                minmax(128px, 1.05fr)
+                minmax(128px, 0.75fr)
+                minmax(92px, 0.7fr)
+                minmax(84px, 0.62fr)
+                minmax(96px, 0.68fr)
+                minmax(92px, 0.58fr);
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .sales-cart-grid > * {
+            min-width: 0;
+        }
+
+        .cart-qty-input {
+            -moz-appearance: textfield;
+        }
+
+        .cart-qty-input::-webkit-outer-spin-button,
+        .cart-qty-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
         @media (max-width: 1279px) {
             .sales-sidebar-tabs {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1039,12 +1077,12 @@
                                     <h1 class="text-lg lg:text-xl font-bold text-gray-900 truncate">Point de Vente</h1>
                                     <p class="text-[11px] md:text-xs text-gray-500 mt-0.5">Choisissez le mode puis ajoutez rapidement vos lignes.</p>
                                 </div>
-                                <div class="flex flex-wrap items-center gap-1.5 flex-shrink-0">
-                                    <span class="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-100 whitespace-nowrap">Stock Boutique</span>
-                                    <div class="flex items-center gap-1.5 px-2.5 h-7 rounded-full bg-white border border-gray-200 min-w-0">
-                                        <span class="text-[10px] font-semibold text-gray-500 whitespace-nowrap">Boutique</span>
+                                <div class="flex flex-wrap items-center justify-end gap-1.5 flex-shrink-0 max-w-full">
+                                    <span class="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-100 whitespace-nowrap shrink-0">Stock Boutique</span>
+                                    <div class="flex items-center gap-1.5 px-2.5 h-7 rounded-full bg-white border border-gray-200 min-w-0 max-w-full">
+                                        <span class="text-[10px] font-semibold text-gray-500 whitespace-nowrap shrink-0">Boutique</span>
                                         <select id="boutique-selector-sales"
-                                            class="bg-transparent text-[10px] font-semibold text-gray-700 focus:outline-none max-w-[120px] truncate">
+                                            class="min-w-0 max-w-[9rem] bg-transparent text-[10px] font-semibold text-gray-700 focus:outline-none truncate">
                                             <option value="">Chargement...</option>
                                         </select>
                                     </div>
@@ -1246,7 +1284,7 @@
                                     <p class="mt-1.5 text-sm font-medium text-gray-500">Aucune ligne</p>
                                     <p class="text-xs text-gray-400">Ajoutez un produit depuis le catalogue ou la saisie facture.</p>
                                 </div>
-                                <div id="cart-items-list" class="hidden mt-3 overflow-hidden rounded-xl border border-gray-200 bg-white"></div>
+                                <div id="cart-items-list" class="sales-cart-scroll hidden mt-3 rounded-xl border border-gray-200 bg-white"></div>
                             </div>
                         </div>
                     </div>
@@ -23280,10 +23318,11 @@
                         : 'Aucun conditionnement';
                     return `
                         <tr class="hover:bg-gray-50" data-price-row="${product.id}">
-                            <td class="px-4 py-3 text-sm font-semibold text-gray-900">
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <span>${product.name || ''}</span>
-                                    ${pricingBadge}
+                            <td class="px-4 py-3">
+                                <div class="space-y-2 min-w-[180px]">
+                                    <input type="text" value="${escapeHtml(product.name || '')}" data-price-field="name"
+                                        class="w-full rounded-lg border border-gray-200 px-2 py-1 text-sm font-semibold text-gray-900 focus:ring-cyan-500 focus:border-cyan-500" />
+                                    ${pricingBadge ? `<div>${pricingBadge}</div>` : ''}
                                 </div>
                             </td>
                             <td class="px-4 py-3">
@@ -23342,6 +23381,7 @@
                 const row = priceTableTbody?.querySelector(`[data-price-row="${productId}"]`);
                 if (!row) return;
 
+                const productName = (row.querySelector('[data-price-field="name"]')?.value || '').trim();
                 const internalCode = normalizeInternalProductCode(row.querySelector('[data-price-field="baseProductCode"]')?.value || '');
                 const baseUnitLabel = (row.querySelector('[data-price-field="baseUnitLabel"]')?.value || DEFAULT_BASE_UNIT_LABEL).trim();
                 const currencyInput = row.querySelector('[data-price-field="currency"]');
@@ -23356,6 +23396,10 @@
                 }
                 const legacyFields = buildLegacyFieldsFromPackagings(packagingValidation.packagings);
 
+                if (!productName) {
+                    showSuccessToast("Le nom du produit est requis.");
+                    return;
+                }
                 if (!baseUnitLabel) {
                     showSuccessToast("Unité de base invalide.");
                     return;
@@ -23383,12 +23427,13 @@
                     }
                 }
 
-                if (!confirm("Confirmer la mise à jour des prix pour ce produit ?")) {
+                if (!confirm("Confirmer la mise à jour du produit et de ses prix ?")) {
                     return;
                 }
 
                 const now = new Date().toISOString();
                 const updates = {};
+                updates[`${dbBasePath}/storeProducts/${productId}/name`] = productName;
                 updates[`${dbBasePath}/storeProducts/${productId}/catalogProductId`] = getProductCatalogId(appData.storeProducts?.[productId]) || productId;
                 updates[`${dbBasePath}/storeProducts/${productId}/internalCode`] = internalCode || '';
                 updates[`${dbBasePath}/storeProducts/${productId}/baseProductCode`] = internalCode || '';
@@ -23413,6 +23458,7 @@
                     const packageType = item.packagingType || item.packageCode || 'detail';
                     const productSnapshot = {
                         ...appData.storeProducts?.[productId],
+                        name: productName,
                         internalCode,
                         baseProductCode: internalCode || '',
                         baseUnitLabel,
@@ -23431,7 +23477,7 @@
                     updates[`${dbBasePath}/shopStock/${item.id}/displayName`] = getPackageDisplayName(productSnapshot, packageType);
                     updates[`${dbBasePath}/shopStock/${item.id}/variantCode`] = getPackageVariantCode(productSnapshot, packageType);
                     updates[`${dbBasePath}/shopStock/${item.id}/name`] = getPackageVariantCode(productSnapshot, packageType);
-                    updates[`${dbBasePath}/shopStock/${item.id}/sourceName`] = appData.storeProducts?.[productId]?.name || '';
+                    updates[`${dbBasePath}/shopStock/${item.id}/sourceName`] = productName;
                     updates[`${dbBasePath}/shopStock/${item.id}/packageCode`] = getPackageRef(productSnapshot, packageType);
                     updates[`${dbBasePath}/shopStock/${item.id}/packageLabel`] = getPackageLabel(packageType, productSnapshot);
                     updates[`${dbBasePath}/shopStock/${item.id}/baseUnitLabel`] = baseUnitLabel;
@@ -29492,6 +29538,21 @@
                 showSuccessToast('Article retiré du panier');
             }
 
+            function getCartQuantityControlHtml(index, quantity) {
+                return `
+                    <div class="flex items-center justify-center gap-0.5">
+                        <button type="button" data-cart-action="decrease" data-index="${index}"
+                            class="inline-flex h-9 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-base font-bold leading-none text-gray-600 hover:bg-gray-50"
+                            aria-label="Diminuer la quantité">−</button>
+                        <input type="number" min="1" step="1" value="${quantity}" data-cart-quantity data-index="${index}"
+                            class="cart-qty-input h-9 w-14 shrink-0 rounded-lg border border-gray-200 px-1 text-sm text-center font-semibold text-gray-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" />
+                        <button type="button" data-cart-action="increase" data-index="${index}"
+                            class="inline-flex h-9 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-base font-bold leading-none text-gray-600 hover:bg-gray-50"
+                            aria-label="Augmenter la quantité">+</button>
+                    </div>
+                `;
+            }
+
             function updateCartQuantity(index, newQty) {
                 const item = cartItems[index];
                 if (!item) return;
@@ -29501,12 +29562,12 @@
                 }
                 const shopProduct = item.shopProductId ? appData.shopStock?.[item.shopProductId] : null;
                 const rawMax = getCartItemMaxSelectableQuantity(item);
-                // Si rawMax vaut 0 (lot non trouvé), utilise la quantité active réconciliée
                 const maxQty = rawMax > 0
                     ? rawMax
                     : (shopProduct ? Math.floor(getShopItemAvailableSaleQuantity(shopProduct) / getCartItemUnitCount(item)) : item.quantity);
                 if (maxQty > 0 && newQty > maxQty) {
                     showSalesErrorMessage(`Stock insuffisant. Disponible: ${maxQty}`);
+                    renderCart();
                     return;
                 }
                 cartItems[index].quantity = newQty;
@@ -29528,7 +29589,6 @@
                     const rawValue = (input.value || '').trim();
 
                     if (!rawValue) {
-                        input.value = item.quantity;
                         return;
                     }
 
@@ -29540,7 +29600,6 @@
 
                     const shopProduct = item.shopProductId ? appData.shopStock?.[item.shopProductId] : null;
                     const rawMax = getCartItemMaxSelectableQuantity(item);
-                    // Si rawMax vaut 0 (lot non trouvé), utilise la quantité active réconciliée
                     const maxQty = rawMax > 0
                         ? rawMax
                         : (shopProduct ? Math.floor(getShopItemAvailableSaleQuantity(shopProduct) / getCartItemUnitCount(item)) : item.quantity);
@@ -29832,56 +29891,55 @@
                         const originalSellingPrice = getCartItemOriginalSellingPrice(item);
                         const hasOriginalSellingPrice = hasUsableSellingPrice(originalSellingPrice);
                         const priceStatusBadge = item.pricePending === true
-                            ? '<span class="text-[11px] font-semibold text-amber-600">Prix à définir</span>'
+                            ? '<span class="inline-flex max-w-full truncate text-[11px] font-semibold text-amber-600">Prix à définir</span>'
                             : item.priceOverridden
-                                ? `<span class="text-[11px] font-semibold text-amber-600">Prix modifié${hasOriginalSellingPrice ? ` · Std ${formatCurrency(originalSellingPrice, item.currency)}` : ''}</span>`
+                                ? `<span class="inline-flex max-w-full truncate text-[11px] font-semibold text-amber-600" title="${hasOriginalSellingPrice ? `Standard ${formatCurrency(originalSellingPrice, item.currency)}` : 'Prix modifié'}">Prix modifié</span>`
                                 : hasOriginalSellingPrice
-                                    ? `<span class="text-[11px] font-semibold text-emerald-600">Std ${formatCurrency(originalSellingPrice, item.currency)}</span>`
-                                    : '<span class="text-[11px] font-semibold text-slate-500">Prix manuel</span>';
+                                    ? `<span class="inline-flex max-w-full truncate text-[11px] font-semibold text-emerald-600" title="Standard ${formatCurrency(originalSellingPrice, item.currency)}">Prix standard</span>`
+                                    : '<span class="inline-flex max-w-full truncate text-[11px] font-semibold text-slate-500">Prix manuel</span>';
                         const resetPriceButton = item.priceOverridden && hasOriginalSellingPrice
                             ? `<button type="button" data-cart-action="reset-price" data-index="${index}" class="text-[11px] font-semibold text-cyan-600 hover:text-cyan-700">Prix standard</button>`
                             : '';
                         return `
                             <div class="border-b border-gray-200 last:border-b-0">
-                                <div class="hidden xl:grid xl:grid-cols-[minmax(0,1fr)_120px_minmax(0,1fr)_64px_96px_96px_110px_86px] xl:items-center xl:gap-2 px-3 py-2.5">
-                                    <div class="min-w-0">
-                                        <p class="truncate text-sm font-semibold text-gray-900">${item.name}</p>
-                                        <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                                            <span class="text-[11px] font-semibold uppercase tracking-wide ${hasProductInternalCode(sourceProduct) ? 'text-slate-400' : 'text-amber-600'}">${internalCodeText}</span>
-                                        </div>
-                                        <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                                <div class="sales-cart-table hidden xl:block">
+                                <div class="sales-cart-grid px-3 py-2.5">
+                                    <div class="min-w-0 space-y-1">
+                                        <p class="truncate text-sm font-semibold text-gray-900" title="${escapeHtml(item.name || '')}">${escapeHtml(item.name || '')}</p>
+                                        <p class="truncate text-[11px] font-semibold uppercase tracking-wide ${hasProductInternalCode(sourceProduct) ? 'text-slate-400' : 'text-amber-600'}">${internalCodeText}</p>
+                                        <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
                                             ${priceStatusBadge}
-                                            ${lineDiscountAmount > 0 ? `<span class="text-[11px] font-semibold text-rose-600">Remise ${formatCurrency(lineDiscountAmount, item.currency)}</span>` : ''}
+                                            ${lineDiscountAmount > 0 ? `<span class="inline-flex max-w-full truncate text-[11px] font-semibold text-rose-600">Remise ${formatCurrency(lineDiscountAmount, item.currency)}</span>` : ''}
                                         </div>
                                     </div>
                                     <select data-cart-lot data-index="${index}"
-                                        class="h-9 w-full rounded-lg border border-gray-200 bg-white px-2 text-sm text-gray-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400">
+                                        class="h-9 w-full min-w-0 rounded-lg border border-gray-200 bg-white px-2 text-sm text-gray-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400">
                                         ${lotOptions}
                                     </select>
                                     <select data-cart-package data-index="${index}"
-                                        class="h-9 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400">
+                                        class="h-9 w-full min-w-0 rounded-lg border border-gray-200 bg-white px-2 text-sm text-gray-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400">
                                         ${packageOptions}
                                     </select>
-                                    <input type="number" min="1" step="1" value="${item.quantity}" data-cart-quantity data-index="${index}"
-                                        class="h-9 w-full rounded-lg border border-gray-200 px-2 text-sm text-center text-gray-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" />
+                                    ${getCartQuantityControlHtml(index, item.quantity)}
                                     <input type="number" min="0" step="0.01" value="${getCartItemPriceInputValue(item)}" data-cart-price data-index="${index}"
-                                        class="h-9 w-full rounded-lg border border-gray-200 px-2 text-sm text-right text-gray-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                                        class="h-9 w-full min-w-0 rounded-lg border border-gray-200 px-2 text-sm text-right text-gray-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
                                         placeholder="${hasOriginalSellingPrice ? formatInputNumber(originalSellingPrice) : 'Prix'}" />
                                     <input type="number" min="0" step="0.01" value="${getCartItemLineDiscountInputValue(item)}" data-cart-discount data-index="${index}"
-                                        class="h-9 w-full rounded-lg border border-gray-200 px-2 text-sm text-right text-rose-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                                        class="h-9 w-full min-w-0 rounded-lg border border-gray-200 px-2 text-sm text-right text-rose-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
                                         placeholder="0" />
                                     <input type="number" min="0" step="0.01" value="${getCartItemLineTotalInputValue(item)}" data-cart-line-total data-index="${index}"
-                                        class="h-9 w-full rounded-lg border border-gray-200 px-2 text-sm text-right font-semibold ${hasLinePrice ? 'text-gray-900' : 'text-amber-600'} focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                                        class="h-9 w-full min-w-0 rounded-lg border border-gray-200 px-2 text-sm text-right font-semibold ${hasLinePrice ? 'text-gray-900' : 'text-amber-600'} focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
                                         placeholder="${hasLinePrice ? formatInputNumber(lineNetTotal) : 'Total'}" />
-                                    <div class="flex items-center justify-end gap-2">
+                                    <div class="flex min-w-0 items-center justify-end gap-1.5">
                                         ${resetPriceButton}
-                                        <button type="button" data-cart-action="remove" data-index="${index}" class="inline-flex h-9 items-center justify-center rounded-lg border border-red-200 px-2.5 text-xs font-semibold text-red-600 hover:bg-red-50">Retirer</button>
+                                        <button type="button" data-cart-action="remove" data-index="${index}" class="inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-red-200 px-2 text-xs font-semibold text-red-600 hover:bg-red-50">Retirer</button>
                                     </div>
+                                </div>
                                 </div>
                                 <div class="xl:hidden px-3 py-3">
                                     <div class="flex items-start justify-between gap-3">
                                         <div class="min-w-0">
-                                            <p class="text-sm font-semibold text-gray-900">${item.name}</p>
+                                            <p class="break-words text-sm font-semibold text-gray-900">${escapeHtml(item.name || '')}</p>
                                             <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
                                                 <span class="text-[11px] font-semibold uppercase tracking-wide ${hasProductInternalCode(sourceProduct) ? 'text-slate-400' : 'text-amber-600'}">${internalCodeText}</span>
                                                 ${priceStatusBadge}
@@ -29906,8 +29964,7 @@
                                         </label>
                                         <label class="block">
                                             <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Qté</span>
-                                            <input type="number" min="1" step="1" value="${item.quantity}" data-cart-quantity data-index="${index}"
-                                                class="mt-1 h-9 w-full rounded-lg border border-gray-200 px-3 text-sm text-center text-gray-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" />
+                                            <div class="mt-1">${getCartQuantityControlHtml(index, item.quantity)}</div>
                                         </label>
                                         <label class="block">
                                             <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Prix</span>
@@ -29934,15 +29991,17 @@
                         `;
                     }).join('');
                     const cartHeaderHtml = `
-                        <div class="hidden xl:grid xl:grid-cols-[minmax(0,1fr)_120px_minmax(0,1fr)_64px_96px_96px_110px_86px] xl:gap-2 border-b border-gray-200 bg-gray-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-                            <span>Produit</span>
-                            <span>Lot</span>
-                            <span>Conditionnement</span>
-                            <span class="text-center">Qté</span>
-                            <span class="text-right">Prix unitaire</span>
-                            <span class="text-right">Remise</span>
-                            <span class="text-right">Total ligne</span>
-                            <span class="text-right">Action</span>
+                        <div class="sales-cart-table hidden xl:block border-b border-gray-200 bg-gray-50">
+                            <div class="sales-cart-grid px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                                <span>Produit</span>
+                                <span>Lot</span>
+                                <span>Conditionnement</span>
+                                <span class="text-center">Qté</span>
+                                <span class="text-right">Prix unit.</span>
+                                <span class="text-right">Remise</span>
+                                <span class="text-right">Total</span>
+                                <span class="text-right">Action</span>
+                            </div>
                         </div>
                     `;
                     cartItemsList.innerHTML = `${cartHeaderHtml}${cartRowsHtml}`;
@@ -32173,14 +32232,20 @@
 
             // Cart event listeners
             if (cartItemsList) {
+                cartItemsList.addEventListener('focusin', (event) => {
+                    const qtyInput = event.target.closest('[data-cart-quantity]');
+                    if (!qtyInput || typeof qtyInput.select !== 'function') return;
+                    requestAnimationFrame(() => qtyInput.select());
+                });
                 cartItemsList.addEventListener('click', (event) => {
                     const actionButton = event.target.closest('[data-cart-action]');
                     if (!actionButton) return;
                     const index = parseInt(actionButton.dataset.index, 10);
                     if (Number.isNaN(index)) return;
                     const action = actionButton.dataset.cartAction;
-                    if (action === 'increase') updateCartQuantity(index, cartItems[index]?.quantity + 1);
-                    if (action === 'decrease') updateCartQuantity(index, cartItems[index]?.quantity - 1);
+                    const currentQty = Number(cartItems[index]?.quantity) || 1;
+                    if (action === 'increase') updateCartQuantity(index, currentQty + 1);
+                    if (action === 'decrease') updateCartQuantity(index, currentQty - 1);
                     if (action === 'remove') removeFromCart(index);
                     if (action === 'reset-price') updateCartItemSellingPrice(index, '');
                 });
@@ -32264,7 +32329,12 @@
                 cartItemsList.addEventListener('focusout', (event) => {
                     const qtyInput = event.target.closest('[data-cart-quantity]');
                     if (qtyInput) {
-                        syncCartQuantitiesFromInputs();
+                        const rawValue = (qtyInput.value || '').trim();
+                        if (!rawValue) {
+                            qtyInput.value = cartItems[parseInt(qtyInput.dataset.index, 10)]?.quantity || 1;
+                        } else {
+                            syncCartQuantitiesFromInputs();
+                        }
                         return;
                     }
                     const lineTotalInput = event.target.closest('[data-cart-line-total]');
