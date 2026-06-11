@@ -4087,8 +4087,8 @@
                                 <label
                                     class="flex items-start justify-between gap-4 p-4 rounded-xl border border-gray-200 hover:border-cyan-200 cursor-pointer">
                                     <div>
-                                        <p class="text-sm font-semibold text-gray-800">Conditionnements à l'entrée magasin</p>
-                                        <p class="text-sm text-gray-500">Saisir les réceptions en cartons, packs, etc. Le stock interne reste en unités de base.</p>
+                                        <p class="text-sm font-semibold text-gray-800">Conditionnements magasin (entrées & sorties)</p>
+                                        <p class="text-sm text-gray-500">Saisir entrées et sorties en cartons, packs, etc. Le stock interne reste en unités de base.</p>
                                     </div>
                                     <input type="checkbox" id="settings-store-entry-packaging"
                                         class="w-5 h-5 text-cyan-500 rounded border-gray-300 focus:ring-cyan-500 shrink-0 mt-0.5">
@@ -5569,7 +5569,9 @@
                             <thead class="bg-white">
                                 <tr>
                                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Produit</th>
+                                    <th id="bulk-exit-packaging-header" class="hidden px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Sortie magasin</th>
                                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Qté</th>
+                                    <th id="bulk-exit-delivery-packaging-header" class="hidden px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Format boutique</th>
                                     <th class="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">Action</th>
                                 </tr>
                             </thead>
@@ -7993,6 +7995,8 @@
             const bulkExitCancelButton = document.getElementById('bulk-exit-cancel-button');
             const bulkExitPreviewButton = document.getElementById('bulk-exit-preview-button');
             const bulkExitConfirmButton = document.getElementById('bulk-exit-confirm-button');
+            const bulkExitPackagingHeader = document.getElementById('bulk-exit-packaging-header');
+            const bulkExitDeliveryPackagingHeader = document.getElementById('bulk-exit-delivery-packaging-header');
             let bulkExitRowSequence = 0;
 
             const openTransferModalButton = document.getElementById('open-transfer-modal-button');
@@ -17184,6 +17188,20 @@
                 return appData.settings?.storeEntryPackagingEnabled === true;
             }
 
+            function getStoreExitPackagings(product) {
+                if (!product) return [];
+                return getProductPackagings(product)
+                    .filter((packaging) => isPackageTypeAvailable(product, packaging.code, 'transfer'))
+                    .sort((a, b) => (Number(b.unitCount) || 1) - (Number(a.unitCount) || 1));
+            }
+
+            function getStoreExitDeliveryPackagings(product) {
+                if (!product) return [];
+                return getProductPackagings(product)
+                    .filter((packaging) => isPackageTypeAvailable(product, packaging.code, 'sell'))
+                    .sort((a, b) => (Number(b.unitCount) || 1) - (Number(a.unitCount) || 1));
+            }
+
             function getStoreEntryPurchasePackagings(product) {
                 if (!product) return [];
                 return getProductPackagings(product)
@@ -21591,6 +21609,7 @@
                         };
                         updateSalesPosModeUI();
                         updateGroupedEntryPackagingUI();
+                        updateBulkExitModalPackagingUI();
                         showSuccessToast('Préférences application mises à jour.');
                     } catch (error) {
                         console.error(error);
@@ -22488,10 +22507,6 @@
                     .sort((a, b) => (a?.name || '').localeCompare(b?.name || ''));
             }
 
-            function getBulkExitFilteredProducts(search = '') {
-                return getBulkExitSelectableProducts().filter(product => matchesStoreProductSearch(product, search));
-            }
-
             function getBulkTransferSelectableProducts() {
                 return getActiveStoreProducts()
                     .filter(product => isProductTransferReady(product))
@@ -22518,9 +22533,174 @@
                 }
             }
 
-            function getBulkExitProductOptionLabel(product) {
+            function getBulkExitProductDisplayLabel(product) {
+                if (!product) return '';
+                const item = getExitProductComboboxItems('').find((entry) => entry.value === product.id);
+                if (item?.displayLabel) return item.displayLabel;
                 const quantity = Math.max(Number(product?.quantityInStore) || 0, 0);
-                return `${product?.name || 'Produit'} · ${getProductInternalCodeText(product)} · Stock: ${quantity}`;
+                return `${product?.name || 'Produit'} · ${getProductInternalCodeText(product)} · Stock ${quantity}`;
+            }
+
+            function getBulkExitProductComboboxItems(search = '') {
+                return getExitProductComboboxItems(search);
+            }
+
+            function closeAllBulkExitComboboxes(exceptRow = null) {
+                if (!bulkExitRowsTbody) return;
+                bulkExitRowsTbody.querySelectorAll('tr[data-bulk-exit-row]').forEach((row) => {
+                    if (row === exceptRow) return;
+                    const dropdown = row.querySelector('[data-bulk-exit-dropdown]');
+                    if (dropdown) dropdown.classList.add('hidden');
+                    row.dataset.bulkExitComboboxOpen = 'false';
+                });
+            }
+
+            function renderBulkExitRowCombobox(row, { openDropdown = false } = {}) {
+                if (!row) return;
+                const searchInput = row.querySelector('[data-bulk-exit-field="search"]');
+                const optionsPanel = row.querySelector('[data-bulk-exit-options]');
+                const emptyState = row.querySelector('[data-bulk-exit-empty]');
+                const dropdown = row.querySelector('[data-bulk-exit-dropdown]');
+                const productSelect = row.querySelector('[data-bulk-exit-field="product"]');
+                if (!searchInput || !optionsPanel || !productSelect) return;
+
+                const query = row.dataset.bulkExitQuery ?? searchInput.value ?? '';
+                const items = getBulkExitProductComboboxItems(query);
+                const selectedValue = productSelect.value || '';
+
+                productSelect.innerHTML = '';
+                const placeholder = document.createElement('option');
+                placeholder.value = '';
+                placeholder.textContent = 'Sélectionnez un produit';
+                productSelect.appendChild(placeholder);
+                items.forEach((item) => {
+                    const option = document.createElement('option');
+                    option.value = item.value;
+                    option.textContent = item.displayLabel || item.title || 'Produit';
+                    productSelect.appendChild(option);
+                });
+                if (selectedValue && items.some((item) => item.value === selectedValue)) {
+                    productSelect.value = selectedValue;
+                }
+
+                optionsPanel.innerHTML = items.map((item) => buildProductComboboxOptionMarkup(item, selectedValue)).join('');
+                optionsPanel.classList.toggle('hidden', items.length === 0);
+                if (emptyState) emptyState.classList.toggle('hidden', items.length > 0);
+
+                if (openDropdown && dropdown) {
+                    dropdown.classList.remove('hidden');
+                    row.dataset.bulkExitComboboxOpen = 'true';
+                }
+            }
+
+            function setBulkExitRowProduct(row, productId, { closeDropdown = true } = {}) {
+                if (!row) return;
+                const productSelect = row.querySelector('[data-bulk-exit-field="product"]');
+                const searchInput = row.querySelector('[data-bulk-exit-field="search"]');
+                const dropdown = row.querySelector('[data-bulk-exit-dropdown]');
+                if (!productSelect || !searchInput) return;
+                productSelect.value = productId || '';
+                row.dataset.bulkExitQuery = '';
+                const product = productId ? getActiveStoreProductById(productId) : null;
+                searchInput.value = product ? getBulkExitProductDisplayLabel(product) : '';
+                renderBulkExitRowCombobox(row);
+                updateBulkExitRowPackagingUI(row);
+                if (closeDropdown && dropdown) {
+                    dropdown.classList.add('hidden');
+                    row.dataset.bulkExitComboboxOpen = 'false';
+                }
+            }
+
+            function updateBulkExitModalPackagingUI() {
+                const enabled = isStoreEntryPackagingEnabled();
+                if (bulkExitPackagingHeader) bulkExitPackagingHeader.classList.toggle('hidden', !enabled);
+                if (bulkExitDeliveryPackagingHeader) bulkExitDeliveryPackagingHeader.classList.toggle('hidden', !enabled);
+                if (!bulkExitRowsTbody) return;
+                bulkExitRowsTbody.querySelectorAll('tr[data-bulk-exit-row]').forEach((row) => {
+                    row.querySelectorAll('[data-bulk-exit-packaging-cell]').forEach((cell) => {
+                        cell.classList.toggle('hidden', !enabled);
+                    });
+                    updateBulkExitRowPackagingUI(row);
+                });
+            }
+
+            function updateBulkExitRowPackagingUI(row) {
+                if (!row) return;
+                const productId = row.querySelector('[data-bulk-exit-field="product"]')?.value || '';
+                const product = productId ? getActiveStoreProductById(productId) : null;
+                const packagingSelect = row.querySelector('[data-bulk-exit-field="packaging"]');
+                const deliverySelect = row.querySelector('[data-bulk-exit-field="delivery-packaging"]');
+                const quantityLabel = row.querySelector('[data-bulk-exit-quantity-label]');
+                const quantityMeta = row.querySelector('[data-bulk-exit-quantity-meta]');
+                const quantityInput = row.querySelector('[data-bulk-exit-field="quantity"]');
+                const enabled = isStoreEntryPackagingEnabled();
+                const packagings = enabled ? getStoreExitPackagings(product) : [];
+                const deliveryPackagings = enabled ? getStoreExitDeliveryPackagings(product) : [];
+                const showPackaging = enabled && !!product && packagings.length > 0;
+
+                if (packagingSelect) {
+                    const previousValue = packagingSelect.value || '';
+                    packagingSelect.innerHTML = '';
+                    if (showPackaging) {
+                        packagings.forEach((packaging) => {
+                            const option = document.createElement('option');
+                            option.value = packaging.code;
+                            option.textContent = `${packaging.label} (${packaging.unitCount} ${getProductBaseUnitLabel(product)})`;
+                            packagingSelect.appendChild(option);
+                        });
+                        const hasPrevious = packagings.some((packaging) => packaging.code === previousValue);
+                        packagingSelect.value = hasPrevious ? previousValue : (packagings[0]?.code || '');
+                    }
+                    packagingSelect.disabled = !showPackaging;
+                }
+
+                if (deliverySelect) {
+                    const previousDelivery = deliverySelect.value || '';
+                    deliverySelect.innerHTML = '<option value="">Identique au magasin</option>';
+                    if (enabled && product && deliveryPackagings.length) {
+                        deliveryPackagings.forEach((packaging) => {
+                            const option = document.createElement('option');
+                            option.value = packaging.code;
+                            option.textContent = `${packaging.label} (${packaging.unitCount} ${getProductBaseUnitLabel(product)})`;
+                            deliverySelect.appendChild(option);
+                        });
+                        const hasPrevious = deliveryPackagings.some((packaging) => packaging.code === previousDelivery);
+                        if (hasPrevious) deliverySelect.value = previousDelivery;
+                    }
+                    deliverySelect.disabled = !(enabled && !!product);
+                }
+
+                const selectedPackaging = showPackaging
+                    ? findPackagingByRef(product, packagingSelect?.value)
+                    : null;
+                if (quantityLabel) {
+                    quantityLabel.textContent = showPackaging
+                        ? `Nombre de ${(selectedPackaging?.label || 'format').toLowerCase()}(s) *`
+                        : 'Quantité *';
+                }
+                const enteredQty = parseInt(quantityInput?.value, 10);
+                if (quantityMeta) {
+                    if (showPackaging && Number.isFinite(enteredQty) && enteredQty > 0) {
+                        const baseQty = resolveStoreEntryBaseQuantity(product, selectedPackaging?.code, enteredQty);
+                        quantityMeta.textContent = `Sortie de ${formatBaseUnits(baseQty, getProductBaseUnitLabel(product))} du stock.`;
+                        quantityMeta.classList.remove('hidden');
+                    } else {
+                        quantityMeta.textContent = '';
+                        quantityMeta.classList.add('hidden');
+                    }
+                }
+            }
+
+            function resolveBulkExitRowBaseQuantity(row, product, enteredQty) {
+                if (!product || !Number.isFinite(enteredQty) || enteredQty <= 0) return 0;
+                if (!isStoreEntryPackagingEnabled()) return enteredQty;
+                const packagingSelect = row.querySelector('[data-bulk-exit-field="packaging"]');
+                const packagingCode = packagingSelect?.value || '';
+                const packagings = getStoreExitPackagings(product);
+                if (packagingCode && packagings.length) {
+                    return resolveStoreEntryBaseQuantity(product, packagingCode, enteredQty);
+                }
+                return enteredQty;
             }
 
             function getBulkTransferProductOptionLabel(product) {
@@ -22554,20 +22734,47 @@
                 if (!bulkExitRowsTbody) return null;
                 const row = document.createElement('tr');
                 row.dataset.bulkExitRow = 'true';
+                row.dataset.bulkExitQuery = '';
+                row.dataset.bulkExitComboboxOpen = 'false';
                 bulkExitRowSequence += 1;
-                const datalistId = `bulk-exit-product-options-${bulkExitRowSequence}`;
+                const packagingHidden = isStoreEntryPackagingEnabled() ? '' : 'hidden';
                 row.innerHTML = `
-                    <td class="px-3 py-3 align-top">
-                        <input type="text" data-bulk-exit-field="search" list="${datalistId}" placeholder="Tapez pour rechercher un produit"
-                            class="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-orange-400 focus:border-orange-400" />
-                        <datalist id="${datalistId}"></datalist>
-                        <select data-bulk-exit-field="product"
-                            class="hidden">
+                    <td class="px-3 py-3 align-top min-w-[240px]">
+                        <div class="relative" data-bulk-exit-combobox>
+                            <div class="flex items-center gap-1">
+                                <input type="text" data-bulk-exit-field="search" autocomplete="off" placeholder="Rechercher un produit..."
+                                    class="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-orange-400 focus:border-orange-400" />
+                                <button type="button" data-bulk-exit-toggle
+                                    class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50"
+                                    aria-label="Afficher les produits">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div data-bulk-exit-dropdown class="product-combobox-dropdown hidden absolute left-0 right-0 z-30 mt-1 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
+                                <div data-bulk-exit-options class="product-combobox-options-panel max-h-56 space-y-1 overflow-y-auto p-2"></div>
+                                <div data-bulk-exit-empty class="hidden px-4 py-5 text-sm text-gray-400">Aucun produit correspondant.</div>
+                            </div>
+                            <select data-bulk-exit-field="product" class="hidden"></select>
+                        </div>
+                    </td>
+                    <td data-bulk-exit-packaging-cell class="${packagingHidden} px-3 py-3 align-top min-w-[170px]">
+                        <select data-bulk-exit-field="packaging"
+                            class="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-orange-400 focus:border-orange-400">
                         </select>
                     </td>
                     <td class="px-3 py-3 align-top">
+                        <label data-bulk-exit-quantity-label class="sr-only">Quantité</label>
                         <input type="number" min="1" step="1" placeholder="0" data-bulk-exit-field="quantity"
                             class="w-28 rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-orange-400 focus:border-orange-400" />
+                        <p data-bulk-exit-quantity-meta class="hidden mt-1 max-w-[180px] text-[11px] leading-4 text-gray-500"></p>
+                    </td>
+                    <td data-bulk-exit-packaging-cell class="${packagingHidden} px-3 py-3 align-top min-w-[170px]">
+                        <select data-bulk-exit-field="delivery-packaging"
+                            class="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-orange-400 focus:border-orange-400">
+                            <option value="">Identique au magasin</option>
+                        </select>
                     </td>
                     <td class="px-3 py-3 align-top text-right">
                         <button type="button" data-bulk-exit-remove
@@ -22577,6 +22784,8 @@
                     </td>
                 `;
                 bulkExitRowsTbody.appendChild(row);
+                renderBulkExitRowCombobox(row);
+                updateBulkExitRowPackagingUI(row);
                 return row;
             }
 
@@ -22610,71 +22819,11 @@
                 return row;
             }
 
-            function refreshBulkExitRowProductOptions(row, { preserveSelection = true } = {}) {
-                if (!row) return;
-                const searchInput = row.querySelector('input[data-bulk-exit-field="search"]');
-                const productSelect = row.querySelector('select[data-bulk-exit-field="product"]');
-                const datalist = row.querySelector('datalist');
-                if (!searchInput || !productSelect) return;
-                const query = (searchInput.value || '').trim();
-                const products = query ? getBulkExitFilteredProducts(query) : getBulkExitSelectableProducts();
-                fillBulkProductSelect(
-                    productSelect,
-                    products,
-                    query ? 'Sélectionnez un produit...' : 'Tapez pour rechercher un produit',
-                    getBulkExitProductOptionLabel
-                );
-                if (datalist) {
-                    datalist.innerHTML = '';
-                    products.forEach((product) => {
-                        const option = document.createElement('option');
-                        option.value = getBulkExitProductOptionLabel(product);
-                        datalist.appendChild(option);
-                    });
-                }
-                resolveBulkExitRowSelection(row, { preserveSelection });
-            }
-
-            function resolveBulkExitRowSelection(row, { preserveSelection = true, syncInputWithSelection = false } = {}) {
-                if (!row) return null;
-                const searchInput = row.querySelector('input[data-bulk-exit-field="search"]');
-                const productSelect = row.querySelector('select[data-bulk-exit-field="product"]');
-                if (!searchInput || !productSelect) return null;
-                const query = (searchInput.value || '').trim();
-                const products = query ? getBulkExitFilteredProducts(query) : getBulkExitSelectableProducts();
-                const normalizedQuery = normalizeString(query);
-                const currentValue = preserveSelection ? (productSelect.value || '') : '';
-                let resolvedValue = '';
-
-                if (normalizedQuery) {
-                    const exactMatches = products.filter((product) => (
-                        normalizeString(getBulkExitProductOptionLabel(product)) === normalizedQuery
-                        || normalizeString(product?.name || '') === normalizedQuery
-                        || normalizeString(getProductInternalCodeText(product)) === normalizedQuery
-                    ));
-                    if (exactMatches.length === 1) {
-                        resolvedValue = exactMatches[0].id;
-                    } else if (products.length === 1) {
-                        resolvedValue = products[0].id;
-                    } else if (currentValue && products.some((product) => product.id === currentValue)) {
-                        resolvedValue = currentValue;
-                    }
-                } else if (currentValue && products.some((product) => product.id === currentValue)) {
-                    resolvedValue = currentValue;
-                }
-
-                productSelect.value = resolvedValue;
-                const product = resolvedValue ? getActiveStoreProductById(resolvedValue) : null;
-                if (syncInputWithSelection && product) {
-                    searchInput.value = getBulkExitProductOptionLabel(product);
-                }
-                return product;
-            }
-
             function refreshBulkExitRowProducts() {
                 if (!bulkExitRowsTbody) return;
-                bulkExitRowsTbody.querySelectorAll('tr[data-bulk-exit-row]').forEach(row => {
-                    refreshBulkExitRowProductOptions(row, { preserveSelection: true });
+                bulkExitRowsTbody.querySelectorAll('tr[data-bulk-exit-row]').forEach((row) => {
+                    renderBulkExitRowCombobox(row);
+                    updateBulkExitRowPackagingUI(row);
                 });
             }
 
@@ -22767,6 +22916,7 @@
                     return;
                 }
                 resetBulkExitModalState();
+                updateBulkExitModalPackagingUI();
                 bulkExitModal.classList.remove('hidden');
             }
 
@@ -22802,30 +22952,22 @@
                     items.forEach(item => {
                         const row = buildBulkExitRow();
                         if (!row) return;
-                        // Pré-remplir la recherche avec le nom du produit pour déclencher la résolution
-                        const searchInput = row.querySelector('input[data-bulk-exit-field="search"]');
-                        const qtyInput    = row.querySelector('input[data-bulk-exit-field="quantity"]');
-                        if (searchInput) searchInput.value = item.name || item.productName || '';
-                        if (qtyInput)    qtyInput.value    = item.quantity || 1;
-                        // Peupler le datalist puis forcer la résolution
-                        refreshBulkExitRowProductOptions(row, { preserveSelection: false });
-                        // Tentative de pré-sélection directe par storeProductId
-                        const productSelect = row.querySelector('select[data-bulk-exit-field="product"]');
-                        if (productSelect && item.storeProductId) {
-                            // Ajouter l'option si absente
-                            if (!productSelect.querySelector(`option[value="${item.storeProductId}"]`)) {
-                                const opt = document.createElement('option');
-                                opt.value = item.storeProductId;
-                                opt.textContent = item.name || item.productName || item.storeProductId;
-                                productSelect.appendChild(opt);
-                            }
-                            productSelect.value = item.storeProductId;
+                        const qtyInput = row.querySelector('input[data-bulk-exit-field="quantity"]');
+                        if (qtyInput) qtyInput.value = item.quantity || 1;
+                        if (item.storeProductId) {
+                            setBulkExitRowProduct(row, item.storeProductId);
+                        } else {
+                            const searchInput = row.querySelector('input[data-bulk-exit-field="search"]');
+                            if (searchInput) searchInput.value = item.name || item.productName || '';
+                            row.dataset.bulkExitQuery = searchInput?.value || '';
+                            renderBulkExitRowCombobox(row);
                         }
                     });
                     // Garantir au moins une ligne vide si aucun item
                     if ((group.items || []).length === 0) ensureBulkExitRows(1);
                 }
 
+                updateBulkExitModalPackagingUI();
                 closeSendToCartModal();
                 bulkExitModal.classList.remove('hidden');
             }
@@ -22855,7 +22997,9 @@
                 return Array.from(bulkExitRowsTbody.querySelectorAll('tr[data-bulk-exit-row]')).map((row, index) => ({
                     row,
                     lineNumber: index + 1,
-                    productId: (resolveBulkExitRowSelection(row, { preserveSelection: true })?.id || row.querySelector('select[data-bulk-exit-field="product"]')?.value || ''),
+                    productId: row.querySelector('select[data-bulk-exit-field="product"]')?.value || '',
+                    packagingCode: row.querySelector('select[data-bulk-exit-field="packaging"]')?.value || '',
+                    deliveryPackagingCode: row.querySelector('select[data-bulk-exit-field="delivery-packaging"]')?.value || '',
                     quantityRaw: row.querySelector('input[data-bulk-exit-field="quantity"]')?.value || ''
                 }));
             }
@@ -22866,89 +23010,113 @@
 
             function buildBulkExitPreview() {
                 clearBulkExitError();
-                const storeId = getActiveStoreId();
-                if (!storeId) {
-                    showBulkExitError('Veuillez créer ou sélectionner un magasin.');
-                    return null;
-                }
-                const rawRows = getBulkExitDraftRows();
-                const rows = rawRows.filter(row => !isBulkExitDraftRowBlank(row));
-                if (!rows.length) {
-                    showBulkExitError('Ajoutez au moins une ligne de sortie.');
-                    return null;
-                }
-                const customerName = (bulkExitCustomerNameInput?.value || '').trim();
-                const customerPhone = (bulkExitCustomerPhoneInput?.value || '').trim();
-                const customerEmail = (bulkExitCustomerEmailInput?.value || '').trim();
-                const deliveryName = (bulkExitDeliveryNameInput?.value || '').trim();
-                const storekeeperName = (bulkExitStorekeeperNameInput?.value || '').trim();
-                if (!customerName) {
-                    showBulkExitError('Renseignez le nom du client pour ce lot.');
-                    return null;
-                }
-                const aggregateByProduct = {};
-                rows.forEach(row => {
-                    const product = getActiveStoreProductById(row.productId);
-                    if (!product) throw new Error(`Ligne ${row.lineNumber}: sélectionnez un produit valide.`);
-                    const quantity = parseNonNegativeInteger(row.quantityRaw, 0);
-                    if (quantity <= 0) throw new Error(`Ligne ${row.lineNumber}: renseignez une quantité supérieure à 0.`);
-                    aggregateByProduct[product.id] = (aggregateByProduct[product.id] || 0) + quantity;
-                });
-
-                Object.entries(aggregateByProduct).forEach(([productId, quantity]) => {
-                    const product = getActiveStoreProductById(productId);
-                    const available = Math.max(Number(product?.quantityInStore) || 0, 0);
-                    if (quantity > available) {
-                        throw new Error(`${product?.name || 'Produit'}: total demandé ${quantity}, stock disponible ${available}.`);
+                try {
+                    const storeId = getActiveStoreId();
+                    if (!storeId) {
+                        showBulkExitError('Veuillez créer ou sélectionner un magasin.');
+                        return null;
                     }
-                });
-
-                const runningStock = {};
-                const previewRows = [];
-                let totalAmount = 0;
-                let hasPendingPrice = false;
-                rows.forEach(row => {
-                    const product = getActiveStoreProductById(row.productId);
-                    const quantity = parseNonNegativeInteger(row.quantityRaw, 0);
-                    const sellingPrice = getStoreSellingPrice(product);
-                    if (!Object.prototype.hasOwnProperty.call(runningStock, product.id)) {
-                        runningStock[product.id] = Math.max(Number(product.quantityInStore) || 0, 0);
+                    const rawRows = getBulkExitDraftRows();
+                    const rows = rawRows.filter(row => !isBulkExitDraftRowBlank(row));
+                    if (!rows.length) {
+                        showBulkExitError('Ajoutez au moins une ligne de sortie.');
+                        return null;
                     }
-                    const stockBefore = runningStock[product.id];
-                    const stockAfter = stockBefore - quantity;
-                    runningStock[product.id] = stockAfter;
-                    const hasLinePrice = Number.isFinite(sellingPrice) && sellingPrice > 0;
-                    const totalLineAmount = hasLinePrice ? sellingPrice * quantity : null;
-                    if (hasLinePrice) {
-                        totalAmount += totalLineAmount;
-                    } else {
-                        hasPendingPrice = true;
+                    const customerName = (bulkExitCustomerNameInput?.value || '').trim();
+                    const customerPhone = (bulkExitCustomerPhoneInput?.value || '').trim();
+                    const customerEmail = (bulkExitCustomerEmailInput?.value || '').trim();
+                    const deliveryName = (bulkExitDeliveryNameInput?.value || '').trim();
+                    const storekeeperName = (bulkExitStorekeeperNameInput?.value || '').trim();
+                    if (!customerName) {
+                        showBulkExitError('Renseignez le nom du client pour ce lot.');
+                        return null;
                     }
-                    previewRows.push({
-                        ...row,
-                        product,
-                        quantity,
-                        sellingPrice: hasLinePrice ? sellingPrice : null,
-                        pricePending: !hasLinePrice,
-                        stockBefore,
-                        stockAfter,
-                        totalAmount: totalLineAmount
+                    const aggregateByProduct = {};
+                    rows.forEach((row) => {
+                        const product = getActiveStoreProductById(row.productId);
+                        if (!product) {
+                            throw new Error(`Ligne ${row.lineNumber}: sélectionnez un produit dans la liste.`);
+                        }
+                        const enteredQty = parseNonNegativeInteger(row.quantityRaw, 0);
+                        if (enteredQty <= 0) {
+                            throw new Error(`Ligne ${row.lineNumber}: renseignez une quantité supérieure à 0.`);
+                        }
+                        const baseQuantity = resolveBulkExitRowBaseQuantity(row, product, enteredQty);
+                        if (baseQuantity <= 0) {
+                            throw new Error(`Ligne ${row.lineNumber}: quantité invalide après conversion.`);
+                        }
+                        aggregateByProduct[product.id] = (aggregateByProduct[product.id] || 0) + baseQuantity;
                     });
-                });
 
-                return {
-                    storeId,
-                    customerName,
-                    customerPhone,
-                    customerEmail,
-                    deliveryName,
-                    storekeeperName,
-                    comment: (bulkExitCommentInput?.value || '').trim(),
-                    rows: previewRows,
-                    totalAmount,
-                    hasPendingPrice,
-                    finalStocks: runningStock
-                };
+                    Object.entries(aggregateByProduct).forEach(([productId, quantity]) => {
+                        const product = getActiveStoreProductById(productId);
+                        const available = Math.max(Number(product?.quantityInStore) || 0, 0);
+                        if (quantity > available) {
+                            throw new Error(`${product?.name || 'Produit'}: total demandé ${quantity}, stock disponible ${available}.`);
+                        }
+                    });
+
+                    const runningStock = {};
+                    const previewRows = [];
+                    let totalAmount = 0;
+                    let hasPendingPrice = false;
+                    rows.forEach((row) => {
+                        const product = getActiveStoreProductById(row.productId);
+                        const enteredQty = parseNonNegativeInteger(row.quantityRaw, 0);
+                        const baseQuantity = resolveBulkExitRowBaseQuantity(row, product, enteredQty);
+                        const packaging = row.packagingCode ? findPackagingByRef(product, row.packagingCode) : null;
+                        const deliveryPackaging = row.deliveryPackagingCode
+                            ? findPackagingByRef(product, row.deliveryPackagingCode)
+                            : packaging;
+                        const sellingPrice = getStoreSellingPrice(product);
+                        if (!Object.prototype.hasOwnProperty.call(runningStock, product.id)) {
+                            runningStock[product.id] = Math.max(Number(product.quantityInStore) || 0, 0);
+                        }
+                        const stockBefore = runningStock[product.id];
+                        const stockAfter = stockBefore - baseQuantity;
+                        runningStock[product.id] = stockAfter;
+                        const hasLinePrice = Number.isFinite(sellingPrice) && sellingPrice > 0;
+                        const totalLineAmount = hasLinePrice ? sellingPrice * baseQuantity : null;
+                        if (hasLinePrice) {
+                            totalAmount += totalLineAmount;
+                        } else {
+                            hasPendingPrice = true;
+                        }
+                        previewRows.push({
+                            ...row,
+                            product,
+                            enteredQty,
+                            quantity: baseQuantity,
+                            packagingCode: packaging?.code || '',
+                            packagingLabel: packaging?.label || '',
+                            packagingQuantity: packaging ? enteredQty : null,
+                            deliveryPackagingCode: deliveryPackaging?.code || '',
+                            deliveryPackagingLabel: deliveryPackaging?.label || '',
+                            sellingPrice: hasLinePrice ? sellingPrice : null,
+                            pricePending: !hasLinePrice,
+                            stockBefore,
+                            stockAfter,
+                            totalAmount: totalLineAmount
+                        });
+                    });
+
+                    return {
+                        storeId,
+                        customerName,
+                        customerPhone,
+                        customerEmail,
+                        deliveryName,
+                        storekeeperName,
+                        comment: (bulkExitCommentInput?.value || '').trim(),
+                        rows: previewRows,
+                        totalAmount,
+                        hasPendingPrice,
+                        finalStocks: runningStock
+                    };
+                } catch (error) {
+                    showBulkExitError(error?.message || "Impossible de préparer le récapitulatif.");
+                    return null;
+                }
             }
 
             function renderBulkExitPreview(preview) {
@@ -22971,13 +23139,20 @@
                     const totalLabel = row.pricePending
                         ? 'Prix à définir'
                         : formatCurrency(row.totalAmount, row.product.currency || 'CFA');
+                    const qtyLabel = row.packagingQuantity && row.packagingLabel
+                        ? `${row.packagingQuantity} ${row.packagingLabel} (${row.quantity} unités)`
+                        : `${row.quantity}`;
+                    const deliveryLabel = row.deliveryPackagingLabel && row.deliveryPackagingCode !== row.packagingCode
+                        ? `<p class="mt-1 text-xs text-gray-500">Format boutique: ${escapeHtml(row.deliveryPackagingLabel)}</p>`
+                        : '';
                     tr.innerHTML = `
                         <td class="px-3 py-3">
-                            <p class="font-semibold text-gray-900">${row.product.name || 'Produit'}</p>
+                            <p class="font-semibold text-gray-900">${escapeHtml(row.product.name || 'Produit')}</p>
                             <p class="mt-1">${codeHtml}</p>
                             <p class="mt-1 text-xs text-gray-500">Ligne ${row.lineNumber}</p>
+                            ${deliveryLabel}
                         </td>
-                        <td class="px-3 py-3 text-right text-gray-700">${row.quantity}</td>
+                        <td class="px-3 py-3 text-right text-gray-700">${escapeHtml(qtyLabel)}</td>
                         <td class="px-3 py-3 text-right text-gray-700">${row.stockAfter}</td>
                         <td class="px-3 py-3 text-right font-semibold ${row.pricePending ? 'text-amber-600' : 'text-gray-900'}">${totalLabel}</td>
                     `;
@@ -23142,7 +23317,17 @@
                         const saleRef = push(ref(db, `${dbBasePath}/salesHistory`));
                         const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
                         const baseComment = preview.comment || 'Sortie groupée';
-                        const movementComment = `Sortie groupée en attente${preview.comment ? ` - ${preview.comment}` : ''}`;
+                        const packagingNote = row.packagingQuantity && row.packagingLabel
+                            ? `${row.packagingQuantity} ${row.packagingLabel} = ${row.quantity} ${getProductBaseUnitLabel(row.product)}`
+                            : '';
+                        const deliveryNote = row.deliveryPackagingLabel && row.deliveryPackagingCode !== row.packagingCode
+                            ? `Format boutique: ${row.deliveryPackagingLabel}`
+                            : '';
+                        const movementComment = [
+                            `Sortie groupée en attente${preview.comment ? ` - ${preview.comment}` : ''}`,
+                            packagingNote,
+                            deliveryNote
+                        ].filter(Boolean).join(' · ');
 
                         updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
                             id: moveKey,
@@ -23157,6 +23342,11 @@
                             deliveryName: preview.deliveryName,
                             storekeeperName: preview.storekeeperName,
                             comment: movementComment,
+                            packagingCode: row.packagingCode || null,
+                            packagingLabel: row.packagingLabel || '',
+                            packagingQuantity: row.packagingQuantity,
+                            deliveryPackagingCode: row.deliveryPackagingCode || null,
+                            deliveryPackagingLabel: row.deliveryPackagingLabel || '',
                             date: { ".sv": "timestamp" },
                             status: EXIT_STATUS_PENDING,
                             userEmail: currentUser.email || '',
@@ -23171,6 +23361,11 @@
                             productName: row.product.name,
                             storeId: preview.storeId,
                             quantity: row.quantity,
+                            packagingCode: row.packagingCode || null,
+                            packagingLabel: row.packagingLabel || '',
+                            packagingQuantity: row.packagingQuantity,
+                            deliveryPackagingCode: row.deliveryPackagingCode || null,
+                            deliveryPackagingLabel: row.deliveryPackagingLabel || '',
                             comment: baseComment,
                             customerName: preview.customerName,
                             customerEmail: preview.customerEmail,
@@ -27817,6 +28012,7 @@
                 updateSalesPosModeUI();
                 syncStoreEntryPackagingSettingsUI();
                 updateGroupedEntryPackagingUI();
+                updateBulkExitModalPackagingUI();
             }
 
             function onCompanyFeatureAccessValue(snapshot) {
@@ -35677,6 +35873,30 @@
             }
             if (bulkExitRowsTbody) {
                 bulkExitRowsTbody.addEventListener('click', (event) => {
+                    const option = event.target.closest('[data-product-option]');
+                    if (option && !option.hasAttribute('disabled')) {
+                        const row = option.closest('tr[data-bulk-exit-row]');
+                        if (row) {
+                            setBulkExitRowProduct(row, option.dataset.productOption);
+                            markBulkExitDraftDirty();
+                        }
+                        return;
+                    }
+                    const toggleButton = event.target.closest('[data-bulk-exit-toggle]');
+                    if (toggleButton) {
+                        const row = toggleButton.closest('tr[data-bulk-exit-row]');
+                        if (!row) return;
+                        const dropdown = row.querySelector('[data-bulk-exit-dropdown]');
+                        const isOpen = row.dataset.bulkExitComboboxOpen === 'true';
+                        closeAllBulkExitComboboxes(isOpen ? row : null);
+                        if (isOpen) {
+                            if (dropdown) dropdown.classList.add('hidden');
+                            row.dataset.bulkExitComboboxOpen = 'false';
+                        } else {
+                            renderBulkExitRowCombobox(row, { openDropdown: true });
+                        }
+                        return;
+                    }
                     const removeButton = event.target.closest('[data-bulk-exit-remove]');
                     if (!removeButton) return;
                     const row = removeButton.closest('tr[data-bulk-exit-row]');
@@ -35686,25 +35906,46 @@
                 });
                 bulkExitRowsTbody.addEventListener('input', (event) => {
                     const row = event.target.closest('tr[data-bulk-exit-row]');
+                    if (!row) return;
                     if (event.target.matches('input[data-bulk-exit-field="search"]')) {
-                        refreshBulkExitRowProductOptions(row, { preserveSelection: true });
+                        const productSelect = row.querySelector('[data-bulk-exit-field="product"]');
+                        const selectedLabel = productSelect?.value
+                            ? getBulkExitProductDisplayLabel(getActiveStoreProductById(productSelect.value))
+                            : '';
+                        if (productSelect?.value && normalizeString(event.target.value) !== normalizeString(selectedLabel)) {
+                            productSelect.value = '';
+                            updateBulkExitRowPackagingUI(row);
+                        }
+                        row.dataset.bulkExitQuery = event.target.value || '';
+                        closeAllBulkExitComboboxes(row);
+                        renderBulkExitRowCombobox(row, { openDropdown: true });
+                    }
+                    if (event.target.matches('input[data-bulk-exit-field="quantity"]')) {
+                        updateBulkExitRowPackagingUI(row);
                     }
                     markBulkExitDraftDirty();
                 });
                 bulkExitRowsTbody.addEventListener('change', (event) => {
                     const row = event.target.closest('tr[data-bulk-exit-row]');
-                    if (event.target.matches('input[data-bulk-exit-field="search"]')) {
-                        refreshBulkExitRowProductOptions(row, { preserveSelection: true });
-                        resolveBulkExitRowSelection(row, { preserveSelection: true, syncInputWithSelection: true });
+                    if (!row) return;
+                    if (event.target.matches('select[data-bulk-exit-field="packaging"], select[data-bulk-exit-field="delivery-packaging"]')) {
+                        updateBulkExitRowPackagingUI(row);
                     }
                     markBulkExitDraftDirty();
                 });
-                bulkExitRowsTbody.addEventListener('focusout', (event) => {
+                bulkExitRowsTbody.addEventListener('focusin', (event) => {
                     if (!event.target.matches('input[data-bulk-exit-field="search"]')) return;
                     const row = event.target.closest('tr[data-bulk-exit-row]');
-                    resolveBulkExitRowSelection(row, { preserveSelection: true, syncInputWithSelection: true });
+                    if (!row) return;
+                    closeAllBulkExitComboboxes(row);
+                    renderBulkExitRowCombobox(row, { openDropdown: true });
                 });
             }
+            document.addEventListener('click', (event) => {
+                if (!bulkExitModal || bulkExitModal.classList.contains('hidden')) return;
+                if (event.target.closest('[data-bulk-exit-combobox]')) return;
+                closeAllBulkExitComboboxes();
+            });
             if (bulkTransferRowsTbody) {
                 bulkTransferRowsTbody.addEventListener('click', (event) => {
                     const removeButton = event.target.closest('[data-bulk-transfer-remove]');
@@ -35732,13 +35973,9 @@
             });
             if (bulkExitPreviewButton) {
                 bulkExitPreviewButton.addEventListener('click', () => {
-                    try {
-                        const preview = buildBulkExitPreview();
-                        if (!preview) return;
-                        renderBulkExitPreview(preview);
-                    } catch (error) {
-                        showBulkExitError(error.message || "Impossible de préparer le récapitulatif.");
-                    }
+                    const preview = buildBulkExitPreview();
+                    if (!preview) return;
+                    renderBulkExitPreview(preview);
                 });
             }
             if (bulkTransferPreviewButton) {
