@@ -5569,9 +5569,8 @@
                             <thead class="bg-white">
                                 <tr>
                                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Produit</th>
-                                    <th id="bulk-exit-packaging-header" class="hidden px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Sortie magasin</th>
+                                    <th id="bulk-exit-packaging-header" class="hidden px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Conditionnement</th>
                                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Qté</th>
-                                    <th id="bulk-exit-delivery-packaging-header" class="hidden px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Format boutique</th>
                                     <th class="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">Action</th>
                                 </tr>
                             </thead>
@@ -7996,7 +7995,6 @@
             const bulkExitPreviewButton = document.getElementById('bulk-exit-preview-button');
             const bulkExitConfirmButton = document.getElementById('bulk-exit-confirm-button');
             const bulkExitPackagingHeader = document.getElementById('bulk-exit-packaging-header');
-            const bulkExitDeliveryPackagingHeader = document.getElementById('bulk-exit-delivery-packaging-header');
             let bulkExitRowSequence = 0;
 
             const openTransferModalButton = document.getElementById('open-transfer-modal-button');
@@ -17195,13 +17193,6 @@
                     .sort((a, b) => (Number(b.unitCount) || 1) - (Number(a.unitCount) || 1));
             }
 
-            function getStoreExitDeliveryPackagings(product) {
-                if (!product) return [];
-                return getProductPackagings(product)
-                    .filter((packaging) => isPackageTypeAvailable(product, packaging.code, 'sell'))
-                    .sort((a, b) => (Number(b.unitCount) || 1) - (Number(a.unitCount) || 1));
-            }
-
             function getStoreEntryPurchasePackagings(product) {
                 if (!product) return [];
                 return getProductPackagings(product)
@@ -22614,7 +22605,6 @@
             function updateBulkExitModalPackagingUI() {
                 const enabled = isStoreEntryPackagingEnabled();
                 if (bulkExitPackagingHeader) bulkExitPackagingHeader.classList.toggle('hidden', !enabled);
-                if (bulkExitDeliveryPackagingHeader) bulkExitDeliveryPackagingHeader.classList.toggle('hidden', !enabled);
                 if (!bulkExitRowsTbody) return;
                 bulkExitRowsTbody.querySelectorAll('tr[data-bulk-exit-row]').forEach((row) => {
                     row.querySelectorAll('[data-bulk-exit-packaging-cell]').forEach((cell) => {
@@ -22629,13 +22619,11 @@
                 const productId = row.querySelector('[data-bulk-exit-field="product"]')?.value || '';
                 const product = productId ? getActiveStoreProductById(productId) : null;
                 const packagingSelect = row.querySelector('[data-bulk-exit-field="packaging"]');
-                const deliverySelect = row.querySelector('[data-bulk-exit-field="delivery-packaging"]');
                 const quantityLabel = row.querySelector('[data-bulk-exit-quantity-label]');
                 const quantityMeta = row.querySelector('[data-bulk-exit-quantity-meta]');
                 const quantityInput = row.querySelector('[data-bulk-exit-field="quantity"]');
                 const enabled = isStoreEntryPackagingEnabled();
                 const packagings = enabled ? getStoreExitPackagings(product) : [];
-                const deliveryPackagings = enabled ? getStoreExitDeliveryPackagings(product) : [];
                 const showPackaging = enabled && !!product && packagings.length > 0;
 
                 if (packagingSelect) {
@@ -22652,22 +22640,6 @@
                         packagingSelect.value = hasPrevious ? previousValue : (packagings[0]?.code || '');
                     }
                     packagingSelect.disabled = !showPackaging;
-                }
-
-                if (deliverySelect) {
-                    const previousDelivery = deliverySelect.value || '';
-                    deliverySelect.innerHTML = '<option value="">Identique au magasin</option>';
-                    if (enabled && product && deliveryPackagings.length) {
-                        deliveryPackagings.forEach((packaging) => {
-                            const option = document.createElement('option');
-                            option.value = packaging.code;
-                            option.textContent = `${packaging.label} (${packaging.unitCount} ${getProductBaseUnitLabel(product)})`;
-                            deliverySelect.appendChild(option);
-                        });
-                        const hasPrevious = deliveryPackagings.some((packaging) => packaging.code === previousDelivery);
-                        if (hasPrevious) deliverySelect.value = previousDelivery;
-                    }
-                    deliverySelect.disabled = !(enabled && !!product);
                 }
 
                 const selectedPackaging = showPackaging
@@ -22691,16 +22663,19 @@
                 }
             }
 
-            function resolveBulkExitRowBaseQuantity(row, product, enteredQty) {
+            function resolveBulkExitBaseQuantity(product, enteredQty, packagingCode = '') {
                 if (!product || !Number.isFinite(enteredQty) || enteredQty <= 0) return 0;
                 if (!isStoreEntryPackagingEnabled()) return enteredQty;
-                const packagingSelect = row.querySelector('[data-bulk-exit-field="packaging"]');
-                const packagingCode = packagingSelect?.value || '';
                 const packagings = getStoreExitPackagings(product);
                 if (packagingCode && packagings.length) {
                     return resolveStoreEntryBaseQuantity(product, packagingCode, enteredQty);
                 }
                 return enteredQty;
+            }
+
+            function resolveBulkExitRowBaseQuantity(domRow, product, enteredQty) {
+                const packagingCode = domRow?.querySelector?.('[data-bulk-exit-field="packaging"]')?.value || '';
+                return resolveBulkExitBaseQuantity(product, enteredQty, packagingCode);
             }
 
             function getBulkTransferProductOptionLabel(product) {
@@ -22769,12 +22744,6 @@
                         <input type="number" min="1" step="1" placeholder="0" data-bulk-exit-field="quantity"
                             class="w-28 rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-orange-400 focus:border-orange-400" />
                         <p data-bulk-exit-quantity-meta class="hidden mt-1 max-w-[180px] text-[11px] leading-4 text-gray-500"></p>
-                    </td>
-                    <td data-bulk-exit-packaging-cell class="${packagingHidden} px-3 py-3 align-top min-w-[170px]">
-                        <select data-bulk-exit-field="delivery-packaging"
-                            class="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-orange-400 focus:border-orange-400">
-                            <option value="">Identique au magasin</option>
-                        </select>
                     </td>
                     <td class="px-3 py-3 align-top text-right">
                         <button type="button" data-bulk-exit-remove
@@ -22999,7 +22968,6 @@
                     lineNumber: index + 1,
                     productId: row.querySelector('select[data-bulk-exit-field="product"]')?.value || '',
                     packagingCode: row.querySelector('select[data-bulk-exit-field="packaging"]')?.value || '',
-                    deliveryPackagingCode: row.querySelector('select[data-bulk-exit-field="delivery-packaging"]')?.value || '',
                     quantityRaw: row.querySelector('input[data-bulk-exit-field="quantity"]')?.value || ''
                 }));
             }
@@ -23041,7 +23009,7 @@
                         if (enteredQty <= 0) {
                             throw new Error(`Ligne ${row.lineNumber}: renseignez une quantité supérieure à 0.`);
                         }
-                        const baseQuantity = resolveBulkExitRowBaseQuantity(row, product, enteredQty);
+                        const baseQuantity = resolveBulkExitBaseQuantity(product, enteredQty, row.packagingCode);
                         if (baseQuantity <= 0) {
                             throw new Error(`Ligne ${row.lineNumber}: quantité invalide après conversion.`);
                         }
@@ -23063,11 +23031,8 @@
                     rows.forEach((row) => {
                         const product = getActiveStoreProductById(row.productId);
                         const enteredQty = parseNonNegativeInteger(row.quantityRaw, 0);
-                        const baseQuantity = resolveBulkExitRowBaseQuantity(row, product, enteredQty);
+                        const baseQuantity = resolveBulkExitBaseQuantity(product, enteredQty, row.packagingCode);
                         const packaging = row.packagingCode ? findPackagingByRef(product, row.packagingCode) : null;
-                        const deliveryPackaging = row.deliveryPackagingCode
-                            ? findPackagingByRef(product, row.deliveryPackagingCode)
-                            : packaging;
                         const sellingPrice = getStoreSellingPrice(product);
                         if (!Object.prototype.hasOwnProperty.call(runningStock, product.id)) {
                             runningStock[product.id] = Math.max(Number(product.quantityInStore) || 0, 0);
@@ -23090,8 +23055,6 @@
                             packagingCode: packaging?.code || '',
                             packagingLabel: packaging?.label || '',
                             packagingQuantity: packaging ? enteredQty : null,
-                            deliveryPackagingCode: deliveryPackaging?.code || '',
-                            deliveryPackagingLabel: deliveryPackaging?.label || '',
                             sellingPrice: hasLinePrice ? sellingPrice : null,
                             pricePending: !hasLinePrice,
                             stockBefore,
@@ -23142,15 +23105,11 @@
                     const qtyLabel = row.packagingQuantity && row.packagingLabel
                         ? `${row.packagingQuantity} ${row.packagingLabel} (${row.quantity} unités)`
                         : `${row.quantity}`;
-                    const deliveryLabel = row.deliveryPackagingLabel && row.deliveryPackagingCode !== row.packagingCode
-                        ? `<p class="mt-1 text-xs text-gray-500">Format boutique: ${escapeHtml(row.deliveryPackagingLabel)}</p>`
-                        : '';
                     tr.innerHTML = `
                         <td class="px-3 py-3">
                             <p class="font-semibold text-gray-900">${escapeHtml(row.product.name || 'Produit')}</p>
                             <p class="mt-1">${codeHtml}</p>
                             <p class="mt-1 text-xs text-gray-500">Ligne ${row.lineNumber}</p>
-                            ${deliveryLabel}
                         </td>
                         <td class="px-3 py-3 text-right text-gray-700">${escapeHtml(qtyLabel)}</td>
                         <td class="px-3 py-3 text-right text-gray-700">${row.stockAfter}</td>
@@ -23320,13 +23279,9 @@
                         const packagingNote = row.packagingQuantity && row.packagingLabel
                             ? `${row.packagingQuantity} ${row.packagingLabel} = ${row.quantity} ${getProductBaseUnitLabel(row.product)}`
                             : '';
-                        const deliveryNote = row.deliveryPackagingLabel && row.deliveryPackagingCode !== row.packagingCode
-                            ? `Format boutique: ${row.deliveryPackagingLabel}`
-                            : '';
                         const movementComment = [
                             `Sortie groupée en attente${preview.comment ? ` - ${preview.comment}` : ''}`,
-                            packagingNote,
-                            deliveryNote
+                            packagingNote
                         ].filter(Boolean).join(' · ');
 
                         updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
@@ -23345,8 +23300,6 @@
                             packagingCode: row.packagingCode || null,
                             packagingLabel: row.packagingLabel || '',
                             packagingQuantity: row.packagingQuantity,
-                            deliveryPackagingCode: row.deliveryPackagingCode || null,
-                            deliveryPackagingLabel: row.deliveryPackagingLabel || '',
                             date: { ".sv": "timestamp" },
                             status: EXIT_STATUS_PENDING,
                             userEmail: currentUser.email || '',
@@ -23364,8 +23317,6 @@
                             packagingCode: row.packagingCode || null,
                             packagingLabel: row.packagingLabel || '',
                             packagingQuantity: row.packagingQuantity,
-                            deliveryPackagingCode: row.deliveryPackagingCode || null,
-                            deliveryPackagingLabel: row.deliveryPackagingLabel || '',
                             comment: baseComment,
                             customerName: preview.customerName,
                             customerEmail: preview.customerEmail,
@@ -35928,7 +35879,7 @@
                 bulkExitRowsTbody.addEventListener('change', (event) => {
                     const row = event.target.closest('tr[data-bulk-exit-row]');
                     if (!row) return;
-                    if (event.target.matches('select[data-bulk-exit-field="packaging"], select[data-bulk-exit-field="delivery-packaging"]')) {
+                    if (event.target.matches('select[data-bulk-exit-field="packaging"]')) {
                         updateBulkExitRowPackagingUI(row);
                     }
                     markBulkExitDraftDirty();
