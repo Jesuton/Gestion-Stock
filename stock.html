@@ -4087,6 +4087,15 @@
                                 <label
                                     class="flex items-start justify-between gap-4 p-4 rounded-xl border border-gray-200 hover:border-cyan-200 cursor-pointer">
                                     <div>
+                                        <p class="text-sm font-semibold text-gray-800">Conditionnements à l'entrée magasin</p>
+                                        <p class="text-sm text-gray-500">Saisir les réceptions en cartons, packs, etc. Le stock interne reste en unités de base.</p>
+                                    </div>
+                                    <input type="checkbox" id="settings-store-entry-packaging"
+                                        class="w-5 h-5 text-cyan-500 rounded border-gray-300 focus:ring-cyan-500 shrink-0 mt-0.5">
+                                </label>
+                                <label
+                                    class="flex items-start justify-between gap-4 p-4 rounded-xl border border-gray-200 hover:border-cyan-200 cursor-pointer">
+                                    <div>
                                         <p class="text-sm font-semibold text-gray-800">Gestion multi-boutiques</p>
                                         <p class="text-sm text-gray-500">Synchroniser plusieurs points de vente.</p>
                                     </div>
@@ -5138,16 +5147,25 @@
                             </div>
                         </div>
 
-                        <div class="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_180px]">
+                        <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_220px]">
                             <div>
                                 <label for="grouped-entry-description" class="block text-sm font-medium text-gray-700">Description</label>
                                 <textarea id="grouped-entry-description" rows="2" placeholder="Description du produit"
                                     class="mt-1 w-full rounded-xl border border-gray-300 p-3 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400"></textarea>
                             </div>
-                            <div>
-                                <label for="grouped-entry-quantity" class="block text-sm font-medium text-gray-700">Quantité à ajouter *</label>
-                                <input type="number" id="grouped-entry-quantity" min="1" placeholder="0"
-                                    class="mt-1 w-full rounded-xl border border-gray-300 px-4 py-3 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400">
+                            <div class="space-y-3">
+                                <div id="grouped-entry-packaging-row" class="hidden">
+                                    <label for="grouped-entry-packaging-select" class="block text-sm font-medium text-gray-700">Conditionnement</label>
+                                    <select id="grouped-entry-packaging-select"
+                                        class="mt-1 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400">
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="grouped-entry-quantity" id="grouped-entry-quantity-label" class="block text-sm font-medium text-gray-700">Quantité à ajouter *</label>
+                                    <input type="number" id="grouped-entry-quantity" min="1" placeholder="0"
+                                        class="mt-1 w-full rounded-xl border border-gray-300 px-4 py-3 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400">
+                                    <p id="grouped-entry-quantity-meta" class="hidden mt-1 text-xs text-gray-500"></p>
+                                </div>
                             </div>
                         </div>
 
@@ -7355,6 +7373,7 @@
             const salesLineBuilderPane = document.getElementById('sales-line-builder-pane');
             const salesInvoiceLinesCount = document.getElementById('sales-invoice-lines-count');
             const settingsSalesPosModeSelect = document.getElementById('settings-sales-pos-mode');
+            const settingsStoreEntryPackagingCheckbox = document.getElementById('settings-store-entry-packaging');
             const salesQuickProductCombobox = document.getElementById('sales-quick-product-combobox');
             const salesQuickProductSearchInput = document.getElementById('sales-quick-product-search');
             const salesQuickProductToggleButton = document.getElementById('sales-quick-product-toggle');
@@ -7852,6 +7871,10 @@
             const groupedEntryNewCodeInput = document.getElementById('grouped-entry-new-code');
             const groupedEntryDescriptionInput = document.getElementById('grouped-entry-description');
             const groupedEntryQuantityInput = document.getElementById('grouped-entry-quantity');
+            const groupedEntryQuantityLabel = document.getElementById('grouped-entry-quantity-label');
+            const groupedEntryQuantityMeta = document.getElementById('grouped-entry-quantity-meta');
+            const groupedEntryPackagingRow = document.getElementById('grouped-entry-packaging-row');
+            const groupedEntryPackagingSelect = document.getElementById('grouped-entry-packaging-select');
             const groupedEntryExpirationDateInput = document.getElementById('grouped-entry-expiration-date');
             const groupedEntryAddLineButton = document.getElementById('grouped-entry-add-line-button');
             const groupedEntryResetLineButton = document.getElementById('grouped-entry-reset-line-button');
@@ -11895,6 +11918,7 @@
                 if (settingsSalesPosModeSelect) {
                     settingsSalesPosModeSelect.value = normalizeSalesPosModeSetting(appData.settings?.salesPosMode);
                 }
+                syncStoreEntryPackagingSettingsUI();
             }
 
             function getCustomerOutstandingBalance(customer) {
@@ -16485,6 +16509,11 @@
                 if (settingsTabsWrapper) settingsTabsWrapper.classList.toggle('hidden', !canAccessSettings);
                 if (settingsAdminBadge) settingsAdminBadge.textContent = `Rôle : ${canAccessSettings ? 'Admin' : 'Accès limité'}`;
                 if (discountApprovalSettingsSection) discountApprovalSettingsSection.classList.toggle('hidden', !isAdmin);
+                if (settingsStoreEntryPackagingCheckbox) {
+                    const packagingSettingLabel = settingsStoreEntryPackagingCheckbox.closest('label');
+                    if (packagingSettingLabel) packagingSettingLabel.classList.toggle('hidden', !isAdmin);
+                    settingsStoreEntryPackagingCheckbox.disabled = !isAdmin;
+                }
                 updateStoreManagementState();
                 updateBoutiqueManagementState();
             }
@@ -17149,6 +17178,89 @@
 
             function getPackageUnits(product, packageRef = null) {
                 return findPackagingByRef(product, packageRef)?.unitCount || 1;
+            }
+
+            function isStoreEntryPackagingEnabled() {
+                return appData.settings?.storeEntryPackagingEnabled === true;
+            }
+
+            function getStoreEntryPurchasePackagings(product) {
+                if (!product) return [];
+                return getProductPackagings(product)
+                    .filter((packaging) => isPackageTypeAvailable(product, packaging.code, 'purchase'))
+                    .sort((a, b) => (Number(b.unitCount) || 1) - (Number(a.unitCount) || 1));
+            }
+
+            function getGroupedEntryCurrentProduct() {
+                if (groupedEntryMode === 'new') return null;
+                const productId = groupedEntryProductSelect?.value || '';
+                return productId ? getEntryProductById(productId) : null;
+            }
+
+            function resolveStoreEntryBaseQuantity(product, packagingCode, packagingQty) {
+                const safeQty = parseInt(packagingQty, 10);
+                if (!product || !Number.isFinite(safeQty) || safeQty <= 0) return 0;
+                const unitsPerPackage = Math.max(getPackageUnits(product, packagingCode), 1);
+                return safeQty * unitsPerPackage;
+            }
+
+            function syncStoreEntryPackagingSettingsUI() {
+                if (settingsStoreEntryPackagingCheckbox) {
+                    settingsStoreEntryPackagingCheckbox.checked = isStoreEntryPackagingEnabled();
+                }
+            }
+
+            function updateGroupedEntryPackagingUI() {
+                const featureEnabled = isStoreEntryPackagingEnabled();
+                const product = getGroupedEntryCurrentProduct();
+                const packagings = featureEnabled ? getStoreEntryPurchasePackagings(product) : [];
+                const showPackaging = featureEnabled && groupedEntryMode === 'existing' && !!product && packagings.length > 0;
+
+                if (groupedEntryPackagingRow) {
+                    groupedEntryPackagingRow.classList.toggle('hidden', !showPackaging);
+                }
+
+                if (groupedEntryPackagingSelect) {
+                    const previousValue = groupedEntryPackagingSelect.value || '';
+                    groupedEntryPackagingSelect.innerHTML = '';
+                    if (showPackaging) {
+                        packagings.forEach((packaging) => {
+                            const option = document.createElement('option');
+                            option.value = packaging.code;
+                            option.textContent = `${packaging.label} (${packaging.unitCount} ${getProductBaseUnitLabel(product)})`;
+                            groupedEntryPackagingSelect.appendChild(option);
+                        });
+                        const hasPrevious = packagings.some((packaging) => packaging.code === previousValue);
+                        groupedEntryPackagingSelect.value = hasPrevious
+                            ? previousValue
+                            : (packagings[0]?.code || '');
+                    }
+                }
+
+                const selectedPackaging = showPackaging
+                    ? findPackagingByRef(product, groupedEntryPackagingSelect?.value)
+                    : null;
+                const packagingLabel = (selectedPackaging?.label || 'conditionnement').toLowerCase();
+                if (groupedEntryQuantityLabel) {
+                    groupedEntryQuantityLabel.textContent = showPackaging
+                        ? `Nombre de ${packagingLabel}(s) *`
+                        : 'Quantité à ajouter *';
+                }
+
+                const packagingQty = parseInt(groupedEntryQuantityInput?.value, 10);
+                if (groupedEntryQuantityMeta) {
+                    if (showPackaging && Number.isFinite(packagingQty) && packagingQty > 0) {
+                        const baseQty = resolveStoreEntryBaseQuantity(product, selectedPackaging?.code, packagingQty);
+                        groupedEntryQuantityMeta.textContent = `Équivaut à ${formatBaseUnits(baseQty, getProductBaseUnitLabel(product))} en stock magasin.`;
+                        groupedEntryQuantityMeta.classList.remove('hidden');
+                    } else if (featureEnabled && groupedEntryMode === 'existing' && product) {
+                        groupedEntryQuantityMeta.textContent = 'Saisie en unités de base pour ce produit.';
+                        groupedEntryQuantityMeta.classList.toggle('hidden', !!showPackaging);
+                    } else {
+                        groupedEntryQuantityMeta.textContent = '';
+                        groupedEntryQuantityMeta.classList.add('hidden');
+                    }
+                }
             }
 
             function getPackageLabel(packageRef, product = null) {
@@ -21466,11 +21578,20 @@
                         return;
                     }
                     const nextPosMode = normalizeSalesPosModeSetting(settingsSalesPosModeSelect?.value);
+                    const nextStoreEntryPackaging = settingsStoreEntryPackagingCheckbox?.checked === true;
                     try {
-                        await update(ref(db, `${dbBasePath}/settings`), { salesPosMode: nextPosMode });
-                        appData.settings = { ...(appData.settings || {}), salesPosMode: nextPosMode };
+                        await update(ref(db, `${dbBasePath}/settings`), {
+                            salesPosMode: nextPosMode,
+                            storeEntryPackagingEnabled: nextStoreEntryPackaging
+                        });
+                        appData.settings = {
+                            ...(appData.settings || {}),
+                            salesPosMode: nextPosMode,
+                            storeEntryPackagingEnabled: nextStoreEntryPackaging
+                        };
                         updateSalesPosModeUI();
-                        showSuccessToast('Préférences du point de vente mises à jour.');
+                        updateGroupedEntryPackagingUI();
+                        showSuccessToast('Préférences application mises à jour.');
                     } catch (error) {
                         console.error(error);
                         showSuccessToast("Impossible de sauvegarder le mode du point de vente.");
@@ -21746,6 +21867,9 @@
                     newProductName: '',
                     newProductCode: '',
                     quantity: '',
+                    packagingCode: '',
+                    packagingLabel: '',
+                    packagingQuantity: '',
                     description: '',
                     expirationDate: ''
                 };
@@ -21786,6 +21910,7 @@
                 } else {
                     groupedEntryProductStock.textContent = `${stockValue}`;
                 }
+                updateGroupedEntryPackagingUI();
             }
 
             function setGroupedEntryTabStyles(activeButton, inactiveButton) {
@@ -21827,6 +21952,7 @@
                         groupedEntryNewNameInput.focus();
                     }
                 }
+                updateGroupedEntryPackagingUI();
             }
 
             function getGroupedEntryProductStockLabel(product) {
@@ -21877,6 +22003,7 @@
                 }
                 refreshGroupedEntryProductSelect();
                 updateGroupedEntryProductInfo(preserveProductId ? getEntryProductById(preserveProductId) : null);
+                updateGroupedEntryPackagingUI();
             }
 
             function getGroupedEntryDisplayName(line) {
@@ -21898,10 +22025,10 @@
             }
 
             function getGroupedEntryDraftPayload() {
-                const quantity = parseInt(groupedEntryQuantityInput?.value, 10);
+                const enteredQuantity = parseInt(groupedEntryQuantityInput?.value, 10);
                 const description = groupedEntryDescriptionInput?.value?.trim() || '';
                 const expirationDate = groupedEntryExpirationDateInput?.value || '';
-                if (!Number.isFinite(quantity) || quantity <= 0) {
+                if (!Number.isFinite(enteredQuantity) || enteredQuantity <= 0) {
                     throw new Error('Veuillez renseigner une quantité supérieure à 0.');
                 }
 
@@ -21920,7 +22047,10 @@
                         productId: '',
                         newProductName,
                         newProductCode,
-                        quantity: `${quantity}`,
+                        quantity: `${enteredQuantity}`,
+                        packagingCode: '',
+                        packagingLabel: '',
+                        packagingQuantity: '',
                         description,
                         expirationDate
                     };
@@ -21935,13 +22065,29 @@
                 if (!product) {
                     throw new Error('Produit introuvable.');
                 }
+
+                const packagings = isStoreEntryPackagingEnabled() ? getStoreEntryPurchasePackagings(product) : [];
+                const packagingCode = packagings.length ? (groupedEntryPackagingSelect?.value || packagings[0]?.code || '') : '';
+                const selectedPackaging = packagingCode ? findPackagingByRef(product, packagingCode) : null;
+                const usePackagingInput = isStoreEntryPackagingEnabled() && !!selectedPackaging && packagings.length > 0;
+                const baseQuantity = usePackagingInput
+                    ? resolveStoreEntryBaseQuantity(product, packagingCode, enteredQuantity)
+                    : enteredQuantity;
+
+                if (!Number.isFinite(baseQuantity) || baseQuantity <= 0) {
+                    throw new Error('La quantité convertie doit être supérieure à 0.');
+                }
+
                 return {
                     id: groupedEntryEditingLineId || createGroupedEntryLineDraft().id,
                     mode: 'existing',
                     productId,
                     newProductName: '',
                     newProductCode: '',
-                    quantity: `${quantity}`,
+                    quantity: `${baseQuantity}`,
+                    packagingCode: usePackagingInput ? packagingCode : '',
+                    packagingLabel: usePackagingInput ? (selectedPackaging?.label || '') : '',
+                    packagingQuantity: usePackagingInput ? `${enteredQuantity}` : '',
                     description,
                     expirationDate
                 };
@@ -21965,9 +22111,15 @@
                 if (groupedEntryNewNameInput) groupedEntryNewNameInput.value = line.newProductName || '';
                 if (groupedEntryNewCodeInput) groupedEntryNewCodeInput.value = line.newProductCode || '';
                 if (groupedEntryDescriptionInput) groupedEntryDescriptionInput.value = line.description || '';
-                if (groupedEntryQuantityInput) groupedEntryQuantityInput.value = line.quantity || '';
+                if (groupedEntryPackagingSelect && line.packagingCode) {
+                    groupedEntryPackagingSelect.value = line.packagingCode;
+                }
+                if (groupedEntryQuantityInput) {
+                    groupedEntryQuantityInput.value = line.packagingQuantity || line.quantity || '';
+                }
                 if (groupedEntryExpirationDateInput) groupedEntryExpirationDateInput.value = line.expirationDate || '';
                 updateGroupedEntryProductInfo(line.productId ? getEntryProductById(line.productId) : null);
+                updateGroupedEntryPackagingUI();
                 if (groupedEntryAddLineButton) groupedEntryAddLineButton.textContent = 'Mettre à jour la ligne';
             }
 
@@ -21987,6 +22139,9 @@
                         const codeLabel = isNewLine
                             ? (line.newProductCode || 'Code à définir')
                             : (product ? getProductInternalCodeText(product) : 'Produit');
+                        const quantityLabel = line.packagingQuantity && line.packagingLabel
+                            ? `${line.packagingQuantity} ${line.packagingLabel} (${line.quantity} unités)`
+                            : `${line.quantity || '0'}`;
 
                         return `
                             <article data-grouped-entry-row-id="${escapeShopDocumentValue(line.id)}" class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -22015,7 +22170,7 @@
                                 <div class="mt-4 grid grid-cols-1 gap-3 text-sm text-gray-600 md:grid-cols-3">
                                     <div class="rounded-xl border border-gray-200 bg-gray-50 px-3 py-3">
                                         <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Quantité</p>
-                                        <p class="mt-1 font-semibold text-gray-900">${escapeShopDocumentValue(line.quantity || '0')}</p>
+                                        <p class="mt-1 font-semibold text-gray-900">${escapeShopDocumentValue(quantityLabel)}</p>
                                     </div>
                                     <div class="rounded-xl border border-gray-200 bg-gray-50 px-3 py-3">
                                         <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Date d'expiration</p>
@@ -22064,6 +22219,7 @@
                     renderProductCombobox('groupedEntry');
                     updateGroupedEntryProductInfo(product);
                 }
+                updateGroupedEntryPackagingUI();
                 groupedEntryModal.classList.remove('hidden');
                 groupedEntryModal.classList.add('flex');
             }
@@ -27659,6 +27815,8 @@
                     tzSelect.value = appData.settings.timezone;
                 }
                 updateSalesPosModeUI();
+                syncStoreEntryPackagingSettingsUI();
+                updateGroupedEntryPackagingUI();
             }
 
             function onCompanyFeatureAccessValue(snapshot) {
@@ -34369,12 +34527,19 @@
                         }
                     }
 
-                    const purchaseCost = getPackagePurchaseCost(product, getPrimaryPackaging(product)?.code || null);
+                    const packagingCode = (line.packagingCode || '').trim();
+                    const packagingQuantity = parseInt(line.packagingQuantity, 10);
+                    const hasPackagingEntry = packagingCode && Number.isFinite(packagingQuantity) && packagingQuantity > 0;
+                    const costPackageRef = hasPackagingEntry
+                        ? packagingCode
+                        : (getPrimaryPackaging(product)?.code || null);
+                    const purchaseCost = getPackagePurchaseCost(product, costPackageRef);
                     if (!isNewModeLine && !isProductPricingComplete(product)) {
                         validationErrors.push(`Ligne ${lineNumber}: prix non définis pour "${product.name || 'ce produit'}".`);
                         continue;
                     }
                     const safeUnitCost = Number.isFinite(purchaseCost) ? purchaseCost : 0;
+                    const invoiceQuantity = hasPackagingEntry ? packagingQuantity : qty;
 
                     const isUnassigned = product.storeId === UNASSIGNED_STORE_ID;
                     const currentStock = Number(product.quantityInStore) || 0;
@@ -34418,7 +34583,10 @@
                     }
 
                     const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
-                    const movementComment = [reference, globalComment].filter(Boolean).join(' · ') || 'Entrée groupée';
+                    const packagingNote = hasPackagingEntry
+                        ? `${packagingQuantity} ${line.packagingLabel || getPackageLabel(packagingCode, product)} = ${qty} ${getProductBaseUnitLabel(product)}`
+                        : '';
+                    const movementComment = [reference, globalComment, packagingNote].filter(Boolean).join(' · ') || 'Entrée groupée';
                     updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
                         id: moveKey,
                         productId: product.id,
@@ -34431,6 +34599,9 @@
                         deliveryName,
                         storekeeperName,
                         comment: movementComment,
+                        packagingCode: hasPackagingEntry ? packagingCode : null,
+                        packagingLabel: hasPackagingEntry ? (line.packagingLabel || getPackageLabel(packagingCode, product)) : '',
+                        packagingQuantity: hasPackagingEntry ? packagingQuantity : null,
                         supplierId: supplier.id,
                         supplierName: supplier.name || '',
                         expirationDate: expirationDate || null,
@@ -34446,7 +34617,7 @@
                     const rawRate = Number(getSupplierConversionRate(supplier));
                     const conversionRate = Number.isFinite(rawRate) && rawRate > 0 ? rawRate : 1;
                     const unitCost = safeUnitCost;
-                    const totalProduct = roundAmount(unitCost * qty);
+                    const totalProduct = roundAmount(unitCost * invoiceQuantity);
                     let totalSupplier = totalProduct;
                     let baseTotal = totalProduct;
                     if (supplierCurrency !== DEFAULT_SUPPLIER_CURRENCY) {
@@ -34466,7 +34637,7 @@
                         supplierName: supplier.name || '',
                         productId: product.id,
                         productName: product.name || '',
-                        quantity: qty,
+                        quantity: invoiceQuantity,
                         unitCost,
                         productCurrency,
                         currency: supplierCurrency,
@@ -34479,6 +34650,10 @@
                         deliveryName,
                         storekeeperName,
                         storeId,
+                        packagingCode: hasPackagingEntry ? packagingCode : null,
+                        packagingLabel: hasPackagingEntry ? (line.packagingLabel || getPackageLabel(packagingCode, product)) : '',
+                        packagingQuantity: hasPackagingEntry ? packagingQuantity : null,
+                        baseQuantity: qty,
                         date: { ".sv": "timestamp" },
                         createdAt: now,
                         source: 'grouped_entry',
@@ -34491,6 +34666,9 @@
                         productId: product.id,
                         productName: product.name || '',
                         quantity: qty,
+                        packagingCode: hasPackagingEntry ? packagingCode : '',
+                        packagingLabel: hasPackagingEntry ? (line.packagingLabel || getPackageLabel(packagingCode, product)) : '',
+                        packagingQuantity: hasPackagingEntry ? packagingQuantity : null,
                         oldStock: baseStock,
                         newStock,
                         description,
@@ -35197,6 +35375,12 @@
                     groupedEntryDescriptionInput.value = product.description || '';
                 }
             });
+            if (groupedEntryPackagingSelect) {
+                groupedEntryPackagingSelect.addEventListener('change', updateGroupedEntryPackagingUI);
+            }
+            if (groupedEntryQuantityInput) {
+                groupedEntryQuantityInput.addEventListener('input', updateGroupedEntryPackagingUI);
+            }
             if (groupedEntryAddLineButton) groupedEntryAddLineButton.addEventListener('click', () => {
                 try {
                     setGroupedEntryError('');
