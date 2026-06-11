@@ -4800,6 +4800,55 @@
         <option value="Personnalisé"></option>
     </datalist>
 
+    <div id="store-entry-correction-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 m-4">
+            <div class="flex justify-between items-start gap-4 mb-4">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">Corriger une entrée magasin</h2>
+                    <p id="store-entry-correction-subtitle" class="text-sm text-gray-500 mt-1">—</p>
+                </div>
+                <button type="button" id="close-store-entry-correction-modal-button" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div id="store-entry-correction-summary" class="rounded-xl border border-amber-100 bg-amber-50/70 p-4 text-sm text-gray-700 space-y-1">
+                <p><span class="font-semibold">Quantité enregistrée :</span> <span id="store-entry-correction-original-qty">—</span></p>
+                <p><span class="font-semibold">Stock après entrée :</span> <span id="store-entry-correction-stock-after">—</span></p>
+            </div>
+            <p class="mt-3 text-xs text-gray-500">L'entrée d'origine n'est jamais supprimée. Une ligne de correction est ajoutée dans l'historique.</p>
+            <div class="mt-4 space-y-4">
+                <div>
+                    <label for="store-entry-correction-mode" class="block text-sm font-medium text-gray-700">Action *</label>
+                    <select id="store-entry-correction-mode"
+                        class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400">
+                        <option value="cancel">Annuler complètement cette entrée</option>
+                        <option value="adjust">Corriger la quantité</option>
+                    </select>
+                </div>
+                <div id="store-entry-correction-new-qty-row" class="hidden">
+                    <label for="store-entry-correction-new-qty" class="block text-sm font-medium text-gray-700">Nouvelle quantité correcte *</label>
+                    <input type="number" id="store-entry-correction-new-qty" min="0" step="1"
+                        class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400" />
+                </div>
+                <div>
+                    <label for="store-entry-correction-reason" class="block text-sm font-medium text-gray-700">Motif *</label>
+                    <textarea id="store-entry-correction-reason" rows="3" placeholder="Ex: mauvaise quantité saisie, mauvais produit..."
+                        class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400"></textarea>
+                </div>
+            </div>
+            <p id="store-entry-correction-invoice-hint" class="mt-3 text-xs text-amber-700 hidden">Une facture fournisseur peut être liée à cette entrée : vérifiez aussi la dette fournisseur si besoin.</p>
+            <p id="store-entry-correction-error" class="mt-3 text-sm text-red-500 hidden"></p>
+            <div class="mt-5 flex justify-end gap-3">
+                <button type="button" id="store-entry-correction-cancel-button"
+                    class="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50">Fermer</button>
+                <button type="button" id="store-entry-correction-submit-button"
+                    class="px-4 py-2 rounded-lg bg-amber-500 text-white text-sm font-semibold hover:bg-amber-600">Enregistrer la correction</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 
       MODAL "ENREGISTRER UNE ENTRÉE"
     -->
@@ -6880,7 +6929,14 @@
             const db = getDatabase(app);
 
             let isAuthenticated = false;
-            let currentPage = 'Tableau de bord';
+            const LAST_PAGE_STORAGE_KEY = 'stockpilot:last-page';
+            let currentPage = (() => {
+                try {
+                    return localStorage.getItem(LAST_PAGE_STORAGE_KEY) || 'Tableau de bord';
+                } catch {
+                    return 'Tableau de bord';
+                }
+            })();
             let isLoginView = true;
             let currentUser = null;
             let currentUserData = null;
@@ -7719,6 +7775,21 @@
             const priceLotSaveNextButton = document.getElementById('price-lot-save-next-button');
             const priceLotError = document.getElementById('price-lot-error');
 
+            const storeEntryCorrectionModal = document.getElementById('store-entry-correction-modal');
+            const closeStoreEntryCorrectionModalButton = document.getElementById('close-store-entry-correction-modal-button');
+            const storeEntryCorrectionCancelButton = document.getElementById('store-entry-correction-cancel-button');
+            const storeEntryCorrectionSubmitButton = document.getElementById('store-entry-correction-submit-button');
+            const storeEntryCorrectionSubtitle = document.getElementById('store-entry-correction-subtitle');
+            const storeEntryCorrectionOriginalQty = document.getElementById('store-entry-correction-original-qty');
+            const storeEntryCorrectionStockAfter = document.getElementById('store-entry-correction-stock-after');
+            const storeEntryCorrectionMode = document.getElementById('store-entry-correction-mode');
+            const storeEntryCorrectionNewQtyRow = document.getElementById('store-entry-correction-new-qty-row');
+            const storeEntryCorrectionNewQty = document.getElementById('store-entry-correction-new-qty');
+            const storeEntryCorrectionReason = document.getElementById('store-entry-correction-reason');
+            const storeEntryCorrectionInvoiceHint = document.getElementById('store-entry-correction-invoice-hint');
+            const storeEntryCorrectionError = document.getElementById('store-entry-correction-error');
+            let activeStoreEntryCorrectionMovementId = null;
+
             const openEntryModalButton = document.getElementById('open-entry-modal-button');
             const entryModal = document.getElementById('entry-modal');
             const closeEntryModalButton = document.getElementById('close-entry-modal-button');
@@ -8230,6 +8301,23 @@
             function getBoutiqueStorageKey() {
                 const companyId = currentUserData?.companyId || currentUser?.uid || 'local';
                 return `stockpilot:boutique:${companyId}`;
+            }
+
+            function persistCurrentPage(pageName = currentPage) {
+                if (!pageName) return;
+                try {
+                    localStorage.setItem(LAST_PAGE_STORAGE_KEY, pageName);
+                } catch {
+                    // ignore storage errors
+                }
+            }
+
+            function clearPersistedCurrentPage() {
+                try {
+                    localStorage.removeItem(LAST_PAGE_STORAGE_KEY);
+                } catch {
+                    // ignore storage errors
+                }
             }
 
             function getAccessibleStoreIds() {
@@ -18222,6 +18310,7 @@
                 currentUser = null;
                 currentUserData = null;
                 dbBasePath = '';
+                clearPersistedCurrentPage();
                 cleanupFirebaseListeners();
                 updateUI();
             }
@@ -24072,6 +24161,173 @@
                 return { label: 'Validé', classes: 'bg-blue-100 text-blue-700' };
             }
 
+            function getStoreEntryCorrectionAdjustment(movementId) {
+                if (!movementId) return null;
+                return Object.values(appData.storeMovements || {}).find(move =>
+                    move.correctsMovementId === movementId && move.type === 'Ajustement'
+                ) || null;
+            }
+
+            function canCorrectStoreEntry(move) {
+                if (!move || move.type !== 'Entrée') return false;
+                if (move.correctedByMovementId) return false;
+                if (getStoreEntryCorrectionAdjustment(move.id)) return false;
+                const role = getCurrentUserRole();
+                return role === 'admin' || role === 'manager';
+            }
+
+            function closeStoreEntryCorrectionModal() {
+                activeStoreEntryCorrectionMovementId = null;
+                if (storeEntryCorrectionModal) storeEntryCorrectionModal.classList.add('hidden');
+                if (storeEntryCorrectionError) storeEntryCorrectionError.classList.add('hidden');
+                if (storeEntryCorrectionReason) storeEntryCorrectionReason.value = '';
+                if (storeEntryCorrectionNewQty) storeEntryCorrectionNewQty.value = '';
+                if (storeEntryCorrectionMode) storeEntryCorrectionMode.value = 'cancel';
+                if (storeEntryCorrectionNewQtyRow) storeEntryCorrectionNewQtyRow.classList.add('hidden');
+            }
+
+            function updateStoreEntryCorrectionModeUI() {
+                const isAdjust = storeEntryCorrectionMode?.value === 'adjust';
+                if (storeEntryCorrectionNewQtyRow) {
+                    storeEntryCorrectionNewQtyRow.classList.toggle('hidden', !isAdjust);
+                }
+            }
+
+            function openStoreEntryCorrectionModal(movementId) {
+                const move = appData.storeMovements?.[movementId];
+                if (!canCorrectStoreEntry(move)) {
+                    showSuccessToast('Cette entrée ne peut plus être corrigée.');
+                    return;
+                }
+                activeStoreEntryCorrectionMovementId = movementId;
+                const originalQty = Math.abs(parseInt(move.quantityChange, 10) || 0);
+                if (storeEntryCorrectionSubtitle) {
+                    storeEntryCorrectionSubtitle.textContent = `${move.productName || 'Produit'} · ${formatMovementDate(move.date)}`;
+                }
+                if (storeEntryCorrectionOriginalQty) {
+                    storeEntryCorrectionOriginalQty.textContent = `${originalQty} unité(s)`;
+                }
+                if (storeEntryCorrectionStockAfter) {
+                    storeEntryCorrectionStockAfter.textContent = `${Number(move.newStock) || 0} unité(s)`;
+                }
+                if (storeEntryCorrectionMode) storeEntryCorrectionMode.value = 'cancel';
+                if (storeEntryCorrectionNewQty) storeEntryCorrectionNewQty.value = String(originalQty);
+                if (storeEntryCorrectionReason) storeEntryCorrectionReason.value = '';
+                if (storeEntryCorrectionInvoiceHint) {
+                    storeEntryCorrectionInvoiceHint.classList.toggle('hidden', !move.supplierId);
+                }
+                if (storeEntryCorrectionError) storeEntryCorrectionError.classList.add('hidden');
+                updateStoreEntryCorrectionModeUI();
+                if (storeEntryCorrectionModal) storeEntryCorrectionModal.classList.remove('hidden');
+            }
+
+            async function submitStoreEntryCorrection() {
+                if (!dbBasePath || !currentUser || !activeStoreEntryCorrectionMovementId) return;
+                const originalMove = appData.storeMovements?.[activeStoreEntryCorrectionMovementId];
+                if (!canCorrectStoreEntry(originalMove)) {
+                    showSuccessToast('Cette entrée ne peut plus être corrigée.');
+                    closeStoreEntryCorrectionModal();
+                    return;
+                }
+                const mode = storeEntryCorrectionMode?.value || 'cancel';
+                const reason = (storeEntryCorrectionReason?.value || '').trim();
+                if (!reason) {
+                    if (storeEntryCorrectionError) {
+                        storeEntryCorrectionError.textContent = 'Veuillez indiquer le motif de la correction.';
+                        storeEntryCorrectionError.classList.remove('hidden');
+                    }
+                    return;
+                }
+                const originalQty = Math.abs(parseInt(originalMove.quantityChange, 10) || 0);
+                let targetQty = 0;
+                let delta = 0;
+                if (mode === 'cancel') {
+                    targetQty = 0;
+                    delta = -originalQty;
+                } else {
+                    targetQty = parseInt(storeEntryCorrectionNewQty?.value, 10);
+                    if (!Number.isFinite(targetQty) || targetQty < 0) {
+                        if (storeEntryCorrectionError) {
+                            storeEntryCorrectionError.textContent = 'Veuillez saisir une quantité valide.';
+                            storeEntryCorrectionError.classList.remove('hidden');
+                        }
+                        return;
+                    }
+                    delta = targetQty - originalQty;
+                    if (delta === 0) {
+                        if (storeEntryCorrectionError) {
+                            storeEntryCorrectionError.textContent = 'La nouvelle quantité est identique à l\'entrée d\'origine.';
+                            storeEntryCorrectionError.classList.remove('hidden');
+                        }
+                        return;
+                    }
+                }
+                const product = appData.storeProducts?.[originalMove.productId];
+                if (!product) {
+                    if (storeEntryCorrectionError) {
+                        storeEntryCorrectionError.textContent = 'Produit introuvable.';
+                        storeEntryCorrectionError.classList.remove('hidden');
+                    }
+                    return;
+                }
+                const currentStock = Number(product.quantityInStore) || 0;
+                const newStock = currentStock + delta;
+                if (newStock < 0) {
+                    if (storeEntryCorrectionError) {
+                        storeEntryCorrectionError.textContent = `Stock insuffisant pour cette correction (stock actuel : ${currentStock}).`;
+                        storeEntryCorrectionError.classList.remove('hidden');
+                    }
+                    return;
+                }
+                const now = new Date().toISOString();
+                const correctionKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
+                const modeLabel = mode === 'cancel' ? 'Annulation entrée' : 'Correction quantité entrée';
+                const correctionComment = `${modeLabel} · ${reason} · réf. entrée #${originalMove.id.slice(-6)}`;
+                const updates = {};
+                updates[`${dbBasePath}/storeProducts/${originalMove.productId}/quantityInStore`] = newStock;
+                updates[`${dbBasePath}/storeProducts/${originalMove.productId}/updatedAt`] = now;
+                updates[`${dbBasePath}/storeMovements/${correctionKey}`] = {
+                    id: correctionKey,
+                    productId: originalMove.productId,
+                    productName: originalMove.productName || product.name || '',
+                    storeId: originalMove.storeId || getActiveStoreId(),
+                    type: 'Ajustement',
+                    quantityChange: delta,
+                    oldStock: currentStock,
+                    newStock,
+                    comment: correctionComment,
+                    correctsMovementId: originalMove.id,
+                    correctedEntryQty: originalQty,
+                    correctedEntryNewQty: targetQty,
+                    correctionMode: mode,
+                    supplierId: originalMove.supplierId || null,
+                    supplierName: originalMove.supplierName || getSupplierName(originalMove.supplierId) || '',
+                    date: now,
+                    status: EXIT_STATUS_APPROVED,
+                    userEmail: currentUser.email || '',
+                    userName: currentUserData?.fullName || currentUser.email || ''
+                };
+                updates[`${dbBasePath}/storeMovements/${originalMove.id}/correctedByMovementId`] = correctionKey;
+                updates[`${dbBasePath}/storeMovements/${originalMove.id}/correctedAt`] = now;
+                updates[`${dbBasePath}/storeMovements/${originalMove.id}/correctedBy`] = currentUser.uid || '';
+                updates[`${dbBasePath}/storeMovements/${originalMove.id}/correctedByName`] = currentUserData?.fullName || currentUser.email || '';
+                try {
+                    if (storeEntryCorrectionSubmitButton) storeEntryCorrectionSubmitButton.disabled = true;
+                    await update(ref(db), updates);
+                    showSuccessToast('Correction enregistrée. L\'entrée d\'origine reste visible dans l\'historique.');
+                    closeStoreEntryCorrectionModal();
+                    renderStoreMovementsPage();
+                } catch (error) {
+                    console.error(error);
+                    if (storeEntryCorrectionError) {
+                        storeEntryCorrectionError.textContent = 'Impossible d\'enregistrer la correction.';
+                        storeEntryCorrectionError.classList.remove('hidden');
+                    }
+                } finally {
+                    if (storeEntryCorrectionSubmitButton) storeEntryCorrectionSubmitButton.disabled = false;
+                }
+            }
+
             function renderStoreMovementsPage() {
                 if (!storeMovementsPlaceholder || !storeMovementsTableContainer || !storeMovementsTbody) return;
                 const activeStore = getActiveStoreId();
@@ -24184,11 +24440,23 @@
                     const boutiqueLabel = move.boutiqueName || (move.boutiqueId ? getBoutiqueName(resolveBoutiqueId(move.boutiqueId)) : '');
                     const commentBase = move.comment ? move.comment : '-';
                     const commentSuffix = boutiqueLabel ? `Vers la boutique ${boutiqueLabel}` : '';
-                    const comment = commentSuffix
+                    let comment = commentSuffix
                         ? (commentBase === '-' ? commentSuffix : `${commentBase} · ${commentSuffix}`)
                         : commentBase;
+                    if (isAdjustment && move.correctsMovementId) {
+                        comment = `${comment}${comment === '-' ? '' : ' · '}Corrige l'entrée #${move.correctsMovementId.slice(-6)}`;
+                    }
+                    if (isEntry && move.correctedByMovementId) {
+                        comment = `${comment}${comment === '-' ? '' : ' · '}Corrigée (voir ajustement #${move.correctedByMovementId.slice(-6)})`;
+                    }
                     const userLabel = move.userName || move.userFullName || move.userEmail || move.userId || '-';
                     const supplierLabel = move.supplierName || getSupplierName(move.supplierId) || '-';
+                    let actionHtml = '<span class="text-xs text-gray-400">—</span>';
+                    if (isEntry && move.correctedByMovementId) {
+                        actionHtml = '<span class="text-xs text-indigo-600 font-semibold">Corrigée</span>';
+                    } else if (canCorrectStoreEntry(move)) {
+                        actionHtml = `<button type="button" data-correct-store-entry="${move.id}" class="text-xs font-semibold text-amber-600 hover:text-amber-700">Corriger</button>`;
+                    }
                     return `
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${move.productName || '-'}</td>
@@ -24205,7 +24473,7 @@
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${statusBadge.classes}">${statusBadge.label}</span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right">
-                                <span class="text-xs text-gray-400">—</span>
+                                ${actionHtml}
                             </td>
                         </tr>`;
                 }).join('');
@@ -27677,6 +27945,10 @@
                 // Mettre à jour les boutons d'actions rapides
                 if (isAuthenticated && typeof updateQuickActionButtons === 'function') {
                     updateQuickActionButtons();
+                }
+
+                if (isAuthenticated && currentPage) {
+                    persistCurrentPage(currentPage);
                 }
             }
 
@@ -32168,6 +32440,30 @@
                 });
             bindPaginationControls('salesHistory', renderSalesHistory);
             bindPaginationControls('storeMovements', renderStoreMovementsPage);
+            if (storeMovementsTbody) {
+                storeMovementsTbody.addEventListener('click', (event) => {
+                    const button = event.target.closest('[data-correct-store-entry]');
+                    if (!button) return;
+                    openStoreEntryCorrectionModal(button.dataset.correctStoreEntry);
+                });
+            }
+            if (closeStoreEntryCorrectionModalButton) {
+                closeStoreEntryCorrectionModalButton.addEventListener('click', closeStoreEntryCorrectionModal);
+            }
+            if (storeEntryCorrectionCancelButton) {
+                storeEntryCorrectionCancelButton.addEventListener('click', closeStoreEntryCorrectionModal);
+            }
+            if (storeEntryCorrectionMode) {
+                storeEntryCorrectionMode.addEventListener('change', updateStoreEntryCorrectionModeUI);
+            }
+            if (storeEntryCorrectionSubmitButton) {
+                storeEntryCorrectionSubmitButton.addEventListener('click', submitStoreEntryCorrection);
+            }
+            if (storeEntryCorrectionModal) {
+                storeEntryCorrectionModal.addEventListener('click', (event) => {
+                    if (event.target === storeEntryCorrectionModal) closeStoreEntryCorrectionModal();
+                });
+            }
             bindPaginationControls('shopStock', () => renderShopStock(shopSearchInput ? shopSearchInput.value : ''));
             bindPaginationControls('shopMovements', renderShopMovements);
             if (traceabilityProductSelect) {
@@ -33819,6 +34115,7 @@
                         updates[`${dbBasePath}/storeProducts/${pid}/expirationDate`] = expirationDate;
                         updates[`${dbBasePath}/storeProducts/${pid}/updatedAt`] = new Date().toISOString();
                     }
+                    const supplier = getSuppliersSorted().find(s => s.id === supplierId);
                     const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
                     updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
                         id: moveKey,
@@ -33831,6 +34128,8 @@
                         newStock,
                         deliveryName,
                         storekeeperName,
+                        supplierId,
+                        supplierName: supplier?.name || '',
                         comment,
                         expirationDate,
                         date: new Date().toISOString(),
@@ -33841,7 +34140,6 @@
 
                     // --- INJECTION AUTOMATIQUE DE LA FACTURE FOURNISSEUR ---
                     const invoiceKey = push(ref(db, `${dbBasePath}/supplierInvoices`)).key;
-                    const supplier = getSuppliersSorted().find(s => s.id === supplierId);
                     const invoiceBaseTotal = qty * safePurchaseCost;
                     const invoiceCurrency = productCurrency || (supplier && supplier.currency) || 'FCFA';
                     
@@ -34784,6 +35082,7 @@
             }));
 
             const handleLogoutClick = () => {
+                clearPersistedCurrentPage();
                 if (isCodeSession) {
                     handleManualLogout();
                     showSuccessToast('Déconnecté');
@@ -35893,7 +36192,7 @@
                     });
                 } else {
                     if (!isCodeSession) {
-                        isAuthenticated = false; currentUser = null; currentUserData = null; dbBasePath = ''; currentPage = 'Tableau de bord'; cleanupFirebaseListeners(); updateUI();
+                        isAuthenticated = false; currentUser = null; currentUserData = null; dbBasePath = ''; cleanupFirebaseListeners(); updateUI();
                     }
                 }
             });
