@@ -4093,6 +4093,20 @@
                                     <input type="checkbox" id="settings-store-entry-packaging"
                                         class="w-5 h-5 text-cyan-500 rounded border-gray-300 focus:ring-cyan-500 shrink-0 mt-0.5">
                                 </label>
+                                <div class="p-4 rounded-2xl border border-cyan-100 bg-cyan-50/60 space-y-3">
+                                    <div>
+                                        <p class="text-sm font-semibold text-gray-800">Affichage produit</p>
+                                        <p class="text-sm text-gray-500">Ordre du code interne et du nom dans les listes et sélecteurs.</p>
+                                    </div>
+                                    <label class="block">
+                                        <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Ordre d'affichage</span>
+                                        <select id="settings-product-display-order"
+                                            class="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm text-gray-700 focus:ring-cyan-400 focus:border-cyan-400">
+                                            <option value="name_first">Nom puis code</option>
+                                            <option value="code_first">Code puis nom</option>
+                                        </select>
+                                    </label>
+                                </div>
                                 <label
                                     class="flex items-start justify-between gap-4 p-4 rounded-xl border border-gray-200 hover:border-cyan-200 cursor-pointer">
                                     <div>
@@ -7375,6 +7389,7 @@
             const salesInvoiceLinesCount = document.getElementById('sales-invoice-lines-count');
             const settingsSalesPosModeSelect = document.getElementById('settings-sales-pos-mode');
             const settingsStoreEntryPackagingCheckbox = document.getElementById('settings-store-entry-packaging');
+            const settingsProductDisplayOrderSelect = document.getElementById('settings-product-display-order');
             const salesQuickProductCombobox = document.getElementById('sales-quick-product-combobox');
             const salesQuickProductSearchInput = document.getElementById('sales-quick-product-search');
             const salesQuickProductToggleButton = document.getElementById('sales-quick-product-toggle');
@@ -9371,25 +9386,24 @@
 
             function getTransferProductDisplayLabel(product) {
                 if (!product) return '';
-                const name = product.name || 'Produit sans nom';
-                const code = getProductInternalCode(product);
-                return code ? `${name} · ${code}` : `${name} · Code manquant`;
+                return getProductDisplayPlainLabel(product);
             }
 
             function getEntryProductDisplayLabel(product) {
                 if (!product) return '';
-                const baseLabel = getTransferProductDisplayLabel(product);
+                const extras = [];
                 const rawStoreId = product.storeId;
                 if (rawStoreId === UNASSIGNED_STORE_ID) {
-                    return `${baseLabel} · Non assigné`;
+                    extras.push('Non assigné');
+                } else {
+                    const storeId = resolveStoreId(rawStoreId);
+                    const storeName = storeId ? (getStoreName(storeId) || DEFAULT_STORE_NAME) : '';
+                    const activeStoreId = getActiveStoreId();
+                    if (storeName && storeId && activeStoreId && storeId !== activeStoreId) {
+                        extras.push(storeName);
+                    }
                 }
-                const storeId = resolveStoreId(rawStoreId);
-                const storeName = storeId ? (getStoreName(storeId) || DEFAULT_STORE_NAME) : '';
-                const activeStoreId = getActiveStoreId();
-                if (storeName && storeId && activeStoreId && storeId !== activeStoreId) {
-                    return `${baseLabel} · ${storeName}`;
-                }
-                return baseLabel;
+                return getProductDisplayPlainLabel(product, extras);
             }
 
             function closeTransferProductDropdown({ restoreSelection = false } = {}) {
@@ -9424,8 +9438,7 @@
 
                 transferProductOptions.innerHTML = filteredProducts.map(product => {
                     const qty = parseNonNegativeInteger(product.quantityInStore, 0);
-                    const codeHtml = getProductInternalCodeMarkup(product, { prefix: 'Code' });
-                    const name = escapeHtml(product.name || 'Produit sans nom');
+                    const displayBlock = getProductDisplayBlockMarkup(product, { showCodePrefix: true });
                     const description = product.description
                         ? `<p class="mt-1 truncate text-xs text-slate-400">${escapeHtml(product.description)}</p>`
                         : '';
@@ -9436,9 +9449,8 @@
                             data-transfer-product-option="${escapeHtml(product.id)}"
                             class="flex w-full items-start justify-between gap-3 rounded-xl px-3 py-3 text-left transition ${isSelected ? 'bg-cyan-50 ring-1 ring-cyan-200' : 'hover:bg-slate-50'} ${isDisabled ? 'cursor-not-allowed opacity-55' : ''}"
                             ${isDisabled ? 'disabled' : ''}>
-                            <div class="min-w-0">
-                                <p class="truncate text-sm font-semibold text-slate-800">${name}</p>
-                                <p class="mt-1">${codeHtml}</p>
+                            <div class="min-w-0 flex-1">
+                                ${displayBlock}
                                 ${description}
                             </div>
                             <div class="shrink-0 text-right">
@@ -9499,9 +9511,11 @@
                 const description = item.description
                     ? `<p class="mt-1 truncate text-xs text-slate-400">${escapeHtml(item.description)}</p>`
                     : '';
-                const meta = item.meta
-                    ? `<p class="mt-1 text-xs font-medium uppercase tracking-wide text-slate-400">${escapeHtml(item.meta)}</p>`
-                    : '';
+                const nameHtml = `<span class="${PRODUCT_NAME_DISPLAY_CLASSES}">${escapeHtml(item.title || 'Produit')}</span>`;
+                const codeHtml = getProductCodeDisplayMarkup(item.meta);
+                const codeFirst = isProductCodeFirstDisplay();
+                const primaryLine = codeFirst ? codeHtml : nameHtml;
+                const secondaryLine = codeFirst ? nameHtml : codeHtml;
                 const badge = item.badge
                     ? `<span class="inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${item.badgeClasses || 'bg-slate-100 text-slate-600'}">${escapeHtml(item.badge)}</span>`
                     : '';
@@ -9512,8 +9526,8 @@
                         class="flex w-full items-start justify-between gap-3 rounded-xl px-3 py-3 text-left transition ${activeClass} ${disabledClass}"
                         ${item.disabled ? 'disabled' : ''}>
                         <div class="min-w-0">
-                            <p class="truncate text-sm font-semibold text-slate-800">${escapeHtml(item.title)}</p>
-                            ${meta}
+                            <p class="truncate">${primaryLine}</p>
+                            <p class="mt-0.5 truncate">${secondaryLine}</p>
                             ${description}
                         </div>
                         <div class="shrink-0 text-right">
@@ -10557,10 +10571,9 @@
                 products.forEach(product => {
                     const option = document.createElement('option');
                     option.value = product.id;
-                    const codeText = getProductInternalCodeText(product);
                     const storeId = resolveStoreId(product.storeId);
                     const storeLabel = storeId ? getStoreName(storeId) : 'Non assigné';
-                    option.textContent = `${product.name || 'Produit'} · ${codeText} · ${storeLabel}`;
+                    option.textContent = getProductDisplayPlainLabel(product, [storeLabel]);
                     shopDirectEntryProductSelect.appendChild(option);
                 });
                 shopDirectEntryProductSelect.value = products.some(product => product.id === previousValue) ? previousValue : '';
@@ -16516,6 +16529,11 @@
                     if (packagingSettingLabel) packagingSettingLabel.classList.toggle('hidden', !isAdmin);
                     settingsStoreEntryPackagingCheckbox.disabled = !isAdmin;
                 }
+                if (settingsProductDisplayOrderSelect) {
+                    const displaySettingBlock = settingsProductDisplayOrderSelect.closest('.rounded-2xl');
+                    if (displaySettingBlock) displaySettingBlock.classList.toggle('hidden', !isAdmin);
+                    settingsProductDisplayOrderSelect.disabled = !isAdmin;
+                }
                 updateStoreManagementState();
                 updateBoutiqueManagementState();
             }
@@ -17100,18 +17118,146 @@
                 return getProductInternalCode(product) || 'Code manquant';
             }
 
+            const PRODUCT_CODE_DISPLAY_CLASSES = 'text-[11px] font-medium text-blue-900';
+            const PRODUCT_CODE_MISSING_CLASSES = 'text-[11px] font-semibold text-amber-700';
+            const PRODUCT_NAME_DISPLAY_CLASSES = 'text-sm font-semibold text-slate-800';
+
+            function getProductCodeDisplayMarkup(codeValue, options = {}) {
+                const {
+                    prefix = '',
+                    missingLabel = 'Code manquant',
+                    classes = PRODUCT_CODE_DISPLAY_CLASSES,
+                    missingClasses = PRODUCT_CODE_MISSING_CLASSES
+                } = options;
+                const code = (codeValue || '').toString().trim();
+                if (code && code !== missingLabel) {
+                    const label = prefix ? `${escapeHtml(prefix)}: ${escapeHtml(code)}` : escapeHtml(code);
+                    return `<span class="${classes}">${label}</span>`;
+                }
+                return `<span class="${missingClasses}">${escapeHtml(missingLabel)}</span>`;
+            }
+
             function getProductInternalCodeMarkup(product, options = {}) {
                 const {
                     prefix = 'Code',
                     missingLabel = 'Code manquant',
-                    classes = 'text-xs font-medium uppercase tracking-wide text-slate-400',
-                    missingClasses = 'text-xs font-semibold text-amber-700'
+                    classes = PRODUCT_CODE_DISPLAY_CLASSES,
+                    missingClasses = PRODUCT_CODE_MISSING_CLASSES
                 } = options;
+                return getProductCodeDisplayMarkup(getProductInternalCode(product), { prefix, missingLabel, classes, missingClasses });
+            }
+
+            function normalizeProductDisplayOrderSetting(value) {
+                return value === 'code_first' ? 'code_first' : 'name_first';
+            }
+
+            function isProductCodeFirstDisplay() {
+                return normalizeProductDisplayOrderSetting(appData.settings?.productDisplayOrder) === 'code_first';
+            }
+
+            function getProductNameDisplayMarkup(name, options = {}) {
+                const { classes = PRODUCT_NAME_DISPLAY_CLASSES } = options;
+                return `<span class="${classes}">${escapeHtml(name || 'Produit sans nom')}</span>`;
+            }
+
+            function getProductDisplayPlainLabel(product, extraParts = []) {
+                if (!product) return '';
+                const name = (product.name || 'Produit sans nom').toString().trim() || 'Produit sans nom';
                 const code = getProductInternalCode(product);
-                if (code) {
-                    return `<span class="${classes}">${escapeHtml(prefix)}: ${escapeHtml(code)}</span>`;
+                const codeText = code || 'Code manquant';
+                const core = isProductCodeFirstDisplay()
+                    ? `${codeText} · ${name}`
+                    : `${name} · ${codeText}`;
+                const suffixParts = (extraParts || []).filter(Boolean);
+                return suffixParts.length ? `${core} · ${suffixParts.join(' · ')}` : core;
+            }
+
+            function getProductDisplayInlineMarkup(product, options = {}) {
+                if (!product) return '—';
+                const {
+                    name = product.name || '—',
+                    showCodePrefix = false,
+                    separatorClass = 'text-slate-300'
+                } = options;
+                const codeMarkup = getProductInternalCodeMarkup(product, {
+                    prefix: showCodePrefix ? 'Code' : '',
+                    missingLabel: 'Code manquant'
+                });
+                const nameMarkup = getProductNameDisplayMarkup(name);
+                const separator = `<span class="${separatorClass} mx-1">·</span>`;
+                if (isProductCodeFirstDisplay()) {
+                    return `${codeMarkup}${separator}${nameMarkup}`;
                 }
-                return `<span class="${missingClasses}">${escapeHtml(missingLabel)}</span>`;
+                return `${nameMarkup}${separator}${codeMarkup}`;
+            }
+
+            function getProductDisplayBlockMarkup(product, options = {}) {
+                if (!product) return '';
+                const {
+                    name = product.name || 'Produit sans nom',
+                    showCodePrefix = false,
+                    nameClasses = PRODUCT_NAME_DISPLAY_CLASSES,
+                    codeClasses = PRODUCT_CODE_DISPLAY_CLASSES
+                } = options;
+                const codeMarkup = getProductInternalCodeMarkup(product, {
+                    prefix: showCodePrefix ? 'Code' : '',
+                    classes: codeClasses
+                });
+                const nameMarkup = getProductNameDisplayMarkup(name, { classes: nameClasses });
+                if (isProductCodeFirstDisplay()) {
+                    return `<div class="min-w-0"><p class="truncate">${codeMarkup}</p><p class="mt-0.5 truncate">${nameMarkup}</p></div>`;
+                }
+                return `<div class="min-w-0"><p class="truncate">${nameMarkup}</p><p class="mt-0.5 truncate">${codeMarkup}</p></div>`;
+            }
+
+            function getProductDisplayTitleBlockMarkup(name, product, options = {}) {
+                const {
+                    nameClasses = 'text-base font-semibold text-gray-900',
+                    wrapperClass = 'mt-3'
+                } = options;
+                const nameMarkup = `<span class="${nameClasses}">${escapeHtml(name || 'Produit')}</span>`;
+                const codeMarkup = getProductInternalCodeMarkup(product, { prefix: 'Code' });
+                if (isProductCodeFirstDisplay()) {
+                    return `<div class="${wrapperClass}"><p>${codeMarkup}</p><p class="mt-0.5">${nameMarkup}</p></div>`;
+                }
+                return `<div class="${wrapperClass}"><p>${nameMarkup}</p><p class="mt-0.5">${codeMarkup}</p></div>`;
+            }
+
+            function syncProductDisplaySettingsUI() {
+                if (settingsProductDisplayOrderSelect) {
+                    settingsProductDisplayOrderSelect.value = normalizeProductDisplayOrderSetting(appData.settings?.productDisplayOrder);
+                }
+            }
+
+            function refreshProductDisplayDependentUI() {
+                renderStoreProducts(storeSearchInput ? storeSearchInput.value : '');
+                renderShopStock(shopSearchInput ? shopSearchInput.value : '');
+                renderSalesProducts(salesProductSearch ? salesProductSearch.value : '');
+                renderPriceTable();
+                populateShopDirectEntryProductSelect();
+                refreshBulkExitRowProducts();
+                renderTransferProductDropdown();
+                ['entry', 'groupedEntry', 'exit', 'salesQuick', 'restock', 'traceability', 'profitability'].forEach((key) => {
+                    renderProductCombobox(key);
+                    syncProductComboboxInput(key);
+                });
+                if (transferProductSelect?.value) {
+                    const selectedTransferProduct = getActiveStoreProductById(transferProductSelect.value);
+                    if (transferProductSearchInput) {
+                        transferProductSearchInput.value = selectedTransferProduct
+                            ? getTransferProductDisplayLabel(selectedTransferProduct)
+                            : '';
+                    }
+                }
+                if (entryProductSelect?.value) {
+                    updateEntryProductInfo(getEntryProductById(entryProductSelect.value));
+                }
+                if (exitProductSelect?.value) {
+                    updateExitProductInfo(getActiveStoreProductById(exitProductSelect.value));
+                }
+                if (groupedEntryProductSelect?.value) {
+                    updateGroupedEntryProductInfo(getEntryProductById(groupedEntryProductSelect.value));
+                }
             }
 
             function isSameProductIdentity(leftProduct, rightProduct) {
@@ -17217,6 +17363,7 @@
                 if (settingsStoreEntryPackagingCheckbox) {
                     settingsStoreEntryPackagingCheckbox.checked = isStoreEntryPackagingEnabled();
                 }
+                syncProductDisplaySettingsUI();
             }
 
             function updateGroupedEntryPackagingUI() {
@@ -21588,19 +21735,23 @@
                     }
                     const nextPosMode = normalizeSalesPosModeSetting(settingsSalesPosModeSelect?.value);
                     const nextStoreEntryPackaging = settingsStoreEntryPackagingCheckbox?.checked === true;
+                    const nextProductDisplayOrder = normalizeProductDisplayOrderSetting(settingsProductDisplayOrderSelect?.value);
                     try {
                         await update(ref(db, `${dbBasePath}/settings`), {
                             salesPosMode: nextPosMode,
-                            storeEntryPackagingEnabled: nextStoreEntryPackaging
+                            storeEntryPackagingEnabled: nextStoreEntryPackaging,
+                            productDisplayOrder: nextProductDisplayOrder
                         });
                         appData.settings = {
                             ...(appData.settings || {}),
                             salesPosMode: nextPosMode,
-                            storeEntryPackagingEnabled: nextStoreEntryPackaging
+                            storeEntryPackagingEnabled: nextStoreEntryPackaging,
+                            productDisplayOrder: nextProductDisplayOrder
                         };
                         updateSalesPosModeUI();
                         updateGroupedEntryPackagingUI();
                         updateBulkExitModalPackagingUI();
+                        refreshProductDisplayDependentUI();
                         showSuccessToast('Préférences application mises à jour.');
                     } catch (error) {
                         console.error(error);
@@ -21704,16 +21855,15 @@
                         const activeStore = getActiveStoreId();
                         const isOtherStore = resolvedStoreId && activeStore && resolvedStoreId !== activeStore;
                         const qty = Number(product.quantityInStore) || 0;
-                        const codeSuffix = ` · ${getProductInternalCodeText(product)}`;
                         const option = document.createElement('option');
                         option.value = product.id;
                         option.disabled = disableOutOfStock && qty <= 0;
                         if (showAssignmentHint && isUnassigned) {
-                            option.textContent = `${product.name}${codeSuffix} (Non assigné${option.disabled ? ' · Rupture' : ''})`;
+                            option.textContent = getProductDisplayPlainLabel(product, [`Non assigné${option.disabled ? ' · Rupture' : ''}`]);
                         } else if (showAssignmentHint && isOtherStore) {
-                            option.textContent = `${product.name}${codeSuffix} (${storeLabel || 'Autre magasin'})`;
+                            option.textContent = getProductDisplayPlainLabel(product, [storeLabel || 'Autre magasin']);
                         } else {
-                            option.textContent = `${product.name}${codeSuffix} (Actuellement : ${qty}${option.disabled ? ' · Rupture' : ''})`;
+                            option.textContent = getProductDisplayPlainLabel(product, [`Actuellement : ${qty}${option.disabled ? ' · Rupture' : ''}`]);
                         }
                         select.appendChild(option);
                     });
@@ -21763,7 +21913,7 @@
                     return;
                 }
                 entryProductInfo.classList.remove('hidden');
-                entryProductName.textContent = `${product.name || '—'} · ${getProductInternalCodeText(product)}`;
+                entryProductName.innerHTML = getProductDisplayInlineMarkup(product, { showCodePrefix: false });
                 const rawStoreId = product.storeId;
                 const isUnassigned = rawStoreId === UNASSIGNED_STORE_ID;
                 const resolvedStoreId = isUnassigned ? null : resolveStoreId(rawStoreId);
@@ -21851,7 +22001,7 @@
                 const totalStock = Number(product.quantityInStore) || 0;
                 const available = Math.max(totalStock, 0);
                 exitProductInfo.classList.remove('hidden');
-                exitProductName.textContent = `${product.name || '—'} · ${getProductInternalCodeText(product)}`;
+                exitProductName.innerHTML = getProductDisplayInlineMarkup(product, { showCodePrefix: false });
                 exitProductTotal.textContent = `${totalStock}`;
                 exitProductStock.textContent = `${available}`;
                 if (exitProductPending && exitProductPendingCount) {
@@ -21905,7 +22055,7 @@
                     return;
                 }
                 groupedEntryProductInfo.classList.remove('hidden');
-                groupedEntryProductName.textContent = `${product.name || '—'} · ${getProductInternalCodeText(product)}`;
+                groupedEntryProductName.innerHTML = getProductDisplayInlineMarkup(product, { showCodePrefix: false });
                 const rawStoreId = product.storeId;
                 const isUnassigned = rawStoreId === UNASSIGNED_STORE_ID;
                 const resolvedStoreId = isUnassigned ? null : resolveStoreId(rawStoreId);
@@ -22527,9 +22677,12 @@
             function getBulkExitProductDisplayLabel(product) {
                 if (!product) return '';
                 const item = getExitProductComboboxItems('').find((entry) => entry.value === product.id);
-                if (item?.displayLabel) return item.displayLabel;
                 const quantity = Math.max(Number(product?.quantityInStore) || 0, 0);
-                return `${product?.name || 'Produit'} · ${getProductInternalCodeText(product)} · Stock ${quantity}`;
+                const stockSuffix = `Stock ${quantity}`;
+                if (item?.displayLabel) {
+                    return `${item.displayLabel} · ${stockSuffix}`;
+                }
+                return getProductDisplayPlainLabel(product, [stockSuffix]);
             }
 
             function getBulkExitProductComboboxItems(search = '') {
@@ -22681,7 +22834,7 @@
             function getBulkTransferProductOptionLabel(product) {
                 const quantity = Math.max(Number(product?.quantityInStore) || 0, 0);
                 const primaryLabel = getPrimaryPackaging(product)?.label || 'format';
-                return `${product?.name || 'Produit'} · ${getProductInternalCodeText(product)} · ${quantity} ${primaryLabel}`;
+                return getProductDisplayPlainLabel(product, [`${quantity} ${primaryLabel}`]);
             }
 
             function renderBulkTransferBoutiqueOptions() {
@@ -23553,7 +23706,7 @@
                     const canCreateExit = isCompanyFeatureEnabled('store_stock.exit');
                     sortedProducts.forEach(product => {
                         const quantity = Number(product.quantityInStore ?? 0);
-                        const codeMeta = getProductInternalCodeMarkup(product, { prefix: 'Code' });
+                        const displayBlock = getProductDisplayBlockMarkup(product, { showCodePrefix: true });
                         const quantityClass = quantity <= 10
                             ? 'bg-red-100 text-red-700'
                             : quantity <= 50
@@ -23583,8 +23736,7 @@
                         html += `
                             <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-4 text-sm font-medium text-gray-900">
-                                    <div>${product.name}</div>
-                                    <div class="mt-1">${codeMeta}</div>
+                                    ${displayBlock}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.description || ''}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">
@@ -25660,12 +25812,14 @@
                                 </button>`
                             : '';
                         const itemLabel = getShopItemDisplayName(item);
-                        const codeMeta = getProductInternalCodeMarkup(sourceProduct, { prefix: 'Code' });
+                        const productTitleBlock = getProductDisplayTitleBlockMarkup(itemLabel, sourceProduct, {
+                            nameClasses: 'text-sm font-medium text-gray-900',
+                            wrapperClass: ''
+                        });
                         html += `
                             <tr class="hover:bg-gray-50 ${isLowStock ? 'bg-red-50' : ''}">
                                 <td class="px-6 py-4 text-sm font-medium text-gray-900">
-                                    <div>${itemLabel}</div>
-                                    <div class="mt-1">${codeMeta}</div>
+                                    ${productTitleBlock}
                                     <div class="text-xs text-gray-400">${getShopItemPackagingLabel(item)}</div>
                                     <div class="text-xs text-cyan-700 mt-1">${lotSummary}</div>
                                 </td>
@@ -27964,6 +28118,7 @@
                 syncStoreEntryPackagingSettingsUI();
                 updateGroupedEntryPackagingUI();
                 updateBulkExitModalPackagingUI();
+                refreshProductDisplayDependentUI();
             }
 
             function onCompanyFeatureAccessValue(snapshot) {
@@ -29507,8 +29662,10 @@
                         : isLowStock
                             ? 'bg-yellow-100 text-yellow-700'
                             : 'bg-green-100 text-green-700';
-                    const itemLabel = getShopItemDisplayName(item);
-                    const codeMeta = getProductInternalCodeMarkup(sourceProduct, { prefix: 'Code', classes: 'text-[11px] font-semibold uppercase tracking-wide text-slate-400', missingClasses: 'text-[11px] font-semibold text-amber-600' });
+                    const titleBlock = getProductDisplayTitleBlockMarkup(itemLabel, sourceProduct, {
+                        nameClasses: 'text-base font-semibold text-gray-900',
+                        wrapperClass: 'mt-3'
+                    });
                     const hasAnyDirectPrice = packagings.some(packaging => {
                         const unitCount = Number(packaging.unitCount) || 1;
                         return activeQty >= unitCount && normalizeSaleUnitPrice(getPackageSellingPrice(sourceProduct, packaging.code)) !== null;
@@ -29537,8 +29694,7 @@
                                 <span class="text-xs font-semibold text-gray-400 uppercase">${category}</span>
                                 <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${stockClass}">${stockLabel}</span>
                             </div>
-                            <h3 class="mt-3 text-base font-semibold text-gray-900">${itemLabel}</h3>
-                            <p class="mt-1">${codeMeta}</p>
+                            ${titleBlock}
                             <p class="mt-1 text-xs text-gray-400">${formatShopStockBreakdown(activeQty, item, { includeBaseTotal: true })}</p>
                             <p class="mt-2 text-xs font-semibold text-cyan-700">${activeLot ? `${activeLot.label} · ${formatBaseUnits(activeQty, getProductBaseUnitLabel(sourceProduct))}` : (pendingLot ? `${pendingLot.label} · en attente de validation` : 'Aucun lot actif')}</p>
                             ${hasAnyDirectPrice ? '' : '<p class="mt-1 text-[11px] font-semibold text-amber-600">Prix à définir avant validation ou facture.</p>'}
