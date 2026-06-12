@@ -2515,8 +2515,8 @@
                             </select>
                         </div>
                         <button id="open-shop-direct-entry-modal-button" type="button"
-                            class="inline-flex items-center justify-center gap-2 rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-600">
-                            <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            class="inline-flex items-center gap-1.5 rounded-lg border border-cyan-200 bg-white px-3 py-1.5 text-xs font-semibold text-cyan-700 shadow-sm transition hover:border-cyan-300 hover:bg-cyan-50">
+                            <svg class="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m7-7H5" />
                             </svg>
                             <span>Entrée directe</span>
@@ -6037,12 +6037,12 @@
     </div>
 
     <div id="shop-direct-entry-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-950/55 backdrop-blur-sm p-4">
-        <div class="w-full max-w-3xl overflow-hidden rounded-[28px] border border-white/70 bg-white shadow-2xl">
-            <div class="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-5 sm:px-7">
+        <div class="flex max-h-[min(90vh,52rem)] w-full max-w-3xl flex-col overflow-hidden rounded-[28px] border border-white/70 bg-white shadow-2xl">
+            <div class="flex shrink-0 items-start justify-between gap-4 border-b border-slate-100 px-6 py-5 sm:px-7">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-600">Stock boutique</p>
                     <h2 class="mt-2 text-2xl font-bold text-slate-900">Entrée directe boutique</h2>
-                    <p class="mt-1 text-sm text-slate-500">Une seule demande avec motif. Le stock ne sera ajouté qu'après validation par un manager ou un administrateur.</p>
+                    <p class="mt-1 text-sm text-slate-500">Ajoutez un ou plusieurs produits avec le même motif. Le stock ne sera ajouté qu'après validation par un manager ou un administrateur.</p>
                 </div>
                 <button id="close-shop-direct-entry-modal-button" type="button" class="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -6050,8 +6050,8 @@
                     </svg>
                 </button>
             </div>
-            <form id="shop-direct-entry-form">
-                <div class="space-y-5 px-6 py-6 sm:px-7 sm:py-7">
+            <form id="shop-direct-entry-form" class="flex min-h-0 flex-1 flex-col">
+                <div class="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-6 sm:px-7 sm:py-7">
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
                             <label for="shop-direct-entry-boutique-select" class="block text-sm font-semibold text-slate-700">Boutique *</label>
@@ -6076,47 +6076,106 @@
                         </div>
                     </div>
 
-                    <div>
-                        <label for="shop-direct-entry-product-select" class="block text-sm font-semibold text-slate-700">Produit catalogue *</label>
-                        <select id="shop-direct-entry-product-select"
-                            class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400"
-                            required>
-                            <option value="">Sélectionnez un produit...</option>
-                        </select>
-                        <p id="shop-direct-entry-product-meta" class="mt-2 text-xs text-slate-500">Choisissez un produit existant du catalogue pour conserver la traçabilité boutique.</p>
-                    </div>
-
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <div>
-                            <label for="shop-direct-entry-quantity" class="block text-sm font-semibold text-slate-700">Quantité à ajouter *</label>
-                            <input type="number" id="shop-direct-entry-quantity" min="1" step="1" placeholder="1"
-                                class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400"
-                                required>
-                            <p id="shop-direct-entry-quantity-meta" class="mt-2 text-xs text-slate-500">La quantité est saisie en unité de base.</p>
-                        </div>
                         <div>
                             <label for="shop-direct-entry-reference" class="block text-sm font-semibold text-slate-700">Référence document</label>
                             <input type="text" id="shop-direct-entry-reference" placeholder="BL, facture, bon manuel..."
                                 class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
                         </div>
+                        <div>
+                            <label for="shop-direct-entry-supplier-name" class="block text-sm font-semibold text-slate-700">Fournisseur</label>
+                            <input type="text" id="shop-direct-entry-supplier-name" placeholder="Nom du fournisseur"
+                                class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 sm:p-5">
+                        <div>
+                            <label for="shop-direct-entry-product-search" class="block text-sm font-semibold text-slate-700">Produit catalogue *</label>
+                            <div id="shop-direct-entry-product-combobox" class="relative mt-2">
+                                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
+                                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <input type="text" id="shop-direct-entry-product-search" autocomplete="off" placeholder="Tapez le nom, le code ou la description"
+                                    class="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-20 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
+                                <button type="button" id="shop-direct-entry-product-clear"
+                                    class="absolute inset-y-0 right-9 hidden flex items-center px-2 text-slate-300 transition hover:text-slate-500"
+                                    aria-label="Effacer la recherche produit">
+                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12M18 6L6 18"></path>
+                                    </svg>
+                                </button>
+                                <button type="button" id="shop-direct-entry-product-toggle"
+                                    class="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 transition hover:text-slate-600"
+                                    aria-label="Afficher les produits" aria-expanded="false">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </button>
+                                <div id="shop-direct-entry-product-dropdown"
+                                    class="hidden absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+                                    <div id="shop-direct-entry-product-options" class="product-combobox-options-panel max-h-72 space-y-1 overflow-y-auto p-2"></div>
+                                    <div id="shop-direct-entry-product-empty" class="hidden px-4 py-6 text-sm text-slate-400">Aucun produit correspondant.</div>
+                                </div>
+                            </div>
+                            <select id="shop-direct-entry-product-select" class="hidden">
+                                <option value="">Tapez pour rechercher un produit</option>
+                            </select>
+                            <p id="shop-direct-entry-product-meta" class="mt-2 text-xs text-slate-500">Choisissez un produit existant du catalogue pour conserver la traçabilité boutique.</p>
+                        </div>
+
+                        <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+                            <div>
+                                <label for="shop-direct-entry-quantity" class="block text-sm font-semibold text-slate-700">Quantité à ajouter *</label>
+                                <input type="number" id="shop-direct-entry-quantity" min="1" step="1" placeholder="1"
+                                    class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
+                                <p id="shop-direct-entry-quantity-meta" class="mt-2 text-xs text-slate-500">La quantité est saisie en unité de base.</p>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                <button type="button" id="shop-direct-entry-add-line-button"
+                                    class="inline-flex items-center gap-1.5 rounded-xl bg-cyan-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-cyan-600">
+                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                    </svg>
+                                    Ajouter à la liste
+                                </button>
+                                <button type="button" id="shop-direct-entry-reset-line-button"
+                                    class="rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                                    Réinitialiser
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     <div>
-                        <label for="shop-direct-entry-supplier-name" class="block text-sm font-semibold text-slate-700">Fournisseur</label>
-                        <input type="text" id="shop-direct-entry-supplier-name" placeholder="Nom du fournisseur"
-                            class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
+                        <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <h3 class="text-sm font-semibold text-slate-900">Produits ajoutés</h3>
+                                <p class="text-xs text-slate-500">Chaque ligne génère une demande de validation.</p>
+                            </div>
+                            <p class="text-xs font-semibold text-cyan-700"><span id="shop-direct-entry-summary-lines">0</span> produit(s)</p>
+                        </div>
+                        <div id="shop-direct-entry-lines-empty"
+                            class="mt-3 flex items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-400">
+                            Aucun produit ajouté.
+                        </div>
+                        <div id="shop-direct-entry-lines-list" class="mt-3 space-y-2"></div>
                     </div>
 
                     <div>
                         <label for="shop-direct-entry-comment" class="block text-sm font-semibold text-slate-700">Commentaire</label>
-                        <textarea id="shop-direct-entry-comment" rows="3" placeholder="Précision utile pour la validation..."
+                        <textarea id="shop-direct-entry-comment" rows="2" placeholder="Précision utile pour la validation..."
                             class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400"></textarea>
                     </div>
 
                     <p id="shop-direct-entry-error" class="hidden rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600"></p>
+                </div>
 
+                <div class="shrink-0 border-t border-slate-100 bg-slate-50 px-6 py-4 sm:px-7">
                     <button type="submit" id="shop-direct-entry-submit-button"
-                        class="w-full rounded-2xl bg-cyan-500 px-4 py-3.5 font-bold text-white shadow-md transition-colors hover:bg-cyan-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none">
+                        class="w-full rounded-2xl bg-cyan-500 px-4 py-3 font-bold text-white shadow-md transition-colors hover:bg-cyan-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none">
                         Envoyer pour validation
                     </button>
                 </div>
@@ -7092,7 +7151,8 @@
                 salesQuick: { query: '', isOpen: false },
                 restock: { query: '', isOpen: false },
                 traceability: { query: '', isOpen: false },
-                profitability: { query: '', isOpen: false }
+                profitability: { query: '', isOpen: false },
+                shopDirectEntry: { query: '', isOpen: false }
             };
             window.addEventListener('resize', () => {
                 Object.keys(productComboboxStates).forEach(key => {
@@ -8070,14 +8130,28 @@
             const shopDirectEntryBoutiqueSelect = document.getElementById('shop-direct-entry-boutique-select');
             const shopDirectEntryReasonSelect = document.getElementById('shop-direct-entry-reason');
             const shopDirectEntryProductSelect = document.getElementById('shop-direct-entry-product-select');
+            const shopDirectEntryProductCombobox = document.getElementById('shop-direct-entry-product-combobox');
+            const shopDirectEntryProductSearchInput = document.getElementById('shop-direct-entry-product-search');
+            const shopDirectEntryProductClearButton = document.getElementById('shop-direct-entry-product-clear');
+            const shopDirectEntryProductToggleButton = document.getElementById('shop-direct-entry-product-toggle');
+            const shopDirectEntryProductDropdown = document.getElementById('shop-direct-entry-product-dropdown');
+            const shopDirectEntryProductOptions = document.getElementById('shop-direct-entry-product-options');
+            const shopDirectEntryProductEmpty = document.getElementById('shop-direct-entry-product-empty');
             const shopDirectEntryProductMeta = document.getElementById('shop-direct-entry-product-meta');
             const shopDirectEntryQuantityInput = document.getElementById('shop-direct-entry-quantity');
             const shopDirectEntryQuantityMeta = document.getElementById('shop-direct-entry-quantity-meta');
+            const shopDirectEntryAddLineButton = document.getElementById('shop-direct-entry-add-line-button');
+            const shopDirectEntryResetLineButton = document.getElementById('shop-direct-entry-reset-line-button');
+            const shopDirectEntryLinesEmpty = document.getElementById('shop-direct-entry-lines-empty');
+            const shopDirectEntryLinesList = document.getElementById('shop-direct-entry-lines-list');
+            const shopDirectEntrySummaryLines = document.getElementById('shop-direct-entry-summary-lines');
             const shopDirectEntryReferenceInput = document.getElementById('shop-direct-entry-reference');
             const shopDirectEntrySupplierNameInput = document.getElementById('shop-direct-entry-supplier-name');
             const shopDirectEntryCommentInput = document.getElementById('shop-direct-entry-comment');
             const shopDirectEntryError = document.getElementById('shop-direct-entry-error');
             const shopDirectEntrySubmitButton = document.getElementById('shop-direct-entry-submit-button');
+            let shopDirectEntryLines = [];
+            let shopDirectEntryEditingLineId = null;
             const restockProductCombobox = document.getElementById('restock-product-combobox');
             const restockProductSearchInput = document.getElementById('restock-product-search');
             const restockProductToggleButton = document.getElementById('restock-product-toggle');
@@ -9912,6 +9986,17 @@
                         empty: profitabilityProductEmpty,
                         select: profitabilityProductFilter,
                         getItems: () => getProfitabilityProductComboboxItems(productComboboxStates.profitability.query)
+                    },
+                    shopDirectEntry: {
+                        combobox: shopDirectEntryProductCombobox,
+                        input: shopDirectEntryProductSearchInput,
+                        clearButton: shopDirectEntryProductClearButton,
+                        toggle: shopDirectEntryProductToggleButton,
+                        dropdown: shopDirectEntryProductDropdown,
+                        options: shopDirectEntryProductOptions,
+                        empty: shopDirectEntryProductEmpty,
+                        select: shopDirectEntryProductSelect,
+                        getItems: () => getShopDirectEntryProductComboboxItems(productComboboxStates.shopDirectEntry.query)
                     }
                 };
                 return configs[key] || null;
@@ -9962,6 +10047,13 @@
                     const product = getProfitabilitySelectableProducts().find(entry => entry.key === value);
                     if (!product) return getAnalyticsProductLabel(value, '');
                     return product.displayLabel || product.name || '';
+                }
+                if (key === 'shopDirectEntry') {
+                    const product = value ? appData.storeProducts?.[value] : null;
+                    if (!product) return '';
+                    const storeId = resolveStoreId(product.storeId);
+                    const storeLabel = storeId ? getStoreName(storeId) : 'Non assigné';
+                    return getProductDisplayPlainLabel(product, [storeLabel]);
                 }
                 return '';
             }
@@ -10563,21 +10655,233 @@
                     : (getActiveBoutiqueId() || '');
             }
 
-            function populateShopDirectEntryProductSelect() {
+            function createShopDirectEntryLineDraft() {
+                return {
+                    id: `shop-direct-entry-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                    productId: '',
+                    quantity: ''
+                };
+            }
+
+            function getShopDirectEntryProductComboboxItems(search = '') {
+                const normalized = normalizeString(search);
+                const boutiqueId = shopDirectEntryBoutiqueSelect?.value || '';
+                return getShopDirectEntrySelectableProducts(boutiqueId)
+                    .filter(product => !normalized || matchesStoreProductSearch(product, search))
+                    .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+                    .map(product => {
+                        const storeId = resolveStoreId(product.storeId);
+                        const storeLabel = storeId ? getStoreName(storeId) : 'Non assigné';
+                        const detailPrice = toNullableFiniteNumber(getPackageSellingPrice(product, 'detail'));
+                        return {
+                            value: product.id,
+                            title: product.name || 'Produit sans nom',
+                            meta: getProductInternalCodeText(product),
+                            description: storeLabel,
+                            badge: detailPrice !== null ? formatCurrency(detailPrice, product?.currency || 'CFA') : 'Prix à définir',
+                            badgeClasses: detailPrice !== null ? 'bg-cyan-50 text-cyan-700' : 'bg-amber-50 text-amber-700',
+                            displayLabel: getProductDisplayPlainLabel(product, [storeLabel])
+                        };
+                    });
+            }
+
+            function refreshShopDirectEntryProductSelect({ preserveSelection = true } = {}) {
                 if (!shopDirectEntryProductSelect) return;
-                const products = getShopDirectEntrySelectableProducts(shopDirectEntryBoutiqueSelect?.value);
-                const previousValue = shopDirectEntryProductSelect.value;
-                shopDirectEntryProductSelect.innerHTML = '<option value="">Sélectionnez un produit...</option>';
-                products.forEach(product => {
+                const selectedValue = preserveSelection ? (shopDirectEntryProductSelect.value || '') : '';
+                const items = getShopDirectEntryProductComboboxItems('');
+                shopDirectEntryProductSelect.innerHTML = '';
+                const placeholder = document.createElement('option');
+                placeholder.value = '';
+                placeholder.textContent = 'Tapez pour rechercher un produit';
+                shopDirectEntryProductSelect.appendChild(placeholder);
+                items.forEach(item => {
                     const option = document.createElement('option');
-                    option.value = product.id;
-                    const storeId = resolveStoreId(product.storeId);
-                    const storeLabel = storeId ? getStoreName(storeId) : 'Non assigné';
-                    option.textContent = getProductDisplayPlainLabel(product, [storeLabel]);
+                    option.value = item.value;
+                    option.textContent = item.displayLabel || item.title || 'Produit';
                     shopDirectEntryProductSelect.appendChild(option);
                 });
-                shopDirectEntryProductSelect.value = products.some(product => product.id === previousValue) ? previousValue : '';
+                shopDirectEntryProductSelect.value = selectedValue && items.some(item => item.value === selectedValue) ? selectedValue : '';
+                syncProductComboboxInput('shopDirectEntry');
+                renderProductCombobox('shopDirectEntry');
                 updateShopDirectEntryFormState();
+            }
+
+            function populateShopDirectEntryProductSelect() {
+                refreshShopDirectEntryProductSelect();
+            }
+
+            function resetShopDirectEntryDraft() {
+                shopDirectEntryEditingLineId = null;
+                productComboboxStates.shopDirectEntry.query = '';
+                if (shopDirectEntryProductSearchInput) shopDirectEntryProductSearchInput.value = '';
+                if (shopDirectEntryProductSelect) shopDirectEntryProductSelect.value = '';
+                if (shopDirectEntryQuantityInput) shopDirectEntryQuantityInput.value = '';
+                if (shopDirectEntryAddLineButton) {
+                    shopDirectEntryAddLineButton.innerHTML = `
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Ajouter à la liste
+                    `;
+                }
+                refreshShopDirectEntryProductSelect({ preserveSelection: false });
+            }
+
+            function getShopDirectEntryDraftPayload() {
+                const productId = shopDirectEntryProductSelect?.value || '';
+                const quantity = parseNonNegativeInteger(shopDirectEntryQuantityInput?.value, 0);
+                const product = productId ? appData.storeProducts?.[productId] : null;
+                if (!product) {
+                    throw new Error('Sélectionnez un produit catalogue.');
+                }
+                if (quantity <= 0) {
+                    throw new Error('Quantité invalide.');
+                }
+                if (shopDirectEntryLines.some(line => line.productId === productId && line.id !== shopDirectEntryEditingLineId)) {
+                    throw new Error('Ce produit est déjà dans la liste.');
+                }
+                return {
+                    id: shopDirectEntryEditingLineId || createShopDirectEntryLineDraft().id,
+                    productId,
+                    quantity: `${quantity}`
+                };
+            }
+
+            function fillShopDirectEntryDraft(line) {
+                if (!line) return;
+                shopDirectEntryEditingLineId = line.id;
+                if (shopDirectEntryProductSelect) shopDirectEntryProductSelect.value = line.productId || '';
+                if (shopDirectEntryQuantityInput) shopDirectEntryQuantityInput.value = line.quantity || '';
+                syncProductComboboxInput('shopDirectEntry');
+                renderProductCombobox('shopDirectEntry');
+                updateShopDirectEntryFormState();
+                if (shopDirectEntryAddLineButton) shopDirectEntryAddLineButton.textContent = 'Mettre à jour la ligne';
+            }
+
+            function renderShopDirectEntryRows() {
+                if (!shopDirectEntryLinesList || !shopDirectEntryLinesEmpty) return;
+                if (!shopDirectEntryLines.length) {
+                    shopDirectEntryLinesEmpty.classList.remove('hidden');
+                    shopDirectEntryLinesList.innerHTML = '';
+                } else {
+                    shopDirectEntryLinesEmpty.classList.add('hidden');
+                    shopDirectEntryLinesList.innerHTML = shopDirectEntryLines.map((line, index) => {
+                        const product = line.productId ? appData.storeProducts?.[line.productId] : null;
+                        const baseUnitLabel = getProductBaseUnitLabel(product);
+                        const quantityLabel = formatBaseUnits(parseNonNegativeInteger(line.quantity, 0), baseUnitLabel);
+                        const codeLabel = getProductInternalCodeText(product) || 'Code manquant';
+                        return `
+                            <article class="rounded-xl border border-slate-200 bg-white px-3 py-3 shadow-sm">
+                                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                    <div class="min-w-0">
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <span class="text-[11px] font-semibold text-slate-400">Ligne ${index + 1}</span>
+                                        </div>
+                                        <p class="mt-1 truncate text-sm font-semibold text-slate-900">${escapeHtml(product?.name || 'Produit')}</p>
+                                        <p class="mt-0.5 text-xs text-slate-500">${escapeHtml(codeLabel)} · ${escapeHtml(quantityLabel)}</p>
+                                    </div>
+                                    <div class="flex shrink-0 items-center gap-2">
+                                        <button type="button" data-shop-direct-entry-edit="${escapeHtml(line.id)}"
+                                            class="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50">
+                                            Modifier
+                                        </button>
+                                        <button type="button" data-shop-direct-entry-remove="${escapeHtml(line.id)}"
+                                            class="rounded-lg border border-rose-200 px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50">
+                                            Retirer
+                                        </button>
+                                    </div>
+                                </div>
+                            </article>
+                        `;
+                    }).join('');
+                }
+                refreshShopDirectEntrySummary();
+            }
+
+            function refreshShopDirectEntrySummary() {
+                const count = shopDirectEntryLines.length;
+                if (shopDirectEntrySummaryLines) shopDirectEntrySummaryLines.textContent = `${count}`;
+                if (shopDirectEntrySubmitButton) {
+                    shopDirectEntrySubmitButton.textContent = count > 0
+                        ? `Envoyer ${count} entrée${count > 1 ? 's' : ''} pour validation`
+                        : 'Envoyer pour validation';
+                    shopDirectEntrySubmitButton.disabled = !shopDirectEntryBoutiqueSelect?.value
+                        || !shopDirectEntryReasonSelect?.value
+                        || count === 0;
+                }
+            }
+
+            function resetShopDirectEntryModal() {
+                shopDirectEntryLines = [];
+                shopDirectEntryEditingLineId = null;
+                if (shopDirectEntryForm) shopDirectEntryForm.reset();
+                closeProductCombobox('shopDirectEntry', { restoreSelection: true });
+                renderShopDirectEntryBoutiqueSelect();
+                resetShopDirectEntryDraft();
+                renderShopDirectEntryRows();
+                clearShopDirectEntryError();
+            }
+
+            function buildShopDirectEntryRequestPayload({ boutiqueId, reason, line, requestId, now }) {
+                const product = line?.productId ? appData.storeProducts?.[line.productId] : null;
+                if (!product) {
+                    throw new Error('Produit catalogue introuvable.');
+                }
+                const quantity = parseNonNegativeInteger(line.quantity, 0);
+                if (quantity <= 0) {
+                    throw new Error('Quantité invalide.');
+                }
+                const boutiqueName = getBoutiqueName(boutiqueId);
+                const existingShopItem = Object.values(appData.shopStock || {}).find(item =>
+                    resolveBoutiqueId(item?.boutiqueId) === boutiqueId &&
+                    item?.sourceProductId === product.id
+                ) || null;
+                const baseUnitLabel = getProductBaseUnitLabel(product);
+                const targetSummary = formatBaseUnits(quantity, baseUnitLabel);
+                return {
+                    id: requestId,
+                    requestType: 'direct_entry',
+                    status: EXIT_STATUS_PENDING,
+                    storeId: resolveStoreId(product.storeId) || null,
+                    boutiqueId,
+                    boutiqueName,
+                    sourceProductId: product.id,
+                    sourceProductName: product.name,
+                    productName: product.name,
+                    baseProductCode: getBaseProductCode(product),
+                    categoryId: product.categoryId || null,
+                    purchaseCost: toNullableFiniteNumber(getPackagePurchaseCost(product, 'detail')),
+                    sellingPrice: toNullableFiniteNumber(getPackageSellingPrice(product, 'detail')),
+                    quantity,
+                    totalUnits: quantity,
+                    sourcePackageCode: 'detail',
+                    sourcePackageLabel: baseUnitLabel,
+                    sourceVariantCode: getBaseProductCode(product) || getPackageVariantCode(product, 'detail'),
+                    sourceSummary: targetSummary,
+                    targetSummary,
+                    targetPackages: [{
+                        type: 'detail',
+                        packageCode: 'detail',
+                        label: baseUnitLabel,
+                        code: getBaseProductCode(product) || getPackageVariantCode(product, 'detail'),
+                        displayName: product.name,
+                        quantity,
+                        unitsPerPackage: 1,
+                        totalUnits: quantity,
+                        sellingPrice: toNullableFiniteNumber(getPackageSellingPrice(product, 'detail')),
+                        purchaseCost: toNullableFiniteNumber(getPackagePurchaseCost(product, 'detail'))
+                    }],
+                    alertThreshold: existingShopItem?.alertThreshold ?? 5,
+                    requestedAt: now,
+                    requestedById: currentUser.uid || '',
+                    requestedByName: currentUserData?.fullName || currentUser.email || '',
+                    requestedByEmail: currentUser.email || '',
+                    shopProductId: existingShopItem?.id || null,
+                    supplierName: (shopDirectEntrySupplierNameInput?.value || '').trim(),
+                    referenceDocument: (shopDirectEntryReferenceInput?.value || '').trim(),
+                    directEntryReason: reason,
+                    comment: (shopDirectEntryCommentInput?.value || '').trim()
+                };
             }
 
             function updateShopDirectEntryFormState() {
@@ -10598,9 +10902,7 @@
                 if (shopDirectEntryQuantityMeta) {
                     shopDirectEntryQuantityMeta.textContent = `La quantité est saisie en ${baseUnitLabel || 'unité de base'}.`;
                 }
-                if (shopDirectEntrySubmitButton) {
-                    shopDirectEntrySubmitButton.disabled = !shopDirectEntryBoutiqueSelect?.value || !product || !(parseNonNegativeInteger(shopDirectEntryQuantityInput?.value, 0) > 0) || !shopDirectEntryReasonSelect?.value;
-                }
+                refreshShopDirectEntrySummary();
                 clearShopDirectEntryError();
             }
 
@@ -17237,7 +17539,7 @@
                 populateShopDirectEntryProductSelect();
                 refreshBulkExitRowProducts();
                 renderTransferProductDropdown();
-                ['entry', 'groupedEntry', 'exit', 'salesQuick', 'restock', 'traceability', 'profitability'].forEach((key) => {
+                ['entry', 'groupedEntry', 'exit', 'salesQuick', 'restock', 'traceability', 'profitability', 'shopDirectEntry'].forEach((key) => {
                     renderProductCombobox(key);
                     syncProductComboboxInput(key);
                 });
@@ -35448,105 +35750,97 @@
                 }
             });
             if (shopDirectEntryBoutiqueSelect) shopDirectEntryBoutiqueSelect.addEventListener('change', () => {
-                populateShopDirectEntryProductSelect();
+                shopDirectEntryLines = [];
+                renderShopDirectEntryRows();
+                resetShopDirectEntryDraft();
+                refreshShopDirectEntryProductSelect({ preserveSelection: false });
             });
             if (shopDirectEntryProductSelect) shopDirectEntryProductSelect.addEventListener('change', updateShopDirectEntryFormState);
             if (shopDirectEntryReasonSelect) shopDirectEntryReasonSelect.addEventListener('change', updateShopDirectEntryFormState);
             if (shopDirectEntryQuantityInput) shopDirectEntryQuantityInput.addEventListener('input', updateShopDirectEntryFormState);
+            if (shopDirectEntryAddLineButton) shopDirectEntryAddLineButton.addEventListener('click', () => {
+                try {
+                    clearShopDirectEntryError();
+                    const nextLine = getShopDirectEntryDraftPayload();
+                    const existingIndex = shopDirectEntryLines.findIndex(line => line.id === nextLine.id);
+                    if (existingIndex >= 0) {
+                        shopDirectEntryLines[existingIndex] = nextLine;
+                    } else {
+                        shopDirectEntryLines.push(nextLine);
+                    }
+                    renderShopDirectEntryRows();
+                    resetShopDirectEntryDraft();
+                } catch (error) {
+                    showShopDirectEntryError(error?.message || "Impossible d'ajouter cette ligne.");
+                }
+            });
+            if (shopDirectEntryResetLineButton) shopDirectEntryResetLineButton.addEventListener('click', () => {
+                clearShopDirectEntryError();
+                resetShopDirectEntryDraft();
+            });
+            if (shopDirectEntryLinesList) shopDirectEntryLinesList.addEventListener('click', (event) => {
+                const editButton = event.target.closest('[data-shop-direct-entry-edit]');
+                if (editButton) {
+                    const line = shopDirectEntryLines.find(item => item.id === editButton.dataset.shopDirectEntryEdit);
+                    if (!line) return;
+                    clearShopDirectEntryError();
+                    fillShopDirectEntryDraft(line);
+                    return;
+                }
+                const removeButton = event.target.closest('[data-shop-direct-entry-remove]');
+                if (!removeButton) return;
+                shopDirectEntryLines = shopDirectEntryLines.filter(line => line.id !== removeButton.dataset.shopDirectEntryRemove);
+                if (shopDirectEntryEditingLineId === removeButton.dataset.shopDirectEntryRemove) {
+                    resetShopDirectEntryDraft();
+                }
+                renderShopDirectEntryRows();
+            });
             if (shopDirectEntryForm) shopDirectEntryForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 if (!currentUser || !dbBasePath) return;
                 clearShopDirectEntryError();
 
                 const boutiqueId = shopDirectEntryBoutiqueSelect?.value || '';
-                const productId = shopDirectEntryProductSelect?.value || '';
                 const reason = shopDirectEntryReasonSelect?.value || '';
-                const quantity = parseNonNegativeInteger(shopDirectEntryQuantityInput?.value, 0);
-                const product = productId ? appData.storeProducts?.[productId] : null;
 
                 if (!boutiqueId) {
                     showShopDirectEntryError('Sélectionnez une boutique.');
-                    return;
-                }
-                if (!product) {
-                    showShopDirectEntryError('Sélectionnez un produit catalogue.');
                     return;
                 }
                 if (!reason) {
                     showShopDirectEntryError('Sélectionnez un motif.');
                     return;
                 }
-                if (quantity <= 0) {
-                    showShopDirectEntryError('Quantité invalide.');
+                if (!shopDirectEntryLines.length) {
+                    showShopDirectEntryError('Ajoutez au moins un produit à la liste.');
                     return;
                 }
 
                 try {
                     if (shopDirectEntrySubmitButton) shopDirectEntrySubmitButton.disabled = true;
                     const now = new Date().toISOString();
-                    const boutiqueName = getBoutiqueName(boutiqueId);
-                    const existingShopItem = Object.values(appData.shopStock || {}).find(item =>
-                        resolveBoutiqueId(item?.boutiqueId) === boutiqueId &&
-                        item?.sourceProductId === productId
-                    ) || null;
-                    const baseUnitLabel = getProductBaseUnitLabel(product);
-                    const targetSummary = formatBaseUnits(quantity, baseUnitLabel);
-                    const requestRef = push(ref(db, `${dbBasePath}/shopTransferRequests`));
-                    if (!requestRef.key) {
-                        throw new Error("Impossible de créer la demande.");
+                    const updates = {};
+                    for (const line of shopDirectEntryLines) {
+                        const requestRef = push(ref(db, `${dbBasePath}/shopTransferRequests`));
+                        if (!requestRef.key) {
+                            throw new Error("Impossible de créer la demande.");
+                        }
+                        updates[`${dbBasePath}/shopTransferRequests/${requestRef.key}`] = buildShopDirectEntryRequestPayload({
+                            boutiqueId,
+                            reason,
+                            line,
+                            requestId: requestRef.key,
+                            now
+                        });
                     }
-                    const requestPayload = {
-                        id: requestRef.key,
-                        requestType: 'direct_entry',
-                        status: EXIT_STATUS_PENDING,
-                        storeId: resolveStoreId(product.storeId) || null,
-                        boutiqueId,
-                        boutiqueName,
-                        sourceProductId: product.id,
-                        sourceProductName: product.name,
-                        productName: product.name,
-                        baseProductCode: getBaseProductCode(product),
-                        categoryId: product.categoryId || null,
-                        purchaseCost: toNullableFiniteNumber(getPackagePurchaseCost(product, 'detail')),
-                        sellingPrice: toNullableFiniteNumber(getPackageSellingPrice(product, 'detail')),
-                        quantity,
-                        totalUnits: quantity,
-                        sourcePackageCode: 'detail',
-                        sourcePackageLabel: baseUnitLabel,
-                        sourceVariantCode: getBaseProductCode(product) || getPackageVariantCode(product, 'detail'),
-                        sourceSummary: targetSummary,
-                        targetSummary,
-                        targetPackages: [{
-                            type: 'detail',
-                            packageCode: 'detail',
-                            label: baseUnitLabel,
-                            code: getBaseProductCode(product) || getPackageVariantCode(product, 'detail'),
-                            displayName: product.name,
-                            quantity,
-                            unitsPerPackage: 1,
-                            totalUnits: quantity,
-                            sellingPrice: toNullableFiniteNumber(getPackageSellingPrice(product, 'detail')),
-                            purchaseCost: toNullableFiniteNumber(getPackagePurchaseCost(product, 'detail'))
-                        }],
-                        alertThreshold: existingShopItem?.alertThreshold ?? 5,
-                        requestedAt: now,
-                        requestedById: currentUser.uid || '',
-                        requestedByName: currentUserData?.fullName || currentUser.email || '',
-                        requestedByEmail: currentUser.email || '',
-                        shopProductId: existingShopItem?.id || null,
-                        supplierName: (shopDirectEntrySupplierNameInput?.value || '').trim(),
-                        referenceDocument: (shopDirectEntryReferenceInput?.value || '').trim(),
-                        directEntryReason: reason,
-                        comment: (shopDirectEntryCommentInput?.value || '').trim()
-                    };
-
-                    await set(ref(db, `${dbBasePath}/shopTransferRequests/${requestRef.key}`), requestPayload);
-                    showSuccessToast("Entrée directe envoyée pour validation.");
-                    shopDirectEntryForm.reset();
+                    await update(ref(db), updates);
+                    const count = shopDirectEntryLines.length;
+                    showSuccessToast(`${count} entrée${count > 1 ? 's' : ''} directe${count > 1 ? 's' : ''} envoyée${count > 1 ? 's' : ''} pour validation.`);
+                    resetShopDirectEntryModal();
                     if (shopDirectEntryModal) shopDirectEntryModal.classList.add('hidden');
                 } catch (error) {
                     console.error(error);
-                    showShopDirectEntryError("Impossible d'envoyer cette entrée directe.");
+                    showShopDirectEntryError(error?.message || "Impossible d'envoyer cette entrée directe.");
                 } finally {
                     updateShopDirectEntryFormState();
                 }
@@ -35822,11 +36116,7 @@
                     return;
                 }
                 if (shopDirectEntryModal) shopDirectEntryModal.classList.remove('hidden');
-                if (shopDirectEntryForm) shopDirectEntryForm.reset();
-                renderShopDirectEntryBoutiqueSelect();
-                populateShopDirectEntryProductSelect();
-                updateShopDirectEntryFormState();
-                clearShopDirectEntryError();
+                resetShopDirectEntryModal();
             });
 
             bindSuggestionComboboxes(document);
@@ -35893,6 +36183,7 @@
                 restockModal.classList.add('hidden');
             });
             if (closeShopDirectEntryModalButton) closeShopDirectEntryModalButton.addEventListener('click', () => {
+                closeProductCombobox('shopDirectEntry', { restoreSelection: true });
                 if (shopDirectEntryModal) shopDirectEntryModal.classList.add('hidden');
             });
             if (bulkTransferCancelButton) bulkTransferCancelButton.addEventListener('click', closeBulkTransferModal);
@@ -36106,6 +36397,7 @@
             bindProductCombobox('restock');
             bindProductCombobox('traceability');
             bindProductCombobox('profitability');
+            bindProductCombobox('shopDirectEntry');
 
             if (entryProductSelect) {
                 entryProductSelect.addEventListener('change', () => {
@@ -36483,6 +36775,7 @@
                         if (m === transferModal) closeTransferProductDropdown({ restoreSelection: true });
                         if (m === bulkTransferModal) resetBulkTransferPreview();
                         if (m === restockModal) closeProductCombobox('restock', { restoreSelection: true });
+                        if (m === shopDirectEntryModal) closeProductCombobox('shopDirectEntry', { restoreSelection: true });
                         m.classList.add('hidden');
                     }
                 });
