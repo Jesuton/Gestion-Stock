@@ -3605,7 +3605,7 @@
                 <div class="mt-6 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div class="relative flex-grow">
-                            <input type="text" id="price-table-search" placeholder="Rechercher un produit ou une catégorie..."
+                            <input type="text" id="price-table-search" placeholder="Rechercher un produit, un code ou une catégorie..."
                                 class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-cyan-500 focus:border-cyan-500" />
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -3613,6 +3613,27 @@
                                 </svg>
                             </div>
                         </div>
+                        <div class="flex flex-col sm:flex-row gap-2 sm:items-center">
+                            <select id="price-table-sort"
+                                class="rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-700 focus:ring-cyan-500 focus:border-cyan-500">
+                                <option value="name_asc">Nom A → Z</option>
+                                <option value="name_desc">Nom Z → A</option>
+                                <option value="code_asc">Code interne</option>
+                                <option value="category_asc">Catégorie</option>
+                                <option value="store_asc">Magasin</option>
+                                <option value="pricing_pending">Prix à définir d'abord</option>
+                                <option value="updated_desc">Modifiés récemment</option>
+                            </select>
+                            <select id="price-table-filter"
+                                class="rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-700 focus:ring-cyan-500 focus:border-cyan-500">
+                                <option value="all">Tous les produits</option>
+                                <option value="pending">Prix à définir uniquement</option>
+                                <option value="active">Prix complets uniquement</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <p id="price-table-result-summary" class="text-sm text-gray-500">—</p>
                         <div class="text-xs text-gray-500 bg-gray-50 border border-gray-100 px-3 py-2 rounded-xl">
                             Modifiez puis cliquez sur <span class="font-semibold text-gray-700">Enregistrer</span>.
                         </div>
@@ -3656,6 +3677,32 @@
                                     <!-- Lignes de prix insérées par JS -->
                                 </tbody>
                             </table>
+                        </div>
+                        <div id="price-table-pagination" class="hidden mt-4 border-t border-gray-100 pt-4">
+                            <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                                <p id="price-table-pagination-summary" class="text-sm text-gray-500">0-0 sur 0 produit(s)</p>
+                                <div class="flex items-center gap-2">
+                                    <label for="price-table-pagination-size" class="text-xs font-semibold uppercase tracking-wide text-gray-400">Par page</label>
+                                    <select id="price-table-pagination-size"
+                                        class="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:ring-cyan-500 focus:border-cyan-500">
+                                        <option value="15" selected>15</option>
+                                        <option value="25">25</option>
+                                        <option value="50">50</option>
+                                        <option value="100">100</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                <button type="button" id="price-table-pagination-prev"
+                                    class="inline-flex items-center justify-center rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50">
+                                    Précédent
+                                </button>
+                                <div id="price-table-pagination-pages" class="flex flex-wrap items-center justify-center gap-2"></div>
+                                <button type="button" id="price-table-pagination-next"
+                                    class="inline-flex items-center justify-center rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50">
+                                    Suivant
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -7192,7 +7239,8 @@
                 salesHistory: { page: 1, pageSize: 10 },
                 storeMovements: { page: 1, pageSize: 10 },
                 shopStock: { page: 1, pageSize: 10 },
-                shopMovements: { page: 1, pageSize: 10 }
+                shopMovements: { page: 1, pageSize: 10 },
+                priceTable: { page: 1, pageSize: 15 }
             };
             const productComboboxStates = {
                 entry: { query: '', isOpen: false },
@@ -7382,9 +7430,18 @@
             const discountApprovalCodeStatus = document.getElementById('discount-approval-code-status');
             const discountApprovalCodeError = document.getElementById('discount-approval-code-error');
             const priceTableSearchInput = document.getElementById('price-table-search');
+            const priceTableSortSelect = document.getElementById('price-table-sort');
+            const priceTableFilterSelect = document.getElementById('price-table-filter');
+            const priceTableResultSummary = document.getElementById('price-table-result-summary');
             const priceTableTableContainer = document.getElementById('price-table-table-container');
             const priceTableTbody = document.getElementById('price-table-tbody');
             const priceTableEmpty = document.getElementById('price-table-empty');
+            const priceTablePagination = document.getElementById('price-table-pagination');
+            const priceTablePaginationSummary = document.getElementById('price-table-pagination-summary');
+            const priceTablePaginationSize = document.getElementById('price-table-pagination-size');
+            const priceTablePaginationPrev = document.getElementById('price-table-pagination-prev');
+            const priceTablePaginationNext = document.getElementById('price-table-pagination-next');
+            const priceTablePaginationPages = document.getElementById('price-table-pagination-pages');
             const priceTableImportButton = document.getElementById('price-table-import-button');
             const priceTableImportInput = document.getElementById('price-table-import-input');
             const priceTableImportStatus = document.getElementById('price-table-import-status');
@@ -7608,6 +7665,16 @@
                     pages: shopMovementsPaginationPages,
                     activePageClasses: 'border-cyan-600 bg-cyan-600 text-white',
                     itemLabel: 'mouvement(s)'
+                },
+                priceTable: {
+                    container: priceTablePagination,
+                    summary: priceTablePaginationSummary,
+                    sizeSelect: priceTablePaginationSize,
+                    prevButton: priceTablePaginationPrev,
+                    nextButton: priceTablePaginationNext,
+                    pages: priceTablePaginationPages,
+                    activePageClasses: 'border-cyan-600 bg-cyan-600 text-white',
+                    itemLabel: 'produit(s)'
                 }
             };
             const profitabilityProductCombobox = document.getElementById('profitability-product-combobox');
@@ -24538,32 +24605,111 @@
                 });
             }
 
-            function renderPriceTable() {
-                if (!priceTableTbody || !priceTableTableContainer || !priceTableEmpty) return;
+            function getSalesCatalogEmptyMessage(searchTerm = '', activeBoutique = '') {
+                const normalizedSearch = normalizeString(searchTerm);
+                const allStock = Object.values(appData.shopStock || {});
+                const boutiqueStock = activeBoutique
+                    ? allStock.filter(item => resolveBoutiqueId(item.boutiqueId) === activeBoutique)
+                    : allStock;
+                if (!allStock.length) {
+                    return 'Aucun produit en stock boutique. Utilisez une entrée directe ou un transfert pour ajouter des articles.';
+                }
+                if (activeBoutique && !boutiqueStock.length) {
+                    return `Aucun produit dans « ${getBoutiqueName(activeBoutique) || 'cette boutique'} ». Changez de boutique en haut de page ou ajoutez du stock.`;
+                }
+                if (normalizedSearch || (selectedSalesCategory && selectedSalesCategory !== 'Tous')) {
+                    return 'Aucun produit ne correspond à votre recherche ou à la catégorie sélectionnée.';
+                }
+                return 'Aucun produit disponible dans le catalogue vente.';
+            }
+
+            function sortPriceTableProducts(products, sortKey = 'name_asc') {
+                const sorted = products.slice();
+                const getCategoryLabel = (product) => getCategoryNameById(product.categoryId) || product.categoryName || product.category || product.type || '';
+                sorted.sort((a, b) => {
+                    switch (sortKey) {
+                        case 'name_desc':
+                            return (b.name || '').localeCompare(a.name || '');
+                        case 'code_asc': {
+                            const codeA = getProductInternalCode(a) || 'zzz';
+                            const codeB = getProductInternalCode(b) || 'zzz';
+                            return codeA.localeCompare(codeB) || (a.name || '').localeCompare(b.name || '');
+                        }
+                        case 'category_asc': {
+                            const categoryCompare = getCategoryLabel(a).localeCompare(getCategoryLabel(b));
+                            return categoryCompare || (a.name || '').localeCompare(b.name || '');
+                        }
+                        case 'store_asc': {
+                            const storeA = resolveStoreId(a.storeId) ? getStoreName(resolveStoreId(a.storeId)) : 'Aucun magasin';
+                            const storeB = resolveStoreId(b.storeId) ? getStoreName(resolveStoreId(b.storeId)) : 'Aucun magasin';
+                            return storeA.localeCompare(storeB) || (a.name || '').localeCompare(b.name || '');
+                        }
+                        case 'pricing_pending': {
+                            const pendingA = getProductPricingStatus(a) === PRICING_STATUS_PENDING ? 0 : 1;
+                            const pendingB = getProductPricingStatus(b) === PRICING_STATUS_PENDING ? 0 : 1;
+                            return pendingA - pendingB || (a.name || '').localeCompare(b.name || '');
+                        }
+                        case 'updated_desc': {
+                            const updatedA = new Date(a.updatedAt || a.createdAt || 0).getTime();
+                            const updatedB = new Date(b.updatedAt || b.createdAt || 0).getTime();
+                            return updatedB - updatedA || (a.name || '').localeCompare(b.name || '');
+                        }
+                        case 'name_asc':
+                        default:
+                            return (a.name || '').localeCompare(b.name || '');
+                    }
+                });
+                return sorted;
+            }
+
+            function getPriceTableFilteredProducts() {
                 const normalizedSearch = normalizeString(priceTableSearchInput?.value);
+                const sortKey = priceTableSortSelect?.value || 'name_asc';
+                const filterKey = priceTableFilterSelect?.value || 'all';
                 const allowedStoreIds = new Set(getAccessibleStoreIds());
                 const products = Object.values(appData.storeProducts || {}).filter(product => {
                     const rawStoreId = product.storeId;
                     const isUnassigned = rawStoreId === UNASSIGNED_STORE_ID;
                     const storeId = isUnassigned ? null : resolveStoreId(rawStoreId);
                     if (!isUnassigned && (!storeId || !allowedStoreIds.has(storeId))) return false;
+                    const pricingStatus = getProductPricingStatus(product);
+                    if (filterKey === 'pending' && pricingStatus !== PRICING_STATUS_PENDING) return false;
+                    if (filterKey === 'active' && pricingStatus === PRICING_STATUS_PENDING) return false;
                     const name = normalizeString(product.name || '');
                     const code = normalizeString(getProductInternalCode(product));
                     const desc = normalizeString(product.description || '');
                     const categoryName = normalizeString(getCategoryNameById(product.categoryId) || product.categoryName || product.category || product.type || '');
                     return !normalizedSearch || name.includes(normalizedSearch) || code.includes(normalizedSearch) || desc.includes(normalizedSearch) || categoryName.includes(normalizedSearch);
-                }).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                });
+                return sortPriceTableProducts(products, sortKey);
+            }
+
+            function renderPriceTable() {
+                if (!priceTableTbody || !priceTableTableContainer || !priceTableEmpty) return;
+                const products = getPriceTableFilteredProducts();
+                const pagination = getPaginationSlice(products, 'priceTable');
+
+                if (priceTableResultSummary) {
+                    if (!products.length) {
+                        priceTableResultSummary.textContent = '0 produit trouvé';
+                    } else if (pagination.totalPages > 1) {
+                        priceTableResultSummary.textContent = `${products.length} produit(s) · page ${pagination.currentPage}/${pagination.totalPages}`;
+                    } else {
+                        priceTableResultSummary.textContent = `${products.length} produit(s)`;
+                    }
+                }
 
                 if (!products.length) {
                     priceTableTableContainer.classList.add('hidden');
                     priceTableEmpty.classList.remove('hidden');
                     priceTableTbody.innerHTML = '';
+                    hidePaginationControls('priceTable');
                     return;
                 }
 
                 priceTableEmpty.classList.add('hidden');
                 priceTableTableContainer.classList.remove('hidden');
-                priceTableTbody.innerHTML = products.map(product => {
+                priceTableTbody.innerHTML = pagination.items.map(product => {
                     const rawStoreId = product.storeId;
                     const isUnassigned = rawStoreId === UNASSIGNED_STORE_ID;
                     const storeId = isUnassigned ? null : resolveStoreId(rawStoreId);
@@ -24648,6 +24794,7 @@
                         </tr>
                     `;
                 }).join('');
+                renderPaginationControls('priceTable', pagination);
             }
 
             async function savePriceTableRow(productId) {
@@ -30372,6 +30519,10 @@
                     salesProductsPlaceholder.classList.remove('hidden');
                     salesProductsContainer.classList.add('hidden');
                     salesProductsContainer.innerHTML = '';
+                    const placeholderText = salesProductsPlaceholder.querySelector('p');
+                    if (placeholderText) {
+                        placeholderText.textContent = getSalesCatalogEmptyMessage(searchTerm, activeBoutique);
+                    }
                     return;
                 }
 
@@ -30397,6 +30548,7 @@
                         : isLowStock
                             ? 'bg-yellow-100 text-yellow-700'
                             : 'bg-green-100 text-green-700';
+                    const itemLabel = getShopItemDisplayName(item);
                     const titleBlock = getProductDisplayTitleBlockMarkup(itemLabel, sourceProduct, {
                         nameClasses: 'text-base font-semibold text-gray-900',
                         wrapperClass: 'mt-3'
@@ -33662,6 +33814,7 @@
             }
             bindPaginationControls('shopStock', () => renderShopStock(shopSearchInput ? shopSearchInput.value : ''));
             bindPaginationControls('shopMovements', renderShopMovements);
+            bindPaginationControls('priceTable', renderPriceTable);
             if (traceabilityProductSelect) {
                 traceabilityProductSelect.addEventListener('change', () => {
                     syncProductComboboxInput('traceability');
@@ -34093,6 +34246,19 @@
             }
             if (priceTableSearchInput) {
                 priceTableSearchInput.addEventListener('input', () => {
+                    resetPagination('priceTable');
+                    renderPriceTable();
+                });
+            }
+            if (priceTableSortSelect) {
+                priceTableSortSelect.addEventListener('change', () => {
+                    resetPagination('priceTable');
+                    renderPriceTable();
+                });
+            }
+            if (priceTableFilterSelect) {
+                priceTableFilterSelect.addEventListener('change', () => {
+                    resetPagination('priceTable');
                     renderPriceTable();
                 });
             }
