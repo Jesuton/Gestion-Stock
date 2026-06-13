@@ -4657,6 +4657,27 @@
                                 Ajouter un conditionnement
                             </button>
                         </div>
+                        <div id="new-product-packaging-copy-panel" class="mt-4 rounded-xl border border-dashed border-cyan-200 bg-cyan-50/40 p-4">
+                            <p class="text-sm font-semibold text-gray-800">Copier depuis un autre produit</p>
+                            <p class="mt-1 text-xs text-gray-500">Reprenez les formats déjà configurés (carton, pack, unité…) pour gagner du temps.</p>
+                            <div class="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:items-end">
+                                <div>
+                                    <label for="new-product-packaging-copy-source" class="block text-xs font-semibold text-gray-600">Produit source</label>
+                                    <select id="new-product-packaging-copy-source"
+                                        class="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
+                                        <option value="">Choisir un produit...</option>
+                                    </select>
+                                </div>
+                                <label class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-600">
+                                    <input type="checkbox" id="new-product-packaging-copy-include-prices" class="rounded border-gray-300 text-cyan-600 focus:ring-cyan-500">
+                                    Copier aussi les prix
+                                </label>
+                                <button type="button" id="new-product-packaging-copy-button"
+                                    class="inline-flex items-center justify-center rounded-xl bg-cyan-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-cyan-600">
+                                    Copier
+                                </button>
+                            </div>
+                        </div>
                         <div id="new-product-packagings-list" class="mt-4 space-y-3"></div>
                     </div>
                     <p id="new-product-error" class="text-red-500 text-sm mt-2 hidden"></p>
@@ -4714,6 +4735,29 @@
                         <button type="button" id="price-packaging-add-button"
                             class="inline-flex items-center justify-center px-4 py-3 rounded-xl border border-cyan-200 text-cyan-700 font-semibold hover:bg-cyan-50">
                             + Ajouter un conditionnement
+                        </button>
+                    </div>
+                </div>
+                <div class="rounded-xl border border-dashed border-cyan-200 bg-cyan-50/40 p-4">
+                    <p class="text-sm font-semibold text-gray-800">Copier depuis un autre produit</p>
+                    <p class="mt-1 text-xs text-gray-500">Reprenez les formats déjà configurés sur un produit existant, puis ajustez si besoin.</p>
+                    <div class="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:items-end">
+                        <div>
+                            <label for="price-packaging-copy-filter" class="block text-xs font-semibold text-gray-600">Rechercher un produit source</label>
+                            <input type="text" id="price-packaging-copy-filter" placeholder="Nom ou code interne..."
+                                class="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
+                            <select id="price-packaging-copy-source"
+                                class="mt-2 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
+                                <option value="">Choisir un produit...</option>
+                            </select>
+                        </div>
+                        <label class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-600">
+                            <input type="checkbox" id="price-packaging-copy-include-prices" class="rounded border-gray-300 text-cyan-600 focus:ring-cyan-500">
+                            Copier aussi les prix
+                        </label>
+                        <button type="button" id="price-packaging-copy-button"
+                            class="inline-flex items-center justify-center rounded-xl bg-cyan-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-cyan-600">
+                            Copier les conditionnements
                         </button>
                     </div>
                 </div>
@@ -7958,6 +8002,13 @@
             const pricePackagingCancelButton = document.getElementById('price-packaging-cancel-button');
             const pricePackagingSaveButton = document.getElementById('price-packaging-save-button');
             const pricePackagingError = document.getElementById('price-packaging-error');
+            const pricePackagingCopyFilterInput = document.getElementById('price-packaging-copy-filter');
+            const pricePackagingCopySourceSelect = document.getElementById('price-packaging-copy-source');
+            const pricePackagingCopyIncludePricesInput = document.getElementById('price-packaging-copy-include-prices');
+            const pricePackagingCopyButton = document.getElementById('price-packaging-copy-button');
+            const newProductPackagingCopySourceSelect = document.getElementById('new-product-packaging-copy-source');
+            const newProductPackagingCopyIncludePricesInput = document.getElementById('new-product-packaging-copy-include-prices');
+            const newProductPackagingCopyButton = document.getElementById('new-product-packaging-copy-button');
             const priceLotModal = document.getElementById('price-lot-modal');
             const closePriceLotModalButton = document.getElementById('close-price-lot-modal-button');
             const priceLotTitle = document.getElementById('price-lot-title');
@@ -29495,6 +29546,123 @@
                 return { packagings: ensureBaseUnitPackaging(normalized, safeBaseUnitLabel) };
             }
 
+            function getPackagingCopySourceProducts(excludeProductId = '', filterQuery = '') {
+                const normalizedFilter = normalizeString(filterQuery);
+                const allowedStoreIds = new Set(getAccessibleStoreIds());
+                return Object.values(appData.storeProducts || {})
+                    .filter(product => {
+                        if (excludeProductId && product.id === excludeProductId) return false;
+                        const rawStoreId = product.storeId;
+                        const isUnassigned = rawStoreId === UNASSIGNED_STORE_ID;
+                        const storeId = isUnassigned ? null : resolveStoreId(rawStoreId);
+                        if (!isUnassigned && (!storeId || !allowedStoreIds.has(storeId))) return false;
+                        const packagings = getProductPackagings(product);
+                        if (!packagings.length) return false;
+                        if (!normalizedFilter) return true;
+                        const name = normalizeString(product.name || '');
+                        const code = normalizeString(getProductInternalCode(product));
+                        return name.includes(normalizedFilter) || code.includes(normalizedFilter);
+                    })
+                    .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            }
+
+            function getPackagingCopySourceLabel(product) {
+                if (!product) return 'Produit';
+                const packagings = getProductPackagings(product);
+                const baseUnitLabel = getProductBaseUnitLabel(product);
+                const code = getProductInternalCodeText(product);
+                const formatSummary = packagings.slice(0, 2).map(item => item.label || item.code).filter(Boolean).join(', ');
+                const suffix = formatSummary
+                    ? `${packagings.length} format(s) · ${formatSummary}${packagings.length > 2 ? '…' : ''}`
+                    : `${packagings.length} format(s)`;
+                return `${product.name || 'Produit'}${code ? ` · ${code}` : ''} · ${baseUnitLabel} · ${suffix}`;
+            }
+
+            function clonePackagingsFromProduct(sourceProduct, { includePrices = false } = {}) {
+                if (!sourceProduct) {
+                    return { baseUnitLabel: DEFAULT_BASE_UNIT_LABEL, packagings: [buildPackagingDraft()] };
+                }
+                const baseUnitLabel = getProductBaseUnitLabel(sourceProduct);
+                const packagings = getProductPackagings(sourceProduct).map((entry, index) => {
+                    const normalized = normalizePackagingEntry(entry, index);
+                    if (!normalized) return buildPackagingDraft();
+                    return buildPackagingDraft({
+                        code: normalized.code,
+                        label: normalized.label,
+                        shopDisplayName: normalized.shopDisplayName,
+                        unitCount: normalized.unitCount,
+                        purchaseCost: includePrices ? normalized.purchaseCost : null,
+                        storePrice: includePrices ? normalized.storePrice : null,
+                        shopPrice: includePrices ? normalized.shopPrice : null,
+                        allowPurchase: normalized.allowPurchase,
+                        allowTransfer: normalized.allowTransfer,
+                        allowSell: normalized.allowSell,
+                        allowStore: normalized.allowStore
+                    });
+                });
+                return {
+                    baseUnitLabel,
+                    packagings: packagings.length ? packagings : [buildPackagingDraft()]
+                };
+            }
+
+            function populatePackagingCopySourceSelect(selectElement, { excludeProductId = '', filterQuery = '', preserveSelection = true } = {}) {
+                if (!selectElement) return;
+                const previousValue = preserveSelection ? (selectElement.value || '') : '';
+                const products = getPackagingCopySourceProducts(excludeProductId, filterQuery);
+                selectElement.innerHTML = '<option value="">Choisir un produit...</option>';
+                products.forEach(product => {
+                    const option = document.createElement('option');
+                    option.value = product.id;
+                    option.textContent = getPackagingCopySourceLabel(product);
+                    selectElement.appendChild(option);
+                });
+                selectElement.value = previousValue && products.some(product => product.id === previousValue)
+                    ? previousValue
+                    : '';
+            }
+
+            function applyPackagingCopyFromSource({
+                sourceProductId,
+                includePrices = false,
+                listContainer,
+                scope = 'price-modal',
+                baseUnitInput = null,
+                errorElement = null
+            }) {
+                if (!sourceProductId) {
+                    if (errorElement) {
+                        errorElement.textContent = 'Choisissez un produit source.';
+                        errorElement.classList.remove('hidden');
+                    } else {
+                        showSuccessToast('Choisissez un produit source.');
+                    }
+                    return false;
+                }
+                const sourceProduct = appData.storeProducts?.[sourceProductId];
+                if (!sourceProduct) {
+                    if (errorElement) {
+                        errorElement.textContent = 'Produit source introuvable.';
+                        errorElement.classList.remove('hidden');
+                    } else {
+                        showSuccessToast('Produit source introuvable.');
+                    }
+                    return false;
+                }
+                const { baseUnitLabel, packagings } = clonePackagingsFromProduct(sourceProduct, { includePrices });
+                if (baseUnitInput) {
+                    baseUnitInput.value = baseUnitLabel;
+                    updateSuggestionComboboxClearState(baseUnitInput.closest('[data-suggestion-combobox]'));
+                }
+                renderPackagingEditorList(listContainer, packagings, scope);
+                updatePricingAccessState();
+                if (errorElement) errorElement.classList.add('hidden');
+                showSuccessToast(includePrices
+                    ? `Conditionnements et prix copiés depuis « ${sourceProduct.name || 'Produit'} ».`
+                    : `Structure copiée depuis « ${sourceProduct.name || 'Produit'} ». Les prix restent à saisir.`);
+                return true;
+            }
+
             function openPricePackagingModal(productId) {
                 if (!pricePackagingModal || !pricePackagingsList) return;
                 const product = appData.storeProducts?.[productId];
@@ -29508,6 +29676,13 @@
                     updateSuggestionComboboxClearState(pricePackagingBaseUnitLabelInput.closest('[data-suggestion-combobox]'));
                 }
                 renderPackagingEditorList(pricePackagingsList, getProductPackagings(product), 'price-modal');
+                populatePackagingCopySourceSelect(pricePackagingCopySourceSelect, {
+                    excludeProductId: productId,
+                    filterQuery: pricePackagingCopyFilterInput?.value || '',
+                    preserveSelection: false
+                });
+                if (pricePackagingCopyFilterInput) pricePackagingCopyFilterInput.value = '';
+                if (pricePackagingCopyIncludePricesInput) pricePackagingCopyIncludePricesInput.checked = false;
                 if (pricePackagingError) pricePackagingError.classList.add('hidden');
                 updatePricingAccessState();
                 pricePackagingModal.classList.remove('hidden');
@@ -36548,6 +36723,8 @@
                         allowSell: true
                     })
                 ], 'new-product');
+                populatePackagingCopySourceSelect(newProductPackagingCopySourceSelect, { preserveSelection: false });
+                if (newProductPackagingCopyIncludePricesInput) newProductPackagingCopyIncludePricesInput.checked = false;
                 updatePricingAccessState();
             });
             if (openEntryModalButton) openEntryModalButton.addEventListener('click', () => {
@@ -36840,6 +37017,38 @@
             if (pricePackagingSaveButton) {
                 pricePackagingSaveButton.addEventListener('click', () => {
                     savePricePackagingModal();
+                });
+            }
+            if (pricePackagingCopyFilterInput) {
+                pricePackagingCopyFilterInput.addEventListener('input', () => {
+                    populatePackagingCopySourceSelect(pricePackagingCopySourceSelect, {
+                        excludeProductId: activePricePackagingProductId || '',
+                        filterQuery: pricePackagingCopyFilterInput.value || '',
+                        preserveSelection: false
+                    });
+                });
+            }
+            if (pricePackagingCopyButton) {
+                pricePackagingCopyButton.addEventListener('click', () => {
+                    applyPackagingCopyFromSource({
+                        sourceProductId: pricePackagingCopySourceSelect?.value || '',
+                        includePrices: !!pricePackagingCopyIncludePricesInput?.checked,
+                        listContainer: pricePackagingsList,
+                        scope: 'price-modal',
+                        baseUnitInput: pricePackagingBaseUnitLabelInput,
+                        errorElement: pricePackagingError
+                    });
+                });
+            }
+            if (newProductPackagingCopyButton) {
+                newProductPackagingCopyButton.addEventListener('click', () => {
+                    applyPackagingCopyFromSource({
+                        sourceProductId: newProductPackagingCopySourceSelect?.value || '',
+                        includePrices: !!newProductPackagingCopyIncludePricesInput?.checked,
+                        listContainer: newProductPackagingsList,
+                        scope: 'new-product',
+                        baseUnitInput: productBaseUnitLabelInput
+                    });
                 });
             }
             if (newProductPackagingsList) {
