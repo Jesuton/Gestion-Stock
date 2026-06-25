@@ -33,6 +33,10 @@
             opacity: 1;
         }
 
+        #success-toast.is-error > div {
+            background-color: #ef4444;
+        }
+
         /* Style pour la transition du margin sur le main content */
         main {
             transition: margin-left 0.3s ease-in-out;
@@ -6880,9 +6884,13 @@
     -->
     <div id="success-toast" class="fixed bottom-5 right-5 z-50">
         <div class="flex items-center bg-green-500 text-white text-sm font-medium px-4 py-3 rounded-lg shadow-lg">
-            <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg id="success-toast-icon-success" class="w-5 h-5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <svg id="success-toast-icon-error" class="hidden w-5 h-5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
             </svg>
             <span id="success-toast-message">Opération réussie!</span>
         </div>
@@ -8666,6 +8674,9 @@
 
             const successToast = document.getElementById('success-toast');
             const successToastMessage = document.getElementById('success-toast-message');
+            const successToastIconSuccess = document.getElementById('success-toast-icon-success');
+            const successToastIconError = document.getElementById('success-toast-icon-error');
+            let appToastHideTimer = null;
             const salesDetailModal = document.getElementById('sales-detail-modal');
             const closeSalesDetailModalButton = document.getElementById('close-sales-detail-modal-button');
             const salesDetailTitle = document.getElementById('sales-detail-title');
@@ -8771,12 +8782,33 @@
             const pendingExitTableContainer = document.getElementById('pending-exit-table-container');
             const pendingExitTbody = document.getElementById('pending-exit-tbody');
 
-            function showSuccessToast(message) {
+            function hideAppToast() {
+                if (successToast) {
+                    successToast.classList.remove('show', 'is-error');
+                }
+                if (successToastIconSuccess) successToastIconSuccess.classList.remove('hidden');
+                if (successToastIconError) successToastIconError.classList.add('hidden');
+            }
+
+            function showAppToast(message, variant = 'success') {
                 if (successToastMessage) successToastMessage.textContent = message;
                 if (successToast) {
+                    const isError = variant === 'error';
+                    successToast.classList.toggle('is-error', isError);
+                    if (successToastIconSuccess) successToastIconSuccess.classList.toggle('hidden', isError);
+                    if (successToastIconError) successToastIconError.classList.toggle('hidden', !isError);
                     successToast.classList.add('show');
-                    setTimeout(() => successToast.classList.remove('show'), 3000);
+                    if (appToastHideTimer) clearTimeout(appToastHideTimer);
+                    appToastHideTimer = setTimeout(hideAppToast, isError ? 4500 : 3000);
                 }
+            }
+
+            function showSuccessToast(message) {
+                showAppToast(message, 'success');
+            }
+
+            function showErrorToast(message) {
+                showAppToast(message, 'error');
             }
 
             function formatCurrency(value, currency = 'XOF') {
@@ -25218,14 +25250,14 @@
                 if (internalCode) {
                     const conflict = findInternalCodeConflict(internalCode, productId);
                     if (conflict) {
-                        showSuccessToast(`Le code interne « ${internalCode} » est déjà utilisé par ${formatProductConflictLabel(conflict)}.`);
+                        showErrorToast(`Le code interne « ${internalCode} » est déjà utilisé par ${formatProductConflictLabel(conflict)}.`);
                         return;
                     }
                 }
 
                 const nameConflict = findProductNameConflict(productName, productId);
                 if (nameConflict) {
-                    showSuccessToast(`Le nom « ${productName} » est déjà utilisé par ${formatProductConflictLabel(nameConflict)}.`);
+                    showErrorToast(`Le nom « ${productName} » est déjà utilisé par ${formatProductConflictLabel(nameConflict)}.`);
                     return;
                 }
 
@@ -35451,14 +35483,14 @@
                     if (internalCode) {
                         const codeConflict = findInternalCodeConflict(internalCode, '');
                         if (codeConflict) {
-                            showSuccessToast(`Le code interne « ${internalCode} » est déjà utilisé par ${formatProductConflictLabel(codeConflict)}.`);
+                            showErrorToast(`Le code interne « ${internalCode} » est déjà utilisé par ${formatProductConflictLabel(codeConflict)}.`);
                             return;
                         }
                     }
 
                     const nameConflict = findProductNameConflict(name, '');
                     if (nameConflict) {
-                        showSuccessToast(`Le nom « ${name.trim()} » est déjà utilisé par ${formatProductConflictLabel(nameConflict)}.`);
+                        showErrorToast(`Le nom « ${name.trim()} » est déjà utilisé par ${formatProductConflictLabel(nameConflict)}.`);
                         return;
                     }
 
