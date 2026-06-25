@@ -18297,6 +18297,28 @@
                 }) || null;
             }
 
+            function findProductNameConflict(name, currentProductId = '') {
+                const normalizedName = normalizeString(name);
+                if (!normalizedName) return null;
+                const currentProduct = currentProductId ? (appData.storeProducts?.[currentProductId] || null) : null;
+                return Object.values(appData.storeProducts || {}).find(product => {
+                    if (!product || product.id === currentProductId) return false;
+                    if (normalizeString(product.name || '') !== normalizedName) return false;
+                    if (currentProduct && isSameProductIdentity(product, currentProduct)) return false;
+                    return true;
+                }) || null;
+            }
+
+            function formatProductConflictLabel(product) {
+                if (!product) return 'un autre produit';
+                const code = getProductInternalCode(product);
+                const name = (product.name || '').trim();
+                if (name && code) return `« ${name} » (${code})`;
+                if (name) return `« ${name} »`;
+                if (code) return `le produit ${code}`;
+                return 'un autre produit';
+            }
+
             function getBaseProductCode(product) {
                 const raw = getProductInternalCode(product);
                 if (raw) return raw;
@@ -25086,9 +25108,15 @@
                 if (internalCode) {
                     const conflict = findInternalCodeConflict(internalCode, productId);
                     if (conflict) {
-                        showSuccessToast(`Le code interne ${internalCode} est déjà utilisé par ${conflict.name || 'un autre produit'}.`);
+                        showSuccessToast(`Le code interne « ${internalCode} » est déjà utilisé par ${formatProductConflictLabel(conflict)}.`);
                         return;
                     }
+                }
+
+                const nameConflict = findProductNameConflict(productName, productId);
+                if (nameConflict) {
+                    showSuccessToast(`Le nom « ${productName} » est déjà utilisé par ${formatProductConflictLabel(nameConflict)}.`);
+                    return;
                 }
 
                 if (!confirm("Confirmer la mise à jour du produit et de ses prix ?")) {
@@ -29924,7 +29952,7 @@
                     const conflict = findInternalCodeConflict(internalCode, activePricePackagingProductId);
                     if (conflict) {
                         if (pricePackagingError) {
-                            pricePackagingError.textContent = `Le code interne ${internalCode} est déjà utilisé par ${conflict.name || 'un autre produit'}.`;
+                            pricePackagingError.textContent = `Le code interne « ${internalCode} » est déjà utilisé par ${formatProductConflictLabel(conflict)}.`;
                             pricePackagingError.classList.remove('hidden');
                         }
                         return;
@@ -35310,105 +35338,43 @@
                 try {
                     if (newProductSubmitButton) newProductSubmitButton.disabled = true;
 
-                    // LOGIQUE D'AGRÉGATION AUTO (MAGASIN)
-                    const existingProducts = Object.values(appData.storeProducts).filter(p =>
-                        p.storeId === UNASSIGNED_STORE_ID &&
-                        (internalCode
-                            ? getProductInternalCode(p) === internalCode
-                            : p.name.toLowerCase() === name.trim().toLowerCase())
-                    );
-                    if (!internalCode && existingProducts.length > 1) {
-                        showSuccessToast("Plusieurs produits portent déjà cette désignation. Renseignez un code interne pour les différencier.");
+                    if (internalCode) {
+                        const codeConflict = findInternalCodeConflict(internalCode, '');
+                        if (codeConflict) {
+                            showSuccessToast(`Le code interne « ${internalCode} » est déjà utilisé par ${formatProductConflictLabel(codeConflict)}.`);
+                            return;
+                        }
+                    }
+
+                    const nameConflict = findProductNameConflict(name, '');
+                    if (nameConflict) {
+                        showSuccessToast(`Le nom « ${name.trim()} » est déjà utilisé par ${formatProductConflictLabel(nameConflict)}.`);
                         return;
                     }
-                    const existingProduct = existingProducts[0] || null;
 
-                    if (internalCode) {
-                        const conflict = findInternalCodeConflict(internalCode, existingProduct?.id || '');
-                        if (conflict) {
-                            showSuccessToast(`Le code interne ${internalCode} est déjà utilisé par ${conflict.name || 'un autre produit'}.`);
-                            return;
-                        }
-                    }
-
-                    if (existingProduct) {
-                        if (!canEditPricing) {
-                            showSuccessToast("Produit déjà enregistré. Un manager doit finaliser les prix.");
-                            return;
-                        }
-                        const updates = {};
-                        const now = new Date().toISOString();
-                        const catalogProductId = getProductCatalogId(existingProduct) || existingProduct.id;
-                        updates[`${dbBasePath}/storeProducts/${existingProduct.id}/catalogProductId`] = catalogProductId;
-                        updates[`${dbBasePath}/storeProducts/${existingProduct.id}/internalCode`] = internalCode || '';
-                        updates[`${dbBasePath}/storeProducts/${existingProduct.id}/baseProductCode`] = internalCode || '';
-                        updates[`${dbBasePath}/storeProducts/${existingProduct.id}/baseUnitLabel`] = baseUnitLabel;
-                        updates[`${dbBasePath}/storeProducts/${existingProduct.id}/packagings`] = packagingValidation.packagings;
-                        updates[`${dbBasePath}/storeProducts/${existingProduct.id}/currency`] = currency;
-                        updates[`${dbBasePath}/storeProducts/${existingProduct.id}/categoryId`] = categoryId || null;
-                        updates[`${dbBasePath}/storeProducts/${existingProduct.id}/pricingStatus`] = pricingStatus;
-                        Object.entries(legacyFields).forEach(([key, value]) => {
-                            updates[`${dbBasePath}/storeProducts/${existingProduct.id}/${key}`] = value;
-                        });
-                        updates[`${dbBasePath}/storeProducts/${existingProduct.id}/updatedAt`] = now;
-                        const shopItems = Object.values(appData.shopStock || {}).filter(item => item.sourceProductId === existingProduct.id);
-                        shopItems.forEach(item => {
-                            const packageType = item.packagingType || item.packageCode || 'detail';
-                            const sourceSnapshot = {
-                                ...existingProduct,
-                                catalogProductId,
-                                internalCode,
-                                baseProductCode: internalCode || '',
-                                baseUnitLabel,
-                                currency,
-                                categoryId: categoryId || null,
-                                packagings: packagingValidation.packagings,
-                                ...legacyFields
-                            };
-                            const nextSellingPrice = getPackageSellingPrice(sourceSnapshot, packageType);
-                            const nextPurchaseCost = getPackagePurchaseCost(sourceSnapshot, packageType);
-                            if (!Array.isArray(item.lotQueue) || !item.lotQueue.length) {
-                                updates[`${dbBasePath}/shopStock/${item.id}/sellingPrice`] = Number.isFinite(nextSellingPrice) ? nextSellingPrice : (Number(item.sellingPrice) || 0);
-                                updates[`${dbBasePath}/shopStock/${item.id}/purchaseCost`] = Number.isFinite(nextPurchaseCost) ? nextPurchaseCost : (Number(item.purchaseCost) || 0);
-                            }
-                            updates[`${dbBasePath}/shopStock/${item.id}/categoryId`] = categoryId || null;
-                            updates[`${dbBasePath}/shopStock/${item.id}/displayName`] = getPackageDisplayName(sourceSnapshot, packageType);
-                            updates[`${dbBasePath}/shopStock/${item.id}/variantCode`] = getPackageVariantCode(sourceSnapshot, packageType);
-                            updates[`${dbBasePath}/shopStock/${item.id}/name`] = getPackageVariantCode(sourceSnapshot, packageType);
-                            updates[`${dbBasePath}/shopStock/${item.id}/sourceName`] = existingProduct.name || '';
-                            updates[`${dbBasePath}/shopStock/${item.id}/packageCode`] = getPackageRef(sourceSnapshot, packageType);
-                            updates[`${dbBasePath}/shopStock/${item.id}/packageLabel`] = getPackageLabel(packageType, sourceSnapshot);
-                            updates[`${dbBasePath}/shopStock/${item.id}/baseUnitLabel`] = baseUnitLabel;
-                            updates[`${dbBasePath}/shopStock/${item.id}/unitsPerPackage`] = getPackageUnits(sourceSnapshot, packageType);
-                            updates[`${dbBasePath}/shopStock/${item.id}/updatedAt`] = now;
-                        });
-                        await update(ref(db), updates);
-                        showSuccessToast("Prix mis à jour pour le produit existant");
-                    } else {
-                        const newRef = push(ref(db, `${dbBasePath}/storeProducts`));
-                        const newProd = {
-                            id: newRef.key,
-                            catalogProductId: newRef.key,
-                            name: name.trim(),
-                            description: '',
-                            internalCode: internalCode || '',
-                            baseProductCode: internalCode || '',
-                            baseUnitLabel,
-                            packagings: packagingValidation.packagings,
-                            currency,
-                            categoryId: categoryId || null,
-                            pricingStatus,
-                            ...legacyFields,
-                            quantityInStore: 0,
-                            createdAt: new Date().toISOString(),
-                            updatedAt: new Date().toISOString(),
-                            storeId: UNASSIGNED_STORE_ID
-                        };
-                        await set(newRef, newProd);
-                        showSuccessToast(pricingStatus === PRICING_STATUS_PENDING
-                            ? "Produit enregistré. Un manager doit définir les prix."
-                            : "Produit ajouté dans le tableau des prix.");
-                    }
+                    const newRef = push(ref(db, `${dbBasePath}/storeProducts`));
+                    const newProd = {
+                        id: newRef.key,
+                        catalogProductId: newRef.key,
+                        name: name.trim(),
+                        description: '',
+                        internalCode: internalCode || '',
+                        baseProductCode: internalCode || '',
+                        baseUnitLabel,
+                        packagings: packagingValidation.packagings,
+                        currency,
+                        categoryId: categoryId || null,
+                        pricingStatus,
+                        ...legacyFields,
+                        quantityInStore: 0,
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString(),
+                        storeId: UNASSIGNED_STORE_ID
+                    };
+                    await set(newRef, newProd);
+                    showSuccessToast(pricingStatus === PRICING_STATUS_PENDING
+                        ? "Produit enregistré. Un manager doit définir les prix."
+                        : "Produit ajouté dans le tableau des prix.");
 
                     newProductForm.reset();
                     if (productBaseUnitLabelInput) productBaseUnitLabelInput.value = DEFAULT_BASE_UNIT_LABEL;
