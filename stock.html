@@ -10781,10 +10781,27 @@
                 if (focusInput) config.input.focus();
             }
 
+            function ensureProductComboboxSelectOption(select, value, label) {
+                if (!select || !value) return;
+                if (Array.from(select.options).some(option => option.value === value)) return;
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = label || value;
+                select.appendChild(option);
+            }
+
             function setProductComboboxSelection(key, value, { closeDropdown = true } = {}) {
                 const config = getProductComboboxConfig(key);
                 if (!config?.select) return;
-                config.select.value = value || '';
+                const nextValue = value || getProductComboboxClearValue(key);
+                if (nextValue) {
+                    ensureProductComboboxSelectOption(
+                        config.select,
+                        nextValue,
+                        getProductComboboxSelectionLabel(key, nextValue)
+                    );
+                }
+                config.select.value = nextValue;
                 productComboboxStates[key].query = '';
                 if (key === 'groupedEntry') {
                     groupedEntryProductSearchQuery = '';
@@ -10883,6 +10900,10 @@
                         event.stopPropagation();
                         clearProductComboboxSelection(key);
                     });
+                }
+
+                if (config.dropdown) {
+                    config.dropdown.addEventListener('mousedown', (event) => event.preventDefault());
                 }
 
                 config.options.addEventListener('click', (event) => {
@@ -30098,7 +30119,7 @@
                         errorElement.textContent = 'Choisissez un produit source.';
                         errorElement.classList.remove('hidden');
                     } else {
-                        showSuccessToast('Choisissez un produit source.');
+                        showErrorToast('Choisissez un produit source.');
                     }
                     return false;
                 }
@@ -30108,7 +30129,7 @@
                         errorElement.textContent = 'Produit source introuvable.';
                         errorElement.classList.remove('hidden');
                     } else {
-                        showSuccessToast('Produit source introuvable.');
+                        showErrorToast('Produit source introuvable.');
                     }
                     return false;
                 }
