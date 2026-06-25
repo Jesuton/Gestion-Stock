@@ -4964,9 +4964,12 @@
                             <p class="mt-1 text-xs text-gray-500">Reprenez les formats déjà configurés (carton, pack, unité…) pour gagner du temps.</p>
                             <div class="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:items-end">
                                 <div>
-                                    <label for="new-product-packaging-copy-source" class="block text-xs font-semibold text-gray-600">Produit source</label>
-                                    <select id="new-product-packaging-copy-source"
+                                    <label for="new-product-packaging-copy-filter" class="block text-xs font-semibold text-gray-600">Rechercher un produit source</label>
+                                    <input type="text" id="new-product-packaging-copy-filter" placeholder="Nom ou code interne..."
                                         class="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
+                                    <label for="new-product-packaging-copy-source" class="sr-only">Produit source</label>
+                                    <select id="new-product-packaging-copy-source"
+                                        class="mt-2 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
                                         <option value="">Choisir un produit...</option>
                                     </select>
                                 </div>
@@ -8312,6 +8315,7 @@
             const pricePackagingCopySourceSelect = document.getElementById('price-packaging-copy-source');
             const pricePackagingCopyIncludePricesInput = document.getElementById('price-packaging-copy-include-prices');
             const pricePackagingCopyButton = document.getElementById('price-packaging-copy-button');
+            const newProductPackagingCopyFilterInput = document.getElementById('new-product-packaging-copy-filter');
             const newProductPackagingCopySourceSelect = document.getElementById('new-product-packaging-copy-source');
             const newProductPackagingCopyIncludePricesInput = document.getElementById('new-product-packaging-copy-include-prices');
             const newProductPackagingCopyButton = document.getElementById('new-product-packaging-copy-button');
@@ -36968,7 +36972,11 @@
                         allowSell: true
                     })
                 ], 'new-product');
-                populatePackagingCopySourceSelect(newProductPackagingCopySourceSelect, { preserveSelection: false });
+                populatePackagingCopySourceSelect(newProductPackagingCopySourceSelect, {
+                    filterQuery: '',
+                    preserveSelection: false
+                });
+                if (newProductPackagingCopyFilterInput) newProductPackagingCopyFilterInput.value = '';
                 if (newProductPackagingCopyIncludePricesInput) newProductPackagingCopyIncludePricesInput.checked = false;
                 updatePricingAccessState();
             });
@@ -37269,6 +37277,14 @@
                     populatePackagingCopySourceSelect(pricePackagingCopySourceSelect, {
                         excludeProductId: activePricePackagingProductId || '',
                         filterQuery: pricePackagingCopyFilterInput.value || '',
+                        preserveSelection: false
+                    });
+                });
+            }
+            if (newProductPackagingCopyFilterInput) {
+                newProductPackagingCopyFilterInput.addEventListener('input', () => {
+                    populatePackagingCopySourceSelect(newProductPackagingCopySourceSelect, {
+                        filterQuery: newProductPackagingCopyFilterInput.value || '',
                         preserveSelection: false
                     });
                 });
