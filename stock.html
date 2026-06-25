@@ -173,11 +173,11 @@
                 min-width: max-content;
             }
 
-            /* Grille de produits sur 1 colonne aérée */
+            /* Grille produits vente : conserver la disposition bureau */
             #sales-products-container {
-                grid-template-columns: 1fr !important;
-                gap: 1.25rem;
-                padding-bottom: 2rem;
+                grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+                gap: 0.75rem;
+                padding-bottom: 1rem;
             }
             
             /* Les éléments cliquables plus accessibles */
@@ -233,6 +233,7 @@
         /* Mise en page identique sur tous les écrans (toutes les pages) */
         .page-content {
             overflow-x: auto;
+            overflow-y: visible;
             -webkit-overflow-scrolling: touch;
         }
 
@@ -399,23 +400,130 @@
             min-width: 0;
         }
 
+        #page-Historique-des-ventes .sales-history-stat-value {
+            min-width: 0;
+            flex: 1 1 auto;
+            font-size: clamp(1.125rem, 1.6vw, 1.875rem);
+            line-height: 1.2;
+        }
+
+        #page-Historique-des-ventes .sales-history-stats-grid .w-10 {
+            flex-shrink: 0;
+        }
+
+        #page-Ventes .sales-sidebar-tabs button {
+            min-width: 0;
+            padding-left: 0.45rem;
+            padding-right: 0.45rem;
+        }
+
+        #page-Ventes {
+            --sales-panel-height: calc(var(--app-height) - 1.25rem);
+        }
+
+        @media (max-width: 1023px) {
+            #page-Ventes {
+                --sales-panel-height: calc(var(--app-height) - 4.75rem);
+            }
+        }
+
         #page-Ventes .sales-pos-layout {
-            min-width: 42rem;
+            min-width: 56rem;
+            align-items: stretch;
+            height: var(--sales-panel-height);
+            max-height: var(--sales-panel-height);
         }
 
         #page-Ventes .sales-pos-main {
             min-width: 0;
+            flex: 1 1 auto;
+            overflow-y: auto;
+            overflow-x: hidden;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+            padding-right: 0.35rem;
         }
 
         #page-Ventes .sales-sidebar-shell {
             flex: 0 0 18.75rem;
             width: 18.75rem;
-            max-height: calc(100vh - 5rem);
-            overflow-y: auto;
+            height: var(--sales-panel-height);
+            max-height: var(--sales-panel-height);
+            overflow: hidden;
             overscroll-behavior: contain;
             position: sticky;
-            top: 1rem;
+            top: 0;
             align-self: flex-start;
+            z-index: 20;
+        }
+
+        #page-Ventes .sales-invoice-panel {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            max-height: 100%;
+            overflow: hidden;
+        }
+
+        #page-Ventes .sales-invoice-body {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        #page-Ventes .sales-invoice-footer {
+            flex-shrink: 0;
+            border-top: 1px solid #f3f4f6;
+            background: #fff;
+        }
+
+        #page-Ventes #sales-products-container {
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        }
+
+        #page-Ventes #sales-products-container > div {
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        #page-Ventes .sales-product-card-header {
+            min-width: 0;
+        }
+
+        #page-Ventes .sales-product-card-header .sales-stock-badge {
+            flex-shrink: 0;
+            max-width: 58%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        #page-Ventes .sales-product-card-header .sales-category-label {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        #page-Ventes .sales-product-packaging-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        }
+
+        .app-toolbar-scroll {
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: center;
+            gap: 0.5rem;
+            overflow-x: auto;
+            overscroll-behavior-x: contain;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 0.15rem;
+        }
+
+        .app-toolbar-scroll > * {
+            flex-shrink: 0;
         }
 
         @media (min-width: 640px) {
@@ -1332,7 +1440,7 @@
                                 <div id="sales-products-placeholder" class="flex flex-col items-center justify-center text-center text-gray-500 h-40">
                                     <p>Aucun produit disponible.</p>
                                 </div>
-                                <div id="sales-products-container" class="hidden grid grid-cols-2 xl:grid-cols-3 gap-3">
+                                <div id="sales-products-container" class="hidden sales-product-grid grid grid-cols-3 gap-3">
                                     <!-- Cartes produits inserees par JS -->
                                 </div>
                             </div>
@@ -1492,7 +1600,8 @@
                     </div>
 
                     <div class="sales-sidebar-shell space-y-6">
-                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="sales-invoice-panel bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div class="sales-invoice-body">
                             <div class="p-6 border-b border-gray-100">
                                 <div class="flex items-center justify-between gap-2">
                                     <h2 class="text-lg font-semibold text-gray-900">Facture en cours</h2>
@@ -1787,13 +1896,14 @@
                                     </div>
                                 </div>
                             </div>
+                            </div>
 
-                            <div class="p-6">
-                                <div class="flex items-center justify-between text-base font-semibold text-gray-900 border-t border-gray-200 pt-3">
+                            <div class="sales-invoice-footer p-6">
+                                <div class="flex items-center justify-between text-base font-semibold text-gray-900 pt-1">
                                     <span>Total</span>
                                     <span id="cart-total" class="responsive-number text-lg text-cyan-600">0 FCFA</span>
                                 </div>
-                                <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div class="mt-4 grid grid-cols-2 gap-3 sales-product-packaging-grid">
                                     <button id="validate-cart-button"
                                         class="w-full py-3 bg-gray-300 text-white font-semibold rounded-xl shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
                                         Valider la vente
@@ -1936,8 +2046,8 @@
                     <div class="sales-history-stats-grid grid grid-cols-4 gap-4">
                         <div class="rounded-2xl p-5 text-white bg-gradient-to-r from-blue-500 to-blue-600">
                             <p class="text-sm opacity-90">Ventes complétées</p>
-                            <div class="mt-3 flex items-center justify-between">
-                                <p id="sales-history-stat-completed" class="text-3xl font-bold">0</p>
+                            <div class="mt-3 flex items-center justify-between gap-2 min-w-0">
+                                <p id="sales-history-stat-completed" class="sales-history-stat-value responsive-number font-bold">0</p>
                                 <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
                                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -1947,8 +2057,8 @@
                         </div>
                         <div class="rounded-2xl p-5 text-white bg-gradient-to-r from-orange-500 to-orange-600">
                             <p class="text-sm opacity-90">En attente</p>
-                            <div class="mt-3 flex items-center justify-between">
-                                <p id="sales-history-stat-pending" class="text-3xl font-bold">0</p>
+                            <div class="mt-3 flex items-center justify-between gap-2 min-w-0">
+                                <p id="sales-history-stat-pending" class="sales-history-stat-value responsive-number font-bold">0</p>
                                 <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
                                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3M12 6a6 6 0 100 12 6 6 0 000-12z" />
@@ -1958,8 +2068,8 @@
                         </div>
                         <div class="rounded-2xl p-5 text-white bg-gradient-to-r from-fuchsia-500 to-pink-500">
                             <p class="text-sm opacity-90">A payer plus tard</p>
-                            <div class="mt-3 flex items-center justify-between">
-                                <p id="sales-history-stat-paylater" class="text-3xl font-bold">0 FCFA</p>
+                            <div class="mt-3 flex items-center justify-between gap-2 min-w-0">
+                                <p id="sales-history-stat-paylater" class="sales-history-stat-value responsive-number font-bold">0 FCFA</p>
                                 <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
                                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 11h18M5 7v10a2 2 0 002 2h10a2 2 0 002-2V7" />
@@ -1969,8 +2079,8 @@
                         </div>
                         <div class="rounded-2xl p-5 text-white bg-gradient-to-r from-purple-500 to-purple-600">
                             <p class="text-sm opacity-90">Revenus total</p>
-                            <div class="mt-3 flex items-center justify-between">
-                                <p id="sales-history-stat-total" class="text-3xl font-bold">0 FCFA</p>
+                            <div class="mt-3 flex items-center justify-between gap-2 min-w-0">
+                                <p id="sales-history-stat-total" class="sales-history-stat-value responsive-number font-bold">0 FCFA</p>
                                 <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
                                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 17l6-6 4 4 8-8" />
@@ -3168,7 +3278,7 @@
                                 </svg>
                             </div>
                         </div>
-                        <div class="flex items-center justify-start xl:justify-end gap-2 flex-wrap">
+                        <div class="app-toolbar-scroll justify-start xl:justify-end">
                             <button id="open-entry-modal-button"
                                 class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2 whitespace-nowrap">Entrée</button>
                             <button id="open-grouped-entry-modal-button"
@@ -18227,15 +18337,15 @@
 
             function getProductDisplayTitleBlockMarkup(name, product, options = {}) {
                 const {
-                    nameClasses = 'text-base font-semibold text-gray-900',
-                    wrapperClass = 'mt-3'
+                    nameClasses = 'text-base font-semibold text-gray-900 truncate block',
+                    wrapperClass = 'mt-3 min-w-0'
                 } = options;
                 const nameMarkup = `<span class="${nameClasses}">${escapeHtml(name || 'Produit')}</span>`;
                 const codeMarkup = getProductInternalCodeMarkup(product, { prefix: 'Code' });
                 if (isProductCodeFirstDisplay()) {
-                    return `<div class="${wrapperClass}"><p>${codeMarkup}</p><p class="mt-0.5">${nameMarkup}</p></div>`;
+                    return `<div class="${wrapperClass}"><p class="truncate">${codeMarkup}</p><p class="mt-0.5 truncate">${nameMarkup}</p></div>`;
                 }
-                return `<div class="${wrapperClass}"><p>${nameMarkup}</p><p class="mt-0.5">${codeMarkup}</p></div>`;
+                return `<div class="${wrapperClass}"><p class="truncate">${nameMarkup}</p><p class="mt-0.5 truncate">${codeMarkup}</p></div>`;
             }
 
             function syncProductDisplaySettingsUI() {
@@ -30967,17 +31077,17 @@
                         `;
                     }).join('');
                     return `
-                        <div class="border border-gray-200 rounded-2xl p-4 hover:shadow-md transition ${isOut ? 'opacity-60' : ''}">
-                            <div class="flex items-center justify-between gap-2">
-                                <span class="text-xs font-semibold text-gray-400 uppercase">${category}</span>
-                                <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${stockClass}">${stockLabel}</span>
+                        <div class="border border-gray-200 rounded-2xl p-4 hover:shadow-md transition min-w-0 ${isOut ? 'opacity-60' : ''}">
+                            <div class="sales-product-card-header flex items-start justify-between gap-2 min-w-0">
+                                <span class="sales-category-label text-xs font-semibold text-gray-400 uppercase">${escapeHtml(category)}</span>
+                                <span class="sales-stock-badge text-xs font-semibold px-2 py-0.5 rounded-full ${stockClass}">${escapeHtml(stockLabel)}</span>
                             </div>
                             ${titleBlock}
-                            <p class="mt-1 text-xs text-gray-400">${formatShopStockBreakdown(activeQty, item, { includeBaseTotal: true })}</p>
-                            <p class="mt-2 text-xs font-semibold text-cyan-700">${activeLot ? `${activeLot.label} · ${formatBaseUnits(activeQty, getProductBaseUnitLabel(sourceProduct))}` : (pendingLot ? `${pendingLot.label} · en attente de validation` : 'Aucun lot actif')}</p>
+                            <p class="mt-1 text-xs text-gray-400 truncate">${formatShopStockBreakdown(activeQty, item, { includeBaseTotal: true })}</p>
+                            <p class="mt-2 text-xs font-semibold text-cyan-700 truncate">${activeLot ? `${activeLot.label} · ${formatBaseUnits(activeQty, getProductBaseUnitLabel(sourceProduct))}` : (pendingLot ? `${pendingLot.label} · en attente de validation` : 'Aucun lot actif')}</p>
                             ${hasAnyDirectPrice ? '' : '<p class="mt-1 text-[11px] font-semibold text-amber-600">Prix à définir avant validation ou facture.</p>'}
-                            ${nextLot && !pendingLot ? `<p class="mt-1 text-[11px] text-amber-600">Prochain lot: ${escapeHtml(nextLot.label)} · ${nextLot.requiresActivationValidation ? 'validation requise' : 'activation auto'}</p>` : ''}
-                            <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            ${nextLot && !pendingLot ? `<p class="mt-1 text-[11px] text-amber-600 truncate">Prochain lot: ${escapeHtml(nextLot.label)} · ${nextLot.requiresActivationValidation ? 'validation requise' : 'activation auto'}</p>` : ''}
+                            <div class="mt-4 grid grid-cols-2 gap-2 sales-product-packaging-grid">
                                 ${packagingButtons}
                             </div>
                         </div>
