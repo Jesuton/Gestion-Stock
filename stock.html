@@ -206,6 +206,20 @@
             -webkit-overflow-scrolling: touch;
         }
 
+        .app-search-field.app-search-field--with-icon > input[type="text"],
+        .app-search-field.app-search-field--with-icon > .app-search-input {
+            padding-left: 2.5rem !important;
+        }
+
+        .app-search-field:not(.app-search-field--with-toggle) > input[type="text"],
+        .app-search-field:not(.app-search-field--with-toggle) > .app-search-input {
+            padding-right: 2.5rem !important;
+        }
+
+        .app-search-clear-btn {
+            z-index: 2;
+        }
+
         .multi-line-list-scroll {
             max-height: min(42vh, 24rem);
             overflow-y: auto;
@@ -1463,7 +1477,14 @@
                                         </div>
                                         <input type="text" id="sales-quick-product-search" autocomplete="off"
                                             placeholder="Rechercher un produit..."
-                                            class="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-9 text-sm text-slate-800 shadow-sm focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-400">
+                                            class="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-16 text-sm text-slate-800 shadow-sm focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-400">
+                                        <button type="button" id="sales-quick-product-clear"
+                                            class="absolute inset-y-0 right-9 hidden flex items-center px-2 text-slate-300 transition hover:text-slate-500"
+                                            aria-label="Effacer la recherche produit">
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12M18 6L6 18"></path>
+                                            </svg>
+                                        </button>
                                         <button type="button" id="sales-quick-product-toggle"
                                             class="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 transition hover:text-slate-600"
                                             aria-label="Afficher les produits" aria-expanded="false">
@@ -3753,7 +3774,14 @@
                                         </svg>
                                     </div>
                                     <input type="text" id="traceability-product-search" autocomplete="off" placeholder="Rechercher ou sélectionner un produit..."
-                                        class="w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-12 text-sm text-gray-800 shadow-sm focus:border-sky-500 focus:ring-sky-500">
+                                        class="w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-24 text-sm text-gray-800 shadow-sm focus:border-sky-500 focus:ring-sky-500">
+                                    <button type="button" id="traceability-product-clear"
+                                        class="absolute inset-y-0 right-10 hidden flex items-center px-2 text-gray-300 transition hover:text-gray-500"
+                                        aria-label="Effacer la recherche produit">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12M18 6L6 18"></path>
+                                        </svg>
+                                    </button>
                                     <button type="button" id="traceability-product-toggle"
                                         class="absolute inset-y-0 right-0 flex items-center px-4 text-gray-400 transition hover:text-gray-600"
                                         aria-label="Afficher les produits" aria-expanded="false">
@@ -6410,7 +6438,14 @@
                                 </svg>
                             </div>
                             <input type="text" id="restock-product-search" autocomplete="off" placeholder="Rechercher ou sélectionner un produit..."
-                                class="w-full rounded-2xl border border-slate-200 bg-white py-3.5 pl-11 pr-12 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
+                                class="w-full rounded-2xl border border-slate-200 bg-white py-3.5 pl-11 pr-24 text-slate-800 shadow-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400">
+                            <button type="button" id="restock-product-clear"
+                                class="absolute inset-y-0 right-10 hidden flex items-center px-2 text-slate-300 transition hover:text-slate-500"
+                                aria-label="Effacer la recherche produit">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12M18 6L6 18"></path>
+                                </svg>
+                            </button>
                             <button type="button" id="restock-product-toggle"
                                 class="absolute inset-y-0 right-0 flex items-center px-4 text-slate-400 transition hover:text-slate-600"
                                 aria-label="Afficher les produits" aria-expanded="false">
@@ -7769,6 +7804,7 @@
             const storeSelectorMovements = document.getElementById('store-selector-movements');
             const traceabilityProductCombobox = document.getElementById('traceability-product-combobox');
             const traceabilityProductSearch = document.getElementById('traceability-product-search');
+            const traceabilityProductClearButton = document.getElementById('traceability-product-clear');
             const traceabilityProductToggle = document.getElementById('traceability-product-toggle');
             const traceabilityProductDropdown = document.getElementById('traceability-product-dropdown');
             const traceabilityProductOptions = document.getElementById('traceability-product-options');
@@ -7963,6 +7999,7 @@
             const settingsProductDisplayOrderSelect = document.getElementById('settings-product-display-order');
             const salesQuickProductCombobox = document.getElementById('sales-quick-product-combobox');
             const salesQuickProductSearchInput = document.getElementById('sales-quick-product-search');
+            const salesQuickProductClearButton = document.getElementById('sales-quick-product-clear');
             const salesQuickProductToggleButton = document.getElementById('sales-quick-product-toggle');
             const salesQuickProductDropdown = document.getElementById('sales-quick-product-dropdown');
             const salesQuickProductOptions = document.getElementById('sales-quick-product-options');
@@ -8707,6 +8744,7 @@
             let shopDirectEntryMode = 'existing';
             const restockProductCombobox = document.getElementById('restock-product-combobox');
             const restockProductSearchInput = document.getElementById('restock-product-search');
+            const restockProductClearButton = document.getElementById('restock-product-clear');
             const restockProductToggleButton = document.getElementById('restock-product-toggle');
             const restockProductDropdown = document.getElementById('restock-product-dropdown');
             const restockProductOptions = document.getElementById('restock-product-options');
@@ -10488,6 +10526,153 @@
                 }));
             }
 
+            function createAppSearchClearButton() {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.dataset.appSearchClear = 'true';
+                button.className = 'app-search-clear-btn absolute inset-y-0 right-0 hidden flex items-center px-3 text-gray-300 transition hover:text-gray-500';
+                button.setAttribute('aria-label', 'Effacer la recherche');
+                button.innerHTML = `
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12M18 6L6 18"></path>
+                    </svg>
+                `;
+                return button;
+            }
+
+            function createAppSearchIcon() {
+                const icon = document.createElement('div');
+                icon.className = 'app-search-icon pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400';
+                icon.innerHTML = `
+                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                    </svg>
+                `;
+                return icon;
+            }
+
+            function hasAppSearchToggle(wrapper) {
+                if (!wrapper) return false;
+                return Boolean(wrapper.querySelector('[id$="-toggle"], [data-bulk-exit-toggle], [data-suggestion-toggle]'));
+            }
+
+            function hasAppSearchIcon(wrapper) {
+                if (!wrapper) return false;
+                return Boolean(wrapper.querySelector('.app-search-icon, .pointer-events-none svg'));
+            }
+
+            function updateAppSearchClearButton(input, clearButton) {
+                if (!input || !clearButton) return;
+                const hasValue = Boolean((input.value || '').trim());
+                clearButton.classList.toggle('hidden', !hasValue);
+            }
+
+            function bindAppSearchClear(input, { onClear, focusOnClear = true } = {}) {
+                if (!input || input.dataset.appSearchClearBound === '1') return null;
+                input.dataset.appSearchClearBound = '1';
+                input.classList.add('app-search-input');
+
+                let wrapper = input.parentElement;
+                const parentIsRelative = wrapper?.classList.contains('relative') || wrapper?.classList.contains('app-search-field');
+                if (!parentIsRelative) {
+                    const newWrapper = document.createElement('div');
+                    newWrapper.className = 'app-search-field relative';
+                    wrapper.insertBefore(newWrapper, input);
+                    newWrapper.appendChild(input);
+                    wrapper = newWrapper;
+                } else {
+                    wrapper.classList.add('app-search-field', 'relative');
+                }
+
+                if (hasAppSearchToggle(wrapper)) {
+                    wrapper.classList.add('app-search-field--with-toggle');
+                }
+
+                if (!hasAppSearchIcon(wrapper)) {
+                    wrapper.insertBefore(createAppSearchIcon(), input);
+                    wrapper.classList.add('app-search-field--with-icon');
+                }
+
+                let clearButton = wrapper.querySelector('[data-app-search-clear]');
+                if (!clearButton) {
+                    clearButton = createAppSearchClearButton();
+                    if (hasAppSearchToggle(wrapper)) {
+                        clearButton.classList.remove('right-0');
+                        clearButton.classList.add('right-10');
+                    }
+                    const toggle = wrapper.querySelector('[id$="-toggle"], [data-bulk-exit-toggle], [data-suggestion-toggle]');
+                    if (toggle && toggle.parentElement === wrapper) {
+                        wrapper.insertBefore(clearButton, toggle);
+                    } else {
+                        wrapper.appendChild(clearButton);
+                    }
+                }
+
+                const refreshClearButton = () => updateAppSearchClearButton(input, clearButton);
+                input.addEventListener('input', refreshClearButton);
+                refreshClearButton();
+
+                clearButton.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    input.value = '';
+                    if (typeof onClear === 'function') onClear();
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                    refreshClearButton();
+                    if (focusOnClear) input.focus();
+                });
+
+                return clearButton;
+            }
+
+            function enhanceBulkExitRowSearch(row) {
+                const input = row?.querySelector('[data-bulk-exit-field="search"]');
+                if (!input || input.dataset.appSearchClearBound === '1') return;
+                const flexContainer = input.parentElement;
+                if (!flexContainer) return;
+                const relativeWrap = document.createElement('div');
+                relativeWrap.className = 'relative flex-1 min-w-0 app-search-field app-search-field--with-icon';
+                flexContainer.insertBefore(relativeWrap, input);
+                relativeWrap.appendChild(input);
+                bindAppSearchClear(input, {
+                    onClear: () => {
+                        const productSelect = row.querySelector('[data-bulk-exit-field="product"]');
+                        if (productSelect) productSelect.value = '';
+                        row.dataset.bulkExitQuery = '';
+                        updateBulkExitRowPackagingUI(row);
+                    }
+                });
+            }
+
+            function initAppSearchClearButtons() {
+                [
+                    salesProductSearch,
+                    salesHistorySearchInput,
+                    chatSearchInput,
+                    chatMessageSearchInput,
+                    shopSearchInput,
+                    storeSearchInput,
+                    priceTableSearchInput,
+                    suppliersSearchInput,
+                    customerSelectSearchInput,
+                    chatMemberSearchInput,
+                    storeValidationEditorSearchInput,
+                    storeMovementFilterProduct,
+                    shopMovementFilterProduct
+                ].filter(Boolean).forEach(input => bindAppSearchClear(input));
+
+                const lossSearchInput = document.getElementById('loss-product-search');
+                if (lossSearchInput) {
+                    bindAppSearchClear(lossSearchInput, {
+                        onClear: () => {
+                            const lossProductIdInput = document.getElementById('loss-product-id');
+                            if (lossProductIdInput) lossProductIdInput.value = '';
+                            document.getElementById('loss-product-dropdown')?.classList.add('hidden');
+                        }
+                    });
+                }
+            }
+
             function getProductComboboxConfig(key) {
                 const configs = {
                     entry: {
@@ -10526,6 +10711,7 @@
                     salesQuick: {
                         combobox: salesQuickProductCombobox,
                         input: salesQuickProductSearchInput,
+                        clearButton: salesQuickProductClearButton,
                         toggle: salesQuickProductToggleButton,
                         dropdown: salesQuickProductDropdown,
                         options: salesQuickProductOptions,
@@ -10536,6 +10722,7 @@
                     restock: {
                         combobox: restockProductCombobox,
                         input: restockProductSearchInput,
+                        clearButton: restockProductClearButton,
                         toggle: restockProductToggleButton,
                         dropdown: restockProductDropdown,
                         options: restockProductOptions,
@@ -10546,6 +10733,7 @@
                     traceability: {
                         combobox: traceabilityProductCombobox,
                         input: traceabilityProductSearch,
+                        clearButton: traceabilityProductClearButton,
                         toggle: traceabilityProductToggle,
                         dropdown: traceabilityProductDropdown,
                         options: traceabilityProductOptions,
@@ -24228,6 +24416,7 @@
                     </td>
                 `;
                 bulkExitRowsTbody.prepend(row);
+                enhanceBulkExitRowSearch(row);
                 renderBulkExitRowCombobox(row);
                 updateBulkExitRowPackagingUI(row);
                 return row;
@@ -37591,6 +37780,7 @@
             bindProductCombobox('shopDirectEntry');
             bindProductCombobox('newProductPackagingCopy');
             bindProductCombobox('pricePackagingCopy');
+            initAppSearchClearButtons();
 
             if (entryProductSelect) {
                 entryProductSelect.addEventListener('change', () => {
