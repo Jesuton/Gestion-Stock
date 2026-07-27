@@ -26586,25 +26586,29 @@
                     showSuccessToast('Produit introuvable.');
                     return;
                 }
-                if (!confirm('Supprimer ce produit du magasin définitivement ?')) return;
+                if (!confirm('Retirer ce produit du magasin ?\n\nLe stock sera remis à zéro et le produit disparaîtra de la liste magasin, mais il restera dans le tableau des prix.')) return;
 
                 try {
                     const now = new Date().toISOString();
                     const qty = Number(product.quantityInStore) || 0;
+                    const previousStoreId = resolveStoreId(product.storeId) || storeId;
                     const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
                     const updates = {};
 
-                    updates[`${dbBasePath}/storeProducts/${productId}`] = null;
+                    updates[`${dbBasePath}/storeProducts/${productId}/quantityInStore`] = 0;
+                    updates[`${dbBasePath}/storeProducts/${productId}/storeId`] = UNASSIGNED_STORE_ID;
+                    updates[`${dbBasePath}/storeProducts/${productId}/expirationDate`] = null;
+                    updates[`${dbBasePath}/storeProducts/${productId}/updatedAt`] = now;
                     updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
                         id: moveKey,
                         productId,
                         productName: product.name || 'Produit',
-                        storeId: resolveStoreId(product.storeId) || storeId,
+                        storeId: previousStoreId,
                         type: "Suppression",
                         quantityChange: qty,
                         oldStock: qty,
                         newStock: 0,
-                        comment: "Suppression produit",
+                        comment: "Retrait magasin (catalogue conservé)",
                         date: { ".sv": "timestamp" },
                         status: EXIT_STATUS_APPROVED,
                         userEmail: currentUser?.email || '',
@@ -26612,7 +26616,7 @@
                     };
 
                     await update(ref(db), updates);
-                    showSuccessToast('Produit supprimé du magasin');
+                    showSuccessToast('Produit retiré du magasin (conservé dans le tableau des prix)');
                 } catch (err) {
                     console.error(err);
                     alert('Erreur lors de la suppression');
