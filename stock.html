@@ -4862,6 +4862,42 @@
         </div>
     </div>
 
+    <div id="incomplete-pricing-modal" class="fixed inset-0 z-[130] hidden items-center justify-center bg-black/50 p-4">
+        <div class="w-full max-w-lg rounded-2xl bg-white shadow-2xl">
+            <div class="flex items-start justify-between gap-4 border-b border-gray-100 px-6 py-5">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-900">Prix incomplets</h2>
+                    <p class="mt-1 text-sm text-gray-500">Certains produits n'ont pas encore tous leurs prix définis dans le tableau des prix.</p>
+                </div>
+                <button type="button" id="incomplete-pricing-close-button" class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600" aria-label="Fermer">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="px-6 py-5 space-y-4">
+                <div class="rounded-xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-amber-800">
+                    Vous pouvez réceptionner le stock maintenant et compléter les prix plus tard dans le tableau des prix.
+                </div>
+                <ul id="incomplete-pricing-product-list" class="max-h-48 space-y-2 overflow-y-auto pr-1 text-sm text-gray-700"></ul>
+                <label class="flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 cursor-pointer">
+                    <input type="checkbox" id="incomplete-pricing-ack-checkbox" class="mt-0.5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+                    <span class="text-sm text-gray-700">Prix à définir plus tard</span>
+                </label>
+            </div>
+            <div class="flex items-center gap-3 border-t border-gray-100 px-6 py-4">
+                <button type="button" id="incomplete-pricing-cancel-button"
+                    class="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-50">
+                    Annuler
+                </button>
+                <button type="button" id="incomplete-pricing-confirm-button" disabled
+                    class="flex-1 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50">
+                    Continuer quand même
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Nouveau client -->
     <div id="customer-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 m-4">
@@ -8781,6 +8817,12 @@
             const successToastMessage = document.getElementById('success-toast-message');
             const successToastIconSuccess = document.getElementById('success-toast-icon-success');
             const successToastIconError = document.getElementById('success-toast-icon-error');
+            const incompletePricingModal = document.getElementById('incomplete-pricing-modal');
+            const incompletePricingProductList = document.getElementById('incomplete-pricing-product-list');
+            const incompletePricingAckCheckbox = document.getElementById('incomplete-pricing-ack-checkbox');
+            const incompletePricingConfirmButton = document.getElementById('incomplete-pricing-confirm-button');
+            const incompletePricingCancelButton = document.getElementById('incomplete-pricing-cancel-button');
+            const incompletePricingCloseButton = document.getElementById('incomplete-pricing-close-button');
             let appToastHideTimer = null;
             const salesDetailModal = document.getElementById('sales-detail-modal');
             const closeSalesDetailModalButton = document.getElementById('close-sales-detail-modal-button');
@@ -18093,6 +18135,112 @@
                 return getProductPricingStatus(product) === PRICING_STATUS_ACTIVE;
             }
 
+            let incompletePricingConfirmResolver = null;
+
+            function getIncompletePricingDetails(product) {
+                if (!product || isProductPricingComplete(product)) return null;
+                const missing = [];
+                const primary = getPrimaryPackaging(product);
+                const currency = (product.currency || '').toString().trim();
+                if (!currency) missing.push("devise");
+                if (!primary) {
+                    missing.push("conditionnement");
+                } else {
+                    const hasPurchase = primary.purchaseCost !== null && Number.isFinite(Number(primary.purchaseCost));
+                    const hasStore = primary.storePrice !== null && hasUsableSellingPrice(primary.storePrice);
+                    const hasShop = primary.shopPrice !== null && hasUsableSellingPrice(primary.shopPrice);
+                    if (!hasPurchase) missing.push("coût d'achat");
+                    if (!hasStore) missing.push("prix magasin");
+                    if (!hasShop) missing.push("prix boutique");
+                }
+                return {
+                    name: product.name || 'Produit',
+                    code: getProductInternalCodeText(product),
+                    missing
+                };
+            }
+
+            function collectUniqueIncompletePricingProducts(products = []) {
+                const seen = new Set();
+                const result = [];
+                products.forEach((product) => {
+                    if (!product?.id || seen.has(product.id)) return;
+                    const details = getIncompletePricingDetails(product);
+                    if (!details) return;
+                    seen.add(product.id);
+                    result.push(details);
+                });
+                return result;
+            }
+
+            function resetIncompletePricingModal() {
+                if (incompletePricingAckCheckbox) incompletePricingAckCheckbox.checked = false;
+                if (incompletePricingConfirmButton) incompletePricingConfirmButton.disabled = true;
+                if (incompletePricingProductList) incompletePricingProductList.innerHTML = '';
+            }
+
+            function closeIncompletePricingModal(confirmed = false) {
+                if (incompletePricingModal) {
+                    incompletePricingModal.classList.add('hidden');
+                    incompletePricingModal.classList.remove('flex');
+                }
+                resetIncompletePricingModal();
+                if (incompletePricingConfirmResolver) {
+                    incompletePricingConfirmResolver(confirmed);
+                    incompletePricingConfirmResolver = null;
+                }
+            }
+
+            function renderIncompletePricingModalItems(items = []) {
+                if (!incompletePricingProductList) return;
+                incompletePricingProductList.innerHTML = items.map((item) => {
+                    const code = item.code ? `<span class="text-xs text-gray-400">${escapeHtml(item.code)}</span>` : '';
+                    const missing = item.missing?.length
+                        ? `<span class="text-xs text-amber-700">Manquant : ${escapeHtml(item.missing.join(', '))}</span>`
+                        : '';
+                    return `
+                        <li class="rounded-xl border border-gray-100 bg-white px-3 py-2.5">
+                            <div class="font-semibold text-gray-900">${escapeHtml(item.name || 'Produit')}</div>
+                            ${code ? `<div class="mt-0.5">${code}</div>` : ''}
+                            ${missing ? `<div class="mt-1">${missing}</div>` : ''}
+                        </li>
+                    `;
+                }).join('');
+            }
+
+            function requestIncompletePricingConfirmation(products = []) {
+                const items = collectUniqueIncompletePricingProducts(products);
+                if (!items.length) return Promise.resolve(true);
+                if (!incompletePricingModal || !incompletePricingConfirmButton || !incompletePricingAckCheckbox) {
+                    return Promise.resolve(true);
+                }
+                return new Promise((resolve) => {
+                    incompletePricingConfirmResolver = resolve;
+                    resetIncompletePricingModal();
+                    renderIncompletePricingModalItems(items);
+                    incompletePricingModal.classList.remove('hidden');
+                    incompletePricingModal.classList.add('flex');
+                });
+            }
+
+            function bindIncompletePricingModal() {
+                if (!incompletePricingModal) return;
+                incompletePricingAckCheckbox?.addEventListener('change', () => {
+                    if (incompletePricingConfirmButton) {
+                        incompletePricingConfirmButton.disabled = !incompletePricingAckCheckbox.checked;
+                    }
+                });
+                incompletePricingConfirmButton?.addEventListener('click', () => {
+                    if (!incompletePricingAckCheckbox?.checked) return;
+                    closeIncompletePricingModal(true);
+                });
+                incompletePricingCancelButton?.addEventListener('click', () => closeIncompletePricingModal(false));
+                incompletePricingCloseButton?.addEventListener('click', () => closeIncompletePricingModal(false));
+                incompletePricingModal.addEventListener('click', (event) => {
+                    if (event.target === incompletePricingModal) closeIncompletePricingModal(false);
+                });
+            }
+
             function isProductTransferReady(product) {
                 if (!product) return false;
                 const primaryPackaging = getPrimaryPackaging(product);
@@ -25873,6 +26021,7 @@
                 const suppliersIndex = buildSupplierNameIndex();
                 const updates = {};
                 const errors = [];
+                const incompletePricingProducts = [];
                 const stockTracker = new Map();
                 const cloneTracker = new Map();
                 const now = new Date().toISOString();
@@ -25908,6 +26057,9 @@
                         continue;
                     }
                     let product = matches[0] || unassignedMatches[0] || otherMatches[0];
+                    if (!isProductPricingComplete(product)) {
+                        incompletePricingProducts.push(product);
+                    }
                     const shouldClone = !matches.length && !unassignedMatches.length && !!product;
                     const qty = parseCsvNumber(row[idxQuantity]);
                     if (!Number.isFinite(qty) || qty <= 0 || !Number.isInteger(qty)) {
@@ -25927,10 +26079,7 @@
                     }
 
                     const purchaseCost = getPackagePurchaseCost(product, getPrimaryPackaging(product)?.code || null);
-                    if (!isProductPricingComplete(product)) {
-                        errors.push(`Ligne ${lineNumber}: prix non définis pour "${rawName}".`);
-                        continue;
-                    }
+                    const safeUnitCost = Number.isFinite(purchaseCost) ? purchaseCost : 0;
 
                     if (shouldClone && product) {
                         if (cloneTracker.has(product.id)) {
@@ -25978,7 +26127,7 @@
                     const productCurrency = (product.currency || DEFAULT_SUPPLIER_CURRENCY).toUpperCase();
                     const rawRate = Number(getSupplierConversionRate(supplier));
                     const conversionRate = Number.isFinite(rawRate) && rawRate > 0 ? rawRate : 1;
-                    const unitCost = purchaseCost;
+                    const unitCost = safeUnitCost;
                     const totalProduct = roundAmount(unitCost * qty);
                     let totalSupplier = totalProduct;
                     let baseTotal = totalProduct;
@@ -26048,6 +26197,7 @@
                         total: totalSupplier,
                         paidAmount: 0,
                         status: 'open',
+                        pricingPending: safeUnitCost <= 0,
                         storeId,
                         date: { ".sv": "timestamp" },
                         createdAt: now,
@@ -26062,6 +26212,9 @@
                     setImportMessage(storeImportCsvError, errors[0] || "Aucune ligne valide à importer.", true);
                     return;
                 }
+
+                const pricingConfirmed = await requestIncompletePricingConfirmation(incompletePricingProducts);
+                if (!pricingConfirmed) return;
 
                 if (!confirm(`Importer ${imported} ligne(s) dans le magasin ?`)) return;
 
@@ -36173,8 +36326,8 @@
                 }
                 const purchaseCost = getPackagePurchaseCost(prod, getPrimaryPackaging(prod)?.code || null);
                 if (!isNewMode && !isProductPricingComplete(prod)) {
-                    showSuccessToast("Veuillez définir les prix dans le tableau des prix avant d'ajouter du stock.");
-                    return;
+                    const pricingConfirmed = await requestIncompletePricingConfirmation([prod]);
+                    if (!pricingConfirmed) return;
                 }
                 const productCurrency = (prod.currency || DEFAULT_SUPPLIER_CURRENCY).toUpperCase();
                 const safePurchaseCost = Number.isFinite(purchaseCost) ? purchaseCost : 0;
@@ -36309,6 +36462,7 @@
                 const cloneTracker = new Map();
                 const pendingNewProducts = new Map();
                 const validationErrors = [];
+                const incompletePricingProducts = [];
                 let totalQuantity = 0;
                 let lineCount = 0;
 
@@ -36470,8 +36624,7 @@
                         : (getPrimaryPackaging(product)?.code || null);
                     const purchaseCost = getPackagePurchaseCost(product, costPackageRef);
                     if (!isNewModeLine && !isProductPricingComplete(product)) {
-                        validationErrors.push(`Ligne ${lineNumber}: prix non définis pour "${product.name || 'ce produit'}".`);
-                        continue;
+                        incompletePricingProducts.push(product);
                     }
                     const safeUnitCost = Number.isFinite(purchaseCost) ? purchaseCost : 0;
                     const invoiceQuantity = hasPackagingEntry ? packagingQuantity : qty;
@@ -36630,6 +36783,9 @@
                     setGroupedEntryError('Aucune ligne valide à enregistrer.');
                     return;
                 }
+
+                const pricingConfirmed = await requestIncompletePricingConfirmation(incompletePricingProducts);
+                if (!pricingConfirmed) return;
 
                 updates[`${dbBasePath}/storeEntryGroups/${groupId}`] = {
                     id: groupId,
@@ -37780,6 +37936,7 @@
             bindProductCombobox('shopDirectEntry');
             bindProductCombobox('newProductPackagingCopy');
             bindProductCombobox('pricePackagingCopy');
+            bindIncompletePricingModal();
             initAppSearchClearButtons();
 
             if (entryProductSelect) {
