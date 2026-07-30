@@ -3432,7 +3432,7 @@
                                 <p class="text-sm text-gray-500 mt-1">Renseignez le stock physique puis validez.</p>
                             </div>
                             <div class="text-xs text-gray-500 bg-gray-50 border border-gray-100 px-3 py-2 rounded-xl">
-                                Astuce: cochez <span class="font-semibold text-gray-700">Conforme</span> pour remplir automatiquement.
+                                Astuce: saisissez par conditionnement ou cliquez <span class="font-semibold text-gray-700">Conforme</span> pour reprendre le stock virtuel.
                             </div>
                         </div>
 
@@ -6467,6 +6467,7 @@
                             <thead class="sticky top-0 z-10 bg-slate-50">
                                 <tr>
                                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Produit source</th>
+                                    <th id="bulk-transfer-packaging-header" class="hidden px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Conditionnement</th>
                                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Qté sortie</th>
                                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Résumé réception</th>
                                     <th class="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Action</th>
@@ -8862,6 +8863,7 @@
             const bulkTransferAlertThresholdInput = document.getElementById('bulk-transfer-alert-threshold');
             const bulkTransferCommentInput = document.getElementById('bulk-transfer-comment');
             const bulkTransferRowsTbody = document.getElementById('bulk-transfer-rows-tbody');
+            const bulkTransferPackagingHeader = document.getElementById('bulk-transfer-packaging-header');
             const bulkTransferAddRowButton = document.getElementById('bulk-transfer-add-row-button');
             const bulkTransferError = document.getElementById('bulk-transfer-error');
             const bulkTransferPreviewSection = document.getElementById('bulk-transfer-preview-section');
@@ -11921,17 +11923,6 @@
                     if (!newProductName) {
                         throw new Error('Veuillez renseigner le nom du produit.');
                     }
-                    const draftKey = getShopDirectEntryLineDuplicateKey({
-                        mode: 'new',
-                        newProductName,
-                        newProductCode
-                    });
-                    if (shopDirectEntryLines.some(line =>
-                        line.id !== shopDirectEntryEditingLineId &&
-                        getShopDirectEntryLineDuplicateKey(line) === draftKey
-                    )) {
-                        throw new Error('Ce produit est déjà dans la liste.');
-                    }
                     const draftPackaging = readEntryDraftPackagingFromInputs(
                         shopDirectEntryNewBaseUnitInput,
                         shopDirectEntryNewPackagingLabelInput,
@@ -11960,12 +11951,6 @@
                 const product = productId ? appData.storeProducts?.[productId] : null;
                 if (!product) {
                     throw new Error('Sélectionnez un produit catalogue.');
-                }
-                if (shopDirectEntryLines.some(line =>
-                    line.id !== shopDirectEntryEditingLineId &&
-                    getShopDirectEntryLineDuplicateKey(line) === getShopDirectEntryLineDuplicateKey({ mode: 'existing', productId })
-                )) {
-                    throw new Error('Ce produit est déjà dans la liste.');
                 }
 
                 const packagings = isStoreEntryPackagingEnabled() ? getStoreEntryPurchasePackagings(product) : [];
@@ -12021,6 +12006,7 @@
 
             function renderShopDirectEntryRows() {
                 if (!shopDirectEntryLinesList || !shopDirectEntryLinesEmpty) return;
+                shopDirectEntryLines = consolidateGroupedEntryLines(shopDirectEntryLines);
                 if (!shopDirectEntryLines.length) {
                     shopDirectEntryLinesEmpty.classList.remove('hidden');
                     shopDirectEntryLinesList.innerHTML = '';
@@ -12029,10 +12015,7 @@
                     shopDirectEntryLinesList.innerHTML = shopDirectEntryLines.slice().reverse().map((line, index) => {
                         const product = line.mode === 'new' ? null : (line.productId ? appData.storeProducts?.[line.productId] : null);
                         const displayName = getShopDirectEntryLineDisplayName(line);
-                        const baseUnitLabel = getProductBaseUnitLabel(product);
-                        const quantityLabel = line.packagingQuantity && line.packagingLabel
-                            ? `${line.packagingQuantity} ${line.packagingLabel} (${formatBaseUnits(parseNonNegativeInteger(line.quantity, 0), baseUnitLabel)})`
-                            : formatBaseUnits(parseNonNegativeInteger(line.quantity, 0), baseUnitLabel || 'unité');
+                        const quantityLabel = formatGroupedEntryLineQuantityLabel(line);
                         const codeLabel = line.mode === 'new'
                             ? (line.newProductCode || 'Code à définir')
                             : (getProductInternalCodeText(product) || 'Code manquant');
@@ -20037,21 +20020,268 @@
             }
 
             function summarizeEntryLinesPackagingQuantity(lines = []) {
-                const packagingTotals = new Map();
-                let totalBaseUnits = 0;
+                if (!lines.length) return '0';
+                const grouped = new Map();
                 lines.forEach((line) => {
+                    const key = getGroupedEntryLineMergeKey(line);
                     const base = parseInt(line.quantity, 10) || 0;
-                    if (base > 0) totalBaseUnits += base;
-                    const pkgQty = parseInt(line.packagingQuantity, 10);
-                    if (line.packagingLabel && Number.isFinite(pkgQty) && pkgQty > 0) {
-                        packagingTotals.set(line.packagingLabel, (packagingTotals.get(line.packagingLabel) || 0) + pkgQty);
+                    if (!grouped.has(key)) {
+                        grouped.set(key, { line, total: 0 });
+                    }
+                    grouped.get(key).total += base;
+                });
+                const parts = Array.from(grouped.values()).map(({ line, total }) => {
+                    return formatGroupedEntryLineQuantityLabel({ ...line, quantity: `${total}` });
+                });
+                if (parts.length === 1) return parts[0];
+                const totalBaseUnits = lines.reduce((sum, line) => sum + (parseInt(line.quantity, 10) || 0), 0);
+                return `${parts.join(' · ')} (${totalBaseUnits} au total)`;
+            }
+
+            function getGroupedEntryLineMergeKey(line) {
+                if (!line) return '';
+                if (line.mode === 'new') {
+                    const code = normalizeInternalProductCode(line.newProductCode || '');
+                    if (code) return `new:code:${code}`;
+                    const name = normalizeString(line.newProductName || '');
+                    if (name) return `new:name:${name}`;
+                    return `new:id:${line.id || ''}`;
+                }
+                return line.productId ? `existing:${line.productId}` : `existing:id:${line.id || ''}`;
+            }
+
+            function mergeGroupedEntryLines(existing, incoming) {
+                const existingBase = parseInt(existing.quantity, 10) || 0;
+                const incomingBase = parseInt(incoming.quantity, 10) || 0;
+                const merged = {
+                    ...existing,
+                    quantity: `${existingBase + incomingBase}`
+                };
+                if (
+                    existing.packagingCode
+                    && incoming.packagingCode
+                    && existing.packagingCode === incoming.packagingCode
+                    && existing.packagingLabel === incoming.packagingLabel
+                ) {
+                    const existingPackQty = parseInt(existing.packagingQuantity, 10) || 0;
+                    const incomingPackQty = parseInt(incoming.packagingQuantity, 10) || 0;
+                    merged.packagingQuantity = `${existingPackQty + incomingPackQty}`;
+                } else {
+                    merged.packagingCode = '';
+                    merged.packagingLabel = '';
+                    merged.packagingQuantity = '';
+                }
+                const descA = (existing.description || '').trim();
+                const descB = (incoming.description || '').trim();
+                if (descB && descB !== descA) {
+                    merged.description = descA ? `${descA} · ${descB}` : descB;
+                }
+                if (incoming.expirationDate) {
+                    if (!merged.expirationDate || incoming.expirationDate < merged.expirationDate) {
+                        merged.expirationDate = incoming.expirationDate;
+                    }
+                }
+                return merged;
+            }
+
+            function consolidateGroupedEntryLines(lines = []) {
+                const merged = new Map();
+                lines.forEach((line) => {
+                    const key = getGroupedEntryLineMergeKey(line);
+                    if (merged.has(key)) {
+                        merged.set(key, mergeGroupedEntryLines(merged.get(key), line));
+                    } else {
+                        merged.set(key, { ...line });
                     }
                 });
-                if (packagingTotals.size > 0) {
-                    const parts = Array.from(packagingTotals.entries()).map(([label, qty]) => formatPackageQuantity(qty, label));
-                    return `${parts.join(' · ')} (${totalBaseUnits} unités)`;
+                return Array.from(merged.values());
+            }
+
+            function formatGroupedEntryLineQuantityLabel(line) {
+                const baseQty = parseInt(line?.quantity, 10) || 0;
+                if (!baseQty) return '0';
+                if (line.mode === 'new') {
+                    const packagingConfig = buildProductPackagingsFromEntryLine(line);
+                    if (packagingConfig.packagings.length) {
+                        const draftProduct = {
+                            baseUnitLabel: packagingConfig.baseUnitLabel,
+                            packagings: packagingConfig.packagings
+                        };
+                        return formatProductStockBreakdown(baseQty, draftProduct, { includeBaseTotal: true });
+                    }
+                    return formatBaseUnits(baseQty, line.newProductBaseUnitLabel || DEFAULT_BASE_UNIT_LABEL);
                 }
-                return `${totalBaseUnits}`;
+                const product = getEntryProductById(line.productId);
+                if (product && getProductPackagings(product).length) {
+                    return formatProductStockBreakdown(baseQty, product, { includeBaseTotal: true });
+                }
+                if (line.packagingQuantity && line.packagingLabel) {
+                    return `${line.packagingQuantity} ${line.packagingLabel} (${baseQty} unités)`;
+                }
+                return `${baseQty}`;
+            }
+
+            function upsertGroupedEntryLine(nextLine) {
+                return upsertTransactionLineCollection({
+                    lines: groupedEntryLines,
+                    nextLine,
+                    editingLineId: groupedEntryEditingLineId,
+                    setLines: (next) => { groupedEntryLines = next; }
+                });
+            }
+
+            function upsertShopDirectEntryLine(nextLine) {
+                return upsertTransactionLineCollection({
+                    lines: shopDirectEntryLines,
+                    nextLine,
+                    editingLineId: shopDirectEntryEditingLineId,
+                    setLines: (next) => { shopDirectEntryLines = next; }
+                });
+            }
+
+            function upsertTransactionLineCollection({ lines, nextLine, editingLineId, setLines }) {
+                if (editingLineId) {
+                    const editIndex = lines.findIndex((line) => line.id === editingLineId);
+                    if (editIndex < 0) {
+                        setLines([...lines, nextLine]);
+                        return { merged: false };
+                    }
+                    const mergeKey = getGroupedEntryLineMergeKey(nextLine);
+                    const duplicateIndex = lines.findIndex(
+                        (line, index) => index !== editIndex && getGroupedEntryLineMergeKey(line) === mergeKey
+                    );
+                    if (duplicateIndex >= 0) {
+                        const mergedLines = [...lines];
+                        mergedLines[duplicateIndex] = mergeGroupedEntryLines(mergedLines[duplicateIndex], nextLine);
+                        mergedLines.splice(editIndex, 1);
+                        setLines(mergedLines);
+                        return { merged: true };
+                    }
+                    const updatedLines = [...lines];
+                    updatedLines[editIndex] = nextLine;
+                    setLines(updatedLines);
+                    return { merged: false };
+                }
+
+                const mergeKey = getGroupedEntryLineMergeKey(nextLine);
+                const existingIndex = lines.findIndex((line) => getGroupedEntryLineMergeKey(line) === mergeKey);
+                if (existingIndex >= 0) {
+                    const mergedLines = [...lines];
+                    mergedLines[existingIndex] = mergeGroupedEntryLines(mergedLines[existingIndex], nextLine);
+                    setLines(mergedLines);
+                    return { merged: true };
+                }
+                setLines([...lines, nextLine]);
+                return { merged: false };
+            }
+
+            function consolidateBulkExitDomRows({ showToast = false } = {}) {
+                if (!bulkExitRowsTbody) return false;
+                const groups = new Map();
+                bulkExitRowsTbody.querySelectorAll('tr[data-bulk-exit-row]').forEach((domRow) => {
+                    const productId = domRow.querySelector('[data-bulk-exit-field="product"]')?.value || '';
+                    if (!productId) return;
+                    if (!groups.has(productId)) groups.set(productId, []);
+                    groups.get(productId).push(domRow);
+                });
+
+                let merged = false;
+                groups.forEach((productRows) => {
+                    if (productRows.length <= 1) return;
+                    merged = true;
+                    const product = getActiveStoreProductById(productRows[0].querySelector('[data-bulk-exit-field="product"]')?.value);
+                    const keeper = productRows[0];
+                    let totalBase = 0;
+                    let referencePackagingCode = productRows[0].querySelector('[data-bulk-exit-field="packaging"]')?.value || '';
+                    let packagingQtySum = 0;
+                    let allSamePackaging = true;
+
+                    productRows.forEach((domRow, index) => {
+                        const qty = parseNonNegativeInteger(domRow.querySelector('[data-bulk-exit-field="quantity"]')?.value, 0);
+                        const packagingCode = domRow.querySelector('[data-bulk-exit-field="packaging"]')?.value || '';
+                        totalBase += resolveBulkExitBaseQuantity(product, qty, packagingCode);
+                        if (index > 0 && packagingCode !== referencePackagingCode) allSamePackaging = false;
+                        if (packagingCode === referencePackagingCode) packagingQtySum += qty;
+                    });
+
+                    const qtyInput = keeper.querySelector('[data-bulk-exit-field="quantity"]');
+                    const packSelect = keeper.querySelector('[data-bulk-exit-field="packaging"]');
+                    if (allSamePackaging && referencePackagingCode && packSelect) {
+                        packSelect.value = referencePackagingCode;
+                        if (qtyInput) qtyInput.value = packagingQtySum;
+                    } else if (packSelect && isStoreEntryPackagingEnabled() && product) {
+                        const basePackaging = getStoreExitPackagings(product).find((entry) => Number(entry.unitCount) === 1);
+                        if (basePackaging) {
+                            packSelect.value = basePackaging.code;
+                        }
+                        if (qtyInput) qtyInput.value = totalBase;
+                    } else if (qtyInput) {
+                        qtyInput.value = totalBase;
+                    }
+
+                    productRows.slice(1).forEach((domRow) => domRow.remove());
+                    updateBulkExitRowPackagingUI(keeper);
+                });
+
+                if (merged) {
+                    ensureBulkExitRows(1);
+                    if (showToast) showSuccessToast('Quantité ajoutée à la ligne existante du même produit.');
+                }
+                return merged;
+            }
+
+            function consolidateBulkTransferDomRows({ showToast = false } = {}) {
+                if (!bulkTransferRowsTbody) return false;
+                const groups = new Map();
+                bulkTransferRowsTbody.querySelectorAll('tr[data-bulk-transfer-row]').forEach((domRow) => {
+                    const productId = domRow.querySelector('[data-bulk-transfer-field="product"]')?.value || '';
+                    if (!productId) return;
+                    if (!groups.has(productId)) groups.set(productId, []);
+                    groups.get(productId).push(domRow);
+                });
+
+                let merged = false;
+                groups.forEach((productRows) => {
+                    if (productRows.length <= 1) return;
+                    merged = true;
+                    const product = getActiveStoreProductById(productRows[0].querySelector('[data-bulk-transfer-field="product"]')?.value);
+                    const keeper = productRows[0];
+                    let totalBase = 0;
+                    let referencePackagingCode = productRows[0].querySelector('[data-bulk-transfer-field="packaging"]')?.value || '';
+                    let packagingQtySum = 0;
+                    let allSamePackaging = true;
+
+                    productRows.forEach((domRow, index) => {
+                        const qty = parseNonNegativeInteger(domRow.querySelector('[data-bulk-transfer-field="quantity"]')?.value, 0);
+                        const packagingCode = domRow.querySelector('[data-bulk-transfer-field="packaging"]')?.value || '';
+                        totalBase += resolveBulkTransferBaseQuantity(product, qty, packagingCode);
+                        if (index > 0 && packagingCode !== referencePackagingCode) allSamePackaging = false;
+                        if (packagingCode === referencePackagingCode) packagingQtySum += qty;
+                    });
+
+                    const qtyInput = keeper.querySelector('[data-bulk-transfer-field="quantity"]');
+                    const packSelect = keeper.querySelector('[data-bulk-transfer-field="packaging"]');
+                    if (allSamePackaging && referencePackagingCode && packSelect) {
+                        packSelect.value = referencePackagingCode;
+                        if (qtyInput) qtyInput.value = packagingQtySum;
+                    } else if (packSelect && isStoreEntryPackagingEnabled() && product) {
+                        const basePackaging = getStoreExitPackagings(product).find((entry) => Number(entry.unitCount) === 1);
+                        if (basePackaging) packSelect.value = basePackaging.code;
+                        if (qtyInput) qtyInput.value = totalBase;
+                    } else if (qtyInput) {
+                        qtyInput.value = totalBase;
+                    }
+
+                    productRows.slice(1).forEach((domRow) => domRow.remove());
+                    updateBulkTransferRowPackagingUI(keeper);
+                    updateBulkTransferRowSummary(keeper);
+                });
+
+                if (merged) {
+                    ensureBulkTransferRows(1);
+                    if (showToast) showSuccessToast('Quantité ajoutée à la ligne existante du même produit.');
+                }
+                return merged;
             }
 
             function formatStoreProductStockDisplay(product) {
@@ -20186,8 +20416,142 @@
                 }
                 const product = appData.storeProducts?.[item?.id];
                 if (!product) return `${numericQty}`;
-                const totalUnits = numericQty * Math.max(getPackageUnits(product, getPrimaryPackaging(product)?.code || null), 1);
-                return formatProductStockBreakdown(totalUnits, product, options);
+                return formatProductStockBreakdown(numericQty, product, options);
+            }
+
+            function getInventoryItemPackagings(item) {
+                if (item?.sourceType === 'shop') {
+                    const shopItem = appData.shopStock?.[item.id];
+                    if (shopItem) {
+                        const sellPackagings = getShopItemSellPackagings(shopItem);
+                        if (sellPackagings.length) return sellPackagings;
+                    }
+                    const sourceProduct = getShopItemSourceProduct(shopItem);
+                    return sourceProduct ? getProductPackagings(sourceProduct) : [];
+                }
+                const product = appData.storeProducts?.[item?.id];
+                return product ? getProductPackagings(product) : [];
+            }
+
+            function getInventoryPackagingCode(packaging) {
+                return (packaging?.code || packaging?.label || '').toString();
+            }
+
+            function decomposeQtyToPackagingMap(totalUnits, packagings = []) {
+                const parts = decomposeBaseUnitsByPackagings(totalUnits, packagings);
+                const map = {};
+                packagings.forEach(packaging => {
+                    map[getInventoryPackagingCode(packaging)] = 0;
+                });
+                parts.forEach(part => {
+                    const code = part.code || part.label;
+                    if (code) map[code] = part.quantity;
+                });
+                return map;
+            }
+
+            function syncInventoryItemPhysicalQty(item) {
+                const packagings = getInventoryItemPackagings(item);
+                if (!packagings.length) {
+                    if (!item.physicalCounted) item.physicalQty = '';
+                    return;
+                }
+                if (!item.physicalCounted) {
+                    item.physicalQty = '';
+                    return;
+                }
+                if (!item.physicalPackaging) item.physicalPackaging = {};
+                let total = 0;
+                packagings.forEach(packaging => {
+                    const code = getInventoryPackagingCode(packaging);
+                    const qty = parseNonNegativeInteger(item.physicalPackaging[code], 0);
+                    total += qty * Math.max(Number(packaging.unitCount) || 1, 1);
+                });
+                item.physicalQty = total;
+            }
+
+            function getInventoryPhysicalQty(item) {
+                syncInventoryItemPhysicalQty(item);
+                const qty = item.physicalQty;
+                if (qty === '' || qty === null || qty === undefined) return NaN;
+                return Number(qty);
+            }
+
+            function fillInventoryItemConforme(item) {
+                item.physicalCounted = true;
+                const packagings = getInventoryItemPackagings(item);
+                if (!packagings.length) {
+                    item.physicalQty = item.systemQty;
+                    return;
+                }
+                if (!item.physicalPackaging) item.physicalPackaging = {};
+                const map = decomposeQtyToPackagingMap(item.systemQty, packagings);
+                packagings.forEach(packaging => {
+                    const code = getInventoryPackagingCode(packaging);
+                    item.physicalPackaging[code] = map[code] ?? 0;
+                });
+                syncInventoryItemPhysicalQty(item);
+            }
+
+            function buildInventoryPhysicalInputsHtml(item) {
+                const packagings = getInventoryItemPackagings(item);
+                const meta = getInventoryProductMeta(item);
+
+                if (!packagings.length) {
+                    const physical = getInventoryPhysicalQty(item);
+                    const inputValue = Number.isFinite(physical) ? physical : '';
+                    return `
+                        <div class="inventory-physical-entry">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <input type="number" min="0" step="1" value="${inputValue}"
+                                    data-inventory-input="${item.id}"
+                                    placeholder="0"
+                                    class="w-20 rounded-lg border border-gray-200 px-2 py-1.5 text-sm text-center font-medium focus:ring-cyan-500 focus:border-cyan-500" />
+                                <span class="text-xs text-gray-500">${escapeHtml(meta.baseLabel)}</span>
+                                <button type="button" data-inventory-fill="${item.id}"
+                                    class="px-2.5 py-1 rounded-lg border border-emerald-200 bg-emerald-50 text-xs font-semibold text-emerald-700 hover:bg-emerald-100">
+                                    Conforme
+                                </button>
+                            </div>
+                        </div>`;
+                }
+
+                const sorted = [...packagings].sort((a, b) => (Number(b.unitCount) || 1) - (Number(a.unitCount) || 1));
+                const inputs = item.physicalPackaging || {};
+                const fields = sorted.map(packaging => {
+                    const code = getInventoryPackagingCode(packaging);
+                    const rawVal = inputs[code];
+                    const displayVal = rawVal === '' || rawVal === null || rawVal === undefined ? '' : rawVal;
+                    const unitHint = Number(packaging.unitCount) > 1 ? `×${packaging.unitCount}` : '×1';
+                    return `
+                        <label class="inventory-pack-field flex flex-col gap-1 min-w-[4.5rem] max-w-[5.5rem]">
+                            <span class="text-[10px] font-semibold uppercase tracking-wide text-gray-400 truncate text-center" title="${escapeHtml(packaging.label || code)}">${escapeHtml(packaging.label || code)}</span>
+                            <input type="number" min="0" step="1" value="${displayVal}"
+                                data-inventory-pack-input="${item.id}" data-inventory-pack-code="${escapeHtml(code)}"
+                                placeholder="0"
+                                class="w-full rounded-lg border border-gray-200 px-1.5 py-1.5 text-sm text-center font-semibold text-gray-800 focus:ring-cyan-500 focus:border-cyan-500 bg-white" />
+                            <span class="text-[10px] text-gray-400 text-center leading-none">${escapeHtml(unitHint)}</span>
+                        </label>`;
+                }).join('');
+
+                const physical = getInventoryPhysicalQty(item);
+                const summaryText = Number.isFinite(physical)
+                    ? formatInventoryQuantityDisplay(item, physical, { includeBaseTotal: true })
+                    : 'Comptez par conditionnement';
+
+                return `
+                    <div class="inventory-physical-entry">
+                        <div class="inline-flex flex-wrap items-start gap-2 rounded-xl border border-gray-100 bg-gray-50/80 px-3 py-2.5">
+                            ${fields}
+                        </div>
+                        <div class="mt-2 flex items-center justify-between gap-3">
+                            <span data-inventory-physical-summary="${item.id}" class="text-xs text-gray-500 leading-snug">${escapeHtml(summaryText)}</span>
+                            <button type="button" data-inventory-fill="${item.id}"
+                                class="shrink-0 px-2.5 py-1 rounded-lg border border-emerald-200 bg-emerald-50 text-xs font-semibold text-emerald-700 hover:bg-emerald-100">
+                                Conforme
+                            </button>
+                        </div>
+                    </div>`;
             }
 
             function getInventoryProductMeta(item) {
@@ -20262,6 +20626,50 @@
                     breakdown: { detail: totalUnits },
                     targets,
                     summary: formatBaseUnits(totalUnits, baseUnitLabel)
+                };
+            }
+
+            function computeTransferPlanFromBaseQuantity(product, baseQuantity) {
+                const totalUnits = parseNonNegativeInteger(baseQuantity, 0);
+                const baseUnitLabel = getProductBaseUnitLabel(product);
+                const detailSellingPrice = toNullableFiniteNumber(getPackageSellingPrice(product, 'detail'));
+                const detailPurchaseCost = toNullableFiniteNumber(getPackagePurchaseCost(product, 'detail'));
+                const targets = totalUnits > 0 ? [{
+                    type: 'detail',
+                    packageCode: 'detail',
+                    label: baseUnitLabel,
+                    code: getPackageVariantCode(product, 'detail'),
+                    displayName: product?.name || getPackageDisplayName(product, 'detail'),
+                    quantity: totalUnits,
+                    unitsPerPackage: 1,
+                    totalUnits,
+                    sellingPrice: detailSellingPrice,
+                    purchaseCost: detailPurchaseCost
+                }] : [];
+                const primaryPackaging = getPrimaryPackaging(product);
+                const summary = getProductPackagings(product).length
+                    ? formatProductStockBreakdown(totalUnits, product, { includeBaseTotal: true })
+                    : formatBaseUnits(totalUnits, baseUnitLabel);
+                return {
+                    cartonQty: primaryPackaging?.unitCount
+                        ? Math.floor(totalUnits / Math.max(primaryPackaging.unitCount, 1))
+                        : totalUnits,
+                    sourcePackagingCode: primaryPackaging?.code || 'PKG',
+                    sourcePackagingLabel: primaryPackaging?.label || 'Conditionnement principal',
+                    unitsPerCarton: primaryPackaging?.unitCount || 1,
+                    totalUnits,
+                    fixedUnits: totalUnits,
+                    remainingUnits: 0,
+                    autoFillPackagingCode: 'detail',
+                    autoFillPackagingLabel: baseUnitLabel,
+                    autoFillUnits: 1,
+                    autoFillQuantity: totalUnits,
+                    editablePackageRefs: [],
+                    isOverflow: false,
+                    isValid: totalUnits > 0,
+                    breakdown: { detail: totalUnits },
+                    targets,
+                    summary
                 };
             }
 
@@ -24278,6 +24686,7 @@
 
             function renderGroupedEntryRows() {
                 if (!groupedEntryLinesList || !groupedEntryLinesEmpty) return;
+                groupedEntryLines = consolidateGroupedEntryLines(groupedEntryLines);
                 if (!groupedEntryLines.length) {
                     groupedEntryLinesEmpty.classList.remove('hidden');
                     groupedEntryLinesList.innerHTML = '';
@@ -24292,9 +24701,7 @@
                         const codeLabel = isNewLine
                             ? (line.newProductCode || 'Code à définir')
                             : (product ? getProductInternalCodeText(product) : 'Produit');
-                        const quantityLabel = line.packagingQuantity && line.packagingLabel
-                            ? `${line.packagingQuantity} ${line.packagingLabel} (${line.quantity} unités)`
-                            : `${line.quantity || '0'}`;
+                        const quantityLabel = formatGroupedEntryLineQuantityLabel(line);
 
                         return `
                             <article data-grouped-entry-row-id="${escapeShopDocumentValue(line.id)}" class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -24747,6 +25154,9 @@
                     dropdown.classList.add('hidden');
                     row.dataset.bulkExitComboboxOpen = 'false';
                 }
+                if (productId) {
+                    consolidateBulkExitDomRows({ showToast: true });
+                }
             }
 
             function updateBulkExitModalPackagingUI() {
@@ -24826,9 +25236,202 @@
             }
 
             function getBulkTransferProductOptionLabel(product) {
-                const quantity = Math.max(Number(product?.quantityInStore) || 0, 0);
-                const primaryLabel = getPrimaryPackaging(product)?.label || 'format';
-                return getProductDisplayPlainLabel(product, [`${quantity} ${primaryLabel}`]);
+                return getProductDisplayPlainLabel(product, [formatStoreProductStockDisplay(product)]);
+            }
+
+            function getBulkTransferProductComboboxItems(search = '') {
+                const normalized = normalizeString(search);
+                return getBulkTransferSelectableProducts()
+                    .filter(product => !normalized || matchesStoreProductSearch(product, search))
+                    .sort((a, b) => (a?.name || '').localeCompare(b?.name || ''))
+                    .map(product => {
+                        const hasSellingPrice = Number.isFinite(getStoreSellingPrice(product));
+                        return {
+                            value: product.id,
+                            title: product.name || 'Produit sans nom',
+                            meta: getProductInternalCodeText(product),
+                            description: product.description || '',
+                            badge: formatStoreProductStockDisplay(product),
+                            badgeClasses: hasSellingPrice ? 'bg-cyan-50 text-cyan-700' : 'bg-amber-50 text-amber-700',
+                            displayLabel: getBulkTransferProductOptionLabel(product)
+                        };
+                    });
+            }
+
+            function getBulkTransferProductDisplayLabel(product) {
+                if (!product) return '';
+                const item = getBulkTransferProductComboboxItems('').find((entry) => entry.value === product.id);
+                if (item?.displayLabel) return item.displayLabel;
+                return getBulkTransferProductOptionLabel(product);
+            }
+
+            function closeAllBulkTransferComboboxes(exceptRow = null) {
+                if (!bulkTransferRowsTbody) return;
+                bulkTransferRowsTbody.querySelectorAll('tr[data-bulk-transfer-row]').forEach((row) => {
+                    if (row === exceptRow) return;
+                    const dropdown = row.querySelector('[data-bulk-transfer-dropdown]');
+                    if (dropdown) dropdown.classList.add('hidden');
+                    row.dataset.bulkTransferComboboxOpen = 'false';
+                });
+            }
+
+            function renderBulkTransferRowCombobox(row, { openDropdown = false } = {}) {
+                if (!row) return;
+                const searchInput = row.querySelector('[data-bulk-transfer-field="search"]');
+                const optionsPanel = row.querySelector('[data-bulk-transfer-options]');
+                const emptyState = row.querySelector('[data-bulk-transfer-empty]');
+                const dropdown = row.querySelector('[data-bulk-transfer-dropdown]');
+                const productSelect = row.querySelector('[data-bulk-transfer-field="product"]');
+                if (!searchInput || !optionsPanel || !productSelect) return;
+
+                const query = row.dataset.bulkTransferQuery ?? searchInput.value ?? '';
+                const items = getBulkTransferProductComboboxItems(query);
+                const selectedValue = productSelect.value || '';
+
+                productSelect.innerHTML = '';
+                const placeholder = document.createElement('option');
+                placeholder.value = '';
+                placeholder.textContent = 'Sélectionnez un produit';
+                productSelect.appendChild(placeholder);
+                items.forEach((item) => {
+                    const option = document.createElement('option');
+                    option.value = item.value;
+                    option.textContent = item.displayLabel || item.title || 'Produit';
+                    productSelect.appendChild(option);
+                });
+                if (selectedValue && items.some((item) => item.value === selectedValue)) {
+                    productSelect.value = selectedValue;
+                }
+
+                optionsPanel.innerHTML = items.map((item) => buildProductComboboxOptionMarkup(item, selectedValue)).join('');
+                optionsPanel.classList.toggle('hidden', items.length === 0);
+                if (emptyState) emptyState.classList.toggle('hidden', items.length > 0);
+
+                if (openDropdown && dropdown) {
+                    dropdown.classList.remove('hidden');
+                    row.dataset.bulkTransferComboboxOpen = 'true';
+                }
+            }
+
+            function setBulkTransferRowProduct(row, productId, { closeDropdown = true } = {}) {
+                if (!row) return;
+                const productSelect = row.querySelector('[data-bulk-transfer-field="product"]');
+                const searchInput = row.querySelector('[data-bulk-transfer-field="search"]');
+                const dropdown = row.querySelector('[data-bulk-transfer-dropdown]');
+                if (!productSelect || !searchInput) return;
+                productSelect.value = productId || '';
+                row.dataset.bulkTransferQuery = '';
+                const product = productId ? getActiveStoreProductById(productId) : null;
+                searchInput.value = product ? getBulkTransferProductDisplayLabel(product) : '';
+                renderBulkTransferRowCombobox(row);
+                updateBulkTransferRowPackagingUI(row);
+                if (closeDropdown && dropdown) {
+                    dropdown.classList.add('hidden');
+                    row.dataset.bulkTransferComboboxOpen = 'false';
+                }
+                if (productId) {
+                    consolidateBulkTransferDomRows({ showToast: true });
+                }
+            }
+
+            function enhanceBulkTransferRowSearch(row) {
+                const input = row?.querySelector('[data-bulk-transfer-field="search"]');
+                if (!input || input.dataset.appSearchClearBound === '1') return;
+                const flexContainer = input.parentElement;
+                if (!flexContainer) return;
+                const relativeWrap = document.createElement('div');
+                relativeWrap.className = 'relative flex-1 min-w-0 app-search-field app-search-field--with-icon';
+                flexContainer.insertBefore(relativeWrap, input);
+                relativeWrap.appendChild(input);
+                bindAppSearchClear(input, {
+                    onClear: () => {
+                        const productSelect = row.querySelector('[data-bulk-transfer-field="product"]');
+                        if (productSelect) productSelect.value = '';
+                        row.dataset.bulkTransferQuery = '';
+                        updateBulkTransferRowPackagingUI(row);
+                        updateBulkTransferRowSummary(row);
+                    }
+                });
+            }
+
+            function updateBulkTransferModalPackagingUI() {
+                const enabled = isStoreEntryPackagingEnabled();
+                if (bulkTransferPackagingHeader) bulkTransferPackagingHeader.classList.toggle('hidden', !enabled);
+                if (!bulkTransferRowsTbody) return;
+                bulkTransferRowsTbody.querySelectorAll('tr[data-bulk-transfer-row]').forEach((row) => {
+                    row.querySelectorAll('[data-bulk-transfer-packaging-cell]').forEach((cell) => {
+                        cell.classList.toggle('hidden', !enabled);
+                    });
+                    updateBulkTransferRowPackagingUI(row);
+                });
+            }
+
+            function updateBulkTransferRowPackagingUI(row) {
+                if (!row) return;
+                const productId = row.querySelector('[data-bulk-transfer-field="product"]')?.value || '';
+                const product = productId ? getActiveStoreProductById(productId) : null;
+                const packagingSelect = row.querySelector('[data-bulk-transfer-field="packaging"]');
+                const quantityLabel = row.querySelector('[data-bulk-transfer-quantity-label]');
+                const quantityMeta = row.querySelector('[data-bulk-transfer-quantity-meta]');
+                const quantityInput = row.querySelector('[data-bulk-transfer-field="quantity"]');
+                const enabled = isStoreEntryPackagingEnabled();
+                const packagings = enabled ? getStoreExitPackagings(product) : [];
+                const showPackaging = enabled && !!product && packagings.length > 0;
+
+                if (packagingSelect) {
+                    const previousValue = packagingSelect.value || '';
+                    packagingSelect.innerHTML = '';
+                    if (showPackaging) {
+                        packagings.forEach((packaging) => {
+                            const option = document.createElement('option');
+                            option.value = packaging.code;
+                            option.textContent = `${packaging.label} (${packaging.unitCount} ${getProductBaseUnitLabel(product)})`;
+                            packagingSelect.appendChild(option);
+                        });
+                        const hasPrevious = packagings.some((packaging) => packaging.code === previousValue);
+                        packagingSelect.value = hasPrevious ? previousValue : (packagings[0]?.code || '');
+                    }
+                    packagingSelect.disabled = !showPackaging;
+                }
+
+                const selectedPackaging = showPackaging
+                    ? findPackagingByRef(product, packagingSelect?.value)
+                    : null;
+                if (quantityLabel) {
+                    quantityLabel.textContent = showPackaging
+                        ? `Nombre de ${(selectedPackaging?.label || 'format').toLowerCase()}(s) *`
+                        : 'Quantité *';
+                }
+                const enteredQty = parseInt(quantityInput?.value, 10);
+                if (quantityMeta) {
+                    if (showPackaging && Number.isFinite(enteredQty) && enteredQty > 0) {
+                        const baseQty = resolveBulkTransferBaseQuantity(product, enteredQty, selectedPackaging?.code);
+                        quantityMeta.textContent = `Sortie de ${formatProductStockBreakdown(baseQty, product, { includeBaseTotal: true })} du stock.`;
+                        quantityMeta.classList.remove('hidden');
+                    } else if (!showPackaging && Number.isFinite(enteredQty) && enteredQty > 0 && product) {
+                        quantityMeta.textContent = `Sortie de ${formatBaseUnits(enteredQty, getProductBaseUnitLabel(product))} du stock.`;
+                        quantityMeta.classList.remove('hidden');
+                    } else {
+                        quantityMeta.textContent = '';
+                        quantityMeta.classList.add('hidden');
+                    }
+                }
+                updateBulkTransferRowSummary(row);
+            }
+
+            function resolveBulkTransferBaseQuantity(product, enteredQty, packagingCode = '') {
+                if (!product || !Number.isFinite(enteredQty) || enteredQty <= 0) return 0;
+                if (!isStoreEntryPackagingEnabled()) return enteredQty;
+                const packagings = getStoreExitPackagings(product);
+                if (packagingCode && packagings.length) {
+                    return resolveStoreEntryBaseQuantity(product, packagingCode, enteredQty);
+                }
+                return enteredQty;
+            }
+
+            function resolveBulkTransferRowBaseQuantity(domRow, product, enteredQty) {
+                const packagingCode = domRow?.querySelector?.('[data-bulk-transfer-field="packaging"]')?.value || '';
+                return resolveBulkTransferBaseQuantity(product, enteredQty, packagingCode);
             }
 
             function renderBulkTransferBoutiqueOptions() {
@@ -24910,15 +25513,40 @@
                 if (!bulkTransferRowsTbody) return null;
                 const row = document.createElement('tr');
                 row.dataset.bulkTransferRow = 'true';
+                row.dataset.bulkTransferQuery = '';
+                row.dataset.bulkTransferComboboxOpen = 'false';
+                const packagingHidden = isStoreEntryPackagingEnabled() ? '' : 'hidden';
                 row.innerHTML = `
-                    <td class="px-3 py-3 align-top">
-                        <select data-bulk-transfer-field="product"
-                            class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400">
+                    <td class="px-3 py-3 align-top min-w-[240px]">
+                        <div class="relative" data-bulk-transfer-combobox>
+                            <div class="flex items-center gap-1">
+                                <input type="text" data-bulk-transfer-field="search" autocomplete="off" placeholder="Rechercher un produit..."
+                                    class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" />
+                                <button type="button" data-bulk-transfer-toggle
+                                    class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50"
+                                    aria-label="Afficher les produits">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div data-bulk-transfer-dropdown class="product-combobox-dropdown hidden absolute left-0 right-0 z-30 mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
+                                <div data-bulk-transfer-options class="product-combobox-options-panel max-h-56 space-y-1 overflow-y-auto p-2"></div>
+                                <div data-bulk-transfer-empty class="hidden px-4 py-5 text-sm text-slate-400">Aucun produit correspondant.</div>
+                            </div>
+                            <select data-bulk-transfer-field="product" class="hidden"></select>
+                        </div>
+                    </td>
+                    <td data-bulk-transfer-packaging-cell class="${packagingHidden} px-3 py-3 align-top min-w-[170px]">
+                        <select data-bulk-transfer-field="packaging"
+                            class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400">
                         </select>
                     </td>
                     <td class="px-3 py-3 align-top">
+                        <label data-bulk-transfer-quantity-label class="sr-only">Quantité</label>
                         <input type="number" min="1" step="1" placeholder="0" data-bulk-transfer-field="quantity"
                             class="w-28 rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400" />
+                        <p data-bulk-transfer-quantity-meta class="hidden mt-1 max-w-[220px] text-[11px] leading-4 text-slate-500"></p>
                     </td>
                     <td class="px-3 py-3 align-top">
                         <div data-bulk-transfer-summary class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-500">
@@ -24933,6 +25561,9 @@
                     </td>
                 `;
                 bulkTransferRowsTbody.prepend(row);
+                enhanceBulkTransferRowSearch(row);
+                renderBulkTransferRowCombobox(row);
+                updateBulkTransferRowPackagingUI(row);
                 return row;
             }
 
@@ -24949,6 +25580,7 @@
                 const summary = row.querySelector('[data-bulk-transfer-summary]');
                 const productId = row.querySelector('select[data-bulk-transfer-field="product"]')?.value || '';
                 const qtyRaw = row.querySelector('input[data-bulk-transfer-field="quantity"]')?.value || '';
+                const packagingCode = row.querySelector('select[data-bulk-transfer-field="packaging"]')?.value || '';
                 if (!summary) return;
                 if (!productId) {
                     summary.textContent = 'Sélectionnez un produit et une quantité.';
@@ -24956,19 +25588,20 @@
                     return;
                 }
                 const product = getActiveStoreProductById(productId);
-                const quantity = parseNonNegativeInteger(qtyRaw, 0);
-                if (!product || quantity <= 0) {
+                const enteredQty = parseNonNegativeInteger(qtyRaw, 0);
+                if (!product || enteredQty <= 0) {
                     summary.textContent = 'Renseignez une quantité supérieure à 0.';
                     summary.className = 'rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-700';
                     return;
                 }
+                const baseQuantity = resolveBulkTransferBaseQuantity(product, enteredQty, packagingCode);
                 const available = Math.max(Number(product.quantityInStore) || 0, 0);
-                if (quantity > available) {
-                    summary.textContent = `Stock insuffisant. Disponible: ${available}.`;
+                if (baseQuantity > available) {
+                    summary.textContent = `Stock insuffisant. Disponible: ${formatStoreProductStockDisplay(product)}.`;
                     summary.className = 'rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-700';
                     return;
                 }
-                const plan = computeTransferPackagingPlan(product, quantity, {});
+                const plan = computeTransferPlanFromBaseQuantity(product, baseQuantity);
                 if (!plan.isValid || !plan.totalUnits) {
                     summary.textContent = 'Impossible de calculer la réception boutique.';
                     summary.className = 'rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-700';
@@ -24980,11 +25613,10 @@
 
             function refreshBulkTransferRowProducts() {
                 if (!bulkTransferRowsTbody) return;
-                const products = getBulkTransferSelectableProducts();
-                bulkTransferRowsTbody.querySelectorAll('select[data-bulk-transfer-field="product"]').forEach(select => {
-                    fillBulkProductSelect(select, products, 'Sélectionnez un produit...', getBulkTransferProductOptionLabel);
+                bulkTransferRowsTbody.querySelectorAll('tr[data-bulk-transfer-row]').forEach((row) => {
+                    renderBulkTransferRowCombobox(row);
+                    updateBulkTransferRowPackagingUI(row);
                 });
-                bulkTransferRowsTbody.querySelectorAll('tr[data-bulk-transfer-row]').forEach(updateBulkTransferRowSummary);
             }
 
             function ensureBulkExitRows(minRows = 1) {
@@ -25101,6 +25733,7 @@
                     return;
                 }
                 resetBulkTransferModalState();
+                updateBulkTransferModalPackagingUI();
                 bulkTransferModal.classList.remove('hidden');
             }
 
@@ -25127,6 +25760,7 @@
             function buildBulkExitPreview() {
                 clearBulkExitError();
                 try {
+                    consolidateBulkExitDomRows();
                     const storeId = getActiveStoreId();
                     if (!storeId) {
                         showBulkExitError('Veuillez créer ou sélectionner un magasin.');
@@ -25176,30 +25810,36 @@
                     const previewRows = [];
                     let totalAmount = 0;
                     let hasPendingPrice = false;
-                    rows.forEach((row) => {
-                        const product = getActiveStoreProductById(row.productId);
-                        const enteredQty = parseNonNegativeInteger(row.quantityRaw, 0);
-                        const baseQuantity = resolveBulkExitBaseQuantity(product, enteredQty, row.packagingCode);
-                        const packaging = row.packagingCode ? findPackagingByRef(product, row.packagingCode) : null;
+                    Object.entries(aggregateByProduct).forEach(([productId, totalBaseQuantity]) => {
+                        const product = getActiveStoreProductById(productId);
+                        const productRows = rows.filter((row) => row.productId === productId);
+                        const packagingCodes = productRows.map((row) => row.packagingCode).filter(Boolean);
+                        const allSamePackaging = packagingCodes.length > 0 && packagingCodes.every((code) => code === packagingCodes[0]);
+                        const packaging = allSamePackaging && packagingCodes[0]
+                            ? findPackagingByRef(product, packagingCodes[0])
+                            : null;
+                        const enteredQty = allSamePackaging
+                            ? productRows.reduce((sum, row) => sum + parseNonNegativeInteger(row.quantityRaw, 0), 0)
+                            : totalBaseQuantity;
                         const sellingPrice = getStoreSellingPrice(product);
                         if (!Object.prototype.hasOwnProperty.call(runningStock, product.id)) {
                             runningStock[product.id] = Math.max(Number(product.quantityInStore) || 0, 0);
                         }
                         const stockBefore = runningStock[product.id];
-                        const stockAfter = stockBefore - baseQuantity;
+                        const stockAfter = stockBefore - totalBaseQuantity;
                         runningStock[product.id] = stockAfter;
                         const hasLinePrice = Number.isFinite(sellingPrice) && sellingPrice > 0;
-                        const totalLineAmount = hasLinePrice ? sellingPrice * baseQuantity : null;
+                        const totalLineAmount = hasLinePrice ? sellingPrice * totalBaseQuantity : null;
                         if (hasLinePrice) {
                             totalAmount += totalLineAmount;
                         } else {
                             hasPendingPrice = true;
                         }
                         previewRows.push({
-                            ...row,
+                            lineNumber: productRows[0]?.lineNumber || previewRows.length + 1,
                             product,
                             enteredQty,
-                            quantity: baseQuantity,
+                            quantity: totalBaseQuantity,
                             packagingCode: packaging?.code || '',
                             packagingLabel: packaging?.label || '',
                             packagingQuantity: packaging ? enteredQty : null,
@@ -25251,8 +25891,14 @@
                         ? 'Prix à définir'
                         : formatCurrency(row.totalAmount, row.product.currency || 'CFA');
                     const qtyLabel = row.packagingQuantity && row.packagingLabel
-                        ? `${row.packagingQuantity} ${row.packagingLabel} (${row.quantity} unités)`
-                        : `${row.quantity}`;
+                        ? formatGroupedEntryLineQuantityLabel({
+                            mode: 'existing',
+                            productId: row.product.id,
+                            quantity: `${row.quantity}`,
+                            packagingQuantity: `${row.packagingQuantity}`,
+                            packagingLabel: row.packagingLabel
+                        })
+                        : formatProductStockBreakdown(row.quantity, row.product, { includeBaseTotal: true });
                     tr.innerHTML = `
                         <td class="px-3 py-3">
                             <p class="font-semibold text-gray-900">${escapeHtml(row.product.name || 'Produit')}</p>
@@ -25284,6 +25930,7 @@
                     row,
                     lineNumber: index + 1,
                     productId: row.querySelector('select[data-bulk-transfer-field="product"]')?.value || '',
+                    packagingCode: row.querySelector('select[data-bulk-transfer-field="packaging"]')?.value || '',
                     quantityRaw: row.querySelector('input[data-bulk-transfer-field="quantity"]')?.value || ''
                 }));
             }
@@ -25294,6 +25941,7 @@
 
             function buildBulkTransferPreview() {
                 clearBulkTransferError();
+                consolidateBulkTransferDomRows();
                 const storeId = getActiveStoreId();
                 if (!storeId) {
                     showBulkTransferError('Veuillez créer ou sélectionner un magasin.');
@@ -25317,40 +25965,54 @@
                     if (!isProductTransferReady(product)) {
                         throw new Error(`Ligne ${row.lineNumber}: ${product.name} ne peut pas encore être transféré.`);
                     }
-                    const quantity = parseNonNegativeInteger(row.quantityRaw, 0);
-                    if (quantity <= 0) throw new Error(`Ligne ${row.lineNumber}: renseignez une quantité supérieure à 0.`);
-                    aggregateByProduct[product.id] = (aggregateByProduct[product.id] || 0) + quantity;
+                    const enteredQty = parseNonNegativeInteger(row.quantityRaw, 0);
+                    if (enteredQty <= 0) throw new Error(`Ligne ${row.lineNumber}: renseignez une quantité supérieure à 0.`);
+                    const baseQuantity = resolveBulkTransferBaseQuantity(product, enteredQty, row.packagingCode);
+                    if (baseQuantity <= 0) throw new Error(`Ligne ${row.lineNumber}: quantité invalide après conversion.`);
+                    aggregateByProduct[product.id] = (aggregateByProduct[product.id] || 0) + baseQuantity;
                 });
 
-                Object.entries(aggregateByProduct).forEach(([productId, quantity]) => {
+                Object.entries(aggregateByProduct).forEach(([productId, baseQuantity]) => {
                     const product = getActiveStoreProductById(productId);
                     const available = Math.max(Number(product?.quantityInStore) || 0, 0);
-                    if (quantity > available) {
-                        throw new Error(`${product?.name || 'Produit'}: total demandé ${quantity}, stock disponible ${available}.`);
+                    if (baseQuantity > available) {
+                        throw new Error(`${product?.name || 'Produit'}: total demandé ${baseQuantity}, stock disponible ${available}.`);
                     }
                 });
 
                 const runningStock = {};
                 const previewRows = [];
                 let totalUnits = 0;
-                rows.forEach(row => {
-                    const product = getActiveStoreProductById(row.productId);
-                    const quantity = parseNonNegativeInteger(row.quantityRaw, 0);
-                    const plan = computeTransferPackagingPlan(product, quantity, {});
+                Object.entries(aggregateByProduct).forEach(([productId, baseQuantity]) => {
+                    const product = getActiveStoreProductById(productId);
+                    const productRows = rows.filter((row) => row.productId === productId);
+                    const packagingCodes = productRows.map((row) => row.packagingCode).filter(Boolean);
+                    const allSamePackaging = packagingCodes.length > 0 && packagingCodes.every((code) => code === packagingCodes[0]);
+                    const packaging = allSamePackaging && packagingCodes[0]
+                        ? findPackagingByRef(product, packagingCodes[0])
+                        : null;
+                    const enteredQty = allSamePackaging
+                        ? productRows.reduce((sum, row) => sum + parseNonNegativeInteger(row.quantityRaw, 0), 0)
+                        : baseQuantity;
+                    const plan = computeTransferPlanFromBaseQuantity(product, baseQuantity);
                     if (!plan.isValid || !plan.totalUnits || !plan.targets.length) {
-                        throw new Error(`Ligne ${row.lineNumber}: impossible de calculer la réception pour ${product.name}.`);
+                        throw new Error(`Ligne ${productRows[0]?.lineNumber || '?'}: impossible de calculer la réception pour ${product.name}.`);
                     }
                     if (!Object.prototype.hasOwnProperty.call(runningStock, product.id)) {
                         runningStock[product.id] = Math.max(Number(product.quantityInStore) || 0, 0);
                     }
                     const stockBefore = runningStock[product.id];
-                    const stockAfter = stockBefore - quantity;
+                    const stockAfter = stockBefore - baseQuantity;
                     runningStock[product.id] = stockAfter;
                     totalUnits += plan.totalUnits;
                     previewRows.push({
-                        ...row,
+                        lineNumber: productRows[0]?.lineNumber || previewRows.length + 1,
                         product,
-                        quantity,
+                        baseQuantity,
+                        enteredQty,
+                        packagingCode: packaging?.code || '',
+                        packagingLabel: packaging?.label || '',
+                        packagingQuantity: packaging ? enteredQty : null,
                         plan,
                         stockBefore,
                         stockAfter
@@ -25375,18 +26037,27 @@
                 preview.rows.forEach(row => {
                     const tr = document.createElement('tr');
                     const codeHtml = getProductInternalCodeMarkup(row.product, { prefix: 'Code' });
+                    const qtyLabel = row.packagingQuantity && row.packagingLabel
+                        ? formatGroupedEntryLineQuantityLabel({
+                            mode: 'existing',
+                            productId: row.product.id,
+                            quantity: `${row.baseQuantity}`,
+                            packagingQuantity: `${row.packagingQuantity}`,
+                            packagingLabel: row.packagingLabel
+                        })
+                        : formatProductStockBreakdown(row.baseQuantity, row.product, { includeBaseTotal: true });
                     tr.innerHTML = `
                         <td class="px-3 py-3">
                             <p class="font-semibold text-slate-900">${row.product.name || 'Produit'}</p>
                             <p class="mt-1">${codeHtml}</p>
                             <p class="mt-1 text-xs text-slate-500">Ligne ${row.lineNumber}</p>
                         </td>
-                        <td class="px-3 py-3 text-right text-slate-700">${row.quantity}</td>
+                        <td class="px-3 py-3 text-right text-slate-700">${escapeHtml(qtyLabel)}</td>
                         <td class="px-3 py-3">
                             <p class="font-medium text-slate-900">${row.plan.summary}</p>
                             <p class="mt-1 text-xs text-slate-500">${preview.boutiqueName}</p>
                         </td>
-                        <td class="px-3 py-3 text-right text-slate-700">${row.stockAfter}</td>
+                        <td class="px-3 py-3 text-right text-slate-700">${formatStoreProductStockDisplay({ ...row.product, quantityInStore: row.stockAfter })}</td>
                     `;
                     bulkTransferPreviewTbody.appendChild(tr);
                 });
@@ -25556,14 +26227,25 @@
                         updates[`${dbBasePath}/storeProducts/${productId}/quantityInStore`] = finalStock;
                     });
                     preview.rows.forEach((row, rowIndex) => {
-                        const sourcePackaging = getPrimaryPackaging(row.product);
-                        const sourcePackageRef = sourcePackaging?.code || null;
+                        const selectedPackaging = row.packagingCode
+                            ? findPackagingByRef(row.product, row.packagingCode)
+                            : getPrimaryPackaging(row.product);
+                        const sourcePackageRef = selectedPackaging?.code || getPrimaryPackaging(row.product)?.code || null;
                         const sourceVariantCode = getPackageVariantCode(row.product, sourcePackageRef);
                         const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
                         const requestRef = push(ref(db, `${dbBasePath}/shopTransferRequests`));
+                        const sourceSummary = row.packagingQuantity && row.packagingLabel
+                            ? formatGroupedEntryLineQuantityLabel({
+                                mode: 'existing',
+                                productId: row.product.id,
+                                quantity: `${row.baseQuantity}`,
+                                packagingQuantity: `${row.packagingQuantity}`,
+                                packagingLabel: row.packagingLabel
+                            })
+                            : formatProductStockBreakdown(row.baseQuantity, row.product, { includeBaseTotal: true });
                         const baseTransferComment = preview.comment
-                            ? `${preview.comment} · ${row.quantity} ${sourceVariantCode} = ${row.plan.summary}`
-                            : `Transfert groupé · ${row.quantity} ${sourceVariantCode} = ${row.plan.summary}`;
+                            ? `${preview.comment} · ${sourceSummary} = ${row.plan.summary}`
+                            : `Transfert groupé · ${sourceSummary} = ${row.plan.summary}`;
                         const transferComment = `${baseTransferComment} · Lot ${batchShortLabel}${batchProductSummary ? ` · Groupe: ${batchProductSummary}` : ''}`;
 
                         updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
@@ -25579,10 +26261,13 @@
                             boutiqueId: preview.boutiqueId,
                             boutiqueName: preview.boutiqueName,
                             type: "Sortie",
-                            quantityChange: row.quantity,
+                            quantityChange: row.baseQuantity,
                             oldStock: row.stockBefore,
                             newStock: row.stockAfter,
                             comment: transferComment,
+                            packagingCode: row.packagingCode || null,
+                            packagingLabel: row.packagingLabel || '',
+                            packagingQuantity: row.packagingQuantity,
                             date: { ".sv": "timestamp" },
                             userEmail: currentUser.email || '',
                             userName: requesterName,
@@ -25607,13 +26292,13 @@
                             baseProductCode: getBaseProductCode(row.product),
                             categoryId: row.product.categoryId || null,
                             purchaseCost: toNullableFiniteNumber(getPackagePurchaseCost(row.product, sourcePackageRef)),
-                            quantity: row.quantity,
-                            sourceCartonQty: row.quantity,
+                            quantity: row.baseQuantity,
+                            sourceCartonQty: row.packagingQuantity ?? row.enteredQty ?? row.baseQuantity,
                             sourcePackageCode: sourcePackageRef,
-                            sourcePackageLabel: sourcePackaging?.label || 'Conditionnement principal',
+                            sourcePackageLabel: selectedPackaging?.label || 'Conditionnement principal',
                             sourceVariantCode,
-                            sourceSummary: `${row.quantity} ${sourceVariantCode}`,
-                            unitsPerCarton: row.plan.unitsPerCarton,
+                            sourceSummary,
+                            unitsPerCarton: selectedPackaging?.unitCount || row.plan.unitsPerCarton,
                             totalUnits: row.plan.totalUnits,
                             targetSummary: row.plan.summary,
                             targetPackages: row.plan.targets,
@@ -28129,12 +28814,13 @@
                 }).join('');
             }
 
-            function getInventoryRowDisplay(systemQty, physicalQty) {
+            function getInventoryRowDisplay(item, systemQty, physicalQty) {
                 if (!Number.isFinite(physicalQty)) {
                     return {
                         label: 'Non compté',
                         classes: 'bg-gray-100 text-gray-500 border-gray-200',
                         deltaLabel: '—',
+                        deltaDetail: '',
                         deltaClass: 'text-gray-400'
                     };
                 }
@@ -28144,14 +28830,21 @@
                         label: 'Conforme',
                         classes: 'bg-emerald-50 text-emerald-700 border-emerald-200',
                         deltaLabel: '0',
+                        deltaDetail: '',
                         deltaClass: 'text-emerald-600'
                     };
                 }
                 const deltaLabel = `${delta > 0 ? '+' : ''}${delta}`;
+                let deltaDetail = '';
+                if (item && getInventoryItemPackagings(item).length) {
+                    const sign = delta > 0 ? '+' : '−';
+                    deltaDetail = `${sign}${formatInventoryQuantityDisplay(item, Math.abs(delta), { includeBaseTotal: true })}`;
+                }
                 return {
                     label: 'Écart',
                     classes: 'bg-rose-50 text-rose-700 border-rose-200',
                     deltaLabel,
+                    deltaDetail,
                     deltaClass: 'text-rose-600'
                 };
             }
@@ -28195,8 +28888,10 @@
                         .map(product => ({
                             id: product.id,
                             name: product.name || '',
-                            systemQty: Number(product.quantityInStore) || 0,
+                            systemQty: parseNonNegativeInteger(product.quantityInStore, 0),
                             physicalQty: '',
+                            physicalPackaging: {},
+                            physicalCounted: false,
                             sourceType: 'store'
                         }))
                         .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
@@ -28207,8 +28902,10 @@
                     .map(item => ({
                         id: item.id,
                         name: getShopItemDisplayName(item),
-                        systemQty: Number(item.quantityInShop) || 0,
+                        systemQty: getShopStockBaseUnits(item),
                         physicalQty: '',
+                        physicalPackaging: {},
+                        physicalCounted: false,
                         sourceType: 'shop'
                     }))
                     .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
@@ -28220,7 +28917,7 @@
                 let mismatchCount = 0;
                 let pendingCount = 0;
                 inventoryDraftItems.forEach(item => {
-                    const physical = Number(item.physicalQty);
+                    const physical = getInventoryPhysicalQty(item);
                     if (!Number.isFinite(physical)) {
                         pendingCount += 1;
                         return;
@@ -28249,41 +28946,29 @@
                 if (inventorySaveButton) inventorySaveButton.disabled = false;
 
                 inventoryTbody.innerHTML = inventoryDraftItems.map(item => {
-                    const physical = Number(item.physicalQty);
-                    const display = getInventoryRowDisplay(item.systemQty, physical);
-                    const inputValue = Number.isFinite(physical) ? physical : '';
+                    const physical = getInventoryPhysicalQty(item);
+                    const display = getInventoryRowDisplay(item, item.systemQty, physical);
                     const meta = getInventoryProductMeta(item);
                     const systemLabel = formatInventoryQuantityDisplay(item, item.systemQty, { includeBaseTotal: true });
-                    const physicalLabel = Number.isFinite(physical)
-                        ? formatInventoryQuantityDisplay(item, physical, { includeBaseTotal: true })
-                        : `Saisissez en ${meta.baseLabel.toLowerCase()}`;
+                    const deltaMain = display.deltaDetail || display.deltaLabel;
                     return `
                         <tr data-inventory-row="${item.id}">
-                            <td class="px-4 py-3 text-sm font-semibold text-gray-900">
+                            <td class="px-4 py-3 text-sm font-semibold text-gray-900 align-top">
                                 <div>${escapeHtml(item.name)}</div>
                                 <div class="mt-1 text-xs font-medium text-gray-400">${escapeHtml(meta.summary || meta.baseLabel)}</div>
                             </td>
-                            <td class="px-4 py-3 text-sm text-right text-gray-600">
+                            <td class="px-4 py-3 text-sm text-right text-gray-600 align-top">
                                 <div class="font-semibold text-gray-700">${escapeHtml(systemLabel)}</div>
-                                <div class="mt-1 text-xs text-gray-400">Valeur enregistrée: ${escapeHtml(String(item.systemQty))}</div>
+                                <div class="mt-1 text-xs text-gray-400">${escapeHtml(String(item.systemQty))} ${escapeHtml(meta.baseLabel.toLowerCase())} en base</div>
                             </td>
-                            <td class="px-4 py-3 text-sm">
-                                <div class="flex items-center gap-2">
-                                    <input type="number" min="0" step="1" value="${inputValue}"
-                                        data-inventory-input="${item.id}"
-                                        class="w-24 rounded-lg border border-gray-200 px-2 py-1 text-sm focus:ring-cyan-500 focus:border-cyan-500" />
-                                    <button type="button"
-                                        data-inventory-fill="${item.id}"
-                                        class="px-2 py-1 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50">
-                                        Conforme
-                                    </button>
-                                </div>
-                                <div data-inventory-physical-summary="${item.id}" class="mt-1 text-xs text-gray-400">${escapeHtml(physicalLabel)}</div>
+                            <td class="px-4 py-3 text-sm align-top min-w-[280px]">
+                                ${buildInventoryPhysicalInputsHtml(item)}
                             </td>
-                            <td class="px-4 py-3 text-sm text-right">
-                                <span data-inventory-delta="${item.id}" class="font-semibold ${display.deltaClass}">${display.deltaLabel}</span>
+                            <td class="px-4 py-3 text-sm text-right align-top">
+                                <span data-inventory-delta="${item.id}" class="font-semibold ${display.deltaClass}">${escapeHtml(deltaMain)}</span>
+                                ${display.deltaDetail ? `<div data-inventory-delta-detail="${item.id}" class="mt-0.5 text-[11px] text-gray-400">${escapeHtml(display.deltaLabel)} en base</div>` : `<div data-inventory-delta-detail="${item.id}" class="hidden"></div>`}
                             </td>
-                            <td class="px-4 py-3 text-sm">
+                            <td class="px-4 py-3 text-sm align-top">
                                 <span data-inventory-status="${item.id}"
                                     class="inline-flex items-center px-2.5 py-1 rounded-full border text-xs font-semibold ${display.classes}">
                                     ${display.label}
@@ -28299,26 +28984,54 @@
                 if (!inventoryTbody) return;
                 const item = inventoryDraftItems.find(row => row.id === itemId);
                 if (!item) return;
-                const physical = Number(item.physicalQty);
-                const display = getInventoryRowDisplay(item.systemQty, physical);
-                const meta = getInventoryProductMeta(item);
+                const physical = getInventoryPhysicalQty(item);
+                const display = getInventoryRowDisplay(item, item.systemQty, physical);
                 const deltaEl = inventoryTbody.querySelector(`[data-inventory-delta="${itemId}"]`);
+                const deltaDetailEl = inventoryTbody.querySelector(`[data-inventory-delta-detail="${itemId}"]`);
                 const physicalSummaryEl = inventoryTbody.querySelector(`[data-inventory-physical-summary="${itemId}"]`);
                 const statusEl = inventoryTbody.querySelector(`[data-inventory-status="${itemId}"]`);
+                const deltaMain = display.deltaDetail || display.deltaLabel;
                 if (deltaEl) {
-                    deltaEl.textContent = display.deltaLabel;
+                    deltaEl.textContent = deltaMain;
                     deltaEl.className = `font-semibold ${display.deltaClass}`;
+                }
+                if (deltaDetailEl) {
+                    if (display.deltaDetail) {
+                        deltaDetailEl.textContent = `${display.deltaLabel} en base`;
+                        deltaDetailEl.classList.remove('hidden');
+                        deltaDetailEl.className = 'mt-0.5 text-[11px] text-gray-400';
+                    } else {
+                        deltaDetailEl.textContent = '';
+                        deltaDetailEl.classList.add('hidden');
+                    }
                 }
                 if (physicalSummaryEl) {
                     physicalSummaryEl.textContent = Number.isFinite(physical)
                         ? formatInventoryQuantityDisplay(item, physical, { includeBaseTotal: true })
-                        : `Saisissez en ${meta.baseLabel.toLowerCase()}`;
+                        : 'Comptez par conditionnement';
                 }
                 if (statusEl) {
                     statusEl.textContent = display.label;
                     statusEl.className = `inline-flex items-center px-2.5 py-1 rounded-full border text-xs font-semibold ${display.classes}`;
                 }
                 updateInventorySummary();
+            }
+
+            function applyInventoryConformeToDom(itemId) {
+                if (!inventoryTbody) return;
+                const item = inventoryDraftItems.find(row => row.id === itemId);
+                if (!item) return;
+                const packagings = getInventoryItemPackagings(item);
+                if (!packagings.length) {
+                    const input = inventoryTbody.querySelector(`input[data-inventory-input="${itemId}"]`);
+                    if (input) input.value = item.systemQty;
+                    return;
+                }
+                packagings.forEach(packaging => {
+                    const code = getInventoryPackagingCode(packaging);
+                    const input = inventoryTbody.querySelector(`input[data-inventory-pack-input="${itemId}"][data-inventory-pack-code="${code}"]`);
+                    if (input) input.value = item.physicalPackaging?.[code] ?? 0;
+                });
             }
 
             function startInventoryDraft() {
@@ -28363,7 +29076,7 @@
                     return;
                 }
 
-                const missing = inventoryDraftItems.filter(item => !Number.isFinite(Number(item.physicalQty)));
+                const missing = inventoryDraftItems.filter(item => !Number.isFinite(getInventoryPhysicalQty(item)));
                 if (missing.length) {
                     showInventoryError('Veuillez saisir le stock physique pour tous les produits.');
                     return;
@@ -28388,7 +29101,7 @@
                 const totalItems = inventoryDraftItems.length;
                 const itemPayloads = inventoryDraftItems.map(item => {
                     const systemQty = Number(item.systemQty) || 0;
-                    const physicalQty = Number(item.physicalQty);
+                    const physicalQty = getInventoryPhysicalQty(item);
                     const delta = physicalQty - systemQty;
                     const status = delta === 0 ? 'match' : 'mismatch';
                     if (status === 'mismatch') mismatchCount += 1;
@@ -34820,12 +35533,26 @@
 
             if (inventoryTbody) {
                 inventoryTbody.addEventListener('input', (event) => {
+                    const packInput = event.target.closest('input[data-inventory-pack-input]');
+                    if (packInput) {
+                        const itemId = packInput.dataset.inventoryPackInput;
+                        const code = packInput.dataset.inventoryPackCode;
+                        const item = inventoryDraftItems.find(row => row.id === itemId);
+                        if (!item) return;
+                        if (!item.physicalPackaging) item.physicalPackaging = {};
+                        item.physicalCounted = true;
+                        item.physicalPackaging[code] = packInput.value === '' ? '' : parseNonNegativeInteger(packInput.value, 0);
+                        updateInventoryRowDisplay(itemId);
+                        return;
+                    }
+
                     const input = event.target.closest('input[data-inventory-input]');
                     if (!input) return;
                     const itemId = input.dataset.inventoryInput;
                     const item = inventoryDraftItems.find(row => row.id === itemId);
                     if (!item) return;
-                    item.physicalQty = input.value === '' ? '' : Number(input.value);
+                    item.physicalCounted = true;
+                    item.physicalQty = input.value === '' ? '' : parseNonNegativeInteger(input.value, 0);
                     updateInventoryRowDisplay(itemId);
                 });
 
@@ -34835,9 +35562,8 @@
                     const itemId = button.dataset.inventoryFill;
                     const item = inventoryDraftItems.find(row => row.id === itemId);
                     if (!item) return;
-                    item.physicalQty = item.systemQty;
-                    const input = inventoryTbody.querySelector(`input[data-inventory-input="${itemId}"]`);
-                    if (input) input.value = item.systemQty;
+                    fillInventoryItemConforme(item);
+                    applyInventoryConformeToDom(itemId);
                     updateInventoryRowDisplay(itemId);
                 });
             }
@@ -36789,7 +37515,7 @@
                     return;
                 }
 
-                const activeLines = groupedEntryLines.slice();
+                const activeLines = consolidateGroupedEntryLines(groupedEntryLines.slice());
                 if (!activeLines.length) {
                     setGroupedEntryError('Ajoutez au moins une ligne produit.');
                     return;
@@ -37143,7 +37869,7 @@
                 };
                 updates[`${dbBasePath}/suppliers/${supplier.id}/updatedAt`] = now;
 
-                if (!confirm(`Valider cette entrée groupée de ${lineCount} ligne(s) pour ${totalQuantity} unité(s) ?`)) {
+                if (!confirm(`Valider cette entrée groupée de ${lineCount} ligne(s) pour ${summarizeEntryLinesPackagingQuantity(activeLines)} ?`)) {
                     return;
                 }
 
@@ -37588,14 +38314,12 @@
                 try {
                     clearShopDirectEntryError();
                     const nextLine = getShopDirectEntryDraftPayload();
-                    const existingIndex = shopDirectEntryLines.findIndex(line => line.id === nextLine.id);
-                    if (existingIndex >= 0) {
-                        shopDirectEntryLines[existingIndex] = nextLine;
-                    } else {
-                        shopDirectEntryLines.push(nextLine);
-                    }
+                    const result = upsertShopDirectEntryLine(nextLine);
                     renderShopDirectEntryRows();
                     resetShopDirectEntryDraft();
+                    if (result.merged) {
+                        showSuccessToast('Quantité ajoutée à la ligne existante du même produit.');
+                    }
                 } catch (error) {
                     showShopDirectEntryError(error?.message || "Impossible d'ajouter cette ligne.");
                 }
@@ -37647,7 +38371,8 @@
                     const now = new Date().toISOString();
                     const updates = {};
                     const pendingNewProducts = new Map();
-                    shopDirectEntryLines.forEach((line, index) => {
+                    const activeLines = consolidateGroupedEntryLines(shopDirectEntryLines.slice());
+                    activeLines.forEach((line, index) => {
                         const product = resolveShopDirectEntryLineProduct(line, {
                             updates,
                             pendingNewProducts,
@@ -37671,7 +38396,7 @@
                         });
                     });
                     await update(ref(db), updates);
-                    const count = shopDirectEntryLines.length;
+                    const count = activeLines.length;
                     showSuccessToast(`${count} entrée${count > 1 ? 's' : ''} directe${count > 1 ? 's' : ''} envoyée${count > 1 ? 's' : ''} pour validation.`);
                     resetShopDirectEntryModal();
                     if (shopDirectEntryModal) shopDirectEntryModal.classList.add('hidden');
@@ -37840,14 +38565,12 @@
                 try {
                     setGroupedEntryError('');
                     const nextLine = getGroupedEntryDraftPayload();
-                    const existingIndex = groupedEntryLines.findIndex((line) => line.id === nextLine.id);
-                    if (existingIndex >= 0) {
-                        groupedEntryLines[existingIndex] = nextLine;
-                    } else {
-                        groupedEntryLines.push(nextLine);
-                    }
+                    const result = upsertGroupedEntryLine(nextLine);
                     renderGroupedEntryRows();
                     resetGroupedEntryDraft();
+                    if (result.merged) {
+                        showSuccessToast('Quantité ajoutée à la ligne existante du même produit.');
+                    }
                 } catch (error) {
                     setGroupedEntryError(error?.message || "Impossible d'ajouter cette ligne.");
                 }
@@ -38236,6 +38959,30 @@
             });
             if (bulkTransferRowsTbody) {
                 bulkTransferRowsTbody.addEventListener('click', (event) => {
+                    const option = event.target.closest('[data-product-option]');
+                    if (option && !option.hasAttribute('disabled')) {
+                        const row = option.closest('tr[data-bulk-transfer-row]');
+                        if (row) {
+                            setBulkTransferRowProduct(row, option.dataset.productOption);
+                            markBulkTransferDraftDirty();
+                        }
+                        return;
+                    }
+                    const toggleButton = event.target.closest('[data-bulk-transfer-toggle]');
+                    if (toggleButton) {
+                        const row = toggleButton.closest('tr[data-bulk-transfer-row]');
+                        if (!row) return;
+                        const dropdown = row.querySelector('[data-bulk-transfer-dropdown]');
+                        const isOpen = row.dataset.bulkTransferComboboxOpen === 'true';
+                        closeAllBulkTransferComboboxes(isOpen ? row : null);
+                        if (isOpen) {
+                            if (dropdown) dropdown.classList.add('hidden');
+                            row.dataset.bulkTransferComboboxOpen = 'false';
+                        } else {
+                            renderBulkTransferRowCombobox(row, { openDropdown: true });
+                        }
+                        return;
+                    }
                     const removeButton = event.target.closest('[data-bulk-transfer-remove]');
                     if (!removeButton) return;
                     const row = removeButton.closest('tr[data-bulk-transfer-row]');
@@ -38243,14 +38990,48 @@
                     ensureBulkTransferRows(1);
                     markBulkTransferDraftDirty();
                 });
-                const syncBulkTransferRows = (event) => {
+                bulkTransferRowsTbody.addEventListener('input', (event) => {
                     const row = event.target.closest('tr[data-bulk-transfer-row]');
-                    if (row) updateBulkTransferRowSummary(row);
+                    if (!row) return;
+                    if (event.target.matches('input[data-bulk-transfer-field="search"]')) {
+                        const productSelect = row.querySelector('[data-bulk-transfer-field="product"]');
+                        const selectedLabel = productSelect?.value
+                            ? getBulkTransferProductDisplayLabel(getActiveStoreProductById(productSelect.value))
+                            : '';
+                        if (productSelect?.value && normalizeString(event.target.value) !== normalizeString(selectedLabel)) {
+                            productSelect.value = '';
+                            updateBulkTransferRowPackagingUI(row);
+                        }
+                        row.dataset.bulkTransferQuery = event.target.value || '';
+                        closeAllBulkTransferComboboxes(row);
+                        renderBulkTransferRowCombobox(row, { openDropdown: true });
+                    }
+                    if (event.target.matches('input[data-bulk-transfer-field="quantity"]')) {
+                        updateBulkTransferRowPackagingUI(row);
+                    }
                     markBulkTransferDraftDirty();
-                };
-                bulkTransferRowsTbody.addEventListener('input', syncBulkTransferRows);
-                bulkTransferRowsTbody.addEventListener('change', syncBulkTransferRows);
+                });
+                bulkTransferRowsTbody.addEventListener('change', (event) => {
+                    const row = event.target.closest('tr[data-bulk-transfer-row]');
+                    if (!row) return;
+                    if (event.target.matches('select[data-bulk-transfer-field="packaging"]')) {
+                        updateBulkTransferRowPackagingUI(row);
+                    }
+                    markBulkTransferDraftDirty();
+                });
+                bulkTransferRowsTbody.addEventListener('focusin', (event) => {
+                    if (!event.target.matches('input[data-bulk-transfer-field="search"]')) return;
+                    const row = event.target.closest('tr[data-bulk-transfer-row]');
+                    if (!row) return;
+                    closeAllBulkTransferComboboxes(row);
+                    renderBulkTransferRowCombobox(row, { openDropdown: true });
+                });
             }
+            document.addEventListener('click', (event) => {
+                if (!bulkTransferModal || bulkTransferModal.classList.contains('hidden')) return;
+                if (event.target.closest('[data-bulk-transfer-combobox]')) return;
+                closeAllBulkTransferComboboxes();
+            });
             [bulkExitCustomerNameInput, bulkExitCustomerPhoneInput, bulkExitCustomerEmailInput, bulkExitDeliveryNameInput, bulkExitCommentInput].forEach(input => {
                 if (input) input.addEventListener('input', markBulkExitDraftDirty);
             });
