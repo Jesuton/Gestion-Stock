@@ -10353,10 +10353,25 @@
                 return text;
             }
 
-            function buildCsvContent(headers, rows, delimiter = ';') {
-                const lines = [headers.map(formatCsvCell).join(delimiter)];
+            function formatCsvTextCell(value) {
+                const text = value === null || value === undefined ? '' : String(value);
+                if (!text) return '';
+                return `="${text.replace(/"/g, '""')}"`;
+            }
+
+            function buildCsvContent(headers, rows, delimiter = ';', { textColumnIndexes = null } = {}) {
+                const textIndexes = textColumnIndexes instanceof Set
+                    ? textColumnIndexes
+                    : (Array.isArray(textColumnIndexes) ? new Set(textColumnIndexes) : null);
+                const formatCell = (cell, index) => {
+                    if (textIndexes && textIndexes.has(index)) {
+                        return formatCsvTextCell(cell);
+                    }
+                    return formatCsvCell(cell);
+                };
+                const lines = [headers.map((cell, index) => formatCell(cell, index)).join(delimiter)];
                 rows.forEach((row) => {
-                    lines.push(row.map(formatCsvCell).join(delimiter));
+                    lines.push(row.map((cell, index) => formatCell(cell, index)).join(delimiter));
                 });
                 return `\uFEFF${lines.join('\r\n')}`;
             }
@@ -10389,61 +10404,127 @@
                 return window.jspdf?.jsPDF || window.jsPDF || null;
             }
 
-            function buildExportPdfDocument({ title, subtitle = '', metaLines = [], orientation = 'portrait' } = {}) {
+            function buildExportPdfDocument({ title, subtitle = '', metaLines = [], orientation = 'portrait', accentColor = [6, 182, 212] } = {}) {
                 const jsPDFConstructor = getJsPdfConstructor();
                 if (!jsPDFConstructor) {
                     throw new Error('jsPDF indisponible');
                 }
                 const doc = new jsPDFConstructor({ orientation, unit: 'mm', format: 'a4' });
-                const primaryColor = [6, 182, 212];
-                const darkGray = [31, 41, 55];
-                doc.setFillColor(...primaryColor);
-                doc.rect(0, 0, orientation === 'landscape' ? 297 : 210, 28, 'F');
+                const pageWidth = orientation === 'landscape' ? 297 : 210;
+                const pageHeight = orientation === 'landscape' ? 210 : 297;
+                const marginX = 12;
+
+                doc.setFillColor(...accentColor);
+                doc.rect(0, 0, pageWidth, 38, 'F');
+                doc.setDrawColor(255, 255, 255);
+                doc.setLineWidth(0.4);
+                doc.line(marginX, 30, pageWidth - marginX, 30);
+
                 doc.setTextColor(255, 255, 255);
-                doc.setFontSize(16);
                 doc.setFont(undefined, 'bold');
-                doc.text(getExportCompanyLabel(), 14, 12);
+                doc.setFontSize(15);
+                doc.text(getExportCompanyLabel(), marginX, 14);
                 doc.setFontSize(11);
-                doc.text(title || 'Export', 14, 20);
-                if (subtitle) {
-                    doc.setFontSize(9);
-                    doc.text(subtitle, 14, 25);
-                }
-                doc.setTextColor(...darkGray);
+                doc.text(title || 'Export', marginX, 22);
                 doc.setFont(undefined, 'normal');
-                doc.setFontSize(9);
-                let y = 36;
-                metaLines.filter(Boolean).forEach((line) => {
-                    doc.text(String(line), 14, y);
-                    y += 5;
-                });
-                doc.__exportStartY = y + 4;
+                doc.setFontSize(8.5);
+                if (subtitle) {
+                    doc.text(subtitle, marginX, 28);
+                }
+                doc.text(formatExportTimestampLabel(), pageWidth - marginX, 14, { align: 'right' });
+                doc.text('StockPilot', pageWidth - marginX, 22, { align: 'right' });
+
+                let startY = 46;
+                const filteredMeta = metaLines.filter(Boolean);
+                if (filteredMeta.length) {
+                    const boxHeight = 8 + filteredMeta.length * 5.5;
+                    doc.setFillColor(248, 250, 252);
+                    doc.setDrawColor(226, 232, 240);
+                    doc.roundedRect(marginX, startY - 3, pageWidth - (marginX * 2), boxHeight, 2.5, 2.5, 'FD');
+                    doc.setTextColor(71, 85, 105);
+                    doc.setFontSize(8);
+                    doc.setFont(undefined, 'normal');
+                    filteredMeta.forEach((line, index) => {
+                        doc.text(String(line), marginX + 4, startY + 2 + (index * 5.5));
+                    });
+                    startY += boxHeight + 6;
+                }
+
+                doc.__exportStartY = startY;
+                doc.__exportPageWidth = pageWidth;
+                doc.__exportPageHeight = pageHeight;
+                doc.__exportMarginX = marginX;
                 return doc;
             }
 
-            function appendExportPdfTable(doc, { head, body, startY, columnStyles = {}, bodyStyles = {} }) {
+            function appendExportPdfTable(doc, {
+                head,
+                body,
+                startY,
+                columnStyles = {},
+                bodyStyles = {},
+                highlightRow = null,
+                margin = null
+            } = {}) {
                 if (typeof doc.autoTable !== 'function') {
                     throw new Error('jsPDF autoTable indisponible');
                 }
+                const marginX = doc.__exportMarginX || 12;
+                const tableMargin = margin || { top: 10, right: marginX, bottom: 18, left: marginX };
                 doc.autoTable({
-                    startY: startY || doc.__exportStartY || 40,
+                    startY: startY || doc.__exportStartY || 46,
                     head,
                     body,
-                    theme: 'grid',
+                    theme: 'plain',
+                    showHead: 'everyPage',
                     headStyles: {
                         fillColor: [6, 182, 212],
                         textColor: [255, 255, 255],
                         fontStyle: 'bold',
-                        fontSize: 8,
-                        halign: 'center'
+                        fontSize: 7.5,
+                        halign: 'center',
+                        valign: 'middle',
+                        cellPadding: { top: 2.8, right: 2, bottom: 2.8, left: 2 }
                     },
                     bodyStyles: {
                         fontSize: 7,
+                        textColor: [31, 41, 55],
+                        valign: 'middle',
+                        cellPadding: { top: 2.2, right: 2, bottom: 2.2, left: 2 },
+                        lineColor: [226, 232, 240],
+                        lineWidth: 0.15,
                         ...bodyStyles
                     },
+                    alternateRowStyles: {
+                        fillColor: [249, 250, 251]
+                    },
                     columnStyles,
-                    margin: { left: 10, right: 10 },
-                    styles: { overflow: 'linebreak', cellPadding: 2 }
+                    margin: tableMargin,
+                    styles: {
+                        overflow: 'linebreak',
+                        cellWidth: 'wrap'
+                    },
+                    didParseCell: (data) => {
+                        if (data.section !== 'body' || typeof highlightRow !== 'function') return;
+                        const fillColor = highlightRow(body[data.row.index], data.row.index);
+                        if (fillColor) {
+                            data.cell.styles.fillColor = fillColor;
+                        }
+                    },
+                    didDrawPage: () => {
+                        const pageWidth = doc.internal.pageSize.getWidth();
+                        const pageHeight = doc.internal.pageSize.getHeight();
+                        doc.setFontSize(7);
+                        doc.setFont(undefined, 'normal');
+                        doc.setTextColor(148, 163, 184);
+                        doc.text('Document généré par StockPilot', marginX, pageHeight - 8);
+                        doc.text(
+                            `Page ${doc.internal.getCurrentPageInfo().pageNumber}`,
+                            pageWidth - marginX,
+                            pageHeight - 8,
+                            { align: 'right' }
+                        );
+                    }
                 });
                 return doc;
             }
@@ -29727,7 +29808,12 @@
                     row.status
                 ]);
                 const stamp = sanitizeExportFilename(context.fileStamp || 'inventaire');
-                downloadTextFile(buildCsvContent(headers, csvRows), `${stamp}.csv`);
+                downloadTextFile(
+                    buildCsvContent(headers, csvRows, ';', {
+                        textColumnIndexes: [0, 1, 2, 3, 4, 5, 7, 9, 11, 12]
+                    }),
+                    `${stamp}.csv`
+                );
                 showSuccessToast('Export CSV généré.');
             }
 
@@ -29743,7 +29829,7 @@
                         metaLines: buildInventoryExportMetaLines(context)
                     });
                     appendExportPdfTable(doc, {
-                        head: [['Produit', 'Code', 'Virtuel', 'Physique', 'Écart', 'Statut']],
+                        head: [['Produit', 'Code', 'Stock virtuel', 'Stock physique', 'Écart', 'Statut']],
                         body: rows.map((row) => [
                             row.productName,
                             row.productCode,
@@ -29752,7 +29838,20 @@
                             row.deltaLabel || (row.delta === '' ? '—' : String(row.delta)),
                             row.status
                         ]),
-                        startY: doc.__exportStartY
+                        startY: doc.__exportStartY,
+                        columnStyles: {
+                            0: { cellWidth: 40, halign: 'left' },
+                            1: { cellWidth: 22, halign: 'left' },
+                            2: { cellWidth: 38, halign: 'right' },
+                            3: { cellWidth: 38, halign: 'right' },
+                            4: { cellWidth: 28, halign: 'right' },
+                            5: { cellWidth: 20, halign: 'center' }
+                        },
+                        highlightRow: (row) => {
+                            if (row?.[5] === 'Écart') return [254, 242, 242];
+                            if (row?.[5] === 'Non compté') return [243, 244, 246];
+                            return null;
+                        }
                     });
                     const stamp = sanitizeExportFilename(context.fileStamp || 'inventaire');
                     downloadPdfDocument(doc, `${stamp}.pdf`);
@@ -29833,7 +29932,12 @@
                         row.shopDetail
                     ]);
                     const stamp = sanitizeExportFilename(`inventaire_global_${new Date().toISOString().slice(0, 10)}`);
-                    downloadTextFile(buildCsvContent(headers, csvRows), `${stamp}.csv`);
+                    downloadTextFile(
+                        buildCsvContent(headers, csvRows, ';', {
+                            textColumnIndexes: [0, 1, 2, 3, 4, 5, 6, 7]
+                        }),
+                        `${stamp}.csv`
+                    );
                     showSuccessToast('Export CSV généré.');
                     return;
                 }
@@ -29844,8 +29948,7 @@
                         metaLines: [
                             `Date: ${formatExportTimestampLabel()}`,
                             `Produits distincts: ${rows.length}`
-                        ],
-                        orientation: 'landscape'
+                        ]
                     });
                     appendExportPdfTable(doc, {
                         head: [['Produit', 'Code', 'Total', 'Magasins', 'Boutiques']],
@@ -29858,11 +29961,11 @@
                         ]),
                         startY: doc.__exportStartY,
                         columnStyles: {
-                            0: { cellWidth: 70 },
-                            1: { cellWidth: 30 },
-                            2: { cellWidth: 55 },
-                            3: { cellWidth: 55 },
-                            4: { cellWidth: 55 }
+                            0: { cellWidth: 48, halign: 'left' },
+                            1: { cellWidth: 24, halign: 'left' },
+                            2: { cellWidth: 38, halign: 'right' },
+                            3: { cellWidth: 38, halign: 'right' },
+                            4: { cellWidth: 38, halign: 'right' }
                         }
                     });
                     downloadPdfDocument(doc, `${sanitizeExportFilename(`inventaire_global_${new Date().toISOString().slice(0, 10)}`)}.pdf`);
@@ -29960,8 +30063,20 @@
                     row.shopPrice
                 ]);
                 const stamp = sanitizeExportFilename(`tableau_prix_${new Date().toISOString().slice(0, 10)}`);
-                downloadTextFile(buildCsvContent(headers, csvRows), `${stamp}.csv`);
+                downloadTextFile(
+                    buildCsvContent(headers, csvRows, ';', {
+                        textColumnIndexes: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+                    }),
+                    `${stamp}.csv`
+                );
                 showSuccessToast(`Export CSV généré (${rows.length} ligne(s)).`);
+            }
+
+            function formatPriceTablePdfAmount(value) {
+                if (value === '' || value === null || value === undefined) return '—';
+                const numeric = Number(value);
+                if (!Number.isFinite(numeric)) return String(value);
+                return numeric.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
             }
 
             function exportPriceTablePdf() {
@@ -29972,53 +30087,48 @@
                 }
                 try {
                     const pendingCount = rows.filter((row) => row.statusLabel === 'Prix à définir').length;
+                    const completeCount = rows.length - pendingCount;
                     const doc = buildExportPdfDocument({
                         title: 'TABLEAU DES PRIX',
                         subtitle: 'Vérification catalogue produits',
                         metaLines: [
                             `Date: ${formatExportTimestampLabel()}`,
                             `Lignes exportées: ${rows.length}`,
-                            `Prix à définir: ${pendingCount}`
-                        ],
-                        orientation: 'landscape'
+                            `Prix complets: ${completeCount} · Prix à définir: ${pendingCount}`,
+                            'Devise principale: CFA (selon fiche produit)'
+                        ]
                     });
                     const body = rows.map((row) => [
                         row.name,
                         row.code,
-                        row.storeName,
                         row.categoryName,
                         row.packagingLabel || row.baseUnitLabel,
-                        row.purchaseCost === '' ? '—' : String(row.purchaseCost),
-                        row.storePrice === '' ? '—' : String(row.storePrice),
-                        row.shopPrice === '' ? '—' : String(row.shopPrice),
-                        row.currency,
+                        formatPriceTablePdfAmount(row.purchaseCost),
+                        formatPriceTablePdfAmount(row.storePrice),
+                        formatPriceTablePdfAmount(row.shopPrice),
                         row.statusLabel
                     ]);
                     appendExportPdfTable(doc, {
-                        head: [['Produit', 'Code', 'Magasin', 'Catégorie', 'Cond.', 'Achat', 'Magasin', 'Boutique', 'Dev.', 'Statut']],
+                        head: [['Produit', 'Code', 'Catégorie', 'Cond.', 'Achat', 'Vente mag.', 'Vente bout.', 'Statut']],
                         body,
                         startY: doc.__exportStartY,
                         columnStyles: {
-                            0: { cellWidth: 42 },
-                            1: { cellWidth: 22 },
-                            2: { cellWidth: 28 },
-                            3: { cellWidth: 24 },
-                            4: { cellWidth: 22 },
-                            5: { cellWidth: 18, halign: 'right' },
-                            6: { cellWidth: 18, halign: 'right' },
-                            7: { cellWidth: 18, halign: 'right' },
-                            8: { cellWidth: 14, halign: 'center' },
-                            9: { cellWidth: 24 }
+                            0: { cellWidth: 34, halign: 'left' },
+                            1: { cellWidth: 18, halign: 'left' },
+                            2: { cellWidth: 20, halign: 'left' },
+                            3: { cellWidth: 18, halign: 'left' },
+                            4: { cellWidth: 22, halign: 'right' },
+                            5: { cellWidth: 22, halign: 'right' },
+                            6: { cellWidth: 22, halign: 'right' },
+                            7: { cellWidth: 24, halign: 'center' }
                         },
-                        bodyStyles: {
-                            fontSize: 6.5
-                        }
+                        highlightRow: (row) => (row?.[7] === 'Prix à définir' ? [255, 251, 235] : null)
                     });
                     if (typeof doc.autoTable === 'function' && doc.lastAutoTable?.finalY) {
-                        const noteY = doc.lastAutoTable.finalY + 8;
+                        const noteY = Math.min(doc.lastAutoTable.finalY + 8, (doc.__exportPageHeight || 297) - 14);
                         doc.setFontSize(8);
                         doc.setTextColor(100, 116, 139);
-                        doc.text('Les produits "Prix à définir" nécessitent une vérification.', 10, noteY);
+                        doc.text('Les lignes surlignées correspondent aux produits dont le prix reste à définir ou à vérifier.', 12, noteY);
                     }
                     downloadPdfDocument(doc, `${sanitizeExportFilename(`tableau_prix_${new Date().toISOString().slice(0, 10)}`)}.pdf`);
                     showSuccessToast('Export PDF généré.');
