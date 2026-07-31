@@ -1197,6 +1197,11 @@
                     <div data-icon="clock" class="w-5 h-5"></div>
                     <span class="sidebar-text">Mouvements Magasin</span>
                 </button>
+                <button data-page="Opérations groupées"
+                    class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
+                    <div data-icon="clipboard" class="w-5 h-5"></div>
+                    <span class="sidebar-text">Opérations groupées</span>
+                </button>
                 <button data-page="Traçabilité"
                     class="nav-button w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100">
                     <div data-icon="chartBar" class="w-5 h-5"></div>
@@ -3766,6 +3771,27 @@
                         </div>
                     </div>
                 </details>
+
+                <div class="mt-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <div class="inline-flex rounded-xl border border-gray-200 bg-white p-1 w-fit">
+                        <button type="button" id="store-movements-view-detail"
+                            class="store-movements-view-button px-4 py-2 rounded-lg text-sm font-semibold bg-purple-500 text-white">Vue détaillée</button>
+                        <button type="button" id="store-movements-view-batches"
+                            class="store-movements-view-button px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 hover:text-gray-900">Par lots</button>
+                    </div>
+                    <label id="store-movements-grouped-only-wrap" class="hidden inline-flex items-center gap-2 text-sm text-gray-600">
+                        <input type="checkbox" id="store-movements-grouped-only-filter"
+                            class="rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
+                        Afficher uniquement les lignes groupées
+                    </label>
+                </div>
+
+                <div id="store-movements-batches-container" class="hidden mt-6 space-y-3"></div>
+                <div id="store-movements-batches-empty"
+                    class="hidden mt-6 flex flex-col items-center justify-center text-center text-gray-500 h-32 rounded-2xl border border-dashed border-gray-200">
+                    <p>Aucun lot groupé trouvé pour ce magasin.</p>
+                </div>
+
                 <div id="store-movements-container" class="mt-6">
                         <div id="store-movements-placeholder"
                             class="flex flex-col items-center justify-center text-center text-gray-500 h-32">
@@ -3839,6 +3865,84 @@
                                 </button>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page: Opérations groupées -->
+            <div id="page-Opérations-groupées" class="page-content p-4 md:p-8 hidden">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                            <div data-icon="clipboard" class="w-5 h-5"></div>
+                        </div>
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900">Opérations groupées</h1>
+                            <p class="text-sm text-gray-500">Retrouvez les produits envoyés, transférés, sortis ou vendus ensemble.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+                        <div class="flex flex-col gap-1 md:col-span-2">
+                            <label class="text-xs font-semibold text-gray-500">Recherche</label>
+                            <input type="text" id="operation-batches-search" placeholder="Produit, lot, référence, client..."
+                                class="w-full rounded-lg border border-gray-200 px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <label class="text-xs font-semibold text-gray-500">Type d'opération</label>
+                            <select id="operation-batches-type-filter"
+                                class="w-full rounded-lg border border-gray-200 px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="all">Tous les types</option>
+                                <option value="entry_group">Entrées groupées</option>
+                                <option value="transfer_batch">Transferts groupés</option>
+                                <option value="exit_batch">Sorties groupées</option>
+                                <option value="sale_group">Ventes groupées</option>
+                                <option value="shop_transfer">Transferts boutique reçus</option>
+                                <option value="shop_sale">Ventes boutique</option>
+                            </select>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <label class="text-xs font-semibold text-gray-500">Plage de dates</label>
+                            <div class="flex items-center gap-2">
+                                <input type="date" id="operation-batches-filter-start"
+                                    class="w-full rounded-lg border border-gray-200 px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                                <input type="date" id="operation-batches-filter-end"
+                                    class="w-full rounded-lg border border-gray-200 px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="operation-batches-empty"
+                    class="mt-6 flex flex-col items-center justify-center text-center text-gray-500 h-40 rounded-2xl border border-dashed border-gray-200 bg-white">
+                    <p>Aucune opération groupée trouvée.</p>
+                </div>
+                <div id="operation-batches-list" class="hidden mt-6 space-y-3"></div>
+                <div id="operation-batches-pagination" class="hidden mt-4 border-t border-gray-100 pt-4 bg-white rounded-2xl px-4 pb-4">
+                    <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <p id="operation-batches-pagination-summary" class="text-sm text-gray-500">0-0 sur 0 lot(s)</p>
+                        <div class="flex items-center gap-2">
+                            <label for="operation-batches-pagination-size" class="text-xs font-semibold uppercase tracking-wide text-gray-400">Par page</label>
+                            <select id="operation-batches-pagination-size"
+                                class="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="10" selected>10</option>
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <button type="button" id="operation-batches-pagination-prev"
+                            class="inline-flex items-center justify-center rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50">
+                            Précédent
+                        </button>
+                        <div id="operation-batches-pagination-pages" class="flex flex-wrap items-center justify-center gap-2"></div>
+                        <button type="button" id="operation-batches-pagination-next"
+                            class="inline-flex items-center justify-center rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50">
+                            Suivant
+                        </button>
                     </div>
                 </div>
             </div>
@@ -7844,7 +7948,7 @@
             let currentUserData = null;
             let dbBasePath = '';
 
-            const appData = { stores: {}, boutiques: {}, categories: {}, storeProducts: {}, storeMovements: {}, shopStock: {}, shopMovements: {}, shopTransferRequests: {}, salesHistory: {}, saleCorrections: {}, customers: {}, suppliers: {}, supplierInvoices: {}, supplierPayments: {}, customerPayments: {}, storeExitRequests: {}, pendingSales: {}, settings: {}, inventories: {}, losses: {}, cashClosures: {}, companyFeatureAccess: {} };
+            const appData = { stores: {}, boutiques: {}, categories: {}, storeProducts: {}, storeMovements: {}, storeEntryGroups: {}, shopStock: {}, shopMovements: {}, shopTransferRequests: {}, salesHistory: {}, saleCorrections: {}, customers: {}, suppliers: {}, supplierInvoices: {}, supplierPayments: {}, customerPayments: {}, storeExitRequests: {}, pendingSales: {}, settings: {}, inventories: {}, losses: {}, cashClosures: {}, companyFeatureAccess: {} };
             let isSidebarOpen = false;
             let isSidebarCollapsed = false;
             let isCodeLoginMode = false;
@@ -7865,8 +7969,8 @@
             const SALE_SOURCE_MIXED = 'mixed';
 
 
-            let storesListener, boutiquesListener, categoriesListener, storeProductsListener, storeMovementsListener, shopStockListener, shopMovementsListener, shopTransferRequestsListener, salesHistoryListener, saleCorrectionsListener, companyMembersListener, companyCustomersListener, suppliersListener, supplierInvoicesListener, supplierPaymentsListener, customerPaymentsListener, storeExitRequestsListener, pendingSalesListener, settingsListener, inventoriesListener, lossesListener, cashClosuresListener, companyFeatureAccessListener, chatListListener, chatReadsListener, chatMessagesListener;
-            let storesRef, boutiquesRef, categoriesRef, storeProductsRef, storeMovementsRef, shopStockRef, shopMovementsRef, shopTransferRequestsRef, salesHistoryRef, saleCorrectionsRef, companyMembersRef, companyCustomersRef, suppliersRef, supplierInvoicesRef, supplierPaymentsRef, customerPaymentsRef, storeExitRequestsRef, pendingSalesRef, settingsRef, inventoriesRef, lossesRef, cashClosuresRef, companyFeatureAccessRef, chatListRef, chatReadsRef, chatMessagesRef;
+            let storesListener, boutiquesListener, categoriesListener, storeProductsListener, storeMovementsListener, storeEntryGroupsListener, shopStockListener, shopMovementsListener, shopTransferRequestsListener, salesHistoryListener, saleCorrectionsListener, companyMembersListener, companyCustomersListener, suppliersListener, supplierInvoicesListener, supplierPaymentsListener, customerPaymentsListener, storeExitRequestsListener, pendingSalesListener, settingsListener, inventoriesListener, lossesListener, cashClosuresListener, companyFeatureAccessListener, chatListListener, chatReadsListener, chatMessagesListener;
+            let storesRef, boutiquesRef, categoriesRef, storeProductsRef, storeMovementsRef, storeEntryGroupsRef, shopStockRef, shopMovementsRef, shopTransferRequestsRef, salesHistoryRef, saleCorrectionsRef, companyMembersRef, companyCustomersRef, suppliersRef, supplierInvoicesRef, supplierPaymentsRef, customerPaymentsRef, storeExitRequestsRef, pendingSalesRef, settingsRef, inventoriesRef, lossesRef, cashClosuresRef, companyFeatureAccessRef, chatListRef, chatReadsRef, chatMessagesRef;
 
             const accessModules = [
                 'Tableau de bord',
@@ -7878,6 +7982,7 @@
                 'Inventaire',
                 'Tableau des prix',
                 'Mouvements Magasin',
+                'Opérations groupées',
                 'Fournisseurs',
                 'Statistiques',
                 'Paramètres',
@@ -7947,10 +8052,13 @@
             let isTransferProductDropdownOpen = false;
             let bulkExitPreviewCache = null;
             let bulkTransferPreviewCache = null;
+            let storeMovementsViewMode = 'detail';
+            let storeMovementsGroupedOnly = false;
             let suppressNextSalesQuickFocusOpen = false;
             const paginationState = {
                 salesHistory: { page: 1, pageSize: 10 },
                 storeMovements: { page: 1, pageSize: 10 },
+                operationBatches: { page: 1, pageSize: 10 },
                 shopStock: { page: 1, pageSize: 10 },
                 shopMovements: { page: 1, pageSize: 10 },
                 priceTable: { page: 1, pageSize: 15 }
@@ -8197,6 +8305,25 @@
             const storeMovementsPaginationPrev = document.getElementById('store-movements-pagination-prev');
             const storeMovementsPaginationNext = document.getElementById('store-movements-pagination-next');
             const storeMovementsPaginationPages = document.getElementById('store-movements-pagination-pages');
+            const storeMovementsViewDetailButton = document.getElementById('store-movements-view-detail');
+            const storeMovementsViewBatchesButton = document.getElementById('store-movements-view-batches');
+            const storeMovementsGroupedOnlyWrap = document.getElementById('store-movements-grouped-only-wrap');
+            const storeMovementsGroupedOnlyFilter = document.getElementById('store-movements-grouped-only-filter');
+            const storeMovementsContainer = document.getElementById('store-movements-container');
+            const storeMovementsBatchesContainer = document.getElementById('store-movements-batches-container');
+            const storeMovementsBatchesEmpty = document.getElementById('store-movements-batches-empty');
+            const operationBatchesSearch = document.getElementById('operation-batches-search');
+            const operationBatchesTypeFilter = document.getElementById('operation-batches-type-filter');
+            const operationBatchesFilterStart = document.getElementById('operation-batches-filter-start');
+            const operationBatchesFilterEnd = document.getElementById('operation-batches-filter-end');
+            const operationBatchesEmpty = document.getElementById('operation-batches-empty');
+            const operationBatchesList = document.getElementById('operation-batches-list');
+            const operationBatchesPagination = document.getElementById('operation-batches-pagination');
+            const operationBatchesPaginationSummary = document.getElementById('operation-batches-pagination-summary');
+            const operationBatchesPaginationSize = document.getElementById('operation-batches-pagination-size');
+            const operationBatchesPaginationPrev = document.getElementById('operation-batches-pagination-prev');
+            const operationBatchesPaginationNext = document.getElementById('operation-batches-pagination-next');
+            const operationBatchesPaginationPages = document.getElementById('operation-batches-pagination-pages');
 
             const shopStockPlaceholder = document.getElementById('shop-stock-placeholder');
             const shopStockTableContainer = document.getElementById('shop-stock-table-container');
@@ -8370,6 +8497,16 @@
                     pages: storeMovementsPaginationPages,
                     activePageClasses: 'border-purple-600 bg-purple-600 text-white',
                     itemLabel: 'mouvement(s)'
+                },
+                operationBatches: {
+                    container: operationBatchesPagination,
+                    summary: operationBatchesPaginationSummary,
+                    sizeSelect: operationBatchesPaginationSize,
+                    prevButton: operationBatchesPaginationPrev,
+                    nextButton: operationBatchesPaginationNext,
+                    pages: operationBatchesPaginationPages,
+                    activePageClasses: 'border-indigo-600 bg-indigo-600 text-white',
+                    itemLabel: 'lot(s)'
                 },
                 shopStock: {
                     container: shopStockPagination,
@@ -21023,6 +21160,7 @@
                 'Inventaire': 'Inventaire',
                 'Tableau des prix': 'Tableau des prix',
                 'Mouvements Magasin': ['Mouvements Magasin', 'Mon Magasin'],
+                'Opérations groupées': ['Mouvements Magasin', 'Historique des ventes', 'Mon Magasin', 'Stock Boutique'],
                 'Traçabilité': ['Mouvements Magasin', 'Stock Boutique', 'Mon Magasin', 'Inventaire'],
                 'Fournisseurs': 'Fournisseurs',
                 'Paramètres': 'Paramètres'
@@ -21039,6 +21177,7 @@
                 'Inventaire': 'inventory.view',
                 'Tableau des prix': 'pricing.view',
                 'Mouvements Magasin': 'store_movements.view',
+                'Opérations groupées': 'operation_batches.view',
                 'Traçabilité': 'traceability.view',
                 'Fournisseurs': 'suppliers.view',
                 'Paramètres': 'settings.view'
@@ -25190,6 +25329,541 @@
                 return `${uniqueValues.slice(0, limit).join(', ')} +${uniqueValues.length - limit}`;
             }
 
+            function getStoreMovementBatchKeyFromData(data) {
+                if (!data) return null;
+                if (data.entryGroupId) return `entry:${data.entryGroupId}`;
+                if (data.batchId) return `batch:${data.batchId}`;
+                return null;
+            }
+
+            function isGroupedStoreMovementData(data) {
+                return !!getStoreMovementBatchKeyFromData(data);
+            }
+
+            function formatMovementBatchLabel(data, fallbackKey = '') {
+                if (data?.entryGroupReference) return data.entryGroupReference;
+                if (data?.batchLabel) return data.batchLabel;
+                if (data?.reference) return data.reference;
+                if (data?.batchId) return formatTransferBatchShortLabel(data.batchId);
+                if (data?.entryGroupId) return formatTransferBatchShortLabel(data.entryGroupId);
+                return formatTransferBatchShortLabel(fallbackKey || 'LOT');
+            }
+
+            function getOperationBatchTypeMeta(type) {
+                const map = {
+                    entry_group: { label: 'Entrée groupée', classes: 'border-emerald-200 bg-emerald-50 text-emerald-700' },
+                    transfer_batch: { label: 'Transfert groupé', classes: 'border-cyan-200 bg-cyan-50 text-cyan-700' },
+                    exit_batch: { label: 'Sortie groupée', classes: 'border-orange-200 bg-orange-50 text-orange-700' },
+                    sale_group: { label: 'Vente groupée', classes: 'border-blue-200 bg-blue-50 text-blue-700' },
+                    shop_transfer: { label: 'Transfert boutique reçu', classes: 'border-purple-200 bg-purple-50 text-purple-700' },
+                    shop_sale: { label: 'Vente boutique', classes: 'border-indigo-200 bg-indigo-50 text-indigo-700' }
+                };
+                return map[type] || { label: 'Lot', classes: 'border-gray-200 bg-gray-50 text-gray-700' };
+            }
+
+            function inferMovementBatchTypeFromMovements(movements = []) {
+                if (movements.some(move => move.type === 'Transfert')) return 'transfer_batch';
+                if (movements.some(move => move.type === 'Sortie directe' || move.type === 'Sortie')) return 'exit_batch';
+                if (movements.some(move => move.type === 'Entrée')) return 'entry_group';
+                return 'transfer_batch';
+            }
+
+            function normalizeEntryGroupToBatch(group) {
+                const items = Object.values(group.items || {}).map(item => ({
+                    productName: item.productName || '',
+                    quantity: parseInt(item.quantity, 10) || 0,
+                    type: 'Entrée',
+                    status: group.status || 'validated',
+                    comment: item.description || '',
+                    supplierName: group.supplierName || ''
+                }));
+                return {
+                    id: `entry:${group.id}`,
+                    type: 'entry_group',
+                    label: group.reference || formatTransferBatchShortLabel(group.id),
+                    reference: group.reference || formatTransferBatchShortLabel(group.id),
+                    date: group.createdAt || '',
+                    lineCount: group.lineCount || items.length,
+                    totalQuantity: group.totalQuantity || items.reduce((sum, item) => sum + item.quantity, 0),
+                    productSummary: summarizeDistinctLabels(items.map(item => item.productName), 4),
+                    user: group.createdByName || group.createdByEmail || '',
+                    comment: group.comment || '',
+                    customerName: '',
+                    storeName: group.storeName || getStoreName(resolveStoreId(group.storeId)) || '',
+                    storeId: resolveStoreId(group.storeId) || null,
+                    status: group.status || 'validated',
+                    items,
+                    raw: group
+                };
+            }
+
+            function normalizeMovementBatchGroup(key, movements, requests = []) {
+                const firstMove = movements[0] || null;
+                const firstRequest = requests[0] || null;
+                const type = key.startsWith('entry:')
+                    ? 'entry_group'
+                    : inferMovementBatchTypeFromMovements(movements);
+                const itemsFromMovements = movements.map(move => {
+                    const qty = parseInt(move.quantityChange, 10) || 0;
+                    const isEntry = move.type === 'Entrée';
+                    const changeValue = isEntry ? Math.abs(qty) : -Math.abs(qty);
+                    return {
+                        productName: move.productName || '',
+                        quantity: Math.abs(qty),
+                        change: changeValue,
+                        type: move.type || '',
+                        status: move.status || EXIT_STATUS_APPROVED,
+                        comment: move.comment || '',
+                        supplierName: move.supplierName || ''
+                    };
+                });
+                const itemsFromRequests = requests
+                    .filter(request => !request.storeMovementId || !movements.some(move => move.id === request.storeMovementId))
+                    .map(request => ({
+                        productName: request.productName || '',
+                        quantity: parseInt(request.quantity, 10) || 0,
+                        change: -(parseInt(request.quantity, 10) || 0),
+                        type: 'Sortie',
+                        status: request.status || EXIT_STATUS_PENDING,
+                        comment: request.comment || '',
+                        customerName: request.customerName || ''
+                    }));
+                const items = [...itemsFromMovements, ...itemsFromRequests];
+                const referenceSource = firstMove || firstRequest || {};
+                const groupId = key.replace(/^(entry|batch):/, '');
+                const entryGroup = appData.storeEntryGroups?.[groupId];
+                return {
+                    id: key,
+                    type,
+                    label: formatMovementBatchLabel(referenceSource, groupId),
+                    reference: entryGroup?.reference || formatMovementBatchLabel(referenceSource, groupId),
+                    date: firstMove?.date || firstRequest?.requestedAt || firstRequest?.date || entryGroup?.createdAt || '',
+                    lineCount: items.length,
+                    totalQuantity: items.reduce((sum, item) => sum + (parseInt(item.quantity, 10) || 0), 0),
+                    productSummary: firstMove?.batchSummary || summarizeDistinctLabels(items.map(item => item.productName), 4),
+                    user: firstMove?.userName || firstMove?.userEmail || firstRequest?.requestedByName || firstRequest?.requestedByEmail || entryGroup?.createdByName || '',
+                    comment: firstMove?.comment || firstRequest?.comment || entryGroup?.comment || '',
+                    customerName: firstRequest?.customerName || '',
+                    storeName: getStoreName(resolveStoreId(firstMove?.storeId || firstRequest?.storeId || entryGroup?.storeId)) || '',
+                    storeId: resolveStoreId(firstMove?.storeId || firstRequest?.storeId || entryGroup?.storeId) || null,
+                    status: firstMove?.status || firstRequest?.status || entryGroup?.status || '',
+                    batchSize: firstMove?.batchSize || items.length,
+                    items,
+                    raw: { movements, requests, entryGroup }
+                };
+            }
+
+            function buildStoreMovementBatchGroups() {
+                const storeId = getActiveStoreId();
+                if (!storeId) return [];
+                const batchesMap = new Map();
+
+                Object.values(appData.storeEntryGroups || {}).forEach(group => {
+                    if (resolveStoreId(group.storeId) !== storeId) return;
+                    batchesMap.set(`entry:${group.id}`, normalizeEntryGroupToBatch(group));
+                });
+
+                const movementGroups = new Map();
+                const requestGroups = new Map();
+                getActiveStoreMovements().forEach(move => {
+                    const key = getStoreMovementBatchKeyFromData(move);
+                    if (!key) return;
+                    if (key.startsWith('entry:') && batchesMap.has(key)) return;
+                    if (!movementGroups.has(key)) movementGroups.set(key, []);
+                    movementGroups.get(key).push(move);
+                });
+                getActiveStoreExitRequests().forEach(request => {
+                    if (!request.batchId) return;
+                    const key = `batch:${request.batchId}`;
+                    if (!requestGroups.has(key)) requestGroups.set(key, []);
+                    requestGroups.get(key).push(request);
+                });
+
+                movementGroups.forEach((movements, key) => {
+                    if (key.startsWith('entry:') && batchesMap.has(key)) return;
+                    batchesMap.set(key, normalizeMovementBatchGroup(key, movements, requestGroups.get(key) || []));
+                });
+                requestGroups.forEach((requests, key) => {
+                    if (batchesMap.has(key)) return;
+                    batchesMap.set(key, normalizeMovementBatchGroup(key, [], requests));
+                });
+
+                return Array.from(batchesMap.values())
+                    .filter(batch => batch.lineCount > 0)
+                    .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+            }
+
+            function normalizeSaleGroupToBatch(group) {
+                const items = (group.items || []).map(item => ({
+                    productName: item.name || '',
+                    quantity: parseInt(item.quantity, 10) || 0,
+                    type: 'Vente',
+                    status: group.paymentStatus || 'paid',
+                    comment: item.packageLabel || '',
+                    total: item.total,
+                    price: item.price
+                }));
+                return {
+                    id: `sale:${group.id}`,
+                    type: 'sale_group',
+                    label: getSaleInvoiceLabel(group.id),
+                    reference: getSaleInvoiceLabel(group.id),
+                    date: group.date || '',
+                    lineCount: items.length,
+                    totalQuantity: items.reduce((sum, item) => sum + item.quantity, 0),
+                    productSummary: summarizeDistinctLabels(items.map(item => item.productName), 4),
+                    user: group.sellerName || '',
+                    comment: (group.comments || []).join(' · '),
+                    customerName: group.customerName || '',
+                    storeName: group.boutiqueName || '',
+                    status: group.paymentStatus || '',
+                    totalAmount: group.total || 0,
+                    currency: group.currency || 'CFA',
+                    items,
+                    raw: group
+                };
+            }
+
+            function normalizeShopTransferToBatch(group) {
+                const items = (group.requests || []).map(request => ({
+                    productName: request.sourceProductName || request.productName || '',
+                    quantity: parseNonNegativeInteger(request.totalUnits, parseNonNegativeInteger(request.quantity, 0)),
+                    type: 'Transfert boutique',
+                    status: request.status || EXIT_STATUS_APPROVED,
+                    comment: request.comment || request.targetSummary || ''
+                }));
+                return {
+                    id: `shop-transfer:${group.key}`,
+                    type: 'shop_transfer',
+                    label: group.batchLabel || formatTransferBatchShortLabel(group.batchId || group.key),
+                    reference: group.batchLabel || formatTransferBatchShortLabel(group.batchId || group.key),
+                    date: group.receivedAt || '',
+                    lineCount: group.lineCount || items.length,
+                    totalQuantity: group.totalUnits || items.reduce((sum, item) => sum + item.quantity, 0),
+                    productSummary: group.productSummary || summarizeDistinctLabels(items.map(item => item.productName), 4),
+                    user: group.validator || '',
+                    comment: '',
+                    customerName: '',
+                    storeName: getStoreName(resolveStoreId(group.firstRequest?.storeId)) || '',
+                    status: EXIT_STATUS_APPROVED,
+                    items,
+                    raw: group
+                };
+            }
+
+            function normalizeShopSaleToBatch(group) {
+                const summary = calculateGroupSummary(group);
+                const items = (group.items || []).map(item => ({
+                    productName: item.name || '',
+                    quantity: parseInt(item.quantity, 10) || 0,
+                    type: 'Vente boutique',
+                    status: group.paymentStatus || 'paid',
+                    comment: item.packageLabel || '',
+                    total: item.total,
+                    price: item.price
+                }));
+                return {
+                    id: `shop-sale:${group.id}`,
+                    type: 'shop_sale',
+                    label: getSaleInvoiceLabel(group.id),
+                    reference: getSaleInvoiceLabel(group.id),
+                    date: group.date || '',
+                    lineCount: items.length,
+                    totalQuantity: items.reduce((sum, item) => sum + item.quantity, 0),
+                    productSummary: summarizeDistinctLabels(items.map(item => item.productName), 4),
+                    user: group.sellerName || '',
+                    comment: (group.comments || []).join(' · '),
+                    customerName: group.customerName || '',
+                    storeName: group.boutiqueName || '',
+                    status: group.paymentStatus || '',
+                    totalAmount: summary.total || 0,
+                    currency: group.currency || 'CFA',
+                    items,
+                    raw: group
+                };
+            }
+
+            function buildAllOperationBatches() {
+                const batches = [];
+                const allowedStores = new Set(getAccessibleStoreIds());
+                const seenKeys = new Set();
+
+                Object.values(appData.storeEntryGroups || {}).forEach(group => {
+                    const storeId = resolveStoreId(group.storeId);
+                    if (allowedStores.size && storeId && !allowedStores.has(storeId)) return;
+                    const batch = normalizeEntryGroupToBatch(group);
+                    batches.push(batch);
+                    seenKeys.add(batch.id);
+                });
+
+                const movementBatchMap = new Map();
+                const requestBatchMap = new Map();
+                Object.values(appData.storeMovements || {}).forEach(move => {
+                    const storeId = resolveStoreId(move.storeId);
+                    if (allowedStores.size && storeId && !allowedStores.has(storeId)) return;
+                    if (move.entryGroupId) return;
+                    if (!move.batchId) return;
+                    const key = `batch:${move.batchId}`;
+                    if (!movementBatchMap.has(key)) movementBatchMap.set(key, []);
+                    movementBatchMap.get(key).push(move);
+                });
+                Object.values(appData.storeExitRequests || {}).forEach(request => {
+                    const storeId = resolveStoreId(request.storeId);
+                    if (allowedStores.size && storeId && !allowedStores.has(storeId)) return;
+                    if (!request.batchId) return;
+                    const key = `batch:${request.batchId}`;
+                    if (!requestBatchMap.has(key)) requestBatchMap.set(key, []);
+                    requestBatchMap.get(key).push(request);
+                });
+                movementBatchMap.forEach((movements, key) => {
+                    if (seenKeys.has(key)) return;
+                    batches.push(normalizeMovementBatchGroup(key, movements, requestBatchMap.get(key) || []));
+                    seenKeys.add(key);
+                });
+                requestBatchMap.forEach((requests, key) => {
+                    if (seenKeys.has(key)) return;
+                    batches.push(normalizeMovementBatchGroup(key, [], requests));
+                    seenKeys.add(key);
+                });
+
+                buildSalesHistoryGroups().forEach(group => {
+                    const itemCount = (group.items || []).length;
+                    if (itemCount <= 1) {
+                        const firstSale = appData.salesHistory?.[group.items?.[0]?.saleId];
+                        if (!firstSale?.batchId) return;
+                    }
+                    batches.push(normalizeSaleGroupToBatch(group));
+                });
+
+                getShopApprovedTransferHistoryGroups().forEach(group => {
+                    if ((group.requests || []).length <= 1 && !group.batchId) return;
+                    batches.push(normalizeShopTransferToBatch(group));
+                });
+
+                getShopGroupedSalesHistory().forEach(group => {
+                    if ((group.items || []).length <= 1) return;
+                    batches.push(normalizeShopSaleToBatch(group));
+                });
+
+                return batches.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+            }
+
+            function filterOperationBatches(batches, filters = {}) {
+                return batches.filter(batch => {
+                    if (filters.type && filters.type !== 'all' && batch.type !== filters.type) return false;
+                    if (!isDateWithinRange(batch.date, filters.start || '', filters.end || '')) return false;
+                    if (filters.search) {
+                        const haystack = [
+                            batch.label,
+                            batch.reference,
+                            batch.productSummary,
+                            batch.user,
+                            batch.comment,
+                            batch.customerName,
+                            batch.storeName,
+                            ...(batch.items || []).map(item => item.productName)
+                        ].join(' ');
+                        if (!matchesTextFilter(haystack, filters.search)) return false;
+                    }
+                    return true;
+                });
+            }
+
+            function filterStoreMovementBatches(batches, filters = {}) {
+                return batches.filter(batch => {
+                    if (filters.type && filters.type !== 'all') {
+                        const typeMap = {
+                            Entrée: 'entry_group',
+                            Transfert: 'transfer_batch',
+                            Sortie: 'exit_batch',
+                            'Sortie directe': 'exit_batch'
+                        };
+                        const expected = typeMap[filters.type];
+                        if (expected && batch.type !== expected) return false;
+                    }
+                    if (!isDateWithinRange(batch.date, filters.start || '', filters.end || '')) return false;
+                    if (filters.product && !matchesTextFilter(batch.productSummary, filters.product)) {
+                        const hasProduct = (batch.items || []).some(item => matchesTextFilter(item.productName, filters.product));
+                        if (!hasProduct) return false;
+                    }
+                    if (filters.user && !matchesTextFilter(batch.user, filters.user)) return false;
+                    if (filters.status && filters.status !== 'all') {
+                        const hasStatus = (batch.items || []).some(item => normalizeString(item.status) === filters.status);
+                        if (!hasStatus && normalizeString(batch.status) !== filters.status) return false;
+                    }
+                    return true;
+                });
+            }
+
+            function renderMovementBatchCardHtml(batch, { showExport = true, showStore = false } = {}) {
+                const meta = getOperationBatchTypeMeta(batch.type);
+                const exportButtons = showExport ? `
+                    <div class="mt-3 flex flex-wrap items-center justify-end gap-2">
+                        <button type="button" data-export-batch-csv="${escapeHtml(batch.id)}" class="inline-flex items-center rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50">CSV</button>
+                        <button type="button" data-export-batch-pdf="${escapeHtml(batch.id)}" class="inline-flex items-center rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50">PDF</button>
+                    </div>
+                ` : '';
+                const storeLine = showStore && batch.storeName
+                    ? `<span class="text-xs text-gray-500">${escapeHtml(batch.storeName)}</span>`
+                    : '';
+                const customerLine = batch.customerName
+                    ? `<span class="text-xs text-gray-500">Client: ${escapeHtml(batch.customerName)}</span>`
+                    : '';
+                const amountLine = batch.totalAmount !== undefined
+                    ? `<span class="text-xs font-semibold text-emerald-700">${formatCurrency(batch.totalAmount, batch.currency || 'CFA')}</span>`
+                    : '';
+                return `
+                    <details class="group rounded-2xl border border-gray-200 bg-gray-50/70" data-operation-batch-id="${escapeHtml(batch.id)}">
+                        <summary class="flex cursor-pointer list-none items-start justify-between gap-3 px-4 py-3 hover:bg-gray-100 rounded-2xl">
+                            <div class="min-w-0">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="inline-flex items-center rounded-full border ${meta.classes} px-2.5 py-0.5 text-[11px] font-semibold">${escapeHtml(meta.label)}</span>
+                                    <span class="inline-flex items-center rounded-full border border-gray-200 bg-white px-2.5 py-0.5 text-[11px] font-semibold text-gray-700">Lot ${escapeHtml(batch.label || batch.reference || '—')}</span>
+                                    <span class="text-xs text-gray-400">${escapeHtml(formatDateForDisplay(batch.date))}</span>
+                                    ${storeLine}
+                                </div>
+                                <p class="mt-2 text-sm font-semibold text-gray-900">${escapeHtml(batch.productSummary || 'Produits groupés')}</p>
+                                <p class="mt-1 text-xs text-gray-500">${batch.lineCount} ligne${batch.lineCount > 1 ? 's' : ''} · ${batch.totalQuantity} unité(s) · ${escapeHtml(batch.user || '—')}</p>
+                                <div class="mt-1 flex flex-wrap items-center gap-2">${customerLine}${amountLine}</div>
+                            </div>
+                            <span class="text-gray-400 transition group-open:rotate-180">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </span>
+                        </summary>
+                        <div class="border-t border-gray-200 bg-white px-4 py-3">
+                            ${batch.comment ? `<p class="mb-3 text-xs text-gray-500">${escapeHtml(batch.comment)}</p>` : ''}
+                            <div class="space-y-2">
+                                ${(batch.items || []).map(item => `
+                                    <div class="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2">
+                                        <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                            <p class="text-sm font-semibold text-gray-900">${escapeHtml(item.productName || 'Produit')}</p>
+                                            <span class="text-xs font-semibold text-gray-700">${Math.abs(parseInt(item.quantity, 10) || 0)} unité(s)${Number.isFinite(item.change) ? ` · ${item.change >= 0 ? '+' : ''}${item.change}` : ''}</span>
+                                        </div>
+                                        <p class="mt-1 text-xs text-gray-500">${escapeHtml(item.type || '')}${item.comment ? ` · ${escapeHtml(item.comment)}` : ''}${item.total !== undefined && item.total !== null ? ` · ${formatCurrency(item.total, batch.currency || 'CFA')}` : ''}</p>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            ${exportButtons}
+                        </div>
+                    </details>
+                `;
+            }
+
+            function getOperationBatchById(batchId) {
+                if (!batchId) return null;
+                return buildAllOperationBatches().find(batch => batch.id === batchId)
+                    || buildStoreMovementBatchGroups().find(batch => batch.id === batchId)
+                    || null;
+            }
+
+            function exportOperationBatchCsv(batch) {
+                if (!batch) return;
+                const headers = ['Produit', 'Quantité', 'Type', 'Statut', 'Commentaire'];
+                const rows = (batch.items || []).map(item => [
+                    item.productName || '',
+                    Math.abs(parseInt(item.quantity, 10) || 0),
+                    item.type || '',
+                    item.status || '',
+                    item.comment || ''
+                ]);
+                const filename = `lot-${(batch.reference || batch.label || batch.id).replace(/[^\w\-]+/g, '_')}.csv`;
+                downloadTextFile(buildCsvContent(headers, rows, ';', { textColumnIndexes: [0, 4] }), filename);
+            }
+
+            function exportOperationBatchPdf(batch) {
+                if (!batch) return;
+                try {
+                    const meta = getOperationBatchTypeMeta(batch.type);
+                    const doc = buildExportPdfDocument({
+                        title: `Lot ${batch.label || batch.reference || ''}`,
+                        subtitle: meta.label,
+                        metaLines: [
+                            batch.storeName ? `Magasin / Boutique: ${batch.storeName}` : '',
+                            batch.user ? `Utilisateur: ${batch.user}` : '',
+                            batch.customerName ? `Client: ${batch.customerName}` : '',
+                            batch.productSummary ? `Produits: ${batch.productSummary}` : '',
+                            `Date: ${formatDateForDisplay(batch.date)}`,
+                            `${batch.lineCount} ligne(s) · ${batch.totalQuantity} unité(s)`
+                        ],
+                        accentColor: [99, 102, 241]
+                    });
+                    const body = (batch.items || []).map(item => [
+                        item.productName || '',
+                        String(Math.abs(parseInt(item.quantity, 10) || 0)),
+                        item.type || '',
+                        item.status || '',
+                        item.comment || ''
+                    ]);
+                    appendExportPdfTable(doc, {
+                        head: [['Produit', 'Quantité', 'Type', 'Statut', 'Commentaire']],
+                        body,
+                        startY: doc.__exportStartY
+                    });
+                    const filename = `lot-${(batch.reference || batch.label || batch.id).replace(/[^\w\-]+/g, '_')}.pdf`;
+                    doc.save(filename);
+                } catch (error) {
+                    console.error(error);
+                    showSuccessToast("Impossible d'exporter ce lot en PDF.");
+                }
+            }
+
+            function updateStoreMovementsViewToggleUI() {
+                const isDetail = storeMovementsViewMode === 'detail';
+                if (storeMovementsViewDetailButton) {
+                    storeMovementsViewDetailButton.classList.toggle('bg-purple-500', isDetail);
+                    storeMovementsViewDetailButton.classList.toggle('text-white', isDetail);
+                    storeMovementsViewDetailButton.classList.toggle('text-gray-600', !isDetail);
+                }
+                if (storeMovementsViewBatchesButton) {
+                    storeMovementsViewBatchesButton.classList.toggle('bg-purple-500', !isDetail);
+                    storeMovementsViewBatchesButton.classList.toggle('text-white', !isDetail);
+                    storeMovementsViewBatchesButton.classList.toggle('text-gray-600', isDetail);
+                }
+                if (storeMovementsGroupedOnlyWrap) {
+                    storeMovementsGroupedOnlyWrap.classList.toggle('hidden', !isDetail);
+                }
+            }
+
+            function renderStoreMovementsBatchesView(filters) {
+                if (!storeMovementsBatchesContainer || !storeMovementsBatchesEmpty) return;
+                const batches = filterStoreMovementBatches(buildStoreMovementBatchGroups(), filters);
+                if (storeMovementsContainer) storeMovementsContainer.classList.add('hidden');
+                if (!batches.length) {
+                    storeMovementsBatchesContainer.classList.add('hidden');
+                    storeMovementsBatchesContainer.innerHTML = '';
+                    storeMovementsBatchesEmpty.classList.remove('hidden');
+                    return;
+                }
+                storeMovementsBatchesEmpty.classList.add('hidden');
+                storeMovementsBatchesContainer.classList.remove('hidden');
+                storeMovementsBatchesContainer.innerHTML = batches.map(batch => renderMovementBatchCardHtml(batch, { showExport: true })).join('');
+            }
+
+            function renderOperationBatchesPage() {
+                if (!operationBatchesEmpty || !operationBatchesList) return;
+                const filters = {
+                    search: normalizeString(operationBatchesSearch?.value),
+                    type: normalizeString(operationBatchesTypeFilter?.value) || 'all',
+                    start: operationBatchesFilterStart?.value || '',
+                    end: operationBatchesFilterEnd?.value || ''
+                };
+                const filtered = filterOperationBatches(buildAllOperationBatches(), filters);
+                if (!filtered.length) {
+                    operationBatchesEmpty.classList.remove('hidden');
+                    operationBatchesList.classList.add('hidden');
+                    operationBatchesList.innerHTML = '';
+                    hidePaginationControls('operationBatches');
+                    return;
+                }
+                const pagination = getPaginationSlice(filtered, 'operationBatches');
+                operationBatchesEmpty.classList.add('hidden');
+                operationBatchesList.classList.remove('hidden');
+                operationBatchesList.innerHTML = pagination.items
+                    .map(batch => renderMovementBatchCardHtml(batch, { showExport: true, showStore: true }))
+                    .join('');
+                renderPaginationControls('operationBatches', pagination);
+            }
+
             function getShopSalesGroupBadge(group) {
                 const summary = calculateGroupSummary(group);
                 const balance = getCustomerGroupBalance(group);
@@ -26513,6 +27187,9 @@
                     const updates = {};
                     const sellerName = currentUserData?.fullName || currentUser.email || '';
                     const saleGroupId = push(ref(db, `${dbBasePath}/salesHistory`)).key || `store-sale-${Date.now()}`;
+                    const batchShortLabel = formatTransferBatchShortLabel(batchId);
+                    const batchProductSummary = summarizeDistinctLabels(preview.rows.map(row => row.product?.name || ''), 4);
+                    const batchLineCount = preview.rows.length;
                     Object.entries(preview.finalStocks).forEach(([productId, finalStock]) => {
                         updates[`${dbBasePath}/storeProducts/${productId}/quantityInStore`] = finalStock;
                     });
@@ -26532,6 +27209,9 @@
                         updates[`${dbBasePath}/storeMovements/${moveKey}`] = {
                             id: moveKey,
                             batchId,
+                            batchLabel: batchShortLabel,
+                            batchSummary: batchProductSummary,
+                            batchSize: batchLineCount,
                             productId: row.product.id,
                             productName: row.product.name,
                             storeId: preview.storeId,
@@ -26554,6 +27234,9 @@
                         updates[`${dbBasePath}/storeExitRequests/${requestRef.key}`] = {
                             id: requestRef.key,
                             batchId,
+                            batchLabel: batchShortLabel,
+                            batchSummary: batchProductSummary,
+                            batchSize: batchLineCount,
                             saleGroupId,
                             productId: row.product.id,
                             productName: row.product.name,
@@ -27986,14 +28669,42 @@
 
             function renderStoreMovementsPage() {
                 if (!storeMovementsPlaceholder || !storeMovementsTableContainer || !storeMovementsTbody) return;
+                updateStoreMovementsViewToggleUI();
                 const activeStore = getActiveStoreId();
+                const filters = {
+                    product: normalizeString(storeMovementFilterProduct?.value),
+                    type: normalizeString(storeMovementFilterType?.value),
+                    user: normalizeString(storeMovementFilterUser?.value),
+                    status: normalizeString(storeMovementFilterStatus?.value),
+                    start: storeMovementFilterStart?.value || '',
+                    end: storeMovementFilterEnd?.value || ''
+                };
                 if (!activeStore) {
                     storeMovementsPlaceholder.classList.remove('hidden');
                     storeMovementsTableContainer.classList.add('hidden');
+                    if (storeMovementsContainer) storeMovementsContainer.classList.remove('hidden');
+                    if (storeMovementsBatchesContainer) {
+                        storeMovementsBatchesContainer.classList.add('hidden');
+                        storeMovementsBatchesContainer.innerHTML = '';
+                    }
+                    if (storeMovementsBatchesEmpty) storeMovementsBatchesEmpty.classList.add('hidden');
                     storeMovementsTbody.innerHTML = '';
                     hidePaginationControls('storeMovements');
                     return;
                 }
+                if (storeMovementsViewMode === 'batches') {
+                    storeMovementsPlaceholder.classList.add('hidden');
+                    storeMovementsTableContainer.classList.add('hidden');
+                    hidePaginationControls('storeMovements');
+                    renderStoreMovementsBatchesView(filters);
+                    return;
+                }
+                if (storeMovementsBatchesContainer) {
+                    storeMovementsBatchesContainer.classList.add('hidden');
+                    storeMovementsBatchesContainer.innerHTML = '';
+                }
+                if (storeMovementsBatchesEmpty) storeMovementsBatchesEmpty.classList.add('hidden');
+                if (storeMovementsContainer) storeMovementsContainer.classList.remove('hidden');
                 const movements = getActiveStoreMovements();
                 const pendingRequests = getActiveStoreExitRequests().filter(request => {
                     if (request.status !== EXIT_STATUS_PENDING) return false;
@@ -28004,15 +28715,6 @@
                     ...movements.map(move => ({ kind: 'movement', data: move, date: move.date })),
                     ...pendingRequests.map(request => ({ kind: 'request', data: request, date: request.requestedAt || request.date }))
                 ].filter(item => item.date);
-
-                const filters = {
-                    product: normalizeString(storeMovementFilterProduct?.value),
-                    type: normalizeString(storeMovementFilterType?.value),
-                    user: normalizeString(storeMovementFilterUser?.value),
-                    status: normalizeString(storeMovementFilterStatus?.value),
-                    start: storeMovementFilterStart?.value || '',
-                    end: storeMovementFilterEnd?.value || ''
-                };
 
                 const filtered = combined.filter(item => {
                     const isRequest = item.kind === 'request';
@@ -28036,6 +28738,7 @@
                     }
 
                     if (!isDateWithinRange(item.date, filters.start, filters.end)) return false;
+                    if (storeMovementsGroupedOnly && !isGroupedStoreMovementData(data)) return false;
                     return true;
                 });
 
@@ -28052,6 +28755,12 @@
                 storeMovementsPlaceholder.classList.add('hidden');
                 storeMovementsTableContainer.classList.remove('hidden');
 
+                const renderBatchBadge = (data) => {
+                    if (!isGroupedStoreMovementData(data)) return '';
+                    const label = formatMovementBatchLabel(data);
+                    return `<span class="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 mr-1">Lot ${escapeHtml(label)}</span>`;
+                };
+
                 storeMovementsTbody.innerHTML = pagination.items.map(item => {
                     if (item.kind === 'request') {
                         const request = item.data;
@@ -28064,7 +28773,7 @@
                         const actionHtml = `<span class="text-xs text-gray-400 italic">En attente de validation</span>`;
                         return `
                             <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${request.productName || '-'}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${renderBatchBadge(request)}${request.productName || '-'}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
                                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-700">Sortie</span>
                                 </td>
@@ -28115,7 +28824,7 @@
                     }
                     return `
                         <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${move.productName || '-'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${renderBatchBadge(move)}${move.productName || '-'}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm">
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${typeBadge.classes}">${typeBadge.label}</span>
                             </td>
@@ -28139,6 +28848,14 @@
             function onStoreMovementsValue(snapshot) {
                 appData.storeMovements = snapshot.val() || {};
                 renderStoreMovementsPage();
+                renderOperationBatchesPage();
+                renderTraceabilityPage();
+            }
+
+            function onStoreEntryGroupsValue(snapshot) {
+                appData.storeEntryGroups = snapshot.val() || {};
+                renderStoreMovementsPage();
+                renderOperationBatchesPage();
                 renderTraceabilityPage();
             }
 
@@ -28876,6 +29593,7 @@
                 appData.storeExitRequests = snapshot.val() || {};
                 renderPendingExitRequests();
                 renderStoreMovementsPage();
+                renderOperationBatchesPage();
                 renderTraceabilityPage();
             }
 
@@ -30495,11 +31213,13 @@
                     const location = getTraceabilityStoreLabel(resolveStoreId(move.storeId) || baseStoreId);
                     const userLabel = move.userName || move.userFullName || move.userEmail || move.userId || '';
                     const sourceLabel = getPrimaryPackaging(product)?.label || 'Conditionnement principal';
+                    const batchLabel = isGroupedStoreMovementData(move) ? formatMovementBatchLabel(move) : '';
                     pushEvent({
                         id: `store-move-${move.id}`,
                         date: move.date,
                         label: `Magasin · ${badge.label}`,
                         badge,
+                        batchLabel,
                         dotClass: getTraceabilityDotClass(badge.label),
                         location,
                         quantity: Math.abs(qty),
@@ -30521,11 +31241,13 @@
                     const statusBadge = formatExitStatusBadge(request.status || EXIT_STATUS_PENDING);
                     const qty = parseInt(request.quantity, 10) || 0;
                     const userLabel = request.requestedByName || request.requestedBy || request.requestedByEmail || '';
+                    const batchLabel = isGroupedStoreMovementData(request) ? formatMovementBatchLabel(request) : '';
                     pushEvent({
                         id: `store-exit-${request.id}`,
                         date: request.requestedAt || request.date,
                         label: 'Magasin · Demande sortie',
                         badge: { label: 'Demande sortie', classes: 'bg-amber-50 text-amber-700 border border-amber-200' },
+                        batchLabel,
                         dotClass: getTraceabilityDotClass('demande'),
                         location: getTraceabilityStoreLabel(resolveStoreId(request.storeId) || baseStoreId),
                         quantity: Math.abs(qty),
@@ -30552,11 +31274,13 @@
                     const boutiqueLabel = getTraceabilityBoutiqueLabel(request.boutiqueId, request.boutiqueName || 'Boutique');
                     const userLabel = request.requestedByName || request.requestedByEmail || '';
                     const isDirectEntry = request.requestType === 'direct_entry';
+                    const batchLabel = request.batchId ? formatMovementBatchLabel(request) : '';
                     pushEvent({
                         id: `transfer-${request.id}`,
                         date: request.requestedAt || request.date,
                         label: `${requestLabel} · Demande`,
                         badge: { label: requestLabel, classes: 'bg-purple-50 text-purple-700 border border-purple-200' },
+                        batchLabel,
                         dotClass: getTraceabilityDotClass(requestLabel),
                         location: isDirectEntry
                             ? boutiqueLabel
@@ -30787,6 +31511,9 @@
                         const badge = event.badge
                             ? `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${event.badge.classes}">${event.badge.label}</span>`
                             : '';
+                        const batchBadge = event.batchLabel
+                            ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full border border-indigo-200 bg-indigo-50 text-[10px] font-semibold text-indigo-700">Lot ${event.batchLabel}</span>`
+                            : '';
                         return `
                             <div class="relative pl-8">
                                 <span class="absolute left-1.5 top-5 w-3 h-3 rounded-full ${event.dotClass || 'bg-sky-500'} ring-4 ring-white"></span>
@@ -30794,6 +31521,7 @@
                                     <div class="flex flex-wrap items-center justify-between gap-2">
                                         <div class="flex flex-wrap items-center gap-2">
                                             ${badge}
+                                            ${batchBadge}
                                             <p class="text-sm font-semibold text-gray-900">${event.label || '—'}</p>
                                         </div>
                                         <div class="text-xs text-gray-500">${dateLabel}</div>
@@ -30824,6 +31552,9 @@
                     const statusBadge = event.statusLabel
                         ? `<span class="inline-flex items-center px-2.5 py-1 rounded-full border text-xs font-semibold ${event.statusClass}">${event.statusLabel}</span>`
                         : '<span class="text-xs text-gray-400">—</span>';
+                    const batchBadge = event.batchLabel
+                        ? `<span class="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 mr-1">Lot ${event.batchLabel}</span>`
+                        : '';
                     const details = buildTraceabilityDetails({
                         location: '',
                         quantity: null,
@@ -30844,7 +31575,7 @@
                     return `
                         <tr class="hover:bg-gray-50">
                             <td class="px-4 py-3 text-sm text-gray-500">${dateLabel}</td>
-                            <td class="px-4 py-3 text-sm font-semibold text-gray-900">${event.label || '—'}</td>
+                            <td class="px-4 py-3 text-sm font-semibold text-gray-900">${batchBadge}${event.label || '—'}</td>
                             <td class="px-4 py-3 text-sm text-gray-500">${event.location || '—'}</td>
                             <td class="px-4 py-3 text-sm text-right font-semibold text-gray-700">${qtyLabel}</td>
                             <td class="px-4 py-3 text-sm text-right font-semibold ${changeClass}">${changeLabel}</td>
@@ -31777,6 +32508,7 @@
             function onShopTransferRequestsValue(snapshot) {
                 appData.shopTransferRequests = snapshot.val() || {};
                 renderPendingShopTransfers();
+                renderOperationBatchesPage();
                 renderTraceabilityPage();
             }
 
@@ -31785,6 +32517,7 @@
                 renderSalesHistory();
                 updateDashboardStats();
                 renderCustomerHistory();
+                renderOperationBatchesPage();
                 renderTraceabilityPage();
                 renderProfitabilityAndCashPage();
             }
@@ -31901,6 +32634,9 @@
                 storeMovementsRef = ref(db, `${dbBasePath}/storeMovements`);
                 storeMovementsListener = onValue(storeMovementsRef, onStoreMovementsValue);
 
+                storeEntryGroupsRef = ref(db, `${dbBasePath}/storeEntryGroups`);
+                storeEntryGroupsListener = onValue(storeEntryGroupsRef, onStoreEntryGroupsValue);
+
                 storeExitRequestsRef = ref(db, `${dbBasePath}/storeExitRequests`);
                 storeExitRequestsListener = onValue(storeExitRequestsRef, onStoreExitRequestsValue);
 
@@ -31978,6 +32714,7 @@
                 if (categoriesListener && categoriesRef) off(categoriesRef, categoriesListener);
                 if (storeProductsListener && storeProductsRef) off(storeProductsRef, storeProductsListener);
                 if (storeMovementsListener && storeMovementsRef) off(storeMovementsRef, storeMovementsListener);
+                if (storeEntryGroupsListener && storeEntryGroupsRef) off(storeEntryGroupsRef, storeEntryGroupsListener);
                 if (storeExitRequestsListener && storeExitRequestsRef) off(storeExitRequestsRef, storeExitRequestsListener);
                 if (shopStockListener && shopStockRef) off(shopStockRef, shopStockListener);
                 if (shopMovementsListener && shopMovementsRef) off(shopMovementsRef, shopMovementsListener);
@@ -31999,8 +32736,8 @@
                 if (chatListListener && chatListRef) off(chatListRef, chatListListener);
                 if (chatReadsListener && chatReadsRef) off(chatReadsRef, chatReadsListener);
                 if (chatMessagesListener && chatMessagesRef) off(chatMessagesRef, chatMessagesListener);
-                storesListener = null; boutiquesListener = null; categoriesListener = null; storeProductsListener = null; storeMovementsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; shopTransferRequestsListener = null; salesHistoryListener = null; saleCorrectionsListener = null; pendingSalesListener = null; settingsListener = null; companyFeatureAccessListener = null; companyMembersListener = null; companyCustomersListener = null; suppliersListener = null; supplierInvoicesListener = null; supplierPaymentsListener = null; customerPaymentsListener = null; inventoriesListener = null; lossesListener = null; cashClosuresListener = null; chatListListener = null; chatReadsListener = null; chatMessagesListener = null;
-                chatListRef = null; chatReadsRef = null; chatMessagesRef = null; inventoriesRef = null; saleCorrectionsRef = null; lossesRef = null; cashClosuresRef = null; companyFeatureAccessRef = null;
+                storesListener = null; boutiquesListener = null; categoriesListener = null; storeProductsListener = null; storeMovementsListener = null; storeEntryGroupsListener = null; storeExitRequestsListener = null; shopStockListener = null; shopMovementsListener = null; shopTransferRequestsListener = null; salesHistoryListener = null; saleCorrectionsListener = null; pendingSalesListener = null; settingsListener = null; companyFeatureAccessListener = null; companyMembersListener = null; companyCustomersListener = null; suppliersListener = null; supplierInvoicesListener = null; supplierPaymentsListener = null; customerPaymentsListener = null; inventoriesListener = null; lossesListener = null; cashClosuresListener = null; chatListListener = null; chatReadsListener = null; chatMessagesListener = null;
+                chatListRef = null; chatReadsRef = null; chatMessagesRef = null; inventoriesRef = null; saleCorrectionsRef = null; lossesRef = null; cashClosuresRef = null; companyFeatureAccessRef = null; storeEntryGroupsRef = null;
                 appData.stores = {}; appData.boutiques = {}; appData.categories = {}; appData.storeProducts = {}; appData.storeMovements = {}; appData.shopStock = {}; appData.shopMovements = {}; appData.shopTransferRequests = {}; appData.salesHistory = {}; appData.saleCorrections = {}; appData.customers = {}; appData.suppliers = {}; appData.supplierInvoices = {}; appData.supplierPayments = {}; appData.customerPayments = {}; appData.storeExitRequests = {}; appData.pendingSales = {}; appData.settings = {}; appData.inventories = {}; appData.losses = {}; appData.cashClosures = {}; appData.companyFeatureAccess = {};
                 inventoriesPathSuffix = 'inventories';
                 selectedCustomer = null;
@@ -32099,6 +32836,9 @@
                 renderDashboardAdminRecovery();
                 if (currentPage === 'Traçabilité') {
                     renderTraceabilityPage();
+                }
+                if (currentPage === 'Opérations groupées') {
+                    renderOperationBatchesPage();
                 }
                 if (currentPage === 'Rentabilite Caisse') {
                     renderProfitabilityAndCashPage();
@@ -36772,6 +37512,57 @@
                 });
             bindPaginationControls('salesHistory', renderSalesHistory);
             bindPaginationControls('storeMovements', renderStoreMovementsPage);
+            bindPaginationControls('operationBatches', renderOperationBatchesPage);
+            if (storeMovementsViewDetailButton) {
+                storeMovementsViewDetailButton.addEventListener('click', () => {
+                    storeMovementsViewMode = 'detail';
+                    renderStoreMovementsPage();
+                });
+            }
+            if (storeMovementsViewBatchesButton) {
+                storeMovementsViewBatchesButton.addEventListener('click', () => {
+                    storeMovementsViewMode = 'batches';
+                    renderStoreMovementsPage();
+                });
+            }
+            if (storeMovementsGroupedOnlyFilter) {
+                storeMovementsGroupedOnlyFilter.addEventListener('change', () => {
+                    storeMovementsGroupedOnly = storeMovementsGroupedOnlyFilter.checked === true;
+                    resetPagination('storeMovements');
+                    renderStoreMovementsPage();
+                });
+            }
+            [operationBatchesSearch, operationBatchesTypeFilter, operationBatchesFilterStart, operationBatchesFilterEnd]
+                .filter(Boolean)
+                .forEach(input => {
+                    input.addEventListener('input', () => {
+                        resetPagination('operationBatches');
+                        renderOperationBatchesPage();
+                    });
+                    input.addEventListener('change', () => {
+                        resetPagination('operationBatches');
+                        renderOperationBatchesPage();
+                    });
+                });
+            const handleOperationBatchExportClick = (event) => {
+                const csvButton = event.target.closest('[data-export-batch-csv]');
+                const pdfButton = event.target.closest('[data-export-batch-pdf]');
+                const batchId = csvButton?.dataset.exportBatchCsv || pdfButton?.dataset.exportBatchPdf;
+                if (!batchId) return;
+                const batch = getOperationBatchById(batchId);
+                if (!batch) {
+                    showSuccessToast('Lot introuvable.');
+                    return;
+                }
+                if (csvButton) exportOperationBatchCsv(batch);
+                if (pdfButton) exportOperationBatchPdf(batch);
+            };
+            if (storeMovementsBatchesContainer) {
+                storeMovementsBatchesContainer.addEventListener('click', handleOperationBatchExportClick);
+            }
+            if (operationBatchesList) {
+                operationBatchesList.addEventListener('click', handleOperationBatchExportClick);
+            }
             if (storeMovementsTbody) {
                 storeMovementsTbody.addEventListener('click', (event) => {
                     const button = event.target.closest('[data-correct-store-entry]');
