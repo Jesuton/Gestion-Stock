@@ -20735,9 +20735,7 @@
 
             function formatStoreProductStockDisplay(product) {
                 if (!product) return '0';
-                const quantity = parseNonNegativeInteger(product.quantityInStore, 0);
-                if (!getProductPackagings(product).length) return `${quantity}`;
-                return formatProductStockBreakdown(quantity, product, { includeBaseTotal: true });
+                return formatStoreStockDisplayFromBaseUnits(product.quantityInStore, product);
             }
 
             function formatBaseUnits(quantity, label = DEFAULT_BASE_UNIT_LABEL) {
@@ -20754,9 +20752,15 @@
 
             function getStoreStockBaseUnits(product) {
                 if (!product) return 0;
-                const sourceQty = Number(product.quantityInStore) || 0;
-                const sourceUnits = getPackageUnits(product, getPrimaryPackaging(product)?.code || null);
-                return sourceQty * Math.max(sourceUnits, 1);
+                return parseNonNegativeInteger(product.quantityInStore, 0);
+            }
+
+            function formatStoreStockDisplayFromBaseUnits(baseUnits, product) {
+                const quantity = parseNonNegativeInteger(baseUnits, 0);
+                if (!product || !getProductPackagings(product).length) {
+                    return formatBaseUnits(quantity, product ? getProductBaseUnitLabel(product) : DEFAULT_BASE_UNIT_LABEL);
+                }
+                return formatProductStockBreakdown(quantity, product, { includeBaseTotal: true });
             }
 
             function getShopStockBaseUnits(item, sourceProduct = null) {
@@ -25402,29 +25406,44 @@
                 return 'transfer_batch';
             }
 
+            function extractPackagingSummaryFromText(text = '') {
+                const value = String(text || '').trim();
+                const match = value.match(/(\d+(?:[.,]\d+)?)\s+([^=·]+?)\s*=\s*(\d+(?:[.,]\d+)?)/);
+                if (!match) return '';
+                return `${match[1]} ${match[2].trim()} = ${match[3]}`;
+            }
+
             function buildBatchItemFromStoreMovement(move) {
                 const qty = parseInt(move.quantityChange, 10) || 0;
                 const isEntry = move.type === 'Entrée';
                 const changeValue = isEntry ? Math.abs(qty) : -Math.abs(qty);
                 const linkedRequest = getLinkedShopTransferRequestForMovement(move.id);
+                const sourceSummary = linkedRequest?.sourceSummary || extractPackagingSummaryFromText(move.comment || '');
                 const packagingUnits = move.packagingUnits
                     || linkedRequest?.unitsPerCarton
-                    || inferPackagingUnitsFromSummary(linkedRequest?.sourceSummary || move.comment || '')
+                    || inferPackagingUnitsFromSummary(sourceSummary || move.comment || '')
                     || (move.productId && move.packagingCode ? getPackageUnits(appData.storeProducts?.[move.productId], move.packagingCode) : null);
+                let packagingQuantity = move.packagingQuantity ?? linkedRequest?.sourceCartonQty ?? null;
+                let packagingLabel = move.packagingLabel || linkedRequest?.sourcePackageLabel || '';
+                if ((!packagingQuantity || !packagingLabel) && sourceSummary) {
+                    const enriched = enrichBatchItemFromSummary({ sourceSummary, quantity: Math.abs(qty) });
+                    packagingQuantity = packagingQuantity ?? enriched.packagingQuantity ?? null;
+                    packagingLabel = packagingLabel || enriched.packagingLabel || '';
+                }
                 return {
                     productId: move.productId || linkedRequest?.sourceProductId || '',
                     productName: move.productName || linkedRequest?.sourceProductName || '',
                     packagingCode: move.packagingCode || linkedRequest?.sourcePackageCode || '',
-                    packagingLabel: move.packagingLabel || linkedRequest?.sourcePackageLabel || '',
-                    packagingQuantity: move.packagingQuantity ?? linkedRequest?.sourceCartonQty ?? null,
+                    packagingLabel,
+                    packagingQuantity,
                     packagingUnits: packagingUnits || null,
                     unitsPerCarton: linkedRequest?.unitsPerCarton || packagingUnits || null,
                     quantity: Math.abs(qty),
                     change: changeValue,
                     type: isTransferStoreMovement(move) ? 'Transfert' : (move.type || ''),
                     status: move.status || EXIT_STATUS_APPROVED,
-                    comment: linkedRequest?.sourceSummary || move.comment || '',
-                    sourceSummary: linkedRequest?.sourceSummary || '',
+                    comment: move.comment || '',
+                    sourceSummary,
                     supplierName: move.supplierName || '',
                     boutiqueName: move.boutiqueName || linkedRequest?.boutiqueName || ''
                 };
@@ -25509,32 +25528,85 @@
                 })), limit);
             }
 
-            function finalizeOperationBatch(batch) {
-                if (!batch) return batch;
-                const items = sortBatchItemsByPackagingDesc(batch.items || []);
-                return {
-                    ...batch,
-                    items,
-                    productSummary: summarizeBatchProductNames(items, 4)
-                };
+            function enrichBatchItemFromSummary(item = {}) {
+                if (!item || typeof item !== 'object') return item;
+                const enriched = { ...item };
+                const text = String(enriched.sourceSummary || enriched.comment || '').trim();
+                const match = text.match(/(\d+(?:[.,]\d+)?)\s+([^=·]+?)\s*=\s*(\d+(?:[.,]\d+)?)/);
+                if (match) {
+                    if (!enriched.packagingQuantity) {
+                        enriched.packagingQuantity = parseInt(String(match[1]).replace(',', '.'), 10);
+                    }
+                    if (!enriched.packagingLabel) {
+                        enriched.packagingLabel = match[2].trim();
+                    }
+                    if (!enriched.quantity) {
+                        enriched.quantity = parseInt(String(match[3]).replace(',', '.'), 10);
+                    }
+                }
+                return enriched;
             }
 
             function formatBatchItemQuantityLabel(item = {}) {
-                const quantity = Math.abs(parseInt(item.quantity, 10) || 0);
-                const product = item.productId ? appData.storeProducts?.[item.productId] : null;
-                if (item.packagingQuantity && item.packagingLabel && product) {
-                    return formatGroupedEntryLineQuantityLabel({
-                        mode: 'existing',
-                        productId: item.productId,
-                        quantity: `${quantity}`,
-                        packagingQuantity: `${item.packagingQuantity}`,
-                        packagingLabel: item.packagingLabel
-                    });
+                const enriched = enrichBatchItemFromSummary(item);
+                const quantity = Math.abs(parseInt(enriched.quantity, 10) || 0);
+                const product = enriched.productId ? appData.storeProducts?.[enriched.productId] : null;
+                const sourceSummary = String(enriched.sourceSummary || '').trim();
+                if (sourceSummary && /=/.test(sourceSummary)) {
+                    return sourceSummary;
+                }
+                if (enriched.packagingQuantity && enriched.packagingLabel) {
+                    const baseLabel = product ? getProductBaseUnitLabel(product) : 'pièce';
+                    return `${enriched.packagingQuantity} ${enriched.packagingLabel} (${quantity} ${baseLabel}${quantity > 1 ? 's' : ''})`;
                 }
                 if (product) {
                     return formatProductStockBreakdown(quantity, product, { includeBaseTotal: true });
                 }
                 return `${quantity} unité(s)`;
+            }
+
+            function formatBatchTotalsLabel(batch = {}) {
+                const items = (batch.items || []).map(enrichBatchItemFromSummary);
+                let totalPieces = 0;
+                let totalPackagingQty = 0;
+                let hasPackagingQty = false;
+                const packagingLabels = new Set();
+
+                items.forEach(item => {
+                    totalPieces += Math.abs(parseInt(item.quantity, 10) || 0);
+                    const packagingQty = parseInt(item.packagingQuantity, 10);
+                    if (packagingQty > 0) {
+                        hasPackagingQty = true;
+                        totalPackagingQty += packagingQty;
+                        if (item.packagingLabel) packagingLabels.add(String(item.packagingLabel).trim());
+                    }
+                });
+
+                const firstProduct = appData.storeProducts?.[items[0]?.productId];
+                const baseLabel = firstProduct ? getProductBaseUnitLabel(firstProduct) : 'pièce';
+                const piecesPart = `${totalPieces} ${baseLabel}${totalPieces > 1 ? 's' : ''}`;
+
+                if (!hasPackagingQty) {
+                    return piecesPart;
+                }
+
+                const packagingLabel = packagingLabels.size === 1
+                    ? [...packagingLabels][0]
+                    : 'cond.';
+                const packagingPart = `${totalPackagingQty} ${packagingLabel}${totalPackagingQty > 1 ? 's' : ''}`;
+                return `${packagingPart} · ${piecesPart}`;
+            }
+
+            function finalizeOperationBatch(batch) {
+                if (!batch) return batch;
+                const items = sortBatchItemsByPackagingDesc((batch.items || []).map(enrichBatchItemFromSummary));
+                const enrichedBatch = {
+                    ...batch,
+                    items,
+                    productSummary: summarizeBatchProductNames(items, 4),
+                    totalsLabel: formatBatchTotalsLabel({ ...batch, items })
+                };
+                return enrichedBatch;
             }
 
             function getStoreMovementBatchKeyFromData(data) {
@@ -25570,21 +25642,30 @@
             }
 
             function normalizeEntryGroupToBatch(group) {
-                const items = Object.values(group.items || {}).map(item => ({
-                    productId: item.productId || '',
-                    productName: item.productName || '',
-                    packagingCode: item.packagingCode || '',
-                    packagingLabel: item.packagingLabel || '',
-                    packagingQuantity: item.packagingQuantity,
-                    packagingUnits: item.productId && item.packagingCode
-                        ? getPackageUnits(appData.storeProducts?.[item.productId], item.packagingCode)
-                        : inferPackagingUnitsFromSummary(item.description || ''),
-                    quantity: parseInt(item.quantity, 10) || 0,
-                    type: 'Entrée',
-                    status: group.status || 'validated',
-                    comment: item.description || '',
-                    supplierName: group.supplierName || ''
-                }));
+                const items = Object.values(group.items || {}).map(item => {
+                    const product = appData.storeProducts?.[item.productId];
+                    const baseLabel = product ? getProductBaseUnitLabel(product) : 'pièce';
+                    const quantity = parseInt(item.quantity, 10) || 0;
+                    const sourceSummary = item.packagingQuantity && item.packagingLabel
+                        ? `${item.packagingQuantity} ${item.packagingLabel} = ${quantity} ${baseLabel}`
+                        : '';
+                    return {
+                        productId: item.productId || '',
+                        productName: item.productName || '',
+                        packagingCode: item.packagingCode || '',
+                        packagingLabel: item.packagingLabel || '',
+                        packagingQuantity: item.packagingQuantity,
+                        packagingUnits: item.productId && item.packagingCode
+                            ? getPackageUnits(product, item.packagingCode)
+                            : inferPackagingUnitsFromSummary(sourceSummary || item.description || ''),
+                        quantity,
+                        type: 'Entrée',
+                        status: group.status || 'validated',
+                        comment: item.description || '',
+                        sourceSummary,
+                        supplierName: group.supplierName || ''
+                    };
+                });
                 return finalizeOperationBatch({
                     id: `entry:${group.id}`,
                     type: 'entry_group',
@@ -25935,7 +26016,7 @@
                                     ${storeLine}
                                 </div>
                                 <p class="mt-1.5 text-sm font-semibold text-gray-900">${escapeHtml(sortedBatch.productSummary || 'Produits groupés')}</p>
-                                <p class="mt-0.5 text-xs text-gray-500">${sortedBatch.lineCount} ligne${sortedBatch.lineCount > 1 ? 's' : ''} · ${sortedBatch.totalQuantity} unité(s) · ${escapeHtml(sortedBatch.user || '—')}</p>
+                                <p class="mt-0.5 text-xs text-gray-500">${sortedBatch.lineCount} ligne${sortedBatch.lineCount > 1 ? 's' : ''} · ${escapeHtml(sortedBatch.totalsLabel || `${sortedBatch.totalQuantity} unité(s)`)} · ${escapeHtml(sortedBatch.user || '—')}</p>
                                 <div class="mt-1 flex flex-wrap items-center gap-2">${customerLine}${amountLine}</div>
                             </div>
                             <span class="text-gray-400 transition group-open:rotate-180">
@@ -25948,8 +26029,8 @@
                                 ${(sortedBatch.items || []).map(item => `
                                     <div class="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2">
                                         <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                                            <p class="text-sm font-semibold text-gray-900">${escapeHtml(item.productName || 'Produit')}${item.packagingLabel ? `<span class="ml-2 text-xs font-normal text-gray-500">${escapeHtml(item.packagingLabel)}</span>` : ''}</p>
-                                            <span class="text-xs font-semibold text-gray-700">${escapeHtml(formatBatchItemQuantityLabel(item))}${Number.isFinite(item.change) ? ` · ${item.change >= 0 ? '+' : ''}${item.change}` : ''}</span>
+                                            <p class="text-sm font-semibold text-gray-900">${escapeHtml(item.productName || 'Produit')}</p>
+                                            <span class="text-xs font-semibold text-gray-700">${escapeHtml(formatBatchItemQuantityLabel(item))}</span>
                                         </div>
                                         <p class="mt-1 text-xs text-gray-500">${escapeHtml(item.type || '')}${item.comment ? ` · ${escapeHtml(item.comment)}` : ''}${item.total !== undefined && item.total !== null ? ` · ${formatCurrency(item.total, sortedBatch.currency || 'CFA')}` : ''}</p>
                                     </div>
@@ -25971,14 +26052,21 @@
 
             function exportOperationBatchCsv(batch) {
                 if (!batch) return;
-                const headers = ['Produit', 'Quantité', 'Type', 'Statut', 'Commentaire'];
-                const rows = (batch.items || []).map(item => [
-                    item.productName || '',
-                    Math.abs(parseInt(item.quantity, 10) || 0),
-                    item.type || '',
-                    item.status || '',
-                    item.comment || ''
-                ]);
+                const headers = ['Produit', 'Conditionnement', 'Quantité (pièces)', 'Type', 'Statut', 'Commentaire'];
+                const rows = (batch.items || []).map(item => {
+                    const enriched = enrichBatchItemFromSummary(item);
+                    const packagingLabel = enriched.packagingQuantity && enriched.packagingLabel
+                        ? `${enriched.packagingQuantity} ${enriched.packagingLabel}`
+                        : '';
+                    return [
+                        enriched.productName || '',
+                        packagingLabel,
+                        Math.abs(parseInt(enriched.quantity, 10) || 0),
+                        enriched.type || '',
+                        enriched.status || '',
+                        enriched.comment || ''
+                    ];
+                });
                 const filename = `lot-${(batch.reference || batch.label || batch.id).replace(/[^\w\-]+/g, '_')}.csv`;
                 downloadTextFile(buildCsvContent(headers, rows, ';', { textColumnIndexes: [0, 4] }), filename);
             }
@@ -26000,15 +26088,22 @@
                         ],
                         accentColor: [99, 102, 241]
                     });
-                    const body = (batch.items || []).map(item => [
-                        item.productName || '',
-                        String(Math.abs(parseInt(item.quantity, 10) || 0)),
-                        item.type || '',
-                        item.status || '',
-                        item.comment || ''
-                    ]);
+                    const body = (batch.items || []).map(item => {
+                        const enriched = enrichBatchItemFromSummary(item);
+                        const packagingLabel = enriched.packagingQuantity && enriched.packagingLabel
+                            ? `${enriched.packagingQuantity} ${enriched.packagingLabel}`
+                            : '';
+                        return [
+                            enriched.productName || '',
+                            packagingLabel,
+                            String(Math.abs(parseInt(enriched.quantity, 10) || 0)),
+                            enriched.type || '',
+                            enriched.status || '',
+                            enriched.comment || ''
+                        ];
+                    });
                     appendExportPdfTable(doc, {
-                        head: [['Produit', 'Quantité', 'Type', 'Statut', 'Commentaire']],
+                        head: [['Produit', 'Conditionnement', 'Quantité (pièces)', 'Type', 'Statut', 'Commentaire']],
                         body,
                         startY: doc.__exportStartY
                     });
@@ -30119,9 +30214,9 @@
                 inventoryGlobalTbody.innerHTML = items.map(entry => {
                     const entryKey = encodeURIComponent(entry.key || entry.name || '');
                     const product = getInventoryAggregateProduct(entry);
-                    const totalLabel = product ? formatProductStockBreakdown(entry.totalQty, product, { includeBaseTotal: true }) : `${entry.totalQty} u. base`;
-                    const storeLabel = product ? formatProductStockBreakdown(entry.storeQty, product, { includeBaseTotal: true }) : `${entry.storeQty} u. base`;
-                    const shopLabel = product ? formatProductStockBreakdown(entry.shopQty, product, { includeBaseTotal: true }) : `${entry.shopQty} u. base`;
+                    const totalLabel = product ? formatStoreStockDisplayFromBaseUnits(entry.totalQty, product) : `${entry.totalQty} u. base`;
+                    const storeLabel = product ? formatStoreStockDisplayFromBaseUnits(entry.storeQty, product) : `${entry.storeQty} u. base`;
+                    const shopLabel = product ? formatStoreStockDisplayFromBaseUnits(entry.shopQty, product) : `${entry.shopQty} u. base`;
                     const storeEntries = Object.entries(entry.storeBreakdown || {}).map(([id, qty]) => ({
                         id,
                         qty,
@@ -30134,10 +30229,10 @@
                     })).sort((a, b) => a.name.localeCompare(b.name));
 
                     const storeTags = storeEntries.length
-                        ? storeEntries.map(item => `<span class="px-2 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold">${escapeHtml(item.name)} · ${escapeHtml(product ? formatProductStockBreakdown(item.qty, product, { includeBaseTotal: true }) : `${item.qty} u. base`)}</span>`).join('')
+                        ? storeEntries.map(item => `<span class="px-2 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold">${escapeHtml(item.name)} · ${escapeHtml(product ? formatStoreStockDisplayFromBaseUnits(item.qty, product) : `${item.qty} u. base`)}</span>`).join('')
                         : '<span class="text-xs text-gray-400">Aucun stock magasin.</span>';
                     const shopTags = shopEntries.length
-                        ? shopEntries.map(item => `<span class="px-2 py-1 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-semibold">${escapeHtml(item.name)} · ${escapeHtml(product ? formatProductStockBreakdown(item.qty, product, { includeBaseTotal: true }) : `${item.qty} u. base`)}</span>`).join('')
+                        ? shopEntries.map(item => `<span class="px-2 py-1 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-semibold">${escapeHtml(item.name)} · ${escapeHtml(product ? formatStoreStockDisplayFromBaseUnits(item.qty, product) : `${item.qty} u. base`)}</span>`).join('')
                         : '<span class="text-xs text-gray-400">Aucun stock boutique.</span>';
 
                     return `
