@@ -25332,9 +25332,27 @@
             function getBatchItemPackagingUnits(item = {}) {
                 const explicitUnits = Number(item.packagingUnits ?? item.unitsPerCarton ?? item.packageUnits);
                 if (Number.isFinite(explicitUnits) && explicitUnits > 0) return explicitUnits;
+
+                const fromSummary = inferPackagingUnitsFromSummary(
+                    item.sourceSummary || item.comment || item.packagingLabel || ''
+                );
+                if (fromSummary) return fromSummary;
+
                 const product = item.productId ? appData.storeProducts?.[item.productId] : null;
                 if (item.packagingCode && product) {
-                    return Math.max(getPackageUnits(product, item.packagingCode), 1);
+                    const units = getPackageUnits(product, item.packagingCode);
+                    if (units > 1) return units;
+                    const packaging = findPackagingByRef(product, item.packagingCode);
+                    if (packaging?.unitCount > 1) return packaging.unitCount;
+                }
+                if (item.packagingLabel && product) {
+                    const packagings = getProductPackagings(product);
+                    const normalizedLabel = String(item.packagingLabel).trim().toLowerCase();
+                    const labelMatch = packagings.find(pkg =>
+                        String(pkg.label || '').trim().toLowerCase() === normalizedLabel
+                        || String(pkg.code || '').trim().toLowerCase() === normalizedLabel
+                    );
+                    if (labelMatch?.unitCount > 1) return labelMatch.unitCount;
                 }
                 const packagingQty = parseInt(item.packagingQuantity, 10);
                 const baseQty = parseInt(item.quantity, 10) || 0;
@@ -25343,10 +25361,115 @@
                     if (inferred > 0) return inferred;
                 }
                 if (product) {
+                    const packagings = getProductPackagings(product);
+                    const maxUnits = packagings.reduce((max, pkg) => Math.max(max, Number(pkg.unitCount) || 1), 1);
+                    if (maxUnits > 1) return maxUnits;
                     const primary = getPrimaryPackaging(product);
                     return Math.max(primary?.unitCount || getUnitsPerCarton(product) || 1, 1);
                 }
                 return 1;
+            }
+
+            function inferPackagingUnitsFromSummary(text = '') {
+                const value = String(text || '').trim();
+                if (!value) return null;
+                const equalityMatch = value.match(/(\d+(?:[.,]\d+)?)\s+[^=·]+?\s*=\s*(\d+(?:[.,]\d+)?)/);
+                if (equalityMatch) {
+                    const packagingCount = parseFloat(String(equalityMatch[1]).replace(',', '.'));
+                    const baseCount = parseFloat(String(equalityMatch[2]).replace(',', '.'));
+                    if (packagingCount > 0 && baseCount > 0) {
+                        return Math.round(baseCount / packagingCount);
+                    }
+                }
+                return null;
+            }
+
+            function getLinkedShopTransferRequestForMovement(movementId) {
+                if (!movementId) return null;
+                return Object.values(appData.shopTransferRequests || {}).find(request => request.storeMovementId === movementId) || null;
+            }
+
+            function isTransferStoreMovement(move = {}) {
+                if (move?.boutiqueId) return true;
+                return /transfert/i.test(String(move?.comment || ''));
+            }
+
+            function inferMovementBatchTypeFromMovements(movements = []) {
+                if (movements.some(move => isTransferStoreMovement(move))) return 'transfer_batch';
+                if (movements.some(move => move.type === 'Sortie directe' || (move.type === 'Sortie' && !isTransferStoreMovement(move)))) return 'exit_batch';
+                if (movements.some(move => move.type === 'Entrée')) return 'entry_group';
+                if (movements.some(move => move.type === 'Sortie')) return 'exit_batch';
+                return 'transfer_batch';
+            }
+
+            function buildBatchItemFromStoreMovement(move) {
+                const qty = parseInt(move.quantityChange, 10) || 0;
+                const isEntry = move.type === 'Entrée';
+                const changeValue = isEntry ? Math.abs(qty) : -Math.abs(qty);
+                const linkedRequest = getLinkedShopTransferRequestForMovement(move.id);
+                const packagingUnits = move.packagingUnits
+                    || linkedRequest?.unitsPerCarton
+                    || inferPackagingUnitsFromSummary(linkedRequest?.sourceSummary || move.comment || '')
+                    || (move.productId && move.packagingCode ? getPackageUnits(appData.storeProducts?.[move.productId], move.packagingCode) : null);
+                return {
+                    productId: move.productId || linkedRequest?.sourceProductId || '',
+                    productName: move.productName || linkedRequest?.sourceProductName || '',
+                    packagingCode: move.packagingCode || linkedRequest?.sourcePackageCode || '',
+                    packagingLabel: move.packagingLabel || linkedRequest?.sourcePackageLabel || '',
+                    packagingQuantity: move.packagingQuantity ?? linkedRequest?.sourceCartonQty ?? null,
+                    packagingUnits: packagingUnits || null,
+                    unitsPerCarton: linkedRequest?.unitsPerCarton || packagingUnits || null,
+                    quantity: Math.abs(qty),
+                    change: changeValue,
+                    type: isTransferStoreMovement(move) ? 'Transfert' : (move.type || ''),
+                    status: move.status || EXIT_STATUS_APPROVED,
+                    comment: linkedRequest?.sourceSummary || move.comment || '',
+                    sourceSummary: linkedRequest?.sourceSummary || '',
+                    supplierName: move.supplierName || '',
+                    boutiqueName: move.boutiqueName || linkedRequest?.boutiqueName || ''
+                };
+            }
+
+            function formatStoreMovementCommentDisplay(move = {}) {
+                const raw = String(move?.comment || '').trim();
+                const linkedRequest = getLinkedShopTransferRequestForMovement(move.id);
+                const boutiqueLabel = move.boutiqueName
+                    || linkedRequest?.boutiqueName
+                    || (move.boutiqueId || linkedRequest?.boutiqueId ? getBoutiqueName(resolveBoutiqueId(move.boutiqueId || linkedRequest?.boutiqueId)) : '');
+
+                let cleaned = raw;
+                cleaned = cleaned.replace(/\s*·\s*Lot\s+[A-Z0-9-]+\s*/gi, ' · ');
+                cleaned = cleaned.replace(/\s*·\s*Groupe:\s[^·]+(?=\s*·|$)/gi, '');
+                cleaned = cleaned.replace(/\s*·\s*Vers la boutique\s[^·]+(?=\s*·|$)/gi, '');
+                cleaned = cleaned.replace(/^Transfert groupé\s*·\s*/i, '');
+                cleaned = cleaned.replace(/^Sortie groupée[^·]*·\s*/i, '');
+                cleaned = cleaned.replace(/\s*·\s*·+/g, ' · ').trim().replace(/^·\s*/, '').replace(/\s*·$/, '');
+
+                const sourceSummary = String(linkedRequest?.sourceSummary || '').trim();
+                const quantityLine = sourceSummary
+                    || (() => {
+                        const parts = cleaned.split(' · ').filter(Boolean);
+                        return parts.find(part => /=/.test(part) && /\d/.test(part)) || parts[0] || '';
+                    })();
+
+                const noteParts = cleaned.split(' · ').filter(part => {
+                    if (!part) return false;
+                    if (part === quantityLine) return false;
+                    if (/^=/.test(part)) return false;
+                    if (/^vers la boutique/i.test(part)) return false;
+                    return true;
+                });
+
+                const shortParts = [
+                    quantityLine,
+                    boutiqueLabel ? `→ ${boutiqueLabel}` : '',
+                    ...noteParts.slice(0, 1)
+                ].filter(Boolean);
+
+                return {
+                    short: shortParts.join(' · ') || '—',
+                    full: raw || (sourceSummary ? `${sourceSummary}${boutiqueLabel ? ` · → ${boutiqueLabel}` : ''}` : '')
+                };
             }
 
             function sortBatchItemsByPackagingDesc(items = []) {
@@ -25446,13 +25569,6 @@
                 return map[type] || { label: 'Lot', classes: 'border-gray-200 bg-gray-50 text-gray-700' };
             }
 
-            function inferMovementBatchTypeFromMovements(movements = []) {
-                if (movements.some(move => move.type === 'Transfert')) return 'transfer_batch';
-                if (movements.some(move => move.type === 'Sortie directe' || move.type === 'Sortie')) return 'exit_batch';
-                if (movements.some(move => move.type === 'Entrée')) return 'entry_group';
-                return 'transfer_batch';
-            }
-
             function normalizeEntryGroupToBatch(group) {
                 const items = Object.values(group.items || {}).map(item => ({
                     productId: item.productId || '',
@@ -25462,7 +25578,7 @@
                     packagingQuantity: item.packagingQuantity,
                     packagingUnits: item.productId && item.packagingCode
                         ? getPackageUnits(appData.storeProducts?.[item.productId], item.packagingCode)
-                        : null,
+                        : inferPackagingUnitsFromSummary(item.description || ''),
                     quantity: parseInt(item.quantity, 10) || 0,
                     type: 'Entrée',
                     status: group.status || 'validated',
@@ -25494,45 +25610,28 @@
                 const type = key.startsWith('entry:')
                     ? 'entry_group'
                     : inferMovementBatchTypeFromMovements(movements);
-                const itemsFromMovements = movements.map(move => {
-                    const qty = parseInt(move.quantityChange, 10) || 0;
-                    const isEntry = move.type === 'Entrée';
-                    const changeValue = isEntry ? Math.abs(qty) : -Math.abs(qty);
-                    return {
-                        productId: move.productId || '',
-                        productName: move.productName || '',
-                        packagingCode: move.packagingCode || '',
-                        packagingLabel: move.packagingLabel || '',
-                        packagingQuantity: move.packagingQuantity,
-                        packagingUnits: move.productId && move.packagingCode
-                            ? getPackageUnits(appData.storeProducts?.[move.productId], move.packagingCode)
-                            : null,
-                        quantity: Math.abs(qty),
-                        change: changeValue,
-                        type: move.type || '',
-                        status: move.status || EXIT_STATUS_APPROVED,
-                        comment: move.comment || '',
-                        supplierName: move.supplierName || ''
-                    };
-                });
+                const itemsFromMovements = movements.map(move => buildBatchItemFromStoreMovement(move));
                 const itemsFromRequests = requests
                     .filter(request => !request.storeMovementId || !movements.some(move => move.id === request.storeMovementId))
-                    .map(request => ({
-                        productId: request.productId || '',
-                        productName: request.productName || '',
-                        packagingCode: request.packagingCode || '',
-                        packagingLabel: request.packagingLabel || '',
-                        packagingQuantity: request.packagingQuantity,
-                        packagingUnits: request.productId && request.packagingCode
-                            ? getPackageUnits(appData.storeProducts?.[request.productId], request.packagingCode)
-                            : null,
-                        quantity: parseInt(request.quantity, 10) || 0,
-                        change: -(parseInt(request.quantity, 10) || 0),
-                        type: 'Sortie',
-                        status: request.status || EXIT_STATUS_PENDING,
-                        comment: request.comment || '',
-                        customerName: request.customerName || ''
-                    }));
+                    .map(request => {
+                        const linkedMove = request.storeMovementId ? appData.storeMovements?.[request.storeMovementId] : null;
+                        return {
+                            productId: request.productId || request.sourceProductId || linkedMove?.productId || '',
+                            productName: request.productName || request.sourceProductName || linkedMove?.productName || '',
+                            packagingCode: request.packagingCode || request.sourcePackageCode || linkedMove?.packagingCode || '',
+                            packagingLabel: request.packagingLabel || request.sourcePackageLabel || linkedMove?.packagingLabel || '',
+                            packagingQuantity: request.packagingQuantity ?? request.sourceCartonQty ?? linkedMove?.packagingQuantity ?? null,
+                            packagingUnits: request.unitsPerCarton || inferPackagingUnitsFromSummary(request.sourceSummary || request.comment || linkedMove?.comment || ''),
+                            unitsPerCarton: request.unitsPerCarton || null,
+                            quantity: parseInt(request.quantity, 10) || 0,
+                            change: -(parseInt(request.quantity, 10) || 0),
+                            type: request.requestType === 'transfer' || linkedMove?.boutiqueId ? 'Transfert' : 'Sortie',
+                            status: request.status || EXIT_STATUS_PENDING,
+                            comment: request.sourceSummary || request.comment || '',
+                            sourceSummary: request.sourceSummary || request.targetSummary || '',
+                            customerName: request.customerName || ''
+                        };
+                    });
                 const items = [...itemsFromMovements, ...itemsFromRequests];
                 const referenceSource = firstMove || firstRequest || {};
                 const groupId = key.replace(/^(entry|batch):/, '');
@@ -25827,7 +25926,7 @@
                     : '';
                 return `
                     <details class="group rounded-2xl border border-gray-200 bg-gray-50/70" data-operation-batch-id="${escapeHtml(sortedBatch.id)}">
-                        <summary class="flex cursor-pointer list-none items-start justify-between gap-3 px-4 py-3 hover:bg-gray-100 rounded-2xl">
+                        <summary class="flex cursor-pointer list-none items-start justify-between gap-2 px-4 py-2.5 hover:bg-gray-100 rounded-2xl">
                             <div class="min-w-0">
                                 <div class="flex flex-wrap items-center gap-2">
                                     <span class="inline-flex items-center rounded-full border ${meta.classes} px-2.5 py-0.5 text-[11px] font-semibold">${escapeHtml(meta.label)}</span>
@@ -25835,8 +25934,8 @@
                                     <span class="text-xs text-gray-400">${escapeHtml(formatDateForDisplay(sortedBatch.date))}</span>
                                     ${storeLine}
                                 </div>
-                                <p class="mt-2 text-sm font-semibold text-gray-900">${escapeHtml(sortedBatch.productSummary || 'Produits groupés')}</p>
-                                <p class="mt-1 text-xs text-gray-500">${sortedBatch.lineCount} ligne${sortedBatch.lineCount > 1 ? 's' : ''} · ${sortedBatch.totalQuantity} unité(s) · ${escapeHtml(sortedBatch.user || '—')}</p>
+                                <p class="mt-1.5 text-sm font-semibold text-gray-900">${escapeHtml(sortedBatch.productSummary || 'Produits groupés')}</p>
+                                <p class="mt-0.5 text-xs text-gray-500">${sortedBatch.lineCount} ligne${sortedBatch.lineCount > 1 ? 's' : ''} · ${sortedBatch.totalQuantity} unité(s) · ${escapeHtml(sortedBatch.user || '—')}</p>
                                 <div class="mt-1 flex flex-wrap items-center gap-2">${customerLine}${amountLine}</div>
                             </div>
                             <span class="text-gray-400 transition group-open:rotate-180">
@@ -27339,6 +27438,9 @@
                             packagingCode: row.packagingCode || null,
                             packagingLabel: row.packagingLabel || '',
                             packagingQuantity: row.packagingQuantity,
+                            packagingUnits: row.packagingCode
+                                ? getPackageUnits(row.product, row.packagingCode)
+                                : null,
                             date: { ".sv": "timestamp" },
                             status: EXIT_STATUS_PENDING,
                             userEmail: currentUser.email || '',
@@ -27491,6 +27593,7 @@
                             packagingCode: row.packagingCode || null,
                             packagingLabel: row.packagingLabel || '',
                             packagingQuantity: row.packagingQuantity,
+                            packagingUnits: selectedPackaging?.unitCount || row.plan?.unitsPerCarton || null,
                             date: { ".sv": "timestamp" },
                             userEmail: currentUser.email || '',
                             userName: requesterName,
@@ -28881,29 +28984,30 @@
                         const qty = parseInt(request.quantity, 10) || 0;
                         const changeValue = -Math.abs(qty);
                         const statusBadge = getStatusBadge(request.status);
-                        const comment = request.comment ? request.comment : 'Sortie en attente';
+                        const commentDisplay = formatStoreMovementCommentDisplay({ comment: request.comment || 'Sortie en attente' });
+                        const commentHtml = `<p class="truncate max-w-[16rem]" title="${escapeHtml(commentDisplay.full || commentDisplay.short)}">${escapeHtml(request.comment ? commentDisplay.short : 'Sortie en attente')}</p>`;
                         const requestedBy = request.requestedByName || request.requestedBy || request.requestedByEmail || '-';
-                        const customerLine = request.customerName ? `<p class="text-xs text-gray-500 mt-1">Client: ${request.customerName}</p>` : '';
+                        const customerLine = request.customerName ? `<p class="text-xs text-gray-500 mt-0.5 truncate max-w-[16rem]">Client: ${escapeHtml(request.customerName)}</p>` : '';
                         const actionHtml = `<span class="text-xs text-gray-400 italic">En attente de validation</span>`;
                         return `
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${renderBatchBadge(request)}${request.productName || '-'}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <tr class="hover:bg-gray-50 align-middle">
+                                <td class="px-4 py-2.5 whitespace-nowrap text-sm font-medium text-gray-900">${renderBatchBadge(request)}${request.productName || '-'}</td>
+                                <td class="px-4 py-2.5 whitespace-nowrap text-sm">
                                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-700">Sortie</span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">${Math.abs(qty)}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-red-600">${changeValue}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">-</td>
-                                <td class="px-6 py-4 text-sm text-gray-600">
-                                    <p>${comment}</p>
+                                <td class="px-4 py-2.5 whitespace-nowrap text-sm font-semibold text-gray-900">${Math.abs(qty)}</td>
+                                <td class="px-4 py-2.5 whitespace-nowrap text-sm font-semibold text-red-600">${changeValue}</td>
+                                <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500">-</td>
+                                <td class="px-4 py-2.5 text-sm text-gray-600">
+                                    ${commentHtml}
                                     ${customerLine}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${requestedBy}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatMovementDate(item.date)}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500">${requestedBy}</td>
+                                <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500">${formatMovementDate(item.date)}</td>
+                                <td class="px-4 py-2.5 whitespace-nowrap text-sm">
                                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${statusBadge.classes}">${statusBadge.label}</span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right">
+                                <td class="px-4 py-2.5 whitespace-nowrap text-right">
                                     ${actionHtml}
                                 </td>
                         </tr>`;
@@ -28916,17 +29020,13 @@
                     const changeValue = isEntry ? Math.abs(qty) : (isAdjustment ? qty : -Math.abs(qty));
                     const typeBadge = getMovementTypeBadge(move);
                     const statusBadge = getStatusBadge(move.status || EXIT_STATUS_APPROVED);
-                    const boutiqueLabel = move.boutiqueName || (move.boutiqueId ? getBoutiqueName(resolveBoutiqueId(move.boutiqueId)) : '');
-                    const commentBase = move.comment ? move.comment : '-';
-                    const commentSuffix = boutiqueLabel ? `Vers la boutique ${boutiqueLabel}` : '';
-                    let comment = commentSuffix
-                        ? (commentBase === '-' ? commentSuffix : `${commentBase} · ${commentSuffix}`)
-                        : commentBase;
+                    const commentDisplay = formatStoreMovementCommentDisplay(move);
+                    let commentHtml = `<p class="truncate max-w-[16rem]" title="${escapeHtml(commentDisplay.full || commentDisplay.short)}">${escapeHtml(commentDisplay.short)}</p>`;
                     if (isAdjustment && move.correctsMovementId) {
-                        comment = `${comment}${comment === '-' ? '' : ' · '}Corrige l'entrée #${move.correctsMovementId.slice(-6)}`;
+                        commentHtml += `<p class="mt-0.5 text-xs text-gray-400 truncate max-w-[16rem]">Corrige l'entrée #${move.correctsMovementId.slice(-6)}</p>`;
                     }
                     if (isEntry && move.correctedByMovementId) {
-                        comment = `${comment}${comment === '-' ? '' : ' · '}Corrigée (voir ajustement #${move.correctedByMovementId.slice(-6)})`;
+                        commentHtml += `<p class="mt-0.5 text-xs text-indigo-600 truncate max-w-[16rem]">Corrigée (#${move.correctedByMovementId.slice(-6)})</p>`;
                     }
                     const userLabel = move.userName || move.userFullName || move.userEmail || move.userId || '-';
                     const supplierLabel = move.supplierName || getSupplierName(move.supplierId) || '-';
@@ -28937,21 +29037,21 @@
                         actionHtml = `<button type="button" data-correct-store-entry="${move.id}" class="text-xs font-semibold text-amber-600 hover:text-amber-700">Corriger</button>`;
                     }
                     return `
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${renderBatchBadge(move)}${move.productName || '-'}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                        <tr class="hover:bg-gray-50 align-middle">
+                            <td class="px-4 py-2.5 whitespace-nowrap text-sm font-medium text-gray-900">${renderBatchBadge(move)}${move.productName || '-'}</td>
+                            <td class="px-4 py-2.5 whitespace-nowrap text-sm">
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${typeBadge.classes}">${typeBadge.label}</span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">${Math.abs(qty)}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${changeValue >= 0 ? 'text-emerald-600' : 'text-red-600'}">${changeValue >= 0 ? '+' : ''}${changeValue}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${supplierLabel}</td>
-                            <td class="px-6 py-4 text-sm text-gray-600">${comment}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${userLabel}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatMovementDate(item.date)}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <td class="px-4 py-2.5 whitespace-nowrap text-sm font-semibold text-gray-900">${Math.abs(qty)}</td>
+                            <td class="px-4 py-2.5 whitespace-nowrap text-sm font-semibold ${changeValue >= 0 ? 'text-emerald-600' : 'text-red-600'}">${changeValue >= 0 ? '+' : ''}${changeValue}</td>
+                            <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500">${supplierLabel}</td>
+                            <td class="px-4 py-2.5 text-sm text-gray-600">${commentHtml}</td>
+                            <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500">${userLabel}</td>
+                            <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500">${formatMovementDate(item.date)}</td>
+                            <td class="px-4 py-2.5 whitespace-nowrap text-sm">
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${statusBadge.classes}">${statusBadge.label}</span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right">
+                            <td class="px-4 py-2.5 whitespace-nowrap text-right">
                                 ${actionHtml}
                             </td>
                         </tr>`;
@@ -32622,6 +32722,7 @@
             function onShopTransferRequestsValue(snapshot) {
                 appData.shopTransferRequests = snapshot.val() || {};
                 renderPendingShopTransfers();
+                renderStoreMovementsPage();
                 renderOperationBatchesPage();
                 renderTraceabilityPage();
             }
