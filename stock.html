@@ -25329,6 +25329,91 @@
                 return `${uniqueValues.slice(0, limit).join(', ')} +${uniqueValues.length - limit}`;
             }
 
+            function getBatchItemPackagingUnits(item = {}) {
+                const explicitUnits = Number(item.packagingUnits ?? item.unitsPerCarton ?? item.packageUnits);
+                if (Number.isFinite(explicitUnits) && explicitUnits > 0) return explicitUnits;
+                const product = item.productId ? appData.storeProducts?.[item.productId] : null;
+                if (item.packagingCode && product) {
+                    return Math.max(getPackageUnits(product, item.packagingCode), 1);
+                }
+                const packagingQty = parseInt(item.packagingQuantity, 10);
+                const baseQty = parseInt(item.quantity, 10) || 0;
+                if (packagingQty > 0 && baseQty > 0) {
+                    const inferred = Math.round(baseQty / packagingQty);
+                    if (inferred > 0) return inferred;
+                }
+                if (product) {
+                    const primary = getPrimaryPackaging(product);
+                    return Math.max(primary?.unitCount || getUnitsPerCarton(product) || 1, 1);
+                }
+                return 1;
+            }
+
+            function sortBatchItemsByPackagingDesc(items = []) {
+                return [...items].sort((a, b) => {
+                    const unitsDiff = getBatchItemPackagingUnits(b) - getBatchItemPackagingUnits(a);
+                    if (unitsDiff !== 0) return unitsDiff;
+                    return String(a.productName || '').localeCompare(String(b.productName || ''), 'fr', { sensitivity: 'base' });
+                });
+            }
+
+            function summarizeBatchProductNames(items = [], limit = 4) {
+                const sorted = sortBatchItemsByPackagingDesc(items);
+                const uniqueNames = [];
+                const seen = new Set();
+                sorted.forEach(item => {
+                    const name = String(item.productName || '').trim();
+                    if (!name || seen.has(name)) return;
+                    seen.add(name);
+                    uniqueNames.push(name);
+                });
+                if (!uniqueNames.length) return '';
+                if (uniqueNames.length <= limit) return uniqueNames.join(', ');
+                return `${uniqueNames.slice(0, limit).join(', ')} +${uniqueNames.length - limit}`;
+            }
+
+            function summarizeBatchPreviewRows(rows = [], limit = 4) {
+                return summarizeBatchProductNames(rows.map(row => ({
+                    productId: row.product?.id || '',
+                    productName: row.product?.name || '',
+                    packagingCode: row.packagingCode || '',
+                    packagingLabel: row.packagingLabel || '',
+                    packagingQuantity: row.packagingQuantity,
+                    packagingUnits: row.packagingCode && row.product
+                        ? getPackageUnits(row.product, row.packagingCode)
+                        : (row.product ? getPrimaryPackaging(row.product)?.unitCount : null),
+                    quantity: row.quantity || row.baseQuantity || 0
+                })), limit);
+            }
+
+            function finalizeOperationBatch(batch) {
+                if (!batch) return batch;
+                const items = sortBatchItemsByPackagingDesc(batch.items || []);
+                return {
+                    ...batch,
+                    items,
+                    productSummary: summarizeBatchProductNames(items, 4)
+                };
+            }
+
+            function formatBatchItemQuantityLabel(item = {}) {
+                const quantity = Math.abs(parseInt(item.quantity, 10) || 0);
+                const product = item.productId ? appData.storeProducts?.[item.productId] : null;
+                if (item.packagingQuantity && item.packagingLabel && product) {
+                    return formatGroupedEntryLineQuantityLabel({
+                        mode: 'existing',
+                        productId: item.productId,
+                        quantity: `${quantity}`,
+                        packagingQuantity: `${item.packagingQuantity}`,
+                        packagingLabel: item.packagingLabel
+                    });
+                }
+                if (product) {
+                    return formatProductStockBreakdown(quantity, product, { includeBaseTotal: true });
+                }
+                return `${quantity} unité(s)`;
+            }
+
             function getStoreMovementBatchKeyFromData(data) {
                 if (!data) return null;
                 if (data.entryGroupId) return `entry:${data.entryGroupId}`;
@@ -25370,14 +25455,21 @@
 
             function normalizeEntryGroupToBatch(group) {
                 const items = Object.values(group.items || {}).map(item => ({
+                    productId: item.productId || '',
                     productName: item.productName || '',
+                    packagingCode: item.packagingCode || '',
+                    packagingLabel: item.packagingLabel || '',
+                    packagingQuantity: item.packagingQuantity,
+                    packagingUnits: item.productId && item.packagingCode
+                        ? getPackageUnits(appData.storeProducts?.[item.productId], item.packagingCode)
+                        : null,
                     quantity: parseInt(item.quantity, 10) || 0,
                     type: 'Entrée',
                     status: group.status || 'validated',
                     comment: item.description || '',
                     supplierName: group.supplierName || ''
                 }));
-                return {
+                return finalizeOperationBatch({
                     id: `entry:${group.id}`,
                     type: 'entry_group',
                     label: group.reference || formatTransferBatchShortLabel(group.id),
@@ -25385,7 +25477,6 @@
                     date: group.createdAt || '',
                     lineCount: group.lineCount || items.length,
                     totalQuantity: group.totalQuantity || items.reduce((sum, item) => sum + item.quantity, 0),
-                    productSummary: summarizeDistinctLabels(items.map(item => item.productName), 4),
                     user: group.createdByName || group.createdByEmail || '',
                     comment: group.comment || '',
                     customerName: '',
@@ -25394,7 +25485,7 @@
                     status: group.status || 'validated',
                     items,
                     raw: group
-                };
+                });
             }
 
             function normalizeMovementBatchGroup(key, movements, requests = []) {
@@ -25408,7 +25499,14 @@
                     const isEntry = move.type === 'Entrée';
                     const changeValue = isEntry ? Math.abs(qty) : -Math.abs(qty);
                     return {
+                        productId: move.productId || '',
                         productName: move.productName || '',
+                        packagingCode: move.packagingCode || '',
+                        packagingLabel: move.packagingLabel || '',
+                        packagingQuantity: move.packagingQuantity,
+                        packagingUnits: move.productId && move.packagingCode
+                            ? getPackageUnits(appData.storeProducts?.[move.productId], move.packagingCode)
+                            : null,
                         quantity: Math.abs(qty),
                         change: changeValue,
                         type: move.type || '',
@@ -25420,7 +25518,14 @@
                 const itemsFromRequests = requests
                     .filter(request => !request.storeMovementId || !movements.some(move => move.id === request.storeMovementId))
                     .map(request => ({
+                        productId: request.productId || '',
                         productName: request.productName || '',
+                        packagingCode: request.packagingCode || '',
+                        packagingLabel: request.packagingLabel || '',
+                        packagingQuantity: request.packagingQuantity,
+                        packagingUnits: request.productId && request.packagingCode
+                            ? getPackageUnits(appData.storeProducts?.[request.productId], request.packagingCode)
+                            : null,
                         quantity: parseInt(request.quantity, 10) || 0,
                         change: -(parseInt(request.quantity, 10) || 0),
                         type: 'Sortie',
@@ -25432,7 +25537,7 @@
                 const referenceSource = firstMove || firstRequest || {};
                 const groupId = key.replace(/^(entry|batch):/, '');
                 const entryGroup = appData.storeEntryGroups?.[groupId];
-                return {
+                return finalizeOperationBatch({
                     id: key,
                     type,
                     label: formatMovementBatchLabel(referenceSource, groupId),
@@ -25440,7 +25545,6 @@
                     date: firstMove?.date || firstRequest?.requestedAt || firstRequest?.date || entryGroup?.createdAt || '',
                     lineCount: items.length,
                     totalQuantity: items.reduce((sum, item) => sum + (parseInt(item.quantity, 10) || 0), 0),
-                    productSummary: firstMove?.batchSummary || summarizeDistinctLabels(items.map(item => item.productName), 4),
                     user: firstMove?.userName || firstMove?.userEmail || firstRequest?.requestedByName || firstRequest?.requestedByEmail || entryGroup?.createdByName || '',
                     comment: firstMove?.comment || firstRequest?.comment || entryGroup?.comment || '',
                     customerName: firstRequest?.customerName || '',
@@ -25450,7 +25554,7 @@
                     batchSize: firstMove?.batchSize || items.length,
                     items,
                     raw: { movements, requests, entryGroup }
-                };
+                });
             }
 
             function buildStoreMovementBatchGroups() {
@@ -25495,7 +25599,10 @@
 
             function normalizeSaleGroupToBatch(group) {
                 const items = (group.items || []).map(item => ({
+                    productId: item.storeProductId || item.shopProductId || '',
                     productName: item.name || '',
+                    packagingLabel: item.packageLabel || '',
+                    packageUnits: item.packageUnits || null,
                     quantity: parseInt(item.quantity, 10) || 0,
                     type: 'Vente',
                     status: group.paymentStatus || 'paid',
@@ -25503,7 +25610,7 @@
                     total: item.total,
                     price: item.price
                 }));
-                return {
+                return finalizeOperationBatch({
                     id: `sale:${group.id}`,
                     type: 'sale_group',
                     label: getSaleInvoiceLabel(group.id),
@@ -25511,7 +25618,6 @@
                     date: group.date || '',
                     lineCount: items.length,
                     totalQuantity: items.reduce((sum, item) => sum + item.quantity, 0),
-                    productSummary: summarizeDistinctLabels(items.map(item => item.productName), 4),
                     user: group.sellerName || '',
                     comment: (group.comments || []).join(' · '),
                     customerName: group.customerName || '',
@@ -25521,18 +25627,23 @@
                     currency: group.currency || 'CFA',
                     items,
                     raw: group
-                };
+                });
             }
 
             function normalizeShopTransferToBatch(group) {
                 const items = (group.requests || []).map(request => ({
+                    productId: request.sourceProductId || '',
                     productName: request.sourceProductName || request.productName || '',
+                    packagingCode: request.sourcePackageCode || '',
+                    packagingLabel: request.sourcePackageLabel || '',
+                    packagingQuantity: request.sourceCartonQty,
+                    unitsPerCarton: request.unitsPerCarton,
                     quantity: parseNonNegativeInteger(request.totalUnits, parseNonNegativeInteger(request.quantity, 0)),
                     type: 'Transfert boutique',
                     status: request.status || EXIT_STATUS_APPROVED,
                     comment: request.comment || request.targetSummary || ''
                 }));
-                return {
+                return finalizeOperationBatch({
                     id: `shop-transfer:${group.key}`,
                     type: 'shop_transfer',
                     label: group.batchLabel || formatTransferBatchShortLabel(group.batchId || group.key),
@@ -25540,7 +25651,6 @@
                     date: group.receivedAt || '',
                     lineCount: group.lineCount || items.length,
                     totalQuantity: group.totalUnits || items.reduce((sum, item) => sum + item.quantity, 0),
-                    productSummary: group.productSummary || summarizeDistinctLabels(items.map(item => item.productName), 4),
                     user: group.validator || '',
                     comment: '',
                     customerName: '',
@@ -25548,13 +25658,16 @@
                     status: EXIT_STATUS_APPROVED,
                     items,
                     raw: group
-                };
+                });
             }
 
             function normalizeShopSaleToBatch(group) {
                 const summary = calculateGroupSummary(group);
                 const items = (group.items || []).map(item => ({
+                    productId: item.storeProductId || item.shopProductId || '',
                     productName: item.name || '',
+                    packagingLabel: item.packageLabel || '',
+                    packageUnits: item.packageUnits || null,
                     quantity: parseInt(item.quantity, 10) || 0,
                     type: 'Vente boutique',
                     status: group.paymentStatus || 'paid',
@@ -25562,7 +25675,7 @@
                     total: item.total,
                     price: item.price
                 }));
-                return {
+                return finalizeOperationBatch({
                     id: `shop-sale:${group.id}`,
                     type: 'shop_sale',
                     label: getSaleInvoiceLabel(group.id),
@@ -25570,7 +25683,6 @@
                     date: group.date || '',
                     lineCount: items.length,
                     totalQuantity: items.reduce((sum, item) => sum + item.quantity, 0),
-                    productSummary: summarizeDistinctLabels(items.map(item => item.productName), 4),
                     user: group.sellerName || '',
                     comment: (group.comments || []).join(' · '),
                     customerName: group.customerName || '',
@@ -25580,7 +25692,7 @@
                     currency: group.currency || 'CFA',
                     items,
                     raw: group
-                };
+                });
             }
 
             function buildAllOperationBatches() {
@@ -25696,7 +25808,8 @@
             }
 
             function renderMovementBatchCardHtml(batch, { showExport = true, showStore = false } = {}) {
-                const meta = getOperationBatchTypeMeta(batch.type);
+                const sortedBatch = finalizeOperationBatch(batch);
+                const meta = getOperationBatchTypeMeta(sortedBatch.type);
                 const exportButtons = showExport ? `
                     <div class="mt-3 flex flex-wrap items-center justify-end gap-2">
                         <button type="button" data-export-batch-csv="${escapeHtml(batch.id)}" class="inline-flex items-center rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50">CSV</button>
@@ -25713,17 +25826,17 @@
                     ? `<span class="text-xs font-semibold text-emerald-700">${formatCurrency(batch.totalAmount, batch.currency || 'CFA')}</span>`
                     : '';
                 return `
-                    <details class="group rounded-2xl border border-gray-200 bg-gray-50/70" data-operation-batch-id="${escapeHtml(batch.id)}">
+                    <details class="group rounded-2xl border border-gray-200 bg-gray-50/70" data-operation-batch-id="${escapeHtml(sortedBatch.id)}">
                         <summary class="flex cursor-pointer list-none items-start justify-between gap-3 px-4 py-3 hover:bg-gray-100 rounded-2xl">
                             <div class="min-w-0">
                                 <div class="flex flex-wrap items-center gap-2">
                                     <span class="inline-flex items-center rounded-full border ${meta.classes} px-2.5 py-0.5 text-[11px] font-semibold">${escapeHtml(meta.label)}</span>
-                                    <span class="inline-flex items-center rounded-full border border-gray-200 bg-white px-2.5 py-0.5 text-[11px] font-semibold text-gray-700">Lot ${escapeHtml(batch.label || batch.reference || '—')}</span>
-                                    <span class="text-xs text-gray-400">${escapeHtml(formatDateForDisplay(batch.date))}</span>
+                                    <span class="inline-flex items-center rounded-full border border-gray-200 bg-white px-2.5 py-0.5 text-[11px] font-semibold text-gray-700">Lot ${escapeHtml(sortedBatch.label || sortedBatch.reference || '—')}</span>
+                                    <span class="text-xs text-gray-400">${escapeHtml(formatDateForDisplay(sortedBatch.date))}</span>
                                     ${storeLine}
                                 </div>
-                                <p class="mt-2 text-sm font-semibold text-gray-900">${escapeHtml(batch.productSummary || 'Produits groupés')}</p>
-                                <p class="mt-1 text-xs text-gray-500">${batch.lineCount} ligne${batch.lineCount > 1 ? 's' : ''} · ${batch.totalQuantity} unité(s) · ${escapeHtml(batch.user || '—')}</p>
+                                <p class="mt-2 text-sm font-semibold text-gray-900">${escapeHtml(sortedBatch.productSummary || 'Produits groupés')}</p>
+                                <p class="mt-1 text-xs text-gray-500">${sortedBatch.lineCount} ligne${sortedBatch.lineCount > 1 ? 's' : ''} · ${sortedBatch.totalQuantity} unité(s) · ${escapeHtml(sortedBatch.user || '—')}</p>
                                 <div class="mt-1 flex flex-wrap items-center gap-2">${customerLine}${amountLine}</div>
                             </div>
                             <span class="text-gray-400 transition group-open:rotate-180">
@@ -25731,15 +25844,15 @@
                             </span>
                         </summary>
                         <div class="border-t border-gray-200 bg-white px-4 py-3">
-                            ${batch.comment ? `<p class="mb-3 text-xs text-gray-500">${escapeHtml(batch.comment)}</p>` : ''}
+                            ${sortedBatch.comment ? `<p class="mb-3 text-xs text-gray-500">${escapeHtml(sortedBatch.comment)}</p>` : ''}
                             <div class="space-y-2">
-                                ${(batch.items || []).map(item => `
+                                ${(sortedBatch.items || []).map(item => `
                                     <div class="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2">
                                         <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                                            <p class="text-sm font-semibold text-gray-900">${escapeHtml(item.productName || 'Produit')}</p>
-                                            <span class="text-xs font-semibold text-gray-700">${Math.abs(parseInt(item.quantity, 10) || 0)} unité(s)${Number.isFinite(item.change) ? ` · ${item.change >= 0 ? '+' : ''}${item.change}` : ''}</span>
+                                            <p class="text-sm font-semibold text-gray-900">${escapeHtml(item.productName || 'Produit')}${item.packagingLabel ? `<span class="ml-2 text-xs font-normal text-gray-500">${escapeHtml(item.packagingLabel)}</span>` : ''}</p>
+                                            <span class="text-xs font-semibold text-gray-700">${escapeHtml(formatBatchItemQuantityLabel(item))}${Number.isFinite(item.change) ? ` · ${item.change >= 0 ? '+' : ''}${item.change}` : ''}</span>
                                         </div>
-                                        <p class="mt-1 text-xs text-gray-500">${escapeHtml(item.type || '')}${item.comment ? ` · ${escapeHtml(item.comment)}` : ''}${item.total !== undefined && item.total !== null ? ` · ${formatCurrency(item.total, batch.currency || 'CFA')}` : ''}</p>
+                                        <p class="mt-1 text-xs text-gray-500">${escapeHtml(item.type || '')}${item.comment ? ` · ${escapeHtml(item.comment)}` : ''}${item.total !== undefined && item.total !== null ? ` · ${formatCurrency(item.total, sortedBatch.currency || 'CFA')}` : ''}</p>
                                     </div>
                                 `).join('')}
                             </div>
@@ -25751,9 +25864,10 @@
 
             function getOperationBatchById(batchId) {
                 if (!batchId) return null;
-                return buildAllOperationBatches().find(batch => batch.id === batchId)
-                    || buildStoreMovementBatchGroups().find(batch => batch.id === batchId)
+                const batch = buildAllOperationBatches().find(item => item.id === batchId)
+                    || buildStoreMovementBatchGroups().find(item => item.id === batchId)
                     || null;
+                return batch ? finalizeOperationBatch(batch) : null;
             }
 
             function exportOperationBatchCsv(batch) {
@@ -27188,7 +27302,7 @@
                     const sellerName = currentUserData?.fullName || currentUser.email || '';
                     const saleGroupId = push(ref(db, `${dbBasePath}/salesHistory`)).key || `store-sale-${Date.now()}`;
                     const batchShortLabel = formatTransferBatchShortLabel(batchId);
-                    const batchProductSummary = summarizeDistinctLabels(preview.rows.map(row => row.product?.name || ''), 4);
+                    const batchProductSummary = summarizeBatchPreviewRows(preview.rows, 4);
                     const batchLineCount = preview.rows.length;
                     Object.entries(preview.finalStocks).forEach(([productId, finalStock]) => {
                         updates[`${dbBasePath}/storeProducts/${productId}/quantityInStore`] = finalStock;
@@ -27330,7 +27444,7 @@
                     const updates = {};
                     const requesterName = currentUserData?.fullName || currentUser.email || '';
                     const batchShortLabel = formatTransferBatchShortLabel(batchId);
-                    const batchProductSummary = summarizeDistinctLabels(preview.rows.map(row => row.product?.name || ''), 4);
+                    const batchProductSummary = summarizeBatchPreviewRows(preview.rows, 4);
                     const batchLineCount = preview.rows.length;
                     Object.entries(preview.finalStocks).forEach(([productId, finalStock]) => {
                         updates[`${dbBasePath}/storeProducts/${productId}/quantityInStore`] = finalStock;
