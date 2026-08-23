@@ -18930,67 +18930,184 @@
                 return !!(primary && hasUsableSellingPrice(primary.storePrice));
             }
 
-            function getShopPriceForStoreExit(product) {
-                if (!product) return NaN;
-                const legacyShopPrice = Number(product.boutiqueSellingPrice);
-                if (hasUsableSellingPrice(legacyShopPrice)) return legacyShopPrice;
-                const primary = getPrimaryPackaging(product);
-                if (primary && hasUsableSellingPrice(primary.shopPrice)) return Number(primary.shopPrice);
-                const derivedPrice = getPackageSellingPrice(product, 'detail');
-                if (hasUsableSellingPrice(derivedPrice)) return derivedPrice;
+            function getStorePackageSellingPrice(product, packageRef = null) {
+                const packaging = findPackagingByRef(product, packageRef);
+                if (packaging && hasUsableSellingPrice(packaging.storePrice)) return Number(packaging.storePrice);
                 const packagings = getProductPackagings(product);
-                const reference = packagings.find(item => hasUsableSellingPrice(item.shopPrice) && Number(item.unitCount) > 0);
-                if (reference) return Number(reference.shopPrice);
+                if (packaging && packagings.length) {
+                    const reference = packagings.find(item => hasUsableSellingPrice(item.storePrice) && Number(item.unitCount) > 0);
+                    if (reference) {
+                        const base = Number(reference.storePrice);
+                        const units = Number(packaging.unitCount) || 1;
+                        const refUnits = Number(reference.unitCount) || 1;
+                        return roundAmount((base / refUnits) * units);
+                    }
+                }
+                const legacyStore = Number(product?.storeSellingPrice);
+                if (hasUsableSellingPrice(legacyStore)) {
+                    if (!packaging || !packagings.length) return legacyStore;
+                    const primary = getPrimaryPackaging(product);
+                    if (primary && Number(primary.unitCount) > 0) {
+                        const units = Number(packaging.unitCount) || 1;
+                        const refUnits = Number(primary.unitCount) || 1;
+                        return roundAmount((legacyStore / refUnits) * units);
+                    }
+                    return legacyStore;
+                }
                 return NaN;
             }
 
-            function getStoreExitPriceContext(product) {
-                const storePrice = normalizeSaleUnitPrice(getStoreSellingPrice(product));
-                if (storePrice !== null) {
+            function getShopPackagePriceForStoreExit(product, packageRef = null) {
+                const price = getPackageSellingPrice(product, packageRef);
+                return hasUsableSellingPrice(price) ? price : NaN;
+            }
+
+            function getStoreExitBillingQuantity(snapshot = {}) {
+                if (snapshot.packagingQuantity && snapshot.packagingCode) {
+                    return Number(snapshot.packagingQuantity) || 0;
+                }
+                return Number(snapshot.quantity) || 0;
+            }
+
+            function getStoreExitPriceScope(snapshot = {}) {
+                return snapshot.packagingQuantity && snapshot.packagingCode ? 'packaging' : 'base';
+            }
+
+            function getStoreExitPriceUnitLabel(snapshot = {}, priceContext = {}) {
+                if (getStoreExitPriceScope(snapshot) === 'packaging') {
+                    return snapshot.packagingLabel || priceContext.packagingLabel || 'conditionnement';
+                }
+                const product = snapshot.product || getActiveStoreProductById(snapshot.productId);
+                return getProductBaseUnitLabel(product);
+            }
+
+            function getStoreExitPriceContext(product, packagingCode = null, snapshot = null) {
+                const packaging = packagingCode ? findPackagingByRef(product, packagingCode) : null;
+                const priceScope = snapshot ? getStoreExitPriceScope(snapshot) : (packaging && Number(packaging.unitCount) > 1 ? 'packaging' : 'base');
+                const packageRef = packaging?.code
+                    || packagingCode
+                    || (priceScope === 'base' ? 'detail' : null);
+                const packagingLabel = packaging?.label
+                    || (priceScope === 'base' ? getProductBaseUnitLabel(product) : getPackageLabel(packageRef, product));
+
+                const storeUnitPrice = normalizeSaleUnitPrice(getStorePackageSellingPrice(product, packageRef));
+                if (storeUnitPrice !== null) {
                     return {
-                        sellingPrice: storePrice,
+                        unitPrice: storeUnitPrice,
+                        sellingPrice: storeUnitPrice,
+                        priceScope,
+                        packagingLabel,
                         requiresShopPriceConfirmation: false,
                         shopFallbackPrice: null,
                         priceSource: 'store'
                     };
                 }
-                const shopPrice = normalizeSaleUnitPrice(getShopPriceForStoreExit(product));
-                if (shopPrice !== null) {
+
+                const shopUnitPrice = normalizeSaleUnitPrice(getShopPackagePriceForStoreExit(product, packageRef));
+                if (shopUnitPrice !== null) {
                     return {
+                        unitPrice: null,
                         sellingPrice: null,
+                        shopFallbackPrice: shopUnitPrice,
+                        priceScope,
+                        packagingLabel,
                         requiresShopPriceConfirmation: true,
-                        shopFallbackPrice: shopPrice,
                         priceSource: 'shop_pending'
                     };
                 }
+
                 return {
+                    unitPrice: null,
                     sellingPrice: null,
-                    requiresShopPriceConfirmation: false,
                     shopFallbackPrice: null,
+                    priceScope,
+                    packagingLabel,
+                    requiresShopPriceConfirmation: false,
                     priceSource: 'none'
                 };
             }
 
-            function resolveConfirmedStoreExitPrice(product, shopPriceConfirmed = false) {
-                const context = getStoreExitPriceContext(product);
-                if (context.sellingPrice !== null) {
+            function resolveStoreExitLinePricing(snapshot, { shopPriceConfirmed = false } = {}) {
+                const priceContext = getStoreExitPriceContext(
+                    snapshot.product,
+                    snapshot.packagingCode || null,
+                    snapshot
+                );
+                const billingQuantity = getStoreExitBillingQuantity(snapshot);
+                let unitPrice = priceContext.sellingPrice;
+                let shopPriceApplied = false;
+
+                if (unitPrice === null && priceContext.requiresShopPriceConfirmation && shopPriceConfirmed) {
+                    unitPrice = priceContext.shopFallbackPrice;
+                    shopPriceApplied = true;
+                }
+
+                if (unitPrice === null) {
                     return {
-                        ...context,
+                        ...priceContext,
+                        billingQuantity,
+                        pricePending: !priceContext.requiresShopPriceConfirmation,
+                        requiresShopPriceConfirmation: priceContext.requiresShopPriceConfirmation,
+                        totalAmount: null,
                         shopPriceApplied: false
                     };
                 }
-                if (context.requiresShopPriceConfirmation && shopPriceConfirmed) {
+
+                const totalAmount = unitPrice * billingQuantity;
+                return {
+                    ...priceContext,
+                    unitPrice,
+                    sellingPrice: unitPrice,
+                    billingQuantity,
+                    totalAmount,
+                    pricePending: false,
+                    requiresShopPriceConfirmation: priceContext.requiresShopPriceConfirmation && !shopPriceConfirmed,
+                    shopPriceApplied
+                };
+            }
+
+            function resolveConfirmedStoreExitPrice(product, shopPriceConfirmed = false, options = {}) {
+                const snapshot = {
+                    product,
+                    productId: product?.id,
+                    quantity: options.baseQuantity ?? options.quantity ?? 1,
+                    packagingCode: options.packagingCode || '',
+                    packagingLabel: options.packagingLabel || '',
+                    packagingQuantity: options.packagingQuantity ?? null
+                };
+                const pricing = resolveStoreExitLinePricing(snapshot, { shopPriceConfirmed });
+                if (pricing.pricePending && !pricing.requiresShopPriceConfirmation) {
                     return {
-                        sellingPrice: context.shopFallbackPrice,
+                        sellingPrice: null,
                         requiresShopPriceConfirmation: false,
-                        shopFallbackPrice: context.shopFallbackPrice,
-                        priceSource: 'shop_confirmed',
-                        shopPriceApplied: true
+                        shopFallbackPrice: null,
+                        shopPriceApplied: false,
+                        totalAmount: null,
+                        priceScope: pricing.priceScope,
+                        packagingLabel: pricing.packagingLabel
+                    };
+                }
+                if (pricing.requiresShopPriceConfirmation && !shopPriceConfirmed) {
+                    return {
+                        sellingPrice: null,
+                        requiresShopPriceConfirmation: true,
+                        shopFallbackPrice: pricing.shopFallbackPrice,
+                        shopPriceApplied: false,
+                        totalAmount: null,
+                        priceScope: pricing.priceScope,
+                        packagingLabel: pricing.packagingLabel,
+                        billingQuantity: pricing.billingQuantity
                     };
                 }
                 return {
-                    ...context,
-                    shopPriceApplied: false
+                    sellingPrice: pricing.sellingPrice,
+                    requiresShopPriceConfirmation: false,
+                    shopFallbackPrice: pricing.shopFallbackPrice,
+                    shopPriceApplied: pricing.shopPriceApplied,
+                    totalAmount: pricing.totalAmount,
+                    billingQuantity: pricing.billingQuantity,
+                    priceScope: pricing.priceScope,
+                    packagingLabel: pricing.packagingLabel
                 };
             }
 
@@ -24947,8 +25064,15 @@
                 updateExitShopPriceConfirmationUI(product);
             }
 
-            function updateExitShopPriceConfirmationUI(product) {
-                const context = product ? getStoreExitPriceContext(product) : null;
+            function updateExitShopPriceConfirmationUI(product, options = {}) {
+                const packagingCode = options.packagingCode || null;
+                const snapshot = product ? {
+                    product,
+                    packagingCode,
+                    packagingQuantity: options.packagingQuantity ?? null,
+                    quantity: options.baseQuantity ?? 1
+                } : null;
+                const context = product ? getStoreExitPriceContext(product, packagingCode, snapshot) : null;
                 const requiresConfirmation = Boolean(context?.requiresShopPriceConfirmation);
                 if (exitShopPricePanel) {
                     exitShopPricePanel.classList.toggle('hidden', !requiresConfirmation);
@@ -24958,9 +25082,51 @@
                 }
                 if (exitShopPriceLabel && context?.shopFallbackPrice !== null) {
                     const currency = product?.currency || 'CFA';
-                    exitShopPriceLabel.textContent = `Appliquer le prix boutique : ${formatCurrency(context.shopFallbackPrice, currency)} / unité`;
+                    const unitLabel = context.packagingLabel || getProductBaseUnitLabel(product);
+                    exitShopPriceLabel.textContent = `Appliquer le prix boutique : ${formatCurrency(context.shopFallbackPrice, currency)} / ${unitLabel}`;
                 }
                 syncExitSubmitButtonState(requiresConfirmation);
+            }
+
+            function updateBulkExitRowShopPriceUI(row) {
+                if (!row) return;
+                const productId = row.querySelector('[data-bulk-exit-field="product"]')?.value || '';
+                const product = productId ? getActiveStoreProductById(productId) : null;
+                const panel = row.querySelector('[data-bulk-exit-shop-price-panel]');
+                const checkbox = row.querySelector('[data-bulk-exit-shop-price-confirm]');
+                const label = row.querySelector('[data-bulk-exit-shop-price-label]');
+                const packagingCode = row.querySelector('[data-bulk-exit-field="packaging"]')?.value || '';
+                const enteredQty = parseNonNegativeInteger(row.querySelector('[data-bulk-exit-field="quantity"]')?.value, 0);
+                const snapshot = product && enteredQty > 0 ? buildBulkExitLineSnapshot({
+                    productId,
+                    packagingCode,
+                    quantityRaw: `${enteredQty}`,
+                    lineNumber: 0
+                }) : null;
+                const context = snapshot ? getStoreExitPriceContext(product, snapshot.packagingCode, snapshot) : null;
+                const requiresConfirmation = Boolean(context?.requiresShopPriceConfirmation);
+                if (panel) panel.classList.toggle('hidden', !requiresConfirmation);
+                if (checkbox) checkbox.checked = false;
+                if (label && context?.shopFallbackPrice !== null) {
+                    const unitLabel = getStoreExitPriceUnitLabel(snapshot, context);
+                    label.textContent = `Appliquer le prix boutique : ${formatCurrency(context.shopFallbackPrice, product.currency || 'CFA')} / ${unitLabel}`;
+                }
+            }
+
+            function isBulkExitLineShopPriceConfirmed(lineNumber) {
+                const draftRow = getBulkExitDraftRows().find(row => row.lineNumber === lineNumber);
+                const rowCheckbox = draftRow?.row?.querySelector('[data-bulk-exit-shop-price-confirm]');
+                if (rowCheckbox) return rowCheckbox.checked;
+                const recapCheckbox = bulkExitLinesList?.querySelector(`[data-bulk-exit-recap-shop-price="${lineNumber}"]`);
+                return recapCheckbox?.checked === true;
+            }
+
+            function syncBulkExitShopPriceCheckboxes(lineNumber, checked) {
+                const draftRow = getBulkExitDraftRows().find(row => row.lineNumber === lineNumber);
+                const rowCheckbox = draftRow?.row?.querySelector('[data-bulk-exit-shop-price-confirm]');
+                const recapCheckbox = bulkExitLinesList?.querySelector(`[data-bulk-exit-recap-shop-price="${lineNumber}"]`);
+                if (rowCheckbox) rowCheckbox.checked = checked;
+                if (recapCheckbox) recapCheckbox.checked = checked;
             }
 
             function syncExitSubmitButtonState(requiresShopPriceConfirmation = null) {
@@ -26768,6 +26934,7 @@
                         quantityMeta.classList.add('hidden');
                     }
                 }
+                updateBulkExitRowShopPriceUI(row);
                 refreshBulkExitDraftSummary();
             }
 
@@ -27052,6 +27219,13 @@
                         <input type="number" min="1" step="1" placeholder="0" data-bulk-exit-field="quantity"
                             class="w-28 rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-orange-400 focus:border-orange-400" />
                         <p data-bulk-exit-quantity-meta class="hidden mt-1 max-w-[180px] text-[11px] leading-4 text-gray-500"></p>
+                        <div data-bulk-exit-shop-price-panel class="hidden mt-2 max-w-[240px] rounded-lg border border-amber-200 bg-amber-50 p-2">
+                            <label class="flex items-start gap-2 cursor-pointer">
+                                <input type="checkbox" data-bulk-exit-shop-price-confirm
+                                    class="mt-0.5 h-3.5 w-3.5 shrink-0 rounded border-amber-300 text-orange-500 focus:ring-orange-400">
+                                <span data-bulk-exit-shop-price-label class="text-[11px] leading-4 text-gray-800"></span>
+                            </label>
+                        </div>
                     </td>
                     <td class="px-3 py-3 align-top text-right">
                         <button type="button" data-bulk-exit-remove
@@ -27375,15 +27549,29 @@
                 tone = 'draft',
                 stockAfterLabel = '',
                 amountLabel = '',
-                amountClass = 'text-gray-900'
+                amountClass = 'text-gray-900',
+                showShopPriceConfirmation = false
             } = {}) {
                 const product = line.product || getActiveStoreProductById(line.productId);
                 const codeHtml = product ? getProductInternalCodeMarkup(product, { prefix: 'Code' }) : '';
                 const quantityLabel = formatBulkExitLineQuantityLabel(line);
                 const borderClass = tone === 'preview' ? 'border-orange-200' : 'border-gray-200';
                 const badgeClass = tone === 'preview' ? 'border-orange-200 bg-orange-50 text-orange-700' : 'border-orange-200 bg-orange-50 text-orange-700';
+                const lineNumber = line.lineNumber || index + 1;
+                const shopPricePanelHtml = showShopPriceConfirmation && line.shopFallbackPrice !== null ? `
+                    <div class="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
+                        <label class="flex items-start gap-2 cursor-pointer">
+                            <input type="checkbox"
+                                data-bulk-exit-recap-shop-price="${lineNumber}"
+                                class="mt-0.5 h-4 w-4 shrink-0 rounded border-amber-300 text-orange-500 focus:ring-orange-400">
+                            <span class="text-xs text-gray-800">
+                                Appliquer le prix boutique : ${formatCurrency(line.shopFallbackPrice, product?.currency || 'CFA')} / ${escapeHtml(getStoreExitPriceUnitLabel(line, line))}
+                            </span>
+                        </label>
+                    </div>
+                ` : '';
                 return `
-                    <article class="rounded-2xl border ${borderClass} bg-white p-4 shadow-sm">
+                    <article class="rounded-2xl border ${borderClass} bg-white p-4 shadow-sm" data-bulk-exit-recap-line="${lineNumber}">
                         <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                             <div class="min-w-0">
                                 <div class="flex flex-wrap items-center gap-2">
@@ -27414,6 +27602,7 @@
                                 </div>
                             ` : ''}
                         </div>
+                        ${shopPricePanelHtml}
                     </article>
                 `;
             }
@@ -27422,7 +27611,17 @@
                 const draftRows = getBulkExitDraftRows().filter(row => !isBulkExitDraftRowBlank(row));
                 const snapshots = draftRows
                     .map(buildBulkExitLineSnapshot)
-                    .filter(Boolean);
+                    .filter(Boolean)
+                    .map((snapshot) => {
+                        const priceContext = getStoreExitPriceContext(snapshot.product, snapshot.packagingCode, snapshot);
+                        return {
+                            ...snapshot,
+                            shopFallbackPrice: priceContext.shopFallbackPrice,
+                            requiresShopPriceConfirmation: priceContext.requiresShopPriceConfirmation,
+                            priceScope: priceContext.priceScope,
+                            packagingLabel: snapshot.packagingLabel || priceContext.packagingLabel
+                        };
+                    });
                 const sortedSnapshots = sortBatchItemsByPackagingDesc(snapshots.map((line) => ({
                     ...line,
                     productName: line.productName || line.product?.name || ''
@@ -27438,8 +27637,19 @@
                     } else {
                         bulkExitLinesEmpty.classList.add('hidden');
                         bulkExitLinesList.innerHTML = sortedSnapshots.map((line, index) =>
-                            renderBulkExitRecapCard(line, { index, tone: 'draft' })
+                            renderBulkExitRecapCard(line, {
+                                index,
+                                tone: 'draft',
+                                showShopPriceConfirmation: line.requiresShopPriceConfirmation === true
+                            })
                         ).join('');
+                        bulkExitLinesList.querySelectorAll('[data-bulk-exit-recap-shop-price]').forEach((checkbox) => {
+                            checkbox.addEventListener('change', () => {
+                                const lineNumber = parseInt(checkbox.getAttribute('data-bulk-exit-recap-shop-price'), 10);
+                                syncBulkExitShopPriceCheckboxes(lineNumber, checkbox.checked);
+                                resetBulkExitPreview();
+                            });
+                        });
                     }
                 }
             }
@@ -27515,32 +27725,33 @@
                         if (!Object.prototype.hasOwnProperty.call(originalStockByProduct, product.id)) {
                             originalStockByProduct[product.id] = Math.max(Number(product.quantityInStore) || 0, 0);
                         }
-                        const priceContext = getStoreExitPriceContext(product);
-                        const hasLinePrice = priceContext.sellingPrice !== null;
-                        const requiresShopPriceConfirmation = priceContext.requiresShopPriceConfirmation === true;
-                        if (requiresShopPriceConfirmation) hasShopPriceConfirmations = true;
+                        const shopPriceConfirmed = isBulkExitLineShopPriceConfirmed(snapshot.lineNumber);
+                        const pricing = resolveStoreExitLinePricing(snapshot, { shopPriceConfirmed });
+                        if (pricing.requiresShopPriceConfirmation) hasShopPriceConfirmations = true;
                         if (!Object.prototype.hasOwnProperty.call(runningStock, product.id)) {
                             runningStock[product.id] = originalStockByProduct[product.id];
                         }
                         const stockBefore = runningStock[product.id];
                         const stockAfter = stockBefore - snapshot.quantity;
                         runningStock[product.id] = stockAfter;
-                        const totalLineAmount = hasLinePrice ? priceContext.sellingPrice * snapshot.quantity : null;
-                        if (hasLinePrice) {
-                            totalAmount += totalLineAmount;
-                        } else if (!requiresShopPriceConfirmation) {
+                        if (pricing.totalAmount !== null) {
+                            totalAmount += pricing.totalAmount;
+                        } else if (pricing.pricePending) {
                             hasPendingPrice = true;
                         }
                         previewRows.push({
                             ...snapshot,
-                            sellingPrice: hasLinePrice ? priceContext.sellingPrice : null,
-                            shopFallbackPrice: priceContext.shopFallbackPrice,
-                            requiresShopPriceConfirmation,
-                            shopPriceApplied: false,
-                            pricePending: !hasLinePrice && !requiresShopPriceConfirmation,
+                            sellingPrice: pricing.sellingPrice,
+                            unitPrice: pricing.unitPrice,
+                            billingQuantity: pricing.billingQuantity,
+                            priceScope: pricing.priceScope,
+                            shopFallbackPrice: pricing.shopFallbackPrice,
+                            requiresShopPriceConfirmation: pricing.requiresShopPriceConfirmation,
+                            shopPriceApplied: pricing.shopPriceApplied,
+                            pricePending: pricing.pricePending,
                             stockBefore,
                             stockAfter,
-                            totalAmount: totalLineAmount
+                            totalAmount: pricing.totalAmount
                         });
                     });
 
@@ -27580,16 +27791,20 @@
                         ${storekeeperPart}
                     `;
                 }
-                renderBulkExitShopPriceConfirmations(preview);
+                if (bulkExitShopPricePanel) {
+                    bulkExitShopPricePanel.innerHTML = '';
+                    bulkExitShopPricePanel.classList.add('hidden');
+                }
                 if (bulkExitPreviewLinesList) {
                     bulkExitPreviewLinesList.innerHTML = preview.rows.map((row, index) => {
                         const currency = row.product.currency || 'CFA';
                         let amountLabel = 'Prix à définir';
                         let amountClass = 'text-amber-600';
+                        const billingQuantity = row.billingQuantity ?? getStoreExitBillingQuantity(row);
                         if (row.pricePending) {
                             amountLabel = 'Prix à définir';
                         } else if (row.requiresShopPriceConfirmation) {
-                            amountLabel = `${formatCurrency(row.shopFallbackPrice * row.quantity, currency)} (à confirmer)`;
+                            amountLabel = `${formatCurrency(row.shopFallbackPrice * billingQuantity, currency)} (à confirmer)`;
                         } else if (row.totalAmount !== null) {
                             amountLabel = formatCurrency(row.totalAmount, currency);
                             amountClass = 'text-gray-900';
@@ -27619,81 +27834,47 @@
                 updateBulkExitConfirmButtonState(preview);
             }
 
-            function renderBulkExitShopPriceConfirmations(preview) {
-                if (!bulkExitShopPricePanel) return;
-                const rowsNeedingConfirmation = (preview?.rows || []).filter(row => row.requiresShopPriceConfirmation);
-                if (!rowsNeedingConfirmation.length) {
-                    bulkExitShopPricePanel.innerHTML = '';
-                    bulkExitShopPricePanel.classList.add('hidden');
-                    return;
-                }
-                bulkExitShopPricePanel.classList.remove('hidden');
-                bulkExitShopPricePanel.innerHTML = `
-                    <p class="text-sm font-semibold text-gray-900">Prix boutique à confirmer</p>
-                    <p class="text-xs text-amber-700">Cochez chaque ligne pour appliquer le prix boutique en sortie magasin.</p>
-                    <div class="space-y-2">
-                        ${rowsNeedingConfirmation.map(row => {
-                            const currency = row.product.currency || 'CFA';
-                            const unitLabel = formatCurrency(row.shopFallbackPrice, currency);
-                            const lineTotal = formatCurrency(row.shopFallbackPrice * row.quantity, currency);
-                            return `
-                                <label class="flex items-start gap-3 rounded-xl border border-amber-100 bg-white px-3 py-2.5 cursor-pointer">
-                                    <input type="checkbox"
-                                        data-bulk-exit-shop-price-confirm="${escapeHtml(row.product.id)}"
-                                        class="mt-0.5 h-4 w-4 shrink-0 rounded border-amber-300 text-orange-500 focus:ring-orange-400">
-                                    <span class="min-w-0 text-sm text-gray-800">
-                                        <span class="font-medium">${escapeHtml(row.product.name || 'Produit')}</span>
-                                        <span class="mt-0.5 block text-xs text-amber-700">Prix boutique : ${unitLabel} / unité · Total ligne : ${lineTotal}</span>
-                                    </span>
-                                </label>
-                            `;
-                        }).join('')}
-                    </div>
-                `;
-                bulkExitShopPricePanel.querySelectorAll('[data-bulk-exit-shop-price-confirm]').forEach((input) => {
-                    input.addEventListener('change', () => {
-                        if (bulkExitPreviewCache) {
-                            updateBulkExitConfirmButtonState(bulkExitPreviewCache);
-                            updateBulkExitPreviewTotal(bulkExitPreviewCache);
-                        }
+            function areBulkExitShopPriceConfirmationsComplete(preview = null) {
+                const lines = getBulkExitDraftRows()
+                    .filter(row => !isBulkExitDraftRowBlank(row))
+                    .map(buildBulkExitLineSnapshot)
+                    .filter(Boolean);
+                if (!lines.length && preview?.rows?.length) {
+                    return preview.rows.every((row) => {
+                        if (!row.requiresShopPriceConfirmation) return true;
+                        return isBulkExitLineShopPriceConfirmed(row.lineNumber);
                     });
+                }
+                return lines.every((snapshot) => {
+                    const context = getStoreExitPriceContext(snapshot.product, snapshot.packagingCode, snapshot);
+                    if (!context.requiresShopPriceConfirmation) return true;
+                    return isBulkExitLineShopPriceConfirmed(snapshot.lineNumber);
                 });
-            }
-
-            function areBulkExitShopPriceConfirmationsComplete(preview) {
-                if (!preview?.hasShopPriceConfirmations) return true;
-                const checkboxes = bulkExitShopPricePanel?.querySelectorAll('[data-bulk-exit-shop-price-confirm]') || [];
-                return Array.from(checkboxes).every(checkbox => checkbox.checked);
             }
 
             function mergeBulkExitShopPriceConfirmations(preview) {
                 if (!preview) return false;
-                if (!preview.hasShopPriceConfirmations) return true;
                 if (!areBulkExitShopPriceConfirmationsComplete(preview)) return false;
-                const confirmedIds = new Set(
-                    Array.from(bulkExitShopPricePanel?.querySelectorAll('[data-bulk-exit-shop-price-confirm]:checked') || [])
-                        .map(checkbox => checkbox.getAttribute('data-bulk-exit-shop-price-confirm'))
-                        .filter(Boolean)
-                );
                 let totalAmount = 0;
                 let hasPendingPrice = false;
                 preview.rows.forEach((row) => {
-                    if (!row.requiresShopPriceConfirmation) {
-                        if (row.sellingPrice !== null) totalAmount += row.totalAmount || 0;
-                        if (row.pricePending) hasPendingPrice = true;
-                        return;
-                    }
-                    if (!confirmedIds.has(row.product.id)) return;
-                    row.sellingPrice = row.shopFallbackPrice;
-                    row.totalAmount = row.shopFallbackPrice * row.quantity;
-                    row.pricePending = false;
-                    row.shopPriceApplied = true;
-                    row.requiresShopPriceConfirmation = false;
-                    totalAmount += row.totalAmount;
+                    const pricing = resolveStoreExitLinePricing(row, {
+                        shopPriceConfirmed: isBulkExitLineShopPriceConfirmed(row.lineNumber)
+                    });
+                    row.sellingPrice = pricing.sellingPrice;
+                    row.unitPrice = pricing.unitPrice;
+                    row.billingQuantity = pricing.billingQuantity;
+                    row.totalAmount = pricing.totalAmount;
+                    row.pricePending = pricing.pricePending;
+                    row.shopPriceApplied = pricing.shopPriceApplied;
+                    row.requiresShopPriceConfirmation = pricing.requiresShopPriceConfirmation;
+                    row.priceScope = pricing.priceScope;
+                    if (row.totalAmount !== null) totalAmount += row.totalAmount;
+                    else if (row.pricePending) hasPendingPrice = true;
                 });
                 preview.totalAmount = totalAmount;
                 preview.hasPendingPrice = hasPendingPrice;
-                preview.hasShopPriceConfirmations = false;
+                preview.hasShopPriceConfirmations = preview.rows.some((row) => row.requiresShopPriceConfirmation);
                 return true;
             }
 
@@ -27707,16 +27888,16 @@
                 let totalAmount = 0;
                 let hasUnconfirmedShopPrice = false;
                 preview.rows.forEach((row) => {
-                    if (row.pricePending) return;
-                    if (row.requiresShopPriceConfirmation) {
+                    const pricing = resolveStoreExitLinePricing(row, {
+                        shopPriceConfirmed: isBulkExitLineShopPriceConfirmed(row.lineNumber)
+                    });
+                    if (pricing.pricePending) return;
+                    if (pricing.requiresShopPriceConfirmation) {
                         hasUnconfirmedShopPrice = true;
-                        const checkbox = bulkExitShopPricePanel?.querySelector(`[data-bulk-exit-shop-price-confirm="${row.product.id}"]`);
-                        if (checkbox?.checked) {
-                            totalAmount += row.shopFallbackPrice * row.quantity;
-                        }
+                        if (pricing.totalAmount !== null) totalAmount += pricing.totalAmount;
                         return;
                     }
-                    totalAmount += row.totalAmount || 0;
+                    totalAmount += pricing.totalAmount || 0;
                 });
                 if (hasUnconfirmedShopPrice) {
                     bulkExitPreviewTotal.textContent = `${formatCurrency(totalAmount, currency)} (partiel)`;
@@ -27726,8 +27907,8 @@
             }
 
             function updateBulkExitConfirmButtonState(preview) {
-                if (!bulkExitConfirmButton || !preview) return;
-                const needsConfirmation = preview.hasShopPriceConfirmations && !areBulkExitShopPriceConfirmationsComplete(preview);
+                if (!bulkExitConfirmButton) return;
+                const needsConfirmation = !areBulkExitShopPriceConfirmationsComplete(preview);
                 bulkExitConfirmButton.disabled = needsConfirmation;
                 bulkExitConfirmButton.classList.toggle('opacity-50', needsConfirmation);
                 bulkExitConfirmButton.classList.toggle('cursor-not-allowed', needsConfirmation);
@@ -27894,7 +28075,7 @@
                     return;
                 }
                 if (!mergeBulkExitShopPriceConfirmations(preview)) {
-                    showBulkExitError('Cochez la confirmation du prix boutique pour chaque produit concerné.');
+                    showBulkExitError('Cochez la confirmation du prix boutique sur chaque ligne ajoutée.');
                     updateBulkExitConfirmButtonState(preview);
                     return;
                 }
@@ -27998,6 +28179,14 @@
                             quantity: row.quantity,
                             sellingPrice: row.sellingPrice,
                             totalAmount: row.totalAmount,
+                            billingQuantity: row.billingQuantity ?? getStoreExitBillingQuantity(row),
+                            priceScope: row.priceScope || getStoreExitPriceScope(row),
+                            packagingCode: row.packagingCode || null,
+                            packagingLabel: row.packagingLabel || '',
+                            packagingQuantity: row.packagingQuantity,
+                            packageCode: row.packagingCode || null,
+                            packageLabel: row.packagingLabel || getStoreExitPriceUnitLabel(row, row),
+                            packageUnits: row.packagingUnits || (row.packagingCode ? getPackageUnits(row.product, row.packagingCode) : 1),
                             pricePending: row.pricePending === true,
                             shopPriceApplied: row.shopPriceApplied === true,
                             pricingStatus: row.pricePending === true ? PENDING_SALE_PRICING_PENDING : PENDING_SALE_PRICING_READY,
@@ -30209,9 +30398,20 @@
                         updates[`${dbBasePath}/storeMovements/${resolvedMovementId}/approvedAt`] = now;
                     }
                     const saleKey = push(ref(db, `${dbBasePath}/salesHistory`)).key;
-                    const sellingPrice = normalizeSaleUnitPrice(getStoreSellingPrice(product));
+                    const exitSnapshot = {
+                        product,
+                        productId: product.id,
+                        quantity,
+                        packagingCode: request.packagingCode || '',
+                        packagingLabel: request.packagingLabel || '',
+                        packagingQuantity: request.packagingQuantity ?? null
+                    };
+                    const exitPricing = resolveStoreExitLinePricing(exitSnapshot, {
+                        shopPriceConfirmed: request.shopPriceApplied === true
+                    });
+                    const sellingPrice = exitPricing.sellingPrice;
                     const hasResolvedPrice = sellingPrice !== null;
-                    const totalAmount = hasResolvedPrice ? sellingPrice * quantity : null;
+                    const totalAmount = hasResolvedPrice ? exitPricing.totalAmount : null;
                     updates[`${dbBasePath}/salesHistory/${saleKey}`] = {
                         id: saleKey,
                         storeProductId: product.id,
@@ -30220,7 +30420,16 @@
                         quantity,
                         sellingPrice,
                         totalAmount,
+                        billingQuantity: exitPricing.billingQuantity,
+                        priceScope: exitPricing.priceScope,
+                        packagingCode: request.packagingCode || null,
+                        packagingLabel: request.packagingLabel || '',
+                        packagingQuantity: request.packagingQuantity ?? null,
+                        packageCode: request.packagingCode || null,
+                        packageLabel: request.packagingLabel || getStoreExitPriceUnitLabel(exitSnapshot, exitPricing),
+                        packageUnits: request.packagingCode ? getPackageUnits(product, request.packagingCode) : 1,
                         pricePending: !hasResolvedPrice,
+                        shopPriceApplied: request.shopPriceApplied === true,
                         pricingStatus: hasResolvedPrice ? PENDING_SALE_PRICING_READY : PENDING_SALE_PRICING_PENDING,
                         manualSellingPrice: sellingPrice,
                         sellerName,
@@ -40422,7 +40631,8 @@
                 }
                 const sellingPriceContext = resolveConfirmedStoreExitPrice(
                     prod,
-                    exitShopPriceConfirmInput?.checked === true
+                    exitShopPriceConfirmInput?.checked === true,
+                    { baseQuantity: qty }
                 );
                 const sellingPrice = sellingPriceContext.sellingPrice;
                 const hasResolvedPrice = sellingPrice !== null;
@@ -40443,7 +40653,9 @@
                     const moveKey = push(ref(db, `${dbBasePath}/storeMovements`)).key;
                     const now = new Date().toISOString();
                     const sellerName = currentUserData?.fullName || currentUser.email || '';
-                    const totalAmount = hasResolvedPrice ? sellingPrice * qty : null;
+                    const totalAmount = hasResolvedPrice
+                        ? (sellingPriceContext.totalAmount ?? sellingPrice * qty)
+                        : null;
                     const updates = {};
                     const newStock = (prod.quantityInStore || 0) - qty;
 
@@ -41445,6 +41657,15 @@
                     if (!row) return;
                     if (event.target.matches('select[data-bulk-exit-field="packaging"]')) {
                         updateBulkExitRowPackagingUI(row);
+                    }
+                    if (event.target.matches('[data-bulk-exit-shop-price-confirm]')) {
+                        const draftRows = getBulkExitDraftRows();
+                        const lineNumber = draftRows.findIndex(item => item.row === row) + 1;
+                        if (lineNumber > 0) {
+                            syncBulkExitShopPriceCheckboxes(lineNumber, event.target.checked);
+                        }
+                        refreshBulkExitDraftSummary();
+                        resetBulkExitPreview();
                     }
                     markBulkExitDraftDirty();
                 });
