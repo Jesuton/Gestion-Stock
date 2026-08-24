@@ -77,6 +77,11 @@
             overflow-y: auto;
         }
 
+        #bulk-exit-modal > div {
+            max-height: min(92vh, 64rem) !important;
+            overflow: hidden !important;
+        }
+
         main {
             padding-bottom: env(safe-area-inset-bottom);
         }
@@ -552,18 +557,11 @@
             flex-shrink: 0;
         }
 
-        @media (min-width: 1280px) {
-            .app-toolbar-scroll.app-toolbar-scroll--end {
-                flex-wrap: nowrap;
-                justify-content: flex-end;
-                overflow-x: auto;
-                overscroll-behavior-x: contain;
-                -webkit-overflow-scrolling: touch;
-                padding-bottom: 0.15rem;
-            }
+        .app-toolbar-scroll.app-toolbar-scroll--end {
+            justify-content: flex-start;
         }
 
-        /* Barre d'actions Mon Magasin : empiler recherche + boutons sur petit écran */
+        /* Barre d'actions Mon Magasin : recherche au-dessus, tous les boutons visibles */
         .page-content .store-inventory-actions {
             flex-direction: column !important;
             align-items: stretch !important;
@@ -571,14 +569,6 @@
             gap: 1rem;
             min-width: 0 !important;
             width: 100%;
-        }
-
-        @media (min-width: 1280px) {
-            .page-content .store-inventory-actions {
-                flex-direction: row !important;
-                align-items: center !important;
-                justify-content: space-between !important;
-            }
         }
 
         .page-content .store-page-header {
@@ -6341,161 +6331,204 @@
         </div>
     </div>
 
-    <div id="bulk-exit-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden">
-        <div class="w-full max-w-6xl m-4 overflow-hidden rounded-3xl border border-white/70 bg-white shadow-2xl">
-            <div class="flex items-start justify-between gap-4 border-b border-gray-100 px-6 py-5">
-                <div>
-                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-orange-600">Magasin</p>
-                    <h2 class="mt-2 text-2xl font-bold text-gray-900">Sorties groupées</h2>
-                    <p class="mt-1 text-sm text-gray-500">Saisissez plusieurs sorties, vérifiez le récapitulatif puis envoyez tout en une seule validation.</p>
+    <div id="bulk-exit-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-2 sm:p-4">
+        <div class="flex max-h-[min(94vh,64rem)] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-white/70 bg-white shadow-2xl sm:rounded-3xl">
+            <div class="flex shrink-0 items-center justify-between gap-3 border-b border-gray-100 px-4 py-2.5 sm:px-5">
+                <div class="min-w-0">
+                    <h2 class="text-lg font-bold leading-6 text-gray-900 sm:text-xl">
+                        <span class="mr-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-orange-600">Magasin</span>
+                        Sorties groupées
+                    </h2>
                 </div>
-                <button id="close-bulk-exit-modal-button" class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button id="close-bulk-exit-modal-button" class="rounded-full p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
                 </button>
             </div>
-            <div class="px-6 py-6 space-y-5">
-                <div class="rounded-2xl border border-orange-100 bg-orange-50/50 p-4">
+            <div id="bulk-exit-composer" data-bulk-exit-row="true"
+                class="shrink-0 border-b border-orange-100 bg-orange-50/40 px-4 py-2.5 sm:px-5">
+                    <div class="grid grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1.4fr)_200px_140px_auto] xl:items-end">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600">Produit *</label>
+                            <div class="relative mt-1" data-bulk-exit-combobox>
+                                <div class="flex items-center gap-1">
+                                    <input type="text" data-bulk-exit-field="search" autocomplete="off" placeholder="Rechercher un produit..."
+                                        class="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-orange-400 focus:border-orange-400" />
+                                    <button type="button" data-bulk-exit-toggle
+                                        class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 hover:bg-gray-50"
+                                        aria-label="Afficher les produits">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div data-bulk-exit-dropdown class="product-combobox-dropdown bulk-row-combobox-dropdown hidden absolute left-0 right-0 z-30 mt-1 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
+                                    <div data-bulk-exit-options class="product-combobox-options-panel max-h-56 space-y-1 overflow-y-auto p-2"></div>
+                                    <div data-bulk-exit-empty class="hidden px-4 py-5 text-sm text-gray-400">Aucun produit correspondant.</div>
+                                </div>
+                                <select data-bulk-exit-field="product" class="hidden"></select>
+                            </div>
+                        </div>
+                        <div id="bulk-exit-packaging-header" data-bulk-exit-packaging-cell class="hidden">
+                            <label class="block text-xs font-medium text-gray-600">Conditionnement</label>
+                            <select data-bulk-exit-field="packaging"
+                                class="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-orange-400 focus:border-orange-400">
+                            </select>
+                        </div>
+                        <div>
+                            <label data-bulk-exit-quantity-label class="block text-xs font-medium text-gray-600">Quantité *</label>
+                            <input type="number" min="1" step="1" placeholder="0" data-bulk-exit-field="quantity"
+                                class="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-orange-400 focus:border-orange-400" />
+                            <p data-bulk-exit-quantity-meta class="hidden mt-1 text-[11px] leading-4 text-gray-500"></p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button type="button" id="bulk-exit-add-row-button"
+                                class="inline-flex items-center gap-1.5 rounded-xl bg-orange-500 px-3 py-2 text-sm font-semibold text-white hover:bg-orange-600">
+                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                </svg>
+                                Ajouter
+                            </button>
+                            <button type="button" id="bulk-exit-reset-composer-button"
+                                class="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100">
+                                Réinitialiser
+                            </button>
+                        </div>
+                    </div>
+                    <div data-bulk-exit-shop-price-panel class="hidden mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2">
+                        <label class="flex items-start gap-2 cursor-pointer">
+                            <input type="checkbox" data-bulk-exit-shop-price-confirm
+                                class="mt-0.5 h-4 w-4 shrink-0 rounded border-amber-300 text-orange-500 focus:ring-orange-400">
+                            <span data-bulk-exit-shop-price-label class="text-xs leading-5 text-gray-800"></span>
+                        </label>
+                    </div>
+            </div>
+            <div id="bulk-exit-scroll" class="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3 sm:px-5">
+                <div id="bulk-exit-draft-page" class="space-y-3">
+                <div class="rounded-2xl border border-orange-100 bg-orange-50/50 p-3">
                     <div class="flex items-center gap-2 text-sm font-semibold text-gray-900">
-                        <svg class="w-4 h-4 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg class="h-4 w-4 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A4 4 0 0112 15a4 4 0 016.879 2.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
-                        Client concerné par ce lot
+                        Client
                     </div>
-                    <p class="mt-1 text-xs text-gray-500">Une sortie groupée correspond à un seul client. Saisissez ses informations une seule fois.</p>
-                    <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="mt-2 grid grid-cols-1 gap-2 md:grid-cols-3">
                         <div>
-                            <label for="bulk-exit-customer-name" class="block text-sm font-medium text-gray-700">Nom du client *</label>
+                            <label for="bulk-exit-customer-name" class="block text-xs font-medium text-gray-600">Nom du client *</label>
                             <input type="text" id="bulk-exit-customer-name" placeholder="Nom du client"
-                                class="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:ring-2 focus:ring-orange-400 focus:border-orange-400" />
+                                class="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 focus:border-orange-400" />
                         </div>
                         <div>
-                            <label for="bulk-exit-customer-phone" class="block text-sm font-medium text-gray-700">Téléphone</label>
+                            <label for="bulk-exit-customer-phone" class="block text-xs font-medium text-gray-600">Téléphone</label>
                             <input type="tel" id="bulk-exit-customer-phone" placeholder="+225..."
-                                class="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:ring-2 focus:ring-orange-400 focus:border-orange-400" />
+                                class="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 focus:border-orange-400" />
                         </div>
                         <div>
-                            <label for="bulk-exit-customer-email" class="block text-sm font-medium text-gray-700">Email</label>
+                            <label for="bulk-exit-customer-email" class="block text-xs font-medium text-gray-600">Email</label>
                             <input type="email" id="bulk-exit-customer-email" placeholder="Email optionnel"
-                                class="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:ring-2 focus:ring-orange-400 focus:border-orange-400" />
+                                class="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 focus:border-orange-400" />
                         </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 gap-2 md:grid-cols-3">
                     <div>
-                        <label for="bulk-exit-delivery-name" class="block text-sm font-medium text-gray-700">Livreur / Réceptionnaire</label>
+                        <label for="bulk-exit-delivery-name" class="block text-xs font-medium text-gray-600">Livreur / Réceptionnaire</label>
                         <input type="text" id="bulk-exit-delivery-name" placeholder="Nom du livreur ou du réceptionnaire"
-                            class="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:ring-2 focus:ring-orange-400 focus:border-orange-400" />
+                            class="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 focus:border-orange-400" />
                     </div>
                     <div>
-                        <label for="bulk-exit-storekeeper-name" class="block text-sm font-medium text-gray-700">Nom du magasinier</label>
+                        <label for="bulk-exit-storekeeper-name" class="block text-xs font-medium text-gray-600">Nom du magasinier</label>
                         <input type="text" id="bulk-exit-storekeeper-name" placeholder="Nom du magasinier"
-                            class="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:ring-2 focus:ring-orange-400 focus:border-orange-400" />
+                            class="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 focus:border-orange-400" />
                     </div>
                     <div>
-                        <label for="bulk-exit-comment" class="block text-sm font-medium text-gray-700">Commentaire global</label>
+                        <label for="bulk-exit-comment" class="block text-xs font-medium text-gray-600">Commentaire</label>
                         <input type="text" id="bulk-exit-comment" placeholder="Ex: tournée du matin"
-                            class="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:ring-2 focus:ring-orange-400 focus:border-orange-400" />
+                            class="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 focus:border-orange-400" />
                     </div>
                 </div>
 
-                <div class="rounded-2xl border border-gray-200">
-                    <div class="flex items-center justify-between gap-3 border-b border-gray-200 bg-gray-50 px-4 py-3">
-                        <div>
-                            <p class="text-sm font-semibold text-gray-900">Lignes de sortie</p>
-                            <p class="text-xs text-gray-500">Ajoutez seulement les produits et les quantités pour ce client.</p>
-                        </div>
-                        <button type="button" id="bulk-exit-add-row-button"
-                            class="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-3 py-2 text-xs font-semibold text-white hover:bg-orange-600">
-                            Ajouter une ligne
-                        </button>
-                    </div>
-                    <div class="overflow-x-auto multi-line-table-scroll">
-                        <table class="min-w-full divide-y divide-gray-200 text-sm">
-                            <thead class="sticky top-0 z-10 bg-gray-50">
-                                <tr>
-                                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Produit</th>
-                                    <th id="bulk-exit-packaging-header" class="hidden px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Conditionnement</th>
-                                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Qté</th>
-                                    <th class="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="bulk-exit-rows-tbody" class="divide-y divide-gray-200 bg-white"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="rounded-2xl border border-gray-200 bg-gray-50/60 p-4">
-                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div class="rounded-2xl border border-gray-200 bg-white p-3">
+                    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <h3 class="text-sm font-semibold text-gray-900">Produits ajoutés</h3>
-                            <p class="mt-1 text-xs text-gray-500">Récapitulatif des lignes saisies, du plus grand conditionnement au plus petit.</p>
                         </div>
-                        <div class="flex flex-wrap items-center gap-2 text-sm text-gray-600">
-                            <span class="inline-flex items-center rounded-full border border-gray-200 bg-white px-3 py-1 font-semibold text-gray-700">
+                        <div class="flex flex-wrap items-center gap-2 text-xs text-gray-600">
+                            <span class="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 font-semibold text-gray-700">
                                 Lignes: <span id="bulk-exit-summary-lines" class="ml-1">0</span>
                             </span>
-                            <span class="inline-flex items-center rounded-full border border-gray-200 bg-white px-3 py-1 font-semibold text-gray-700">
-                                Quantité totale: <span id="bulk-exit-summary-quantity" class="ml-1">0</span>
+                            <span class="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 font-semibold text-gray-700">
+                                Qté: <span id="bulk-exit-summary-quantity" class="ml-1">0</span>
                             </span>
                         </div>
                     </div>
                     <div id="bulk-exit-lines-empty"
-                        class="mt-4 flex items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-white px-4 py-8 text-center text-sm text-gray-400">
+                        class="mt-2 flex items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 px-3 py-3 text-center text-sm text-gray-400">
                         Aucun produit ajouté.
                     </div>
-                    <div id="bulk-exit-lines-list" class="mt-4 space-y-3"></div>
+                    <div id="bulk-exit-lines-list" class="mt-3 hidden overflow-hidden rounded-xl border border-gray-200"></div>
+                </div>
                 </div>
 
                 <p id="bulk-exit-error" class="hidden rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600"></p>
 
-                <div id="bulk-exit-preview-section" class="hidden rounded-2xl border border-orange-200 bg-orange-50/40 p-4 space-y-4">
-                    <div class="flex items-start justify-between gap-3">
-                        <div>
-                            <p class="text-sm font-semibold text-gray-900">Récapitulatif avant validation</p>
-                            <p class="text-xs text-gray-500 mt-1">Vérifiez le client, les quantités et l'impact stock avant d'envoyer.</p>
-                        </div>
-                        <div class="text-right text-xs text-gray-500">
-                            <p>Lignes: <span id="bulk-exit-preview-count" class="font-semibold text-gray-900">0</span></p>
-                            <p class="mt-1">Quantité totale: <span id="bulk-exit-preview-quantity" class="font-semibold text-gray-900">0</span></p>
-                            <p class="mt-1">Montant estimé: <span id="bulk-exit-preview-total" class="font-semibold text-gray-900">0 FCFA</span></p>
+                <div id="bulk-exit-preview-section" class="hidden space-y-3">
+                    <div class="rounded-2xl border border-orange-200 bg-orange-50/50 px-4 py-3">
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                                <p class="text-sm font-semibold text-gray-900">Récapitulatif</p>
+                                <div id="bulk-exit-preview-customer" class="mt-1 text-sm text-gray-700"></div>
+                            </div>
+                            <div class="flex flex-wrap gap-2 text-xs">
+                                <span class="inline-flex items-center rounded-full border border-orange-200 bg-white px-2.5 py-1 font-semibold text-gray-700">
+                                    Lignes: <span id="bulk-exit-preview-count" class="ml-1 text-gray-900">0</span>
+                                </span>
+                                <span class="inline-flex items-center rounded-full border border-orange-200 bg-white px-2.5 py-1 font-semibold text-gray-700">
+                                    Qté totale: <span id="bulk-exit-preview-quantity" class="ml-1 text-gray-900">0</span>
+                                </span>
+                                <span class="inline-flex items-center rounded-full border border-orange-200 bg-white px-2.5 py-1 font-semibold text-gray-700">
+                                    Montant: <span id="bulk-exit-preview-total" class="ml-1 text-gray-900">0 FCFA</span>
+                                </span>
+                            </div>
                         </div>
                     </div>
-                    <div id="bulk-exit-preview-customer"
-                        class="rounded-xl border border-orange-100 bg-white px-4 py-3 text-sm text-gray-700"></div>
-                    <div id="bulk-exit-shop-price-panel" class="hidden space-y-2 rounded-xl border border-amber-200 bg-amber-50 p-4"></div>
-                    <div id="bulk-exit-preview-lines-list" class="space-y-3"></div>
-                    <div class="hidden overflow-x-auto rounded-xl border border-orange-100 bg-white">
-                        <table class="min-w-full divide-y divide-gray-200 text-sm">
-                            <thead class="bg-orange-50">
-                                <tr>
-                                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-orange-700">Produit</th>
-                                    <th class="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wide text-orange-700">Qté</th>
-                                    <th class="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wide text-orange-700">Stock après</th>
-                                    <th class="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wide text-orange-700">Montant</th>
-                                </tr>
-                            </thead>
-                            <tbody id="bulk-exit-preview-tbody" class="divide-y divide-gray-200"></tbody>
-                        </table>
+                    <div id="bulk-exit-shop-price-panel" class="hidden space-y-2 rounded-xl border border-amber-200 bg-amber-50 p-3"></div>
+                    <div class="overflow-hidden rounded-xl border border-gray-200">
+                        <div class="grid grid-cols-[1.5rem_minmax(0,1fr)_auto_auto] items-center gap-3 border-b border-gray-200 bg-gray-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-500 sm:grid-cols-[1.5rem_minmax(0,1fr)_minmax(6.5rem,auto)_minmax(6.5rem,auto)_minmax(6rem,auto)_minmax(6rem,auto)]">
+                            <span>#</span>
+                            <span>Produit</span>
+                            <span class="text-right">Qté</span>
+                            <span class="hidden text-right sm:block">Prix unit.</span>
+                            <span class="hidden text-right sm:block">Stock après</span>
+                            <span class="text-right">Montant</span>
+                        </div>
+                        <div id="bulk-exit-preview-lines-list"></div>
+                    </div>
+                    <div class="hidden">
+                        <tbody id="bulk-exit-preview-tbody"></tbody>
                     </div>
                 </div>
 
-                <div class="flex flex-col-reverse sm:flex-row gap-3">
+            </div>
+            <div class="flex shrink-0 flex-col-reverse gap-2 border-t border-gray-100 bg-white px-4 py-2.5 sm:flex-row sm:px-5">
                     <button type="button" id="bulk-exit-cancel-button"
-                        class="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-50">
+                        class="flex-1 rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50">
                         Annuler
                     </button>
+                    <button type="button" id="bulk-exit-back-button"
+                        class="hidden flex-1 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                        Retour
+                    </button>
                     <button type="button" id="bulk-exit-preview-button"
-                        class="flex-1 rounded-xl border border-orange-200 bg-white px-4 py-3 text-sm font-semibold text-orange-700 hover:bg-orange-50">
+                        class="flex-1 rounded-xl border border-orange-200 bg-white px-4 py-2 text-sm font-semibold text-orange-700 hover:bg-orange-50">
                         Voir le récapitulatif
                     </button>
                     <button type="button" id="bulk-exit-confirm-button"
-                        class="hidden flex-1 rounded-xl bg-orange-500 px-4 py-3 text-sm font-semibold text-white hover:bg-orange-600">
+                        class="hidden flex-1 rounded-xl bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600">
                         Confirmer et envoyer
                     </button>
-                </div>
             </div>
         </div>
     </div>
@@ -7399,7 +7432,7 @@
     </div>
 
     <!-- Modal: Détails de vente -->
-    <div id="sales-detail-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+    <div id="sales-detail-modal" class="fixed inset-0 z-[75] flex items-center justify-center bg-black bg-opacity-50 hidden">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-xl p-6 m-4 max-h-[90vh] overflow-y-auto">
             <div class="flex items-center justify-between">
                 <h2 id="sales-detail-title" class="text-xl font-bold text-gray-900">Détails de la vente</h2>
@@ -7509,8 +7542,23 @@
         </div>
     </div>
 
+    <div id="store-validation-invoice-modal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/50 p-3">
+        <div class="flex max-h-[min(92vh,56rem)] w-full max-w-4xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+            <div class="flex shrink-0 items-center justify-between gap-3 border-b border-gray-100 px-4 py-2.5">
+                <h2 id="store-validation-invoice-modal-title" class="text-base font-bold text-gray-900">Facture magasin</h2>
+                <button type="button" id="close-store-validation-invoice-modal-button"
+                    class="rounded-full p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div id="store-validation-invoice-modal-body" class="min-h-0 flex-1 overflow-y-auto p-4"></div>
+        </div>
+    </div>
+
     <!-- Modal: Envoyer vers panier (depuis validation magasin) -->
-    <div id="send-to-cart-modal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/50 p-4">
+    <div id="send-to-cart-modal" class="fixed inset-0 z-[70] hidden items-center justify-center bg-black/50 p-4">
         <div class="flex max-h-[90vh] w-full max-w-sm flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
             <div class="flex items-center justify-between border-b border-gray-100 px-6 py-5">
                 <div>
@@ -9106,7 +9154,13 @@
             const bulkExitStorekeeperNameInput = document.getElementById('bulk-exit-storekeeper-name');
             const bulkExitCommentInput = document.getElementById('bulk-exit-comment');
             const bulkExitRowsTbody = document.getElementById('bulk-exit-rows-tbody');
+            const bulkExitComposer = document.getElementById('bulk-exit-composer');
+            const bulkExitScroll = document.getElementById('bulk-exit-scroll');
             const bulkExitAddRowButton = document.getElementById('bulk-exit-add-row-button');
+            const bulkExitResetComposerButton = document.getElementById('bulk-exit-reset-composer-button');
+            const bulkExitLinesEmpty = document.getElementById('bulk-exit-lines-empty');
+            const bulkExitLinesList = document.getElementById('bulk-exit-lines-list');
+            const bulkExitDraftPage = document.getElementById('bulk-exit-draft-page');
             const bulkExitError = document.getElementById('bulk-exit-error');
             const bulkExitPreviewSection = document.getElementById('bulk-exit-preview-section');
             const bulkExitPreviewCount = document.getElementById('bulk-exit-preview-count');
@@ -9118,13 +9172,14 @@
             const bulkExitPreviewTbody = document.getElementById('bulk-exit-preview-tbody');
             const bulkExitSummaryLines = document.getElementById('bulk-exit-summary-lines');
             const bulkExitSummaryQuantity = document.getElementById('bulk-exit-summary-quantity');
-            const bulkExitLinesEmpty = document.getElementById('bulk-exit-lines-empty');
-            const bulkExitLinesList = document.getElementById('bulk-exit-lines-list');
             const bulkExitCancelButton = document.getElementById('bulk-exit-cancel-button');
+            const bulkExitBackButton = document.getElementById('bulk-exit-back-button');
             const bulkExitPreviewButton = document.getElementById('bulk-exit-preview-button');
             const bulkExitConfirmButton = document.getElementById('bulk-exit-confirm-button');
             const bulkExitPackagingHeader = document.getElementById('bulk-exit-packaging-header');
             let bulkExitRowSequence = 0;
+            let bulkExitLines = [];
+            let bulkExitEditingLineId = '';
 
             const openTransferModalButton = document.getElementById('open-transfer-modal-button');
             const transferModal = document.getElementById('transfer-modal');
@@ -9266,6 +9321,11 @@
             const incompletePricingCancelButton = document.getElementById('incomplete-pricing-cancel-button');
             const incompletePricingCloseButton = document.getElementById('incomplete-pricing-close-button');
             let appToastHideTimer = null;
+            const storeValidationInvoiceModal = document.getElementById('store-validation-invoice-modal');
+            const storeValidationInvoiceModalTitle = document.getElementById('store-validation-invoice-modal-title');
+            const storeValidationInvoiceModalBody = document.getElementById('store-validation-invoice-modal-body');
+            const closeStoreValidationInvoiceModalButton = document.getElementById('close-store-validation-invoice-modal-button');
+            let activeStoreValidationInvoiceId = '';
             const salesDetailModal = document.getElementById('sales-detail-modal');
             const closeSalesDetailModalButton = document.getElementById('close-sales-detail-modal-button');
             const salesDetailTitle = document.getElementById('sales-detail-title');
@@ -10956,11 +11016,28 @@
                     });
             }
 
+            function getProductLargestPackagingUnits(product) {
+                const packagings = getProductPackagings(product);
+                if (!packagings.length) return 1;
+                return Math.max(...packagings.map((packaging) => Number(packaging.unitCount) || 1));
+            }
+
+            function compareStoreProductsByPackagingDesc(a, b) {
+                const unitsDiff = getProductLargestPackagingUnits(b) - getProductLargestPackagingUnits(a);
+                if (unitsDiff !== 0) return unitsDiff;
+                return String(a?.name || '').localeCompare(String(b?.name || ''), 'fr', { sensitivity: 'base' });
+            }
+
+            function formatStoreExitProductStockBadge(product) {
+                const qty = parseNonNegativeInteger(product?.quantityInStore, 0);
+                return formatProductStockBreakdown(qty, product, { includeBaseTotal: false });
+            }
+
             function getExitProductComboboxItems(search = '') {
                 const normalized = normalizeString(search);
                 return getActiveStoreProducts()
                     .filter(product => !normalized || matchesStoreProductSearch(product, search))
-                    .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+                    .sort(compareStoreProductsByPackagingDesc)
                     .map(product => {
                         const qty = parseNonNegativeInteger(product.quantityInStore, 0);
                         const hasSellingPrice = Number.isFinite(getStoreSellingPrice(product));
@@ -10969,7 +11046,7 @@
                             title: product.name || 'Produit sans nom',
                             meta: getProductInternalCodeText(product),
                             description: product.description || (!hasSellingPrice ? 'Prix en attente. Le transfert reste autorisé.' : ''),
-                            badge: hasSellingPrice ? `Stock ${qty}` : 'Prix en attente',
+                            badge: hasSellingPrice ? formatStoreExitProductStockBadge(product) : 'Prix en attente',
                             badgeClasses: hasSellingPrice
                                 ? (qty > 0 ? 'bg-orange-50 text-orange-700' : 'bg-rose-50 text-rose-700')
                                 : 'bg-amber-50 text-amber-700',
@@ -13975,6 +14052,7 @@
 
                 cartItems = newCartItems;
                 closeSendToCartModal();
+                closeStoreValidationInvoiceModal();
                 currentPage = 'Ventes';
                 updateUI();
                 renderCart();
@@ -16969,6 +17047,323 @@
                 }
             }
 
+            const STORE_VALIDATION_LINE_BANDS = [
+                'bg-emerald-50/80 border-l-4 border-l-emerald-400',
+                'bg-sky-50/80 border-l-4 border-l-sky-400',
+                'bg-amber-50/70 border-l-4 border-l-amber-400',
+                'bg-violet-50/80 border-l-4 border-l-violet-400',
+                'bg-rose-50/70 border-l-4 border-l-rose-400',
+                'bg-teal-50/80 border-l-4 border-l-teal-400'
+            ];
+
+            function renderStoreValidationInvoiceCard(group, canValidateStore) {
+                const summary = group.hasPendingPrice ? null : calculateGroupSummary(group);
+                const currency = group.items[0]?.currency || 'CFA';
+                const { dateLabel, timeLabel } = formatHistoryDateParts(group.date || new Date().toISOString());
+                const customerLabel = group.customerName || 'Client comptoir';
+                const customerEmail = group.customerEmail || '';
+                const invoiceKey = group.invoiceId || group.id;
+                const sourceBadge = formatSaleSourceBadge(group.saleSource);
+                const sourceHtml = sourceBadge
+                    ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold ${sourceBadge.classes}">${sourceBadge.label}</span>`
+                    : '';
+                const complementBadge = getStoreValidationComplementBadge(group);
+                const complementHtml = complementBadge
+                    ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold ${complementBadge.classes}">${complementBadge.label}</span>`
+                    : '';
+                const boutiqueLabel = getGroupBoutiqueLabel(group);
+                const boutiqueHtml = boutiqueLabel
+                    ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-cyan-50 text-cyan-700">Boutique: ${boutiqueLabel}</span>`
+                    : '';
+                const detailsButtonHtml = `
+                    <button type="button" data-history-action="details" data-history-id="${group.id}"
+                        class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Détails
+                    </button>
+                `;
+                const validationActions = canValidateStore ? `
+                    <button type="button" ${group.hasPendingPrice ? 'disabled' : ''} data-store-validation-id="${group.id}" data-store-validation-action="paid"
+                        class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-70">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        ${group.hasPendingPrice ? 'Prix requis' : 'Valider'}
+                    </button>
+                    <button type="button" data-store-validation-id="${group.id}" data-store-validation-action="pending"
+                        class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-orange-500 text-white font-semibold hover:bg-orange-600">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3M12 6a6 6 0 100 12 6 6 0 000-12z" />
+                        </svg>
+                        En attente
+                    </button>
+                    <button type="button" data-store-validation-id="${group.id}" data-store-validation-action="pay_later"
+                        class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-purple-600 text-white font-semibold hover:bg-purple-700">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 11h18M5 7v10a2 2 0 002 2h10a2 2 0 002-2V7" />
+                        </svg>
+                        A payer plus tard
+                    </button>
+                    <button type="button" data-store-validation-send="${group.id}"
+                        class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        Envoyer vers panier
+                    </button>
+                    <button type="button" data-store-validation-id="${group.id}" data-store-validation-action="cancel"
+                        class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-rose-600 text-white font-semibold hover:bg-rose-700">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        Annuler
+                    </button>
+                    ${detailsButtonHtml}
+                ` : detailsButtonHtml;
+                const totalLabel = group.hasPendingPrice
+                    ? 'Prix à définir'
+                    : formatCurrency(summary.total, summary.currency);
+                const totalClass = group.hasPendingPrice ? 'text-amber-600' : 'text-emerald-600';
+                const subtotalLabel = group.hasPendingPrice
+                    ? 'Prix à définir'
+                    : formatCurrency(summary.subtotal, summary.currency);
+                const itemsHtml = group.items.map((item, itemIndex) => {
+                    const hasLinePrice = item.pricePending !== true && hasUsableSellingPrice(item.price);
+                    const unitPriceLabel = hasLinePrice
+                        ? `${formatCurrency(item.price, item.currency || currency)} / unité`
+                        : 'Prix à définir avant validation';
+                    const totalLineLabel = hasLinePrice
+                        ? formatCurrency(item.total ?? (item.price * item.quantity), item.currency || currency)
+                        : 'Prix à définir';
+                    const packageHtml = item.packageLabel
+                        ? `<p class="mt-1 text-[11px] font-semibold text-slate-500">${item.packageLabel}</p>`
+                        : '';
+                    const lineSourceBadge = getStoreValidationLineSourceBadge(
+                        item.saleSource,
+                        item.saleSource === SALE_SOURCE_STORE
+                            ? (appData.stores?.[item.storeId]?.name || 'Magasin')
+                            : (item.boutiqueName || 'Boutique')
+                    );
+                    const priceEditorHtml = canValidateStore ? `
+                        <div class="mt-2 flex items-center justify-end gap-2">
+                            <span class="text-[11px] font-semibold text-slate-400">PU</span>
+                            <input type="number" min="0" step="0.01" value="${hasLinePrice ? formatInputNumber(item.price) : ''}"
+                                data-store-validation-price-id="${item.saleId}"
+                                class="w-24 h-8 rounded-md border border-gray-200 px-2 text-xs text-right text-gray-700 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400"
+                                placeholder="Prix" />
+                        </div>
+                    ` : '';
+                    const bandClass = STORE_VALIDATION_LINE_BANDS[itemIndex % STORE_VALIDATION_LINE_BANDS.length];
+                    return `
+                        <div class="flex items-start justify-between text-sm text-gray-700 gap-4 rounded-xl px-3 py-2.5 ${bandClass}">
+                            <div class="flex items-start gap-3">
+                                <span class="px-2 py-0.5 rounded-lg bg-white/80 text-xs font-semibold text-gray-600">${item.quantity}x</span>
+                                <div>
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <span class="font-semibold text-gray-900">${item.name}</span>
+                                        <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold ${lineSourceBadge.classes}">${lineSourceBadge.label}</span>
+                                    </div>
+                                    ${packageHtml}
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs ${hasLinePrice ? 'text-gray-500' : 'text-amber-600'}">${unitPriceLabel}</p>
+                                <p class="text-sm font-semibold ${hasLinePrice ? 'text-gray-900' : 'text-amber-600'}">${totalLineLabel}</p>
+                                ${priceEditorHtml}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                return `
+                    <div class="border border-gray-200 rounded-2xl shadow-sm bg-white overflow-hidden">
+                        <div class="p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7l9-4 9 4-9 4-9-4zM3 7v10l9 4 9-4V7" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <p class="font-semibold text-gray-900">${getSaleInvoiceLabel(invoiceKey)}</p>
+                                        <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">Validation magasin</span>
+                                        ${sourceHtml}
+                                        ${complementHtml}
+                                        ${boutiqueHtml}
+                                        ${group.hasPendingPrice ? '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700">Prix à définir</span>' : ''}
+                                    </div>
+                                    <div class="mt-1 flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                                        <span>${dateLabel}</span>
+                                        <span>${timeLabel}</span>
+                                        <span>${group.totalQuantity} article${group.totalQuantity > 1 ? 's' : ''}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-2xl font-bold ${totalClass}">${totalLabel}</p>
+                                <p class="text-xs text-gray-400">${group.items.length} ligne${group.items.length > 1 ? 's' : ''}</p>
+                            </div>
+                        </div>
+                        <div class="px-4 pb-4">
+                            <div class="flex items-center gap-2 text-sm text-gray-600 border-t border-gray-100 pt-3">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A4 4 0 0112 15a4 4 0 016.879 2.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                <span class="font-semibold text-gray-900">${customerLabel}</span>
+                                ${customerEmail ? `<span class="text-xs text-gray-400">· ${customerEmail}</span>` : ''}
+                            </div>
+                            ${(group.comments || []).length ? `<p class="mt-2 text-xs text-gray-500">Commentaire: ${group.comments.join(' · ')}</p>` : ''}
+                            <div class="mt-4 space-y-2">
+                                ${itemsHtml}
+                            </div>
+                            <div class="mt-4 space-y-2 border-t border-gray-100 pt-4">
+                                <div class="flex items-center justify-between text-sm text-gray-600">
+                                    <span>Sous-total</span>
+                                    <span>${subtotalLabel}</span>
+                                </div>
+                                ${!group.hasPendingPrice && isTaxEnabled ? `
+                                    <div class="flex items-center justify-between text-sm text-gray-400">
+                                        <span>TVA (20%)</span>
+                                        <span>${formatCurrency(summary.tax, summary.currency)}</span>
+                                    </div>
+                                ` : (group.hasPendingPrice ? `
+                                    <div class="flex items-center justify-between text-sm text-amber-600">
+                                        <span>Montant</span>
+                                        <span>Bloqué jusqu'au prix</span>
+                                    </div>
+                                ` : '')}
+                                <div class="flex items-center justify-between text-base font-semibold text-gray-900 border-t border-gray-100 pt-3">
+                                    <span>Total</span>
+                                    <span class="${totalClass}">${totalLabel}</span>
+                                </div>
+                            </div>
+                            <div class="mt-4 flex flex-col md:flex-row gap-3">
+                                ${validationActions}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            function renderStoreValidationInvoiceRow(group, index) {
+                const summary = group.hasPendingPrice ? null : calculateGroupSummary(group);
+                const { dateLabel, timeLabel } = formatHistoryDateParts(group.date || new Date().toISOString());
+                const customerLabel = group.customerName || 'Client comptoir';
+                const invoiceLabel = getSaleInvoiceLabel(group.invoiceId || group.id);
+                const boutiqueLabel = getGroupBoutiqueLabel(group);
+                const sourceBadge = formatSaleSourceBadge(group.saleSource);
+                const totalLabel = group.hasPendingPrice
+                    ? 'Prix à définir'
+                    : formatCurrency(summary.total, summary.currency);
+                const totalClass = group.hasPendingPrice ? 'text-amber-600' : 'text-emerald-700';
+                const productPreview = (group.items || []).slice(0, 3).map(item => item.name).filter(Boolean).join(' · ');
+                const extraProducts = Math.max(0, (group.items || []).length - 3);
+                const commentPreview = (group.comments || []).filter(Boolean).join(' · ');
+                const rowBg = index % 2 === 0 ? 'bg-white' : 'bg-slate-50';
+                return `
+                    <button type="button" data-store-validation-invoice="${group.id}"
+                        class="grid w-full grid-cols-1 gap-1 border-b border-gray-100 px-3 py-1.5 text-left transition hover:bg-emerald-50/80 sm:grid-cols-[7.2rem_minmax(0,1fr)_auto] sm:items-center ${rowBg}">
+                        <div class="flex items-center gap-2">
+                            <span class="font-mono text-xs font-bold text-emerald-700">${invoiceLabel}</span>
+                            ${group.hasPendingPrice ? '<span class="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">Prix</span>' : ''}
+                        </div>
+                        <div class="min-w-0">
+                            <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+                                <span class="font-semibold text-gray-900">${customerLabel}</span>
+                                ${boutiqueLabel ? `<span class="rounded-full bg-cyan-50 px-1.5 py-0.5 text-[10px] font-semibold text-cyan-700">${boutiqueLabel}</span>` : ''}
+                                ${sourceBadge ? `<span class="rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${sourceBadge.classes}">${sourceBadge.label}</span>` : ''}
+                                ${group.sellerName ? `<span class="text-[11px] text-gray-400">· ${group.sellerName}</span>` : ''}
+                            </div>
+                            <p class="truncate text-[11px] text-gray-500">
+                                ${dateLabel} ${timeLabel} · ${group.totalQuantity} art. · ${group.items.length} ligne${group.items.length > 1 ? 's' : ''}${productPreview ? ` · ${productPreview}` : ''}${extraProducts ? ` +${extraProducts}` : ''}${commentPreview ? ` · ${commentPreview}` : ''}
+                            </p>
+                        </div>
+                        <div class="flex items-center justify-between gap-3 sm:justify-end">
+                            <p class="text-sm font-bold ${totalClass}">${totalLabel}</p>
+                            <svg class="h-4 w-4 shrink-0 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </div>
+                    </button>
+                `;
+            }
+
+            function fillStoreValidationInvoiceModal(group) {
+                if (!group || !storeValidationInvoiceModalBody) return;
+                if (storeValidationInvoiceModalTitle) {
+                    storeValidationInvoiceModalTitle.textContent = getSaleInvoiceLabel(group.invoiceId || group.id);
+                }
+                storeValidationInvoiceModalBody.innerHTML = renderStoreValidationInvoiceCard(group, getCurrentUserRole() === 'admin');
+            }
+
+            function openStoreValidationInvoiceModal(groupId) {
+                if (!storeValidationInvoiceModal || !groupId) return;
+                const group = buildStoreValidationGroups().find(item => item.id === groupId);
+                if (!group) {
+                    showSuccessToast("Cette facture n'est plus en attente de validation.");
+                    return;
+                }
+                activeStoreValidationInvoiceId = groupId;
+                fillStoreValidationInvoiceModal(group);
+                storeValidationInvoiceModal.classList.remove('hidden');
+                storeValidationInvoiceModal.classList.add('flex');
+            }
+
+            function closeStoreValidationInvoiceModal() {
+                if (!storeValidationInvoiceModal) return;
+                storeValidationInvoiceModal.classList.add('hidden');
+                storeValidationInvoiceModal.classList.remove('flex');
+                activeStoreValidationInvoiceId = '';
+                if (storeValidationInvoiceModalBody) storeValidationInvoiceModalBody.innerHTML = '';
+            }
+
+            function refreshStoreValidationInvoiceModal() {
+                if (!storeValidationInvoiceModal || storeValidationInvoiceModal.classList.contains('hidden') || !activeStoreValidationInvoiceId) return;
+                const group = buildStoreValidationGroups().find(item => item.id === activeStoreValidationInvoiceId);
+                if (!group) {
+                    closeStoreValidationInvoiceModal();
+                    return;
+                }
+                fillStoreValidationInvoiceModal(group);
+            }
+
+            function handleStoreValidationInvoiceUiClick(event) {
+                const storeValidationButton = event.target.closest('[data-store-validation-action]');
+                if (storeValidationButton) {
+                    const saleId = storeValidationButton.dataset.storeValidationId;
+                    const action = storeValidationButton.dataset.storeValidationAction;
+                    if (saleId && action) {
+                        if (action === 'cancel') {
+                            cancelStoreValidationSale(saleId);
+                        } else {
+                            resolveStoreValidationSale(saleId, action);
+                        }
+                    }
+                    return true;
+                }
+                const storeValidationEditButton = event.target.closest('[data-store-validation-edit]');
+                if (storeValidationEditButton) {
+                    const groupId = storeValidationEditButton.dataset.storeValidationEdit;
+                    if (groupId) openStoreValidationEditor(groupId);
+                    return true;
+                }
+                const storeValidationSendButton = event.target.closest('[data-store-validation-send]');
+                if (storeValidationSendButton) {
+                    const groupId = storeValidationSendButton.dataset.storeValidationSend;
+                    if (groupId) openSendToCartModal(groupId);
+                    return true;
+                }
+                const detailsButton = event.target.closest('[data-history-action="details"]');
+                if (detailsButton) {
+                    const groupId = detailsButton.dataset.historyId;
+                    if (groupId) openSalesDetailModal(groupId);
+                    return true;
+                }
+                return false;
+            }
+
             function renderSalesHistory() {
                 if (!salesHistoryList || !salesHistoryEmpty) return;
 
@@ -17222,208 +17617,31 @@
                 if (!listHasItems) {
                     salesHistoryEmpty.classList.remove('hidden');
                     salesHistoryList.classList.add('hidden');
+                    salesHistoryList.classList.add('space-y-4');
                     salesHistoryList.innerHTML = '';
                     hidePaginationControls('salesHistory');
+                    refreshStoreValidationInvoiceModal();
                     return;
                 }
 
                 salesHistoryEmpty.classList.add('hidden');
                 salesHistoryList.classList.remove('hidden');
+                salesHistoryList.classList.add('space-y-4');
 
                 if (showStoreValidation) {
                     const pagination = getPaginationSlice(filteredStoreValidation, 'salesHistory');
-                    const canValidateStore = getCurrentUserRole() === 'admin';
-                    salesHistoryList.innerHTML = pagination.items.map(group => {
-                        const summary = group.hasPendingPrice ? null : calculateGroupSummary(group);
-                        const currency = group.items[0]?.currency || 'CFA';
-                        const { dateLabel, timeLabel } = formatHistoryDateParts(group.date || new Date().toISOString());
-                        const customerLabel = group.customerName || 'Client comptoir';
-                        const customerEmail = group.customerEmail || '';
-                        const invoiceKey = group.invoiceId || group.id;
-                        const sourceBadge = formatSaleSourceBadge(group.saleSource);
-                        const sourceHtml = sourceBadge
-                            ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold ${sourceBadge.classes}">${sourceBadge.label}</span>`
-                            : '';
-                        const complementBadge = getStoreValidationComplementBadge(group);
-                        const complementHtml = complementBadge
-                            ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold ${complementBadge.classes}">${complementBadge.label}</span>`
-                            : '';
-                        const boutiqueLabel = getGroupBoutiqueLabel(group);
-                        const boutiqueHtml = boutiqueLabel
-                            ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-cyan-50 text-cyan-700">Boutique: ${boutiqueLabel}</span>`
-                            : '';
-                        const detailsButtonHtml = `
-                            <button type="button" data-history-action="details" data-history-id="${group.id}"
-                                class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700">
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                Détails
-                            </button>
-                        `;
-                        const validationActions = canValidateStore ? `
-                            <button type="button" ${group.hasPendingPrice ? 'disabled' : ''} data-store-validation-id="${group.id}" data-store-validation-action="paid"
-                                class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700">
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                </svg>
-                                ${group.hasPendingPrice ? 'Prix requis' : 'Valider'}
-                            </button>
-                            <button type="button" data-store-validation-id="${group.id}" data-store-validation-action="pending"
-                                class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-orange-500 text-white font-semibold hover:bg-orange-600">
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3M12 6a6 6 0 100 12 6 6 0 000-12z" />
-                                </svg>
-                                En attente
-                            </button>
-                            <button type="button" data-store-validation-id="${group.id}" data-store-validation-action="pay_later"
-                                class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-purple-600 text-white font-semibold hover:bg-purple-700">
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 11h18M5 7v10a2 2 0 002 2h10a2 2 0 002-2V7" />
-                                </svg>
-                                A payer plus tard
-                            </button>
-                            <button type="button" data-store-validation-send="${group.id}"
-                                class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700">
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                                </svg>
-                                Envoyer vers panier
-                            </button>
-
-                            <button type="button" data-store-validation-id="${group.id}" data-store-validation-action="cancel"
-                                class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-rose-600 text-white font-semibold hover:bg-rose-700">
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                                Annuler
-                            </button>
-                            ${detailsButtonHtml}
-                        ` : detailsButtonHtml;
-                        const totalLabel = group.hasPendingPrice
-                            ? 'Prix à définir'
-                            : formatCurrency(summary.total, summary.currency);
-                        const totalClass = group.hasPendingPrice ? 'text-amber-600' : 'text-emerald-600';
-                        const subtotalLabel = group.hasPendingPrice
-                            ? 'Prix à définir'
-                            : formatCurrency(summary.subtotal, summary.currency);
-                        const itemsHtml = group.items.map(item => {
-                            const hasLinePrice = item.pricePending !== true && hasUsableSellingPrice(item.price);
-                            const unitPriceLabel = hasLinePrice
-                                ? `${formatCurrency(item.price, item.currency || currency)} / unité`
-                                : 'Prix à définir avant validation';
-                            const totalLineLabel = hasLinePrice
-                                ? formatCurrency(item.total ?? (item.price * item.quantity), item.currency || currency)
-                                : 'Prix à définir';
-                            const packageHtml = item.packageLabel
-                                ? `<p class="mt-1 text-[11px] font-semibold text-slate-500">${item.packageLabel}</p>`
-                                : '';
-                            const lineSourceBadge = getStoreValidationLineSourceBadge(
-                                item.saleSource,
-                                item.saleSource === SALE_SOURCE_STORE
-                                    ? (appData.stores?.[item.storeId]?.name || 'Magasin')
-                                    : (item.boutiqueName || 'Boutique')
-                            );
-                            const priceEditorHtml = canValidateStore ? `
-                                <div class="mt-2 flex items-center justify-end gap-2">
-                                    <span class="text-[11px] font-semibold text-slate-400">PU</span>
-                                    <input type="number" min="0" step="0.01" value="${hasLinePrice ? formatInputNumber(item.price) : ''}"
-                                        data-store-validation-price-id="${item.saleId}"
-                                        class="w-24 h-8 rounded-md border border-gray-200 px-2 text-xs text-right text-gray-700 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400"
-                                        placeholder="Prix" />
-                                </div>
-                            ` : '';
-                            return `
-                                <div class="flex items-start justify-between text-sm text-gray-700 gap-4">
-                                    <div class="flex items-start gap-3">
-                                        <span class="px-2 py-0.5 rounded-lg bg-gray-100 text-xs font-semibold text-gray-500">${item.quantity}x</span>
-                                        <div>
-                                            <div class="flex flex-wrap items-center gap-2">
-                                                <span class="font-semibold text-gray-900">${item.name}</span>
-                                                <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold ${lineSourceBadge.classes}">${lineSourceBadge.label}</span>
-                                            </div>
-                                            ${packageHtml}
-                                        </div>
-                                    </div>
-                                    <div class="text-right">
-                                        <p class="text-xs ${hasLinePrice ? 'text-gray-500' : 'text-amber-600'}">${unitPriceLabel}</p>
-                                        <p class="text-sm font-semibold ${hasLinePrice ? 'text-gray-900' : 'text-amber-600'}">${totalLineLabel}</p>
-                                        ${priceEditorHtml}
-                                    </div>
-                                </div>
-                            `;
-                        }).join('');
-                        return `
-                            <div class="border border-gray-200 rounded-2xl shadow-sm bg-white overflow-hidden">
-                                <div class="p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7l9-4 9 4-9 4-9-4zM3 7v10l9 4 9-4V7" />
-                                            </svg>
-                                        </div>
-                                        <div>
-                                            <div class="flex items-center gap-2 flex-wrap">
-                                                <p class="font-semibold text-gray-900">INV-${String(invoiceKey || '').slice(-6).toUpperCase()}</p>
-                                                <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">Validation magasin</span>
-                                                ${sourceHtml}
-                                                ${complementHtml}
-                                                ${boutiqueHtml}
-                                                ${group.hasPendingPrice ? '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700">Prix à définir</span>' : ''}
-                                            </div>
-                                            <div class="mt-1 flex flex-wrap items-center gap-3 text-xs text-gray-500">
-                                                <span>${dateLabel}</span>
-                                                <span>${timeLabel}</span>
-                                                <span>${group.totalQuantity} article${group.totalQuantity > 1 ? 's' : ''}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="text-right">
-                                        <p class="text-2xl font-bold ${totalClass}">${totalLabel}</p>
-                                        <p class="text-xs text-gray-400">${group.items.length} ligne${group.items.length > 1 ? 's' : ''}</p>
-                                    </div>
-                                </div>
-                                <div class="px-4 pb-4">
-                                    <div class="flex items-center gap-2 text-sm text-gray-600 border-t border-gray-100 pt-3">
-                                        <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A4 4 0 0112 15a4 4 0 016.879 2.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        </svg>
-                                        <span class="font-semibold text-gray-900">${customerLabel}</span>
-                                        ${customerEmail ? `<span class="text-xs text-gray-400">· ${customerEmail}</span>` : ''}
-                                    </div>
-                                    ${(group.comments || []).length ? `<p class="mt-2 text-xs text-gray-500">Commentaire: ${group.comments.join(' · ')}</p>` : ''}
-                                    <div class="mt-4 space-y-3">
-                                        ${itemsHtml}
-                                    </div>
-                                    <div class="mt-4 space-y-2 border-t border-gray-100 pt-4">
-                                        <div class="flex items-center justify-between text-sm text-gray-600">
-                                            <span>Sous-total</span>
-                                            <span>${subtotalLabel}</span>
-                                        </div>
-                                        ${!group.hasPendingPrice && isTaxEnabled ? `
-                                            <div class="flex items-center justify-between text-sm text-gray-400">
-                                                <span>TVA (20%)</span>
-                                                <span>${formatCurrency(summary.tax, summary.currency)}</span>
-                                            </div>
-                                        ` : (group.hasPendingPrice ? `
-                                            <div class="flex items-center justify-between text-sm text-amber-600">
-                                                <span>Montant</span>
-                                                <span>Bloqué jusqu'au prix</span>
-                                            </div>
-                                        ` : '')}
-                                        <div class="flex items-center justify-between text-base font-semibold text-gray-900 border-t border-gray-100 pt-3">
-                                            <span>Total</span>
-                                            <span class="${totalClass}">${totalLabel}</span>
-                                        </div>
-                                    </div>
-                                    <div class="mt-4 flex flex-col md:flex-row gap-3">
-                                        ${validationActions}
-                                    </div>
-                                </div>
+                    salesHistoryList.classList.remove('space-y-4');
+                    salesHistoryList.innerHTML = `
+                        <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+                            <div class="flex items-center justify-between gap-3 border-b border-gray-100 bg-slate-50 px-3 py-2">
+                                <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Cliquez une ligne pour ouvrir le détail</p>
+                                <p class="text-[11px] text-slate-400">${pagination.totalItems} facture${pagination.totalItems > 1 ? 's' : ''}</p>
                             </div>
-                        `;
-                    }).join('');
+                            ${pagination.items.map((group, index) => renderStoreValidationInvoiceRow(group, index)).join('')}
+                        </div>
+                    `;
                     renderPaginationControls('salesHistory', pagination);
+                    refreshStoreValidationInvoiceModal();
                     return;
                 }
 
@@ -20859,48 +21077,33 @@
                 return { merged: false };
             }
 
+            function getBulkExitLineMergeKey(line = {}) {
+                return `${line.productId || ''}::${line.packagingCode || '__base__'}`;
+            }
+
             function consolidateBulkExitDomRows({ showToast = false } = {}) {
-                if (!bulkExitRowsTbody) return false;
+                const next = [];
                 const groups = new Map();
-                bulkExitRowsTbody.querySelectorAll('tr[data-bulk-exit-row]').forEach((domRow) => {
-                    const productId = domRow.querySelector('[data-bulk-exit-field="product"]')?.value || '';
-                    if (!productId) return;
-                    if (!groups.has(productId)) groups.set(productId, []);
-                    groups.get(productId).push(domRow);
-                });
-
                 let merged = false;
-                groups.forEach((productRows) => {
-                    if (productRows.length <= 1) return;
-                    const product = getActiveStoreProductById(productRows[0].querySelector('[data-bulk-exit-field="product"]')?.value);
-                    const packagingGroups = new Map();
-                    productRows.forEach((domRow) => {
-                        const packagingCode = domRow.querySelector('[data-bulk-exit-field="packaging"]')?.value || '';
-                        const mergeKey = packagingCode || '__base__';
-                        if (!packagingGroups.has(mergeKey)) packagingGroups.set(mergeKey, []);
-                        packagingGroups.get(mergeKey).push(domRow);
-                    });
-                    packagingGroups.forEach((packagingRows) => {
-                        if (packagingRows.length <= 1) return;
+                bulkExitLines.forEach((line) => {
+                    if (!line?.productId) return;
+                    const key = getBulkExitLineMergeKey(line);
+                    if (groups.has(key)) {
+                        const keeper = groups.get(key);
+                        keeper.quantityRaw = String(
+                            parseNonNegativeInteger(keeper.quantityRaw, 0) + parseNonNegativeInteger(line.quantityRaw, 0)
+                        );
+                        keeper.shopPriceConfirmed = Boolean(keeper.shopPriceConfirmed || line.shopPriceConfirmed);
                         merged = true;
-                        const keeper = packagingRows[0];
-                        const packagingCode = keeper.querySelector('[data-bulk-exit-field="packaging"]')?.value || '';
-                        let packagingQtySum = 0;
-                        packagingRows.forEach((domRow) => {
-                            packagingQtySum += parseNonNegativeInteger(domRow.querySelector('[data-bulk-exit-field="quantity"]')?.value, 0);
-                        });
-                        const qtyInput = keeper.querySelector('[data-bulk-exit-field="quantity"]');
-                        const packSelect = keeper.querySelector('[data-bulk-exit-field="packaging"]');
-                        if (packSelect && packagingCode) packSelect.value = packagingCode;
-                        if (qtyInput) qtyInput.value = packagingQtySum;
-                        packagingRows.slice(1).forEach((domRow) => domRow.remove());
-                        updateBulkExitRowPackagingUI(keeper);
-                    });
+                        return;
+                    }
+                    const copy = { ...line };
+                    groups.set(key, copy);
+                    next.push(copy);
                 });
-
-                if (merged) {
-                    ensureBulkExitRows(1);
-                    if (showToast) showSuccessToast('Quantité ajoutée à la ligne existante du même produit.');
+                bulkExitLines = next;
+                if (merged && showToast) {
+                    showSuccessToast('Quantité ajoutée à la ligne existante du même produit.');
                 }
                 return merged;
             }
@@ -25106,27 +25309,18 @@
                 const context = snapshot ? getStoreExitPriceContext(product, snapshot.packagingCode, snapshot) : null;
                 const requiresConfirmation = Boolean(context?.requiresShopPriceConfirmation);
                 if (panel) panel.classList.toggle('hidden', !requiresConfirmation);
-                if (checkbox) checkbox.checked = false;
+                if (checkbox) {
+                    checkbox.checked = requiresConfirmation ? checkbox.checked : false;
+                }
                 if (label && context?.shopFallbackPrice !== null) {
                     const unitLabel = getStoreExitPriceUnitLabel(snapshot, context);
-                    label.textContent = `Appliquer le prix boutique : ${formatCurrency(context.shopFallbackPrice, product.currency || 'CFA')} / ${unitLabel}`;
+                    label.textContent = `Appliquer le prix boutique (optionnel) : ${formatCurrency(context.shopFallbackPrice, product.currency || 'CFA')} / ${unitLabel}`;
                 }
             }
 
             function isBulkExitLineShopPriceConfirmed(lineNumber) {
                 const draftRow = getBulkExitDraftRows().find(row => row.lineNumber === lineNumber);
-                const rowCheckbox = draftRow?.row?.querySelector('[data-bulk-exit-shop-price-confirm]');
-                if (rowCheckbox) return rowCheckbox.checked;
-                const recapCheckbox = bulkExitLinesList?.querySelector(`[data-bulk-exit-recap-shop-price="${lineNumber}"]`);
-                return recapCheckbox?.checked === true;
-            }
-
-            function syncBulkExitShopPriceCheckboxes(lineNumber, checked) {
-                const draftRow = getBulkExitDraftRows().find(row => row.lineNumber === lineNumber);
-                const rowCheckbox = draftRow?.row?.querySelector('[data-bulk-exit-shop-price-confirm]');
-                const recapCheckbox = bulkExitLinesList?.querySelector(`[data-bulk-exit-recap-shop-price="${lineNumber}"]`);
-                if (rowCheckbox) rowCheckbox.checked = checked;
-                if (recapCheckbox) recapCheckbox.checked = checked;
+                return draftRow?.shopPriceConfirmed === true;
             }
 
             function syncExitSubmitButtonState(requiresShopPriceConfirmation = null) {
@@ -25601,9 +25795,30 @@
                 bulkTransferError.classList.remove('hidden');
             }
 
+            function showBulkExitDraftPage() {
+                if (bulkExitComposer) bulkExitComposer.classList.remove('hidden');
+                if (bulkExitDraftPage) bulkExitDraftPage.classList.remove('hidden');
+                if (bulkExitPreviewSection) bulkExitPreviewSection.classList.add('hidden');
+                if (bulkExitPreviewButton) bulkExitPreviewButton.classList.remove('hidden');
+                if (bulkExitBackButton) bulkExitBackButton.classList.add('hidden');
+                if (bulkExitConfirmButton) {
+                    bulkExitConfirmButton.classList.add('hidden');
+                    bulkExitConfirmButton.disabled = false;
+                }
+            }
+
+            function showBulkExitPreviewPage() {
+                if (bulkExitComposer) bulkExitComposer.classList.add('hidden');
+                if (bulkExitDraftPage) bulkExitDraftPage.classList.add('hidden');
+                if (bulkExitPreviewSection) bulkExitPreviewSection.classList.remove('hidden');
+                if (bulkExitPreviewButton) bulkExitPreviewButton.classList.add('hidden');
+                if (bulkExitBackButton) bulkExitBackButton.classList.remove('hidden');
+                if (bulkExitConfirmButton) bulkExitConfirmButton.classList.remove('hidden');
+                if (bulkExitScroll) bulkExitScroll.scrollTop = 0;
+            }
+
             function resetBulkExitPreview() {
                 bulkExitPreviewCache = null;
-                if (bulkExitPreviewSection) bulkExitPreviewSection.classList.add('hidden');
                 if (bulkExitPreviewTbody) bulkExitPreviewTbody.innerHTML = '';
                 if (bulkExitPreviewLinesList) bulkExitPreviewLinesList.innerHTML = '';
                 if (bulkExitShopPricePanel) {
@@ -25614,11 +25829,7 @@
                 if (bulkExitPreviewQuantity) bulkExitPreviewQuantity.textContent = '0';
                 if (bulkExitPreviewTotal) bulkExitPreviewTotal.textContent = formatCurrency(0);
                 if (bulkExitPreviewCustomer) bulkExitPreviewCustomer.textContent = '';
-                if (bulkExitPreviewButton) bulkExitPreviewButton.classList.remove('hidden');
-                if (bulkExitConfirmButton) {
-                    bulkExitConfirmButton.classList.add('hidden');
-                    bulkExitConfirmButton.disabled = false;
-                }
+                showBulkExitDraftPage();
             }
 
             function resetBulkTransferPreview() {
@@ -26662,7 +26873,7 @@
             function getBulkExitSelectableProducts() {
                 return getActiveStoreProducts()
                     .slice()
-                    .sort((a, b) => (a?.name || '').localeCompare(b?.name || ''));
+                    .sort(compareStoreProductsByPackagingDesc);
             }
 
             function getBulkTransferSelectableProducts() {
@@ -26694,8 +26905,7 @@
             function getBulkExitProductDisplayLabel(product) {
                 if (!product) return '';
                 const item = getExitProductComboboxItems('').find((entry) => entry.value === product.id);
-                const quantity = Math.max(Number(product?.quantityInStore) || 0, 0);
-                const stockSuffix = `Stock ${quantity}`;
+                const stockSuffix = formatStoreExitProductStockBadge(product);
                 if (item?.displayLabel) {
                     return `${item.displayLabel} · ${stockSuffix}`;
                 }
@@ -26775,17 +26985,19 @@
                         }
                     });
                 }
-                if (bulkExitRowsTbody) {
-                    bulkExitRowsTbody.querySelectorAll('tr[data-bulk-exit-row]').forEach((row) => {
-                        if (row.dataset.bulkExitComboboxOpen === 'true') {
-                            positionBulkRowComboboxDropdown(row);
-                        }
-                    });
-                }
+                getBulkExitComboboxHosts().forEach((row) => {
+                    if (row.dataset.bulkExitComboboxOpen === 'true') {
+                        positionBulkRowComboboxDropdown(row);
+                    }
+                });
+            }
+
+            function getBulkExitComboboxHosts() {
+                return [bulkExitComposer].filter(Boolean);
             }
 
             function bindBulkRowComboboxScrollHandlers() {
-                document.querySelectorAll('.multi-line-table-scroll').forEach((scrollEl) => {
+                document.querySelectorAll('.multi-line-table-scroll, #bulk-exit-scroll').forEach((scrollEl) => {
                     if (scrollEl.dataset.bulkComboboxScrollBound === '1') return;
                     scrollEl.dataset.bulkComboboxScrollBound = '1';
                     scrollEl.addEventListener('scroll', () => repositionOpenBulkRowComboboxes(), { passive: true });
@@ -26797,8 +27009,7 @@
             }
 
             function closeAllBulkExitComboboxes(exceptRow = null) {
-                if (!bulkExitRowsTbody) return;
-                bulkExitRowsTbody.querySelectorAll('tr[data-bulk-exit-row]').forEach((row) => {
+                getBulkExitComboboxHosts().forEach((row) => {
                     if (row === exceptRow) return;
                     const dropdown = row.querySelector('[data-bulk-exit-dropdown]');
                     if (dropdown) {
@@ -26867,16 +27078,11 @@
                     resetBulkRowComboboxDropdown(dropdown);
                     row.dataset.bulkExitComboboxOpen = 'false';
                 }
-                if (productId) {
-                    consolidateBulkExitDomRows({ showToast: true });
-                }
             }
 
             function updateBulkExitModalPackagingUI() {
                 const enabled = isStoreEntryPackagingEnabled();
-                if (bulkExitPackagingHeader) bulkExitPackagingHeader.classList.toggle('hidden', !enabled);
-                if (!bulkExitRowsTbody) return;
-                bulkExitRowsTbody.querySelectorAll('tr[data-bulk-exit-row]').forEach((row) => {
+                getBulkExitComboboxHosts().forEach((row) => {
                     row.querySelectorAll('[data-bulk-exit-packaging-cell]').forEach((cell) => {
                         cell.classList.toggle('hidden', !enabled);
                     });
@@ -26895,6 +27101,9 @@
                 const enabled = isStoreEntryPackagingEnabled();
                 const packagings = enabled ? getStoreExitPackagings(product) : [];
                 const showPackaging = enabled && !!product && packagings.length > 0;
+                row.querySelectorAll('[data-bulk-exit-packaging-cell]').forEach((cell) => {
+                    cell.classList.toggle('hidden', !showPackaging);
+                });
 
                 if (packagingSelect) {
                     const previousValue = packagingSelect.value || '';
@@ -26934,8 +27143,16 @@
                         quantityMeta.classList.add('hidden');
                     }
                 }
-                updateBulkExitRowShopPriceUI(row);
-                refreshBulkExitDraftSummary();
+                try {
+                    updateBulkExitRowShopPriceUI(row);
+                } catch (error) {
+                    console.error(error);
+                }
+                try {
+                    refreshBulkExitDraftSummary();
+                } catch (error) {
+                    console.error(error);
+                }
             }
 
             function resolveBulkExitBaseQuantity(product, enteredQty, packagingCode = '') {
@@ -27234,7 +27451,7 @@
                         </button>
                     </td>
                 `;
-                bulkExitRowsTbody.prepend(row);
+                bulkExitRowsTbody.append(row);
                 enhanceBulkExitRowSearch(row);
                 renderBulkExitRowCombobox(row);
                 updateBulkExitRowPackagingUI(row);
@@ -27300,8 +27517,7 @@
             }
 
             function refreshBulkExitRowProducts() {
-                if (!bulkExitRowsTbody) return;
-                bulkExitRowsTbody.querySelectorAll('tr[data-bulk-exit-row]').forEach((row) => {
+                getBulkExitComboboxHosts().forEach((row) => {
                     renderBulkExitRowCombobox(row);
                     updateBulkExitRowPackagingUI(row);
                 });
@@ -27374,8 +27590,8 @@
                 if (bulkExitDeliveryNameInput) bulkExitDeliveryNameInput.value = '';
                 if (bulkExitStorekeeperNameInput) bulkExitStorekeeperNameInput.value = '';
                 if (bulkExitCommentInput) bulkExitCommentInput.value = '';
-                if (bulkExitRowsTbody) bulkExitRowsTbody.innerHTML = '';
-                ensureBulkExitRows(1);
+                bulkExitLines = [];
+                resetBulkExitComposer();
                 clearBulkExitError();
                 resetBulkExitPreview();
                 refreshBulkExitDraftSummary();
@@ -27397,9 +27613,15 @@
                     showSuccessToast('Veuillez créer ou sélectionner un magasin.');
                     return;
                 }
-                resetBulkExitModalState();
-                updateBulkExitModalPackagingUI();
                 bulkExitModal.classList.remove('hidden');
+                bulkExitModal.classList.add('flex');
+                try {
+                    resetBulkExitModalState();
+                    updateBulkExitModalPackagingUI();
+                } catch (error) {
+                    console.error(error);
+                    showBulkExitError(error?.message || "Impossible de préparer la sortie groupée.");
+                }
             }
 
             // Ouvre la sortie groupée pré-remplie depuis une facture validation magasin
@@ -27427,37 +27649,27 @@
                 if (bulkExitCommentInput)         bulkExitCommentInput.value        =
                     (group.comment || '') || `Facture ${group.id ? group.id.slice(-6).toUpperCase() : ''}`;
 
-                // Vider les lignes vides créées par resetBulkExitModalState et créer une ligne par item
-                if (bulkExitRowsTbody) {
-                    bulkExitRowsTbody.innerHTML = '';
-                    const items = group.items || [];
-                    items.forEach(item => {
-                        const row = buildBulkExitRow();
-                        if (!row) return;
-                        const qtyInput = row.querySelector('input[data-bulk-exit-field="quantity"]');
-                        if (qtyInput) qtyInput.value = item.quantity || 1;
-                        if (item.storeProductId) {
-                            setBulkExitRowProduct(row, item.storeProductId);
-                        } else {
-                            const searchInput = row.querySelector('input[data-bulk-exit-field="search"]');
-                            if (searchInput) searchInput.value = item.name || item.productName || '';
-                            row.dataset.bulkExitQuery = searchInput?.value || '';
-                            renderBulkExitRowCombobox(row);
-                        }
-                    });
-                    // Garantir au moins une ligne vide si aucun item
-                    if ((group.items || []).length === 0) ensureBulkExitRows(1);
-                }
+                bulkExitLines = (group.items || []).map((item) => ({
+                    id: `be-${++bulkExitRowSequence}`,
+                    productId: item.storeProductId || item.productId || '',
+                    packagingCode: item.packagingCode || '',
+                    quantityRaw: String(item.packagingQuantity || item.quantity || 1),
+                    shopPriceConfirmed: Boolean(item.shopPriceApplied)
+                })).filter((line) => line.productId);
+                resetBulkExitComposer();
+                refreshBulkExitDraftSummary();
 
                 updateBulkExitModalPackagingUI();
                 closeSendToCartModal();
                 bulkExitModal.classList.remove('hidden');
+                bulkExitModal.classList.add('flex');
             }
 
             function closeBulkExitModal() {
                 if (!bulkExitModal) return;
                 closeAllBulkExitComboboxes();
                 bulkExitModal.classList.add('hidden');
+                bulkExitModal.classList.remove('flex');
             }
 
             function openBulkTransferModal() {
@@ -27478,14 +27690,118 @@
             }
 
             function getBulkExitDraftRows() {
-                if (!bulkExitRowsTbody) return [];
-                return Array.from(bulkExitRowsTbody.querySelectorAll('tr[data-bulk-exit-row]')).map((row, index) => ({
-                    row,
-                    lineNumber: index + 1,
-                    productId: row.querySelector('select[data-bulk-exit-field="product"]')?.value || '',
-                    packagingCode: row.querySelector('select[data-bulk-exit-field="packaging"]')?.value || '',
-                    quantityRaw: row.querySelector('input[data-bulk-exit-field="quantity"]')?.value || ''
+                return bulkExitLines.map((line, index) => ({
+                    ...line,
+                    lineNumber: index + 1
                 }));
+            }
+
+            function getBulkExitComposerDraft() {
+                if (!bulkExitComposer) return null;
+                return {
+                    productId: bulkExitComposer.querySelector('[data-bulk-exit-field="product"]')?.value || '',
+                    packagingCode: bulkExitComposer.querySelector('[data-bulk-exit-field="packaging"]')?.value || '',
+                    quantityRaw: bulkExitComposer.querySelector('[data-bulk-exit-field="quantity"]')?.value || '',
+                    shopPriceConfirmed: bulkExitComposer.querySelector('[data-bulk-exit-shop-price-confirm]')?.checked === true
+                };
+            }
+
+            function resetBulkExitComposer() {
+                bulkExitEditingLineId = '';
+                if (bulkExitAddRowButton) {
+                    bulkExitAddRowButton.innerHTML = `
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Ajouter
+                    `;
+                }
+                if (!bulkExitComposer) return;
+                setBulkExitRowProduct(bulkExitComposer, '', { closeDropdown: true });
+                const quantityInput = bulkExitComposer.querySelector('[data-bulk-exit-field="quantity"]');
+                if (quantityInput) quantityInput.value = '';
+                const checkbox = bulkExitComposer.querySelector('[data-bulk-exit-shop-price-confirm]');
+                if (checkbox) checkbox.checked = false;
+                updateBulkExitRowPackagingUI(bulkExitComposer);
+            }
+
+            function fillBulkExitComposer(line) {
+                if (!bulkExitComposer || !line) return;
+                bulkExitEditingLineId = line.id || '';
+                setBulkExitRowProduct(bulkExitComposer, line.productId, { closeDropdown: true });
+                const packagingSelect = bulkExitComposer.querySelector('[data-bulk-exit-field="packaging"]');
+                if (packagingSelect && line.packagingCode) packagingSelect.value = line.packagingCode;
+                const quantityInput = bulkExitComposer.querySelector('[data-bulk-exit-field="quantity"]');
+                if (quantityInput) quantityInput.value = line.quantityRaw || '';
+                updateBulkExitRowPackagingUI(bulkExitComposer);
+                const checkbox = bulkExitComposer.querySelector('[data-bulk-exit-shop-price-confirm]');
+                if (checkbox) checkbox.checked = line.shopPriceConfirmed === true;
+                if (bulkExitAddRowButton) {
+                    bulkExitAddRowButton.innerHTML = 'Mettre à jour la ligne';
+                }
+                bulkExitComposer.querySelector('[data-bulk-exit-field="search"]')?.focus();
+            }
+
+            function addOrUpdateBulkExitLineFromComposer() {
+                clearBulkExitError();
+                const draft = getBulkExitComposerDraft();
+                if (!draft?.productId) {
+                    showBulkExitError('Sélectionnez un produit, puis cliquez sur Ajouter.');
+                    return;
+                }
+                const snapshot = buildBulkExitLineSnapshot({
+                    ...draft,
+                    lineNumber: 0
+                });
+                if (!snapshot) {
+                    showBulkExitError('Indiquez une quantité supérieure à 0.');
+                    return;
+                }
+                const nextLine = {
+                    id: bulkExitEditingLineId || `be-${++bulkExitRowSequence}`,
+                    productId: draft.productId,
+                    packagingCode: draft.packagingCode || '',
+                    quantityRaw: String(parseNonNegativeInteger(draft.quantityRaw, 0)),
+                    shopPriceConfirmed: Boolean(draft.shopPriceConfirmed)
+                };
+                if (bulkExitEditingLineId) {
+                    const editIndex = bulkExitLines.findIndex((line) => line.id === bulkExitEditingLineId);
+                    const mergeIndex = bulkExitLines.findIndex((line, index) => (
+                        index !== editIndex && getBulkExitLineMergeKey(line) === getBulkExitLineMergeKey(nextLine)
+                    ));
+                    if (editIndex >= 0 && mergeIndex >= 0) {
+                        bulkExitLines[mergeIndex].quantityRaw = String(
+                            parseNonNegativeInteger(bulkExitLines[mergeIndex].quantityRaw, 0)
+                            + parseNonNegativeInteger(nextLine.quantityRaw, 0)
+                        );
+                        bulkExitLines[mergeIndex].shopPriceConfirmed = Boolean(
+                            bulkExitLines[mergeIndex].shopPriceConfirmed || nextLine.shopPriceConfirmed
+                        );
+                        bulkExitLines.splice(editIndex, 1);
+                        showSuccessToast('Quantité ajoutée à la ligne existante du même produit.');
+                    } else if (editIndex >= 0) {
+                        bulkExitLines[editIndex] = nextLine;
+                    } else {
+                        bulkExitLines.push(nextLine);
+                    }
+                } else {
+                    const existingIndex = bulkExitLines.findIndex((line) => getBulkExitLineMergeKey(line) === getBulkExitLineMergeKey(nextLine));
+                    if (existingIndex >= 0) {
+                        bulkExitLines[existingIndex].quantityRaw = String(
+                            parseNonNegativeInteger(bulkExitLines[existingIndex].quantityRaw, 0)
+                            + parseNonNegativeInteger(nextLine.quantityRaw, 0)
+                        );
+                        bulkExitLines[existingIndex].shopPriceConfirmed = Boolean(
+                            bulkExitLines[existingIndex].shopPriceConfirmed || nextLine.shopPriceConfirmed
+                        );
+                        showSuccessToast('Quantité ajoutée à la ligne existante du même produit.');
+                    } else {
+                        bulkExitLines.push(nextLine);
+                    }
+                }
+                resetBulkExitComposer();
+                markBulkExitDraftDirty();
+                bulkExitComposer?.querySelector('[data-bulk-exit-field="search"]')?.focus();
             }
 
             function isBulkExitDraftRowBlank(row) {
@@ -27527,6 +27843,52 @@
                 });
             }
 
+            function summarizeBulkExitTotalSent(lines = []) {
+                if (!lines.length) return '0';
+                const packagingLabels = [...new Set(lines
+                    .map((line) => (line.packagingLabel || '').trim())
+                    .filter(Boolean))];
+                const packagingTotal = lines.reduce((sum, line) => sum + (Number(line.packagingQuantity) || 0), 0);
+                if (packagingTotal > 0 && packagingLabels.length === 1) {
+                    return `${packagingTotal} ${packagingLabels[0]}`;
+                }
+                if (packagingTotal > 0) {
+                    return `${packagingTotal} conditionnements`;
+                }
+                const baseTotal = lines.reduce((sum, line) => sum + (Number(line.quantity) || 0), 0);
+                const product = lines[0]?.product || getActiveStoreProductById(lines[0]?.productId);
+                return formatBaseUnits(baseTotal, product ? getProductBaseUnitLabel(product) : DEFAULT_BASE_UNIT_LABEL);
+            }
+
+            function formatBulkExitStockAfterCartons(product, stockAfterBaseUnits, line = {}) {
+                const preferred = line.packagingCode
+                    ? findPackagingByRef(product, line.packagingCode)
+                    : null;
+                const packagings = product ? getProductPackagings(product) : [];
+                const carton = preferred && Number(preferred.unitCount) > 1
+                    ? preferred
+                    : [...packagings]
+                        .filter((packaging) => Number(packaging?.unitCount) > 1)
+                        .sort((a, b) => (Number(b.unitCount) || 1) - (Number(a.unitCount) || 1))[0];
+                if (carton && Number(carton.unitCount) > 1) {
+                    const qty = Math.floor(Math.max(0, Number(stockAfterBaseUnits) || 0) / Number(carton.unitCount));
+                    return `${qty} ${carton.label}`;
+                }
+                return formatBaseUnits(stockAfterBaseUnits, product ? getProductBaseUnitLabel(product) : DEFAULT_BASE_UNIT_LABEL);
+            }
+
+            function formatBulkExitUnitPriceLabel(line = {}) {
+                const currency = line.product?.currency || 'CFA';
+                const unitLabel = getStoreExitPriceUnitLabel(line, line);
+                const unitPrice = line.unitPrice ?? line.sellingPrice;
+                if (line.pricePending) return 'À définir';
+                if (line.requiresShopPriceConfirmation && line.shopFallbackPrice != null) {
+                    return `${formatCurrency(line.shopFallbackPrice, currency)} / ${unitLabel}`;
+                }
+                if (unitPrice == null) return '—';
+                return `${formatCurrency(unitPrice, currency)} / ${unitLabel}`;
+            }
+
             function summarizeBulkExitPackagingQuantity(lines = []) {
                 if (!lines.length) return '0';
                 const sorted = sortBatchItemsByPackagingDesc(lines.map((line) => ({
@@ -27550,59 +27912,39 @@
                 stockAfterLabel = '',
                 amountLabel = '',
                 amountClass = 'text-gray-900',
-                showShopPriceConfirmation = false
+                unitPriceLabel = '',
+                actionsHtml = '',
+                shopPriceNote = ''
             } = {}) {
                 const product = line.product || getActiveStoreProductById(line.productId);
-                const codeHtml = product ? getProductInternalCodeMarkup(product, { prefix: 'Code' }) : '';
+                const codeText = product ? getProductInternalCodeText(product) : '';
                 const quantityLabel = formatBulkExitLineQuantityLabel(line);
-                const borderClass = tone === 'preview' ? 'border-orange-200' : 'border-gray-200';
-                const badgeClass = tone === 'preview' ? 'border-orange-200 bg-orange-50 text-orange-700' : 'border-orange-200 bg-orange-50 text-orange-700';
                 const lineNumber = line.lineNumber || index + 1;
-                const shopPricePanelHtml = showShopPriceConfirmation && line.shopFallbackPrice !== null ? `
-                    <div class="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
-                        <label class="flex items-start gap-2 cursor-pointer">
-                            <input type="checkbox"
-                                data-bulk-exit-recap-shop-price="${lineNumber}"
-                                class="mt-0.5 h-4 w-4 shrink-0 rounded border-amber-300 text-orange-500 focus:ring-orange-400">
-                            <span class="text-xs text-gray-800">
-                                Appliquer le prix boutique : ${formatCurrency(line.shopFallbackPrice, product?.currency || 'CFA')} / ${escapeHtml(getStoreExitPriceUnitLabel(line, line))}
-                            </span>
-                        </label>
-                    </div>
-                ` : '';
+                const rowBg = index % 2 === 0 ? 'bg-white' : 'bg-orange-50';
+                const isPreview = tone === 'preview';
+                const gridClass = isPreview
+                    ? 'grid grid-cols-[1.5rem_minmax(0,1fr)_auto_auto] sm:grid-cols-[1.5rem_minmax(0,1fr)_minmax(6.5rem,auto)_minmax(6.5rem,auto)_minmax(6rem,auto)_minmax(6rem,auto)]'
+                    : 'grid grid-cols-[1.5rem_minmax(0,1fr)_auto_auto]';
                 return `
-                    <article class="rounded-2xl border ${borderClass} bg-white p-4 shadow-sm" data-bulk-exit-recap-line="${lineNumber}">
-                        <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                            <div class="min-w-0">
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <span class="inline-flex items-center rounded-full border ${badgeClass} px-2.5 py-1 text-[11px] font-semibold">
-                                        Sortie magasin
-                                    </span>
-                                    <span class="text-xs text-gray-400">Ligne ${index + 1}</span>
-                                </div>
-                                <p class="mt-2 truncate text-sm font-semibold text-gray-900">${escapeHtml(line.productName || product?.name || 'Produit')}</p>
-                                <p class="mt-1">${codeHtml}</p>
-                            </div>
+                    <article class="${rowBg} ${gridClass} items-center gap-3 border-b border-gray-100 px-3 py-1.5 last:border-b-0" data-bulk-exit-recap-line="${lineNumber}">
+                        <span class="text-[11px] font-semibold text-gray-400">${index + 1}</span>
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-semibold leading-5 text-gray-900">
+                                ${escapeHtml(line.productName || product?.name || 'Produit')}
+                                <span class="ml-1 font-medium text-[11px] text-sky-700">${escapeHtml(codeText)}</span>
+                            </p>
                         </div>
-                        <div class="mt-4 grid grid-cols-1 gap-3 text-sm text-gray-600 ${stockAfterLabel || amountLabel ? 'md:grid-cols-3' : 'md:grid-cols-1'}">
-                            <div class="rounded-xl border border-gray-200 bg-gray-50 px-3 py-3">
-                                <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Quantité</p>
-                                <p class="mt-1 font-semibold text-gray-900">${escapeHtml(quantityLabel)}</p>
+                        <p class="shrink-0 text-right text-xs font-semibold leading-4 text-gray-800">${escapeHtml(quantityLabel)}</p>
+                        ${isPreview ? `
+                            <p class="hidden shrink-0 text-right text-xs leading-4 text-gray-600 sm:block">${escapeHtml(unitPriceLabel || '—')}</p>
+                            <p class="hidden shrink-0 text-right text-xs leading-4 text-gray-600 sm:block">${escapeHtml(stockAfterLabel || '—')}</p>
+                            <p class="shrink-0 text-right text-xs font-semibold leading-4 ${amountClass}">${escapeHtml(amountLabel || '—')}</p>
+                        ` : `
+                            <div class="flex shrink-0 items-center justify-end gap-1">
+                                ${shopPriceNote}
+                                ${actionsHtml}
                             </div>
-                            ${stockAfterLabel ? `
-                                <div class="rounded-xl border border-gray-200 bg-gray-50 px-3 py-3">
-                                    <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Stock après</p>
-                                    <p class="mt-1 font-semibold text-gray-900">${escapeHtml(stockAfterLabel)}</p>
-                                </div>
-                            ` : ''}
-                            ${amountLabel ? `
-                                <div class="rounded-xl border border-gray-200 bg-gray-50 px-3 py-3">
-                                    <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Montant</p>
-                                    <p class="mt-1 font-semibold ${amountClass}">${escapeHtml(amountLabel)}</p>
-                                </div>
-                            ` : ''}
-                        </div>
-                        ${shopPricePanelHtml}
+                        `}
                     </article>
                 `;
             }
@@ -27610,18 +27952,21 @@
             function refreshBulkExitDraftSummary() {
                 const draftRows = getBulkExitDraftRows().filter(row => !isBulkExitDraftRowBlank(row));
                 const snapshots = draftRows
-                    .map(buildBulkExitLineSnapshot)
-                    .filter(Boolean)
-                    .map((snapshot) => {
+                    .map((row) => {
+                        const snapshot = buildBulkExitLineSnapshot(row);
+                        if (!snapshot) return null;
                         const priceContext = getStoreExitPriceContext(snapshot.product, snapshot.packagingCode, snapshot);
                         return {
                             ...snapshot,
+                            id: row.id,
+                            shopPriceConfirmed: row.shopPriceConfirmed === true,
                             shopFallbackPrice: priceContext.shopFallbackPrice,
                             requiresShopPriceConfirmation: priceContext.requiresShopPriceConfirmation,
                             priceScope: priceContext.priceScope,
                             packagingLabel: snapshot.packagingLabel || priceContext.packagingLabel
                         };
-                    });
+                    })
+                    .filter(Boolean);
                 const sortedSnapshots = sortBatchItemsByPackagingDesc(snapshots.map((line) => ({
                     ...line,
                     productName: line.productName || line.product?.name || ''
@@ -27633,23 +27978,32 @@
                 if (bulkExitLinesEmpty && bulkExitLinesList) {
                     if (!sortedSnapshots.length) {
                         bulkExitLinesEmpty.classList.remove('hidden');
+                        bulkExitLinesList.classList.add('hidden');
                         bulkExitLinesList.innerHTML = '';
                     } else {
                         bulkExitLinesEmpty.classList.add('hidden');
+                        bulkExitLinesList.classList.remove('hidden');
                         bulkExitLinesList.innerHTML = sortedSnapshots.map((line, index) =>
                             renderBulkExitRecapCard(line, {
                                 index,
                                 tone: 'draft',
-                                showShopPriceConfirmation: line.requiresShopPriceConfirmation === true
+                                shopPriceNote: line.shopPriceConfirmed
+                                    ? '<span class="hidden rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800 sm:inline">Prix boutique</span>'
+                                    : (line.requiresShopPriceConfirmation
+                                        ? '<span class="hidden rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-600 sm:inline">Sans prix</span>'
+                                        : ''),
+                                actionsHtml: `
+                                    <button type="button" data-bulk-exit-edit-line="${escapeHtml(line.id || '')}"
+                                        class="rounded-lg px-2 py-1 text-[11px] font-semibold text-gray-600 hover:bg-white">
+                                        Modifier
+                                    </button>
+                                    <button type="button" data-bulk-exit-remove-line="${escapeHtml(line.id || '')}"
+                                        class="rounded-lg px-2 py-1 text-[11px] font-semibold text-rose-600 hover:bg-rose-100">
+                                        Retirer
+                                    </button>
+                                `
                             })
                         ).join('');
-                        bulkExitLinesList.querySelectorAll('[data-bulk-exit-recap-shop-price]').forEach((checkbox) => {
-                            checkbox.addEventListener('change', () => {
-                                const lineNumber = parseInt(checkbox.getAttribute('data-bulk-exit-recap-shop-price'), 10);
-                                syncBulkExitShopPriceCheckboxes(lineNumber, checkbox.checked);
-                                resetBulkExitPreview();
-                            });
-                        });
                     }
                 }
             }
@@ -27809,14 +28163,12 @@
                             amountLabel = formatCurrency(row.totalAmount, currency);
                             amountClass = 'text-gray-900';
                         }
-                        const stockAfterLabel = formatStoreProductStockDisplay({
-                            ...row.product,
-                            quantityInStore: row.stockAfter
-                        });
+                        const stockAfterLabel = formatBulkExitStockAfterCartons(row.product, row.stockAfter, row);
                         return renderBulkExitRecapCard(row, {
                             index,
                             tone: 'preview',
                             stockAfterLabel,
+                            unitPriceLabel: formatBulkExitUnitPriceLabel(row),
                             amountLabel,
                             amountClass
                         });
@@ -27824,37 +28176,20 @@
                 }
                 if (bulkExitPreviewCount) bulkExitPreviewCount.textContent = String(preview.rows.length);
                 if (bulkExitPreviewQuantity) {
-                    bulkExitPreviewQuantity.textContent = summarizeBulkExitPackagingQuantity(preview.rows);
+                    bulkExitPreviewQuantity.textContent = summarizeBulkExitTotalSent(preview.rows);
                 }
                 updateBulkExitPreviewTotal(preview);
-                bulkExitPreviewSection.classList.remove('hidden');
-                if (bulkExitPreviewButton) bulkExitPreviewButton.classList.add('hidden');
-                if (bulkExitConfirmButton) bulkExitConfirmButton.classList.remove('hidden');
+                showBulkExitPreviewPage();
                 bulkExitPreviewCache = preview;
                 updateBulkExitConfirmButtonState(preview);
             }
 
             function areBulkExitShopPriceConfirmationsComplete(preview = null) {
-                const lines = getBulkExitDraftRows()
-                    .filter(row => !isBulkExitDraftRowBlank(row))
-                    .map(buildBulkExitLineSnapshot)
-                    .filter(Boolean);
-                if (!lines.length && preview?.rows?.length) {
-                    return preview.rows.every((row) => {
-                        if (!row.requiresShopPriceConfirmation) return true;
-                        return isBulkExitLineShopPriceConfirmed(row.lineNumber);
-                    });
-                }
-                return lines.every((snapshot) => {
-                    const context = getStoreExitPriceContext(snapshot.product, snapshot.packagingCode, snapshot);
-                    if (!context.requiresShopPriceConfirmation) return true;
-                    return isBulkExitLineShopPriceConfirmed(snapshot.lineNumber);
-                });
+                return true;
             }
 
             function mergeBulkExitShopPriceConfirmations(preview) {
                 if (!preview) return false;
-                if (!areBulkExitShopPriceConfirmationsComplete(preview)) return false;
                 let totalAmount = 0;
                 let hasPendingPrice = false;
                 preview.rows.forEach((row) => {
@@ -27908,10 +28243,9 @@
 
             function updateBulkExitConfirmButtonState(preview) {
                 if (!bulkExitConfirmButton) return;
-                const needsConfirmation = !areBulkExitShopPriceConfirmationsComplete(preview);
-                bulkExitConfirmButton.disabled = needsConfirmation;
-                bulkExitConfirmButton.classList.toggle('opacity-50', needsConfirmation);
-                bulkExitConfirmButton.classList.toggle('cursor-not-allowed', needsConfirmation);
+                bulkExitConfirmButton.disabled = !preview;
+                bulkExitConfirmButton.classList.toggle('opacity-50', !preview);
+                bulkExitConfirmButton.classList.toggle('cursor-not-allowed', !preview);
             }
 
             function getBulkTransferDraftRows() {
@@ -28071,11 +28405,11 @@
                     }
                     if (!preview) return;
                     renderBulkExitPreview(preview);
-                    showBulkExitError('Consultez le récapitulatif et confirmez les prix boutique avant envoi.');
+                    showBulkExitError('Consultez le récapitulatif avant envoi.');
                     return;
                 }
                 if (!mergeBulkExitShopPriceConfirmations(preview)) {
-                    showBulkExitError('Cochez la confirmation du prix boutique sur chaque ligne ajoutée.');
+                    showBulkExitError("Impossible d'appliquer les prix du lot.");
                     updateBulkExitConfirmButtonState(preview);
                     return;
                 }
@@ -29967,6 +30301,7 @@
                         pay_later: 'Vente en paiement différé.'
                     };
                     showSuccessToast(messageMap[paymentStatus] || 'Mise à jour effectuée.');
+                    closeStoreValidationInvoiceModal();
                 } catch (error) {
                     console.error(error);
                     showSuccessToast("Impossible de valider cette vente pour le moment.");
@@ -30041,6 +30376,7 @@
 
                     await update(ref(db), updates);
 
+                    closeStoreValidationInvoiceModal();
                     renderSalesHistory();
                     updateDashboardStats();
                     updateAllStats();
@@ -30114,6 +30450,7 @@
                     if (activeStoreValidationEditorId) {
                         renderStoreValidationEditor();
                     }
+                    refreshStoreValidationInvoiceModal();
                 } catch (error) {
                     console.error(error);
                     showSuccessToast("Impossible de mettre à jour le prix.");
@@ -39157,31 +39494,12 @@
                             return;
                         }
                     }
-                    const storeValidationButton = event.target.closest('[data-store-validation-action]');
-                    if (storeValidationButton) {
-                        const saleId = storeValidationButton.dataset.storeValidationId;
-                        const action = storeValidationButton.dataset.storeValidationAction;
-                        if (saleId && action) {
-                            if (action === 'cancel') {
-                                cancelStoreValidationSale(saleId);
-                            } else {
-                                resolveStoreValidationSale(saleId, action);
-                            }
-                        }
+                    const storeValidationInvoiceRow = event.target.closest('[data-store-validation-invoice]');
+                    if (storeValidationInvoiceRow) {
+                        openStoreValidationInvoiceModal(storeValidationInvoiceRow.dataset.storeValidationInvoice);
                         return;
                     }
-                    const storeValidationEditButton = event.target.closest('[data-store-validation-edit]');
-                    if (storeValidationEditButton) {
-                        const groupId = storeValidationEditButton.dataset.storeValidationEdit;
-                        if (groupId) openStoreValidationEditor(groupId);
-                        return;
-                    }
-                    const storeValidationSendButton = event.target.closest('[data-store-validation-send]');
-                    if (storeValidationSendButton) {
-                        const groupId = storeValidationSendButton.dataset.storeValidationSend;
-                        if (groupId) openSendToCartModal(groupId);
-                        return;
-                    }
+                    if (handleStoreValidationInvoiceUiClick(event)) return;
                     const validateButton = event.target.closest('[data-pending-validate]');
                     if (validateButton) {
                         validatePendingSale(validateButton.dataset.pendingValidate);
@@ -39384,6 +39702,25 @@
             if (taxToggleHistory) {
                 taxToggleHistory.addEventListener('change', (event) => {
                     setTaxEnabled(event.target.checked);
+                });
+            }
+            if (closeStoreValidationInvoiceModalButton) {
+                closeStoreValidationInvoiceModalButton.addEventListener('click', closeStoreValidationInvoiceModal);
+            }
+            if (storeValidationInvoiceModal) {
+                storeValidationInvoiceModal.addEventListener('click', (event) => {
+                    if (event.target === storeValidationInvoiceModal) closeStoreValidationInvoiceModal();
+                });
+            }
+            if (storeValidationInvoiceModalBody) {
+                storeValidationInvoiceModalBody.addEventListener('click', (event) => {
+                    handleStoreValidationInvoiceUiClick(event);
+                });
+                storeValidationInvoiceModalBody.addEventListener('change', (event) => {
+                    const priceInput = event.target.closest('[data-store-validation-price-id]');
+                    if (!priceInput) return;
+                    const saleId = priceInput.dataset.storeValidationPriceId;
+                    if (saleId) updateStoreValidationSalePrice(saleId, priceInput.value);
                 });
             }
             if (closeSalesDetailModalButton) {
@@ -41315,7 +41652,9 @@
                 }
                 openExitModalForProduct();
             });
-            if (openBulkExitModalButton) openBulkExitModalButton.addEventListener('click', () => {
+            if (openBulkExitModalButton) openBulkExitModalButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
                 if (!isCompanyFeatureEnabled('store_stock.exit')) {
                     showSuccessToast(getFeatureRestrictionMessage());
                     return;
@@ -41581,9 +41920,14 @@
 
             if (bulkExitAddRowButton) {
                 bulkExitAddRowButton.addEventListener('click', () => {
-                    buildBulkExitRow();
-                    refreshBulkExitRowProducts();
-                    markBulkExitDraftDirty();
+                    addOrUpdateBulkExitLineFromComposer();
+                });
+            }
+            if (bulkExitResetComposerButton) {
+                bulkExitResetComposerButton.addEventListener('click', () => {
+                    clearBulkExitError();
+                    resetBulkExitComposer();
+                    bulkExitComposer?.querySelector('[data-bulk-exit-field="search"]')?.focus();
                 });
             }
             if (bulkTransferAddRowButton) {
@@ -41595,87 +41939,92 @@
                 });
             }
             bindBulkRowComboboxScrollHandlers();
-            if (bulkExitRowsTbody) {
-                bulkExitRowsTbody.addEventListener('click', (event) => {
+            if (bulkExitComposer) {
+                enhanceBulkExitRowSearch(bulkExitComposer);
+                bulkExitComposer.addEventListener('click', (event) => {
                     const option = event.target.closest('[data-product-option]');
                     if (option && !option.hasAttribute('disabled')) {
-                        const row = option.closest('tr[data-bulk-exit-row]');
-                        if (row) {
-                            setBulkExitRowProduct(row, option.dataset.productOption);
-                            markBulkExitDraftDirty();
-                        }
+                        setBulkExitRowProduct(bulkExitComposer, option.dataset.productOption);
                         return;
                     }
                     const toggleButton = event.target.closest('[data-bulk-exit-toggle]');
-                    if (toggleButton) {
-                        const row = toggleButton.closest('tr[data-bulk-exit-row]');
-                        if (!row) return;
-                        const dropdown = row.querySelector('[data-bulk-exit-dropdown]');
-                        const isOpen = row.dataset.bulkExitComboboxOpen === 'true';
-                        closeAllBulkExitComboboxes(isOpen ? row : null);
-                        if (isOpen) {
-                            if (dropdown) {
-                                dropdown.classList.add('hidden');
-                                resetBulkRowComboboxDropdown(dropdown);
-                            }
-                            row.dataset.bulkExitComboboxOpen = 'false';
-                        } else {
-                            renderBulkExitRowCombobox(row, { openDropdown: true });
+                    if (!toggleButton) return;
+                    const dropdown = bulkExitComposer.querySelector('[data-bulk-exit-dropdown]');
+                    const isOpen = bulkExitComposer.dataset.bulkExitComboboxOpen === 'true';
+                    closeAllBulkExitComboboxes(isOpen ? bulkExitComposer : null);
+                    if (isOpen) {
+                        if (dropdown) {
+                            dropdown.classList.add('hidden');
+                            resetBulkRowComboboxDropdown(dropdown);
                         }
-                        return;
+                        bulkExitComposer.dataset.bulkExitComboboxOpen = 'false';
+                    } else {
+                        renderBulkExitRowCombobox(bulkExitComposer, { openDropdown: true });
                     }
-                    const removeButton = event.target.closest('[data-bulk-exit-remove]');
-                    if (!removeButton) return;
-                    const row = removeButton.closest('tr[data-bulk-exit-row]');
-                    if (row) row.remove();
-                    ensureBulkExitRows(1);
-                    markBulkExitDraftDirty();
                 });
-                bulkExitRowsTbody.addEventListener('input', (event) => {
-                    const row = event.target.closest('tr[data-bulk-exit-row]');
-                    if (!row) return;
+                bulkExitComposer.addEventListener('input', (event) => {
                     if (event.target.matches('input[data-bulk-exit-field="search"]')) {
-                        const productSelect = row.querySelector('[data-bulk-exit-field="product"]');
+                        const productSelect = bulkExitComposer.querySelector('[data-bulk-exit-field="product"]');
                         const selectedLabel = productSelect?.value
                             ? getBulkExitProductDisplayLabel(getActiveStoreProductById(productSelect.value))
                             : '';
                         if (productSelect?.value && normalizeString(event.target.value) !== normalizeString(selectedLabel)) {
                             productSelect.value = '';
-                            updateBulkExitRowPackagingUI(row);
+                            updateBulkExitRowPackagingUI(bulkExitComposer);
                         }
-                        row.dataset.bulkExitQuery = event.target.value || '';
-                        closeAllBulkExitComboboxes(row);
-                        renderBulkExitRowCombobox(row, { openDropdown: true });
+                        bulkExitComposer.dataset.bulkExitQuery = event.target.value || '';
+                        closeAllBulkExitComboboxes(bulkExitComposer);
+                        renderBulkExitRowCombobox(bulkExitComposer, { openDropdown: true });
                     }
                     if (event.target.matches('input[data-bulk-exit-field="quantity"]')) {
-                        updateBulkExitRowPackagingUI(row);
+                        updateBulkExitRowPackagingUI(bulkExitComposer);
                     }
-                    markBulkExitDraftDirty();
                 });
-                bulkExitRowsTbody.addEventListener('change', (event) => {
-                    const row = event.target.closest('tr[data-bulk-exit-row]');
-                    if (!row) return;
+                bulkExitComposer.addEventListener('change', (event) => {
                     if (event.target.matches('select[data-bulk-exit-field="packaging"]')) {
-                        updateBulkExitRowPackagingUI(row);
+                        updateBulkExitRowPackagingUI(bulkExitComposer);
                     }
-                    if (event.target.matches('[data-bulk-exit-shop-price-confirm]')) {
-                        const draftRows = getBulkExitDraftRows();
-                        const lineNumber = draftRows.findIndex(item => item.row === row) + 1;
-                        if (lineNumber > 0) {
-                            syncBulkExitShopPriceCheckboxes(lineNumber, event.target.checked);
+                });
+                bulkExitComposer.addEventListener('focusin', (event) => {
+                    if (!event.target.matches('input[data-bulk-exit-field="search"]')) return;
+                    closeAllBulkExitComboboxes(bulkExitComposer);
+                    renderBulkExitRowCombobox(bulkExitComposer, { openDropdown: true });
+                });
+                bulkExitComposer.addEventListener('keydown', (event) => {
+                    if (event.key !== 'Enter') return;
+                    if (event.target.matches('input[data-bulk-exit-field="quantity"], input[data-bulk-exit-field="search"]')) {
+                        event.preventDefault();
+                        if (event.target.matches('input[data-bulk-exit-field="quantity"]')) {
+                            addOrUpdateBulkExitLineFromComposer();
                         }
-                        refreshBulkExitDraftSummary();
-                        resetBulkExitPreview();
+                    }
+                });
+            }
+            if (bulkExitLinesList) {
+                bulkExitLinesList.addEventListener('click', (event) => {
+                    const editButton = event.target.closest('[data-bulk-exit-edit-line]');
+                    if (editButton) {
+                        const line = bulkExitLines.find((item) => item.id === editButton.dataset.bulkExitEditLine);
+                        if (line) fillBulkExitComposer(line);
+                        return;
+                    }
+                    const removeButton = event.target.closest('[data-bulk-exit-remove-line]');
+                    if (!removeButton) return;
+                    bulkExitLines = bulkExitLines.filter((item) => item.id !== removeButton.dataset.bulkExitRemoveLine);
+                    if (bulkExitEditingLineId === removeButton.dataset.bulkExitRemoveLine) {
+                        resetBulkExitComposer();
                     }
                     markBulkExitDraftDirty();
                 });
-                bulkExitRowsTbody.addEventListener('focusin', (event) => {
-                    if (!event.target.matches('input[data-bulk-exit-field="search"]')) return;
-                    const row = event.target.closest('tr[data-bulk-exit-row]');
-                    if (!row) return;
-                    closeAllBulkExitComboboxes(row);
-                    renderBulkExitRowCombobox(row, { openDropdown: true });
-                });
+            }
+            if (bulkExitModal && bulkExitScroll && !bulkExitModal.dataset.wheelScrollBound) {
+                bulkExitModal.dataset.wheelScrollBound = '1';
+                bulkExitModal.addEventListener('wheel', (event) => {
+                    if (event.target.closest('.product-combobox-options-panel, [data-suggestion-dropdown]')) return;
+                    if (bulkExitScroll.scrollHeight <= bulkExitScroll.clientHeight) return;
+                    event.preventDefault();
+                    bulkExitScroll.scrollTop += event.deltaY;
+                }, { passive: false });
             }
             document.addEventListener('click', (event) => {
                 if (!bulkExitModal || bulkExitModal.classList.contains('hidden')) return;
@@ -41773,6 +42122,11 @@
                     const preview = buildBulkExitPreview();
                     if (!preview) return;
                     renderBulkExitPreview(preview);
+                });
+            }
+            if (bulkExitBackButton) {
+                bulkExitBackButton.addEventListener('click', () => {
+                    resetBulkExitPreview();
                 });
             }
             if (bulkTransferPreviewButton) {
@@ -42183,7 +42537,10 @@
                             exitSelectedProductId = '';
                             syncExitProductInfoFromSelect();
                         }
-                        if (m === bulkExitModal) resetBulkExitPreview();
+                        if (m === bulkExitModal) {
+                            resetBulkExitPreview();
+                            m.classList.remove('flex');
+                        }
                         if (m === transferModal) closeTransferProductDropdown({ restoreSelection: true });
                         if (m === bulkTransferModal) resetBulkTransferPreview();
                         if (m === restockModal) closeProductCombobox('restock', { restoreSelection: true });
