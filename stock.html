@@ -77,9 +77,111 @@
             overflow-y: auto;
         }
 
-        #bulk-exit-modal > div {
-            max-height: min(92vh, 64rem) !important;
+        #bulk-exit-modal > div,
+        #grouped-entry-modal > div {
+            height: min(90vh, 52rem) !important;
+            max-height: min(90vh, 52rem) !important;
             overflow: hidden !important;
+        }
+
+        .batch-recap-table-wrap {
+            overflow-x: auto;
+        }
+
+        .batch-recap-table {
+            width: 100%;
+            min-width: 44rem;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .batch-recap-table th,
+        .batch-recap-table td {
+            padding: 0.45rem 0.7rem;
+            vertical-align: middle;
+            overflow: hidden;
+        }
+
+        .batch-recap-table thead th {
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+            color: #6b7280;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-align: left;
+            text-transform: uppercase;
+        }
+
+        .batch-recap-table tbody td {
+            border-bottom: 1px solid #f3f4f6;
+            color: #1f2937;
+        }
+
+        .batch-recap-table tbody tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .batch-recap-table .is-num,
+        .batch-recap-table thead th.is-num {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .batch-recap-table .col-num,
+        .batch-recap-table thead th.col-num,
+        .batch-recap-table tbody td.col-num {
+            width: 2.6rem;
+            color: #9ca3af;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .batch-recap-table-preview .col-product { width: 24%; }
+        .batch-recap-table-preview .col-qty { width: 18%; }
+        .batch-recap-table-preview .col-price { width: 16%; }
+        .batch-recap-table-preview .col-stock { width: 13%; }
+        .batch-recap-table-preview .col-amount { width: 18%; }
+
+        .batch-recap-table-draft .col-qty { width: 22%; }
+        .batch-recap-table-draft .col-actions { width: 10rem; }
+
+        .batch-recap-table-entry .col-product { width: 28%; }
+        .batch-recap-table-entry .col-qty { width: 18%; }
+        .batch-recap-table-entry .col-stock { width: 16%; }
+        .batch-recap-table-entry .col-date { width: 12%; }
+        .batch-recap-table-entry .col-type,
+        .batch-recap-table-entry .col-actions { width: 8.5rem; }
+
+        .batch-recap-stack {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.1rem;
+            min-width: 0;
+        }
+
+        .batch-recap-main,
+        .batch-recap-sub {
+            display: block;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .batch-recap-main {
+            color: inherit;
+            font-size: 0.75rem;
+            font-weight: 600;
+            line-height: 1.25;
+        }
+
+        .batch-recap-sub {
+            color: #9ca3af;
+            font-size: 10px;
+            font-weight: 500;
+            line-height: 1.2;
         }
 
         main {
@@ -3309,6 +3411,11 @@
                     <div class="flex-shrink-0">
                         <h1 class="text-3xl font-bold text-gray-800">Gestion du Magasin</h1>
                         <p class="text-gray-500 mt-1">Gestion du stock principal</p>
+                        <p id="store-carton-summary" class="mt-3 flex flex-wrap items-baseline gap-x-2">
+                            <span id="store-carton-total" class="text-[1.7rem] font-semibold leading-none tracking-tight text-slate-900">0</span>
+                            <span class="text-sm text-slate-500">cartons en magasin</span>
+                            <span id="store-carton-remainder" class="text-sm text-slate-400"></span>
+                        </p>
                     </div>
                     <div class="flex flex-wrap items-center gap-2 lg:gap-3 w-full xl:w-auto store-page-header-actions">
                         <div class="flex items-center gap-2 px-3 h-10 rounded-lg border border-gray-200 bg-white shadow-sm min-w-[200px] flex-grow sm:flex-grow-0">
@@ -3763,17 +3870,36 @@
                 </details>
 
                 <div class="mt-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                    <div class="inline-flex rounded-xl border border-gray-200 bg-white p-1 w-fit">
-                        <button type="button" id="store-movements-view-detail"
-                            class="store-movements-view-button px-4 py-2 rounded-lg text-sm font-semibold bg-purple-500 text-white">Vue détaillée</button>
-                        <button type="button" id="store-movements-view-batches"
-                            class="store-movements-view-button px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 hover:text-gray-900">Par lots</button>
+                    <div id="store-movements-carton-summary" class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Aujourd'hui</span>
+                            <span id="store-movements-today-in" title="Cartons entrés" class="font-semibold tabular-nums text-emerald-700">+0</span>
+                            <span class="text-slate-300">/</span>
+                            <span id="store-movements-today-out" title="Cartons sortis" class="font-semibold tabular-nums text-orange-700">−0</span>
+                            <span id="store-movements-today-pieces" class="hidden text-[11px] font-medium text-slate-400" title="Pièces hors carton"></span>
+                        </div>
+                        <div id="store-movements-period-summary" class="hidden items-center gap-2.5">
+                            <span class="hidden h-4 w-px bg-slate-200 sm:block"></span>
+                            <span id="store-movements-period-label" class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Période</span>
+                            <span id="store-movements-period-in" title="Cartons entrés" class="font-semibold tabular-nums text-emerald-700">+0</span>
+                            <span class="text-slate-300">/</span>
+                            <span id="store-movements-period-out" title="Cartons sortis" class="font-semibold tabular-nums text-orange-700">−0</span>
+                            <span id="store-movements-period-pieces" class="hidden text-[11px] font-medium text-slate-400" title="Pièces hors carton"></span>
+                        </div>
                     </div>
-                    <label id="store-movements-grouped-only-wrap" class="hidden inline-flex items-center gap-2 text-sm text-gray-600">
-                        <input type="checkbox" id="store-movements-grouped-only-filter"
-                            class="rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
-                        Afficher uniquement les lignes groupées
-                    </label>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <div class="inline-flex rounded-xl border border-gray-200 bg-white p-1 w-fit">
+                            <button type="button" id="store-movements-view-detail"
+                                class="store-movements-view-button px-4 py-2 rounded-lg text-sm font-semibold bg-purple-500 text-white">Vue détaillée</button>
+                            <button type="button" id="store-movements-view-batches"
+                                class="store-movements-view-button px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 hover:text-gray-900">Par lots</button>
+                        </div>
+                        <label id="store-movements-grouped-only-wrap" class="hidden inline-flex items-center gap-2 text-sm text-gray-600">
+                            <input type="checkbox" id="store-movements-grouped-only-filter"
+                                class="rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
+                            Afficher uniquement les lignes groupées
+                        </label>
+                    </div>
                 </div>
 
                 <div id="store-movements-batches-container" class="hidden mt-6 space-y-3"></div>
@@ -5794,269 +5920,281 @@
         </div>
     </div>
 
-    <div id="grouped-entry-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/55 backdrop-blur-sm p-4">
-        <div class="w-full max-w-6xl overflow-hidden rounded-3xl border border-white/70 bg-white shadow-2xl">
-            <div class="flex items-start justify-between gap-4 border-b border-gray-100 px-6 py-5">
-                <div>
-                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-600">Réceptions magasin</p>
-                    <h2 class="mt-2 text-2xl font-bold text-gray-900">Enregistrer une entrée</h2>
-                    <p class="mt-1 text-sm text-gray-500">Ajoutez un ou plusieurs produits depuis le même document d'entrée.</p>
+    <div id="grouped-entry-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/55 backdrop-blur-sm p-2 sm:p-4">
+        <div class="flex max-h-[min(94vh,64rem)] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-white/70 bg-white shadow-2xl sm:rounded-3xl">
+            <div class="flex shrink-0 items-center justify-between gap-3 border-b border-gray-100 px-4 py-2.5 sm:px-5">
+                <div class="min-w-0">
+                    <h2 class="text-lg font-bold leading-6 text-gray-900 sm:text-xl">
+                        <span class="mr-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-600">Magasin</span>
+                        Entrées groupées
+                    </h2>
                 </div>
                 <button id="close-grouped-entry-modal-button" type="button"
-                    class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    class="rounded-full p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
                 </button>
             </div>
-            <form id="grouped-entry-form" class="flex max-h-[min(88vh,58rem)] flex-col">
-                <div class="flex-1 overflow-y-auto px-6 py-5">
-                    <div class="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_220px_220px]">
-                        <div class="xl:col-span-2">
-                            <label for="grouped-entry-supplier-select" class="block text-sm font-medium text-gray-700">Fournisseur *</label>
-                            <div class="mt-1 flex items-center gap-2">
-                                <select id="grouped-entry-supplier-select"
-                                    class="w-full rounded-xl border border-gray-300 px-4 py-3 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400">
-                                    <option value="">Sélectionnez un fournisseur</option>
-                                </select>
-                                <button type="button" id="open-grouped-entry-supplier-modal-button"
-                                    class="flex h-[50px] min-w-[50px] items-center justify-center rounded-xl border border-gray-300 bg-gray-50 text-gray-500 hover:bg-gray-100"
-                                    title="Nouveau fournisseur">
-                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                    </svg>
+            <form id="grouped-entry-form" class="flex min-h-0 flex-1 flex-col">
+                <div id="grouped-entry-draft-chrome" class="shrink-0">
+                    <div id="grouped-entry-composer" class="border-b border-emerald-100 bg-emerald-50/40 px-4 py-2 sm:px-5">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div class="inline-flex rounded-lg border border-gray-200 bg-white p-0.5">
+                                <button type="button" id="grouped-entry-tab-existing"
+                                    class="rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white shadow">
+                                    Existant
+                                </button>
+                                <button type="button" id="grouped-entry-tab-new"
+                                    class="rounded-md px-2.5 py-1 text-xs font-semibold text-gray-600">
+                                    Nouveau
                                 </button>
                             </div>
-                        </div>
-                        <div>
-                            <label for="grouped-entry-reference" class="block text-sm font-medium text-gray-700">Référence document</label>
-                            <input type="text" id="grouped-entry-reference" placeholder="Ex: BL-2026-001"
-                                class="mt-1 w-full rounded-xl border border-gray-300 px-4 py-3 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400" />
-                        </div>
-                        <div>
-                            <label for="grouped-entry-delivery-name" class="block text-sm font-medium text-gray-700">Livreur / Réceptionnaire</label>
-                            <input type="text" id="grouped-entry-delivery-name" placeholder="Nom du livreur ou du réceptionnaire"
-                                class="mt-1 w-full rounded-xl border border-gray-300 px-4 py-3 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400" />
-                        </div>
-                        <div>
-                            <label for="grouped-entry-storekeeper-name" class="block text-sm font-medium text-gray-700">Nom du magasinier</label>
-                            <input type="text" id="grouped-entry-storekeeper-name" placeholder="Nom du magasinier"
-                                class="mt-1 w-full rounded-xl border border-gray-300 px-4 py-3 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400" />
-                        </div>
-                    </div>
-
-                    <div class="mt-4">
-                        <label for="grouped-entry-comment" class="block text-sm font-medium text-gray-700">Commentaire global</label>
-                        <textarea id="grouped-entry-comment" rows="2" placeholder="Ex: Réception du camion du matin"
-                            class="mt-1 w-full rounded-xl border border-gray-300 p-3 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400"></textarea>
-                    </div>
-
-                    <div class="mt-6 rounded-3xl border border-gray-200 bg-gray-50/70 p-5">
-                        <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                            <div>
-                                <h3 class="text-lg font-semibold text-gray-900">Préparer une ligne produit</h3>
-                                <p class="text-sm text-gray-500">Le formulaire reprend l'entrée classique, puis vous l'ajoutez à la liste.</p>
-                            </div>
                             <span id="grouped-entry-editing-badge"
-                                class="hidden inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                                class="hidden inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700">
                                 Modification en cours
                             </span>
                         </div>
 
-                        <div class="mt-4 inline-flex rounded-lg border border-gray-200 bg-white p-1">
-                            <button type="button" id="grouped-entry-tab-existing"
-                                class="rounded-md bg-emerald-600 px-3 py-2 text-xs font-semibold text-white shadow">
-                                Produit existant
-                            </button>
-                            <button type="button" id="grouped-entry-tab-new"
-                                class="rounded-md border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600">
-                                Nouveau produit
-                            </button>
-                        </div>
-
-                        <div id="grouped-entry-existing-panel" class="mt-4 space-y-4">
-                            <div id="grouped-entry-product-info" class="hidden rounded-xl border border-emerald-100 bg-emerald-50 p-4">
-                                <p id="grouped-entry-product-name" class="text-sm font-semibold text-gray-900">—</p>
-                                <p class="mt-1 text-xs text-emerald-700">Stock actuel: <span id="grouped-entry-product-stock">—</span></p>
-                            </div>
-                            <div>
-                                <label for="grouped-entry-product-search" class="block text-sm font-medium text-gray-700">Produit *</label>
-                                <div id="grouped-entry-product-combobox" class="relative mt-1">
-                                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
-                                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
-                                        </svg>
-                                    </div>
-                                    <input type="text" id="grouped-entry-product-search" autocomplete="off" placeholder="Tapez le nom, le code ou la description"
-                                        class="w-full rounded-xl border border-gray-300 bg-white py-3 pl-11 pr-24 text-gray-800 shadow-sm focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400">
-                                    <button type="button" id="grouped-entry-product-clear"
-                                        class="absolute inset-y-0 right-10 hidden flex items-center px-2 text-gray-300 transition hover:text-gray-500"
-                                        aria-label="Effacer la recherche produit">
-                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12M18 6L6 18"></path>
-                                        </svg>
-                                    </button>
-                                    <button type="button" id="grouped-entry-product-toggle"
-                                        class="absolute inset-y-0 right-0 flex items-center px-4 text-gray-400 transition hover:text-gray-600"
-                                        aria-label="Afficher les produits" aria-expanded="false">
-                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                        </svg>
-                                    </button>
-                                    <div id="grouped-entry-product-dropdown"
-                                        class="hidden absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
-                                        <div id="grouped-entry-product-options" class="product-combobox-options-panel max-h-72 space-y-1 overflow-y-auto p-2"></div>
-                                        <div id="grouped-entry-product-empty" class="hidden px-4 py-6 text-sm text-gray-400">Aucun produit correspondant.</div>
-                                    </div>
-                                </div>
-                                <select id="grouped-entry-product-select" class="hidden">
-                                    <option value="">Tapez pour rechercher un produit</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div id="grouped-entry-new-panel" class="mt-4 hidden space-y-4">
-                            <div>
-                                <label for="grouped-entry-new-name" class="block text-sm font-medium text-gray-700">Nom du produit *</label>
-                                <input type="text" id="grouped-entry-new-name" placeholder="Ex: Caméra HD"
-                                    class="mt-1 w-full rounded-xl border border-gray-300 px-4 py-3 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400">
-                            </div>
-                            <div>
-                                <label for="grouped-entry-new-code" class="block text-sm font-medium text-gray-700">Code interne <span class="font-normal text-gray-400">(optionnel)</span></label>
-                                <input type="text" id="grouped-entry-new-code" placeholder="Ex: CAM-001"
-                                    class="mt-1 w-full rounded-xl border border-gray-300 px-4 py-3 uppercase tracking-wider focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400">
-                            </div>
-                            <div class="rounded-xl border border-amber-200 bg-amber-50/70 p-3 text-xs text-amber-700">
-                                Les prix de vente seront à définir dans le tableau des prix après l'entrée.
-                            </div>
-                            <div class="rounded-xl border border-gray-200 bg-gray-50/80 p-3 space-y-3">
-                                <p class="text-xs font-semibold text-gray-600">Conditionnement <span class="font-normal text-gray-400">(optionnel)</span></p>
-                                <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                                    <div>
-                                        <label for="grouped-entry-new-base-unit" class="block text-xs font-medium text-gray-600">Unité de base</label>
-                                        <div class="suggestion-combobox relative mt-1" data-suggestion-combobox data-suggestions="base-unit">
-                                            <input type="text" id="grouped-entry-new-base-unit" data-suggestion-input autocomplete="off" placeholder="Ex: Pièce" value="Pièce"
-                                                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 pr-16 text-sm focus:ring-emerald-400 focus:border-emerald-400" />
-                                            <div class="absolute inset-y-0 right-0 flex items-center pr-1">
-                                                <button type="button" tabindex="-1" data-suggestion-clear aria-label="Effacer" class="hidden flex items-center justify-center w-7 h-7 rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600">
-                                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                                </button>
-                                                <button type="button" tabindex="-1" data-suggestion-toggle aria-label="Suggestions" class="flex items-center justify-center w-8 h-8 text-slate-400 transition hover:text-slate-600">
-                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                                </button>
-                                            </div>
-                                            <div class="suggestion-combobox-dropdown hidden absolute left-0 right-0 top-full z-40 mt-1 max-h-48 overflow-y-auto rounded-xl border border-gray-200 bg-white py-1 shadow-lg" data-suggestion-dropdown></div>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label for="grouped-entry-new-packaging-label" class="block text-xs font-medium text-gray-600">Conditionnement</label>
-                                        <div class="suggestion-combobox relative mt-1" data-suggestion-combobox data-suggestions="packaging-label">
-                                            <input type="text" id="grouped-entry-new-packaging-label" data-suggestion-input autocomplete="off" placeholder="Ex: Carton"
-                                                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 pr-16 text-sm focus:ring-emerald-400 focus:border-emerald-400" />
-                                            <div class="absolute inset-y-0 right-0 flex items-center pr-1">
-                                                <button type="button" tabindex="-1" data-suggestion-clear aria-label="Effacer" class="hidden flex items-center justify-center w-7 h-7 rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600">
-                                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                                </button>
-                                                <button type="button" tabindex="-1" data-suggestion-toggle aria-label="Suggestions" class="flex items-center justify-center w-8 h-8 text-slate-400 transition hover:text-slate-600">
-                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                                </button>
-                                            </div>
-                                            <div class="suggestion-combobox-dropdown hidden absolute left-0 right-0 top-full z-40 mt-1 max-h-48 overflow-y-auto rounded-xl border border-gray-200 bg-white py-1 shadow-lg" data-suggestion-dropdown></div>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label for="grouped-entry-new-packaging-units" class="block text-xs font-medium text-gray-600">Contenu</label>
-                                        <input type="number" id="grouped-entry-new-packaging-units" min="1" step="1" placeholder="Ex: 120"
-                                            class="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-emerald-400 focus:border-emerald-400" />
-                                        <p class="mt-1 text-[11px] text-gray-400">Unités par conditionnement</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_220px]">
-                            <div>
-                                <label for="grouped-entry-description" class="block text-sm font-medium text-gray-700">Description</label>
-                                <textarea id="grouped-entry-description" rows="2" placeholder="Description du produit"
-                                    class="mt-1 w-full rounded-xl border border-gray-300 p-3 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400"></textarea>
-                            </div>
-                            <div class="space-y-3">
-                                <div id="grouped-entry-packaging-row" class="hidden">
-                                    <label for="grouped-entry-packaging-select" class="block text-sm font-medium text-gray-700">Conditionnement</label>
-                                    <select id="grouped-entry-packaging-select"
-                                        class="mt-1 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400">
-                                    </select>
+                        <div id="grouped-entry-new-panel" class="mt-2 hidden space-y-2">
+                            <div class="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(0,1.2fr)_140px_130px_150px_110px]">
+                                <div>
+                                    <label for="grouped-entry-new-name" class="block text-xs font-medium text-gray-600">Nom du produit *</label>
+                                    <input type="text" id="grouped-entry-new-name" placeholder="Ex: Caméra HD"
+                                        class="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400">
                                 </div>
                                 <div>
-                                    <label for="grouped-entry-quantity" id="grouped-entry-quantity-label" class="block text-sm font-medium text-gray-700">Quantité à ajouter *</label>
-                                    <input type="number" id="grouped-entry-quantity" min="1" placeholder="0"
-                                        class="mt-1 w-full rounded-xl border border-gray-300 px-4 py-3 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400">
-                                    <p id="grouped-entry-quantity-meta" class="hidden mt-1 text-xs text-gray-500"></p>
+                                    <label for="grouped-entry-new-code" class="block text-xs font-medium text-gray-600">Code</label>
+                                    <input type="text" id="grouped-entry-new-code" placeholder="CAM-001"
+                                        class="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm uppercase tracking-wider focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400">
+                                </div>
+                                <div>
+                                    <label for="grouped-entry-new-base-unit" class="block text-xs font-medium text-gray-600">Unité</label>
+                                    <div class="suggestion-combobox relative mt-1" data-suggestion-combobox data-suggestions="base-unit">
+                                        <input type="text" id="grouped-entry-new-base-unit" data-suggestion-input autocomplete="off" placeholder="Pièce" value="Pièce"
+                                            class="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 pr-14 text-sm focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400" />
+                                        <div class="absolute inset-y-0 right-0 flex items-center pr-1">
+                                            <button type="button" tabindex="-1" data-suggestion-clear aria-label="Effacer" class="hidden flex items-center justify-center w-7 h-7 rounded-full text-slate-400 hover:bg-slate-100">
+                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                            </button>
+                                            <button type="button" tabindex="-1" data-suggestion-toggle aria-label="Suggestions" class="flex items-center justify-center w-8 h-8 text-slate-400">
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                            </button>
+                                        </div>
+                                        <div class="suggestion-combobox-dropdown hidden absolute left-0 right-0 top-full z-40 mt-1 max-h-48 overflow-y-auto rounded-xl border border-gray-200 bg-white py-1 shadow-lg" data-suggestion-dropdown></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="grouped-entry-new-packaging-label" class="block text-xs font-medium text-gray-600">Conditionnement</label>
+                                    <div class="suggestion-combobox relative mt-1" data-suggestion-combobox data-suggestions="packaging-label">
+                                        <input type="text" id="grouped-entry-new-packaging-label" data-suggestion-input autocomplete="off" placeholder="Carton"
+                                            class="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 pr-14 text-sm focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400" />
+                                        <div class="absolute inset-y-0 right-0 flex items-center pr-1">
+                                            <button type="button" tabindex="-1" data-suggestion-clear aria-label="Effacer" class="hidden flex items-center justify-center w-7 h-7 rounded-full text-slate-400 hover:bg-slate-100">
+                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                            </button>
+                                            <button type="button" tabindex="-1" data-suggestion-toggle aria-label="Suggestions" class="flex items-center justify-center w-8 h-8 text-slate-400">
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                            </button>
+                                        </div>
+                                        <div class="suggestion-combobox-dropdown hidden absolute left-0 right-0 top-full z-40 mt-1 max-h-48 overflow-y-auto rounded-xl border border-gray-200 bg-white py-1 shadow-lg" data-suggestion-dropdown></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="grouped-entry-new-packaging-units" class="block text-xs font-medium text-gray-600">Contenu</label>
+                                    <input type="number" id="grouped-entry-new-packaging-units" min="1" step="1" placeholder="120"
+                                        class="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400" />
                                 </div>
                             </div>
                         </div>
 
-                        <div class="mt-4">
-                            <label for="grouped-entry-expiration-date" class="block text-sm font-medium text-gray-700">Date d'expiration</label>
-                            <input type="date" id="grouped-entry-expiration-date"
-                                class="mt-1 w-full rounded-xl border border-gray-300 px-4 py-3 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400">
+                        <div class="mt-2 grid grid-cols-1 items-end gap-2 md:grid-cols-[minmax(0,1fr)_6.25rem_auto]">
+                            <div id="grouped-entry-existing-panel" class="min-w-0">
+                                <div class="grid grid-cols-1 items-end gap-2 sm:grid-cols-[minmax(0,1fr)_10.5rem]">
+                                    <div class="min-w-0">
+                                        <label for="grouped-entry-product-search" class="block text-xs font-medium text-gray-600">Produit *</label>
+                                        <div id="grouped-entry-product-combobox" class="relative mt-1">
+                                            <div class="flex items-center gap-1">
+                                                <input type="text" id="grouped-entry-product-search" autocomplete="off" placeholder="Rechercher un produit..."
+                                                    class="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400" />
+                                                <button type="button" id="grouped-entry-product-clear"
+                                                    class="hidden h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-400 hover:bg-gray-50"
+                                                    aria-label="Effacer la recherche produit">
+                                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12M18 6L6 18"></path>
+                                                    </svg>
+                                                </button>
+                                                <button type="button" id="grouped-entry-product-toggle"
+                                                    class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 hover:bg-gray-50"
+                                                    aria-label="Afficher les produits" aria-expanded="false">
+                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                            <div id="grouped-entry-product-dropdown"
+                                                class="product-combobox-dropdown hidden absolute left-0 right-0 z-30 mt-1 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
+                                                <div id="grouped-entry-product-options" class="product-combobox-options-panel max-h-44 space-y-1 overflow-y-auto p-2"></div>
+                                                <div id="grouped-entry-product-empty" class="hidden px-4 py-5 text-sm text-gray-400">Aucun produit correspondant.</div>
+                                            </div>
+                                            <select id="grouped-entry-product-select" class="hidden">
+                                                <option value="">Tapez pour rechercher un produit</option>
+                                            </select>
+                                        </div>
+                                        <div id="grouped-entry-product-info" class="hidden truncate text-[11px] text-emerald-700">
+                                            <span id="grouped-entry-product-name">—</span>
+                                            · Stock: <span id="grouped-entry-product-stock">—</span>
+                                        </div>
+                                    </div>
+                                    <div id="grouped-entry-packaging-row">
+                                        <label for="grouped-entry-packaging-select" class="block text-xs font-medium text-gray-600">Conditionnement</label>
+                                        <select id="grouped-entry-packaging-select"
+                                            class="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400">
+                                            <option value="">—</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="grouped-entry-quantity" id="grouped-entry-quantity-label" class="block text-xs font-medium text-gray-600">Qté *</label>
+                                <input type="number" id="grouped-entry-quantity" min="1" placeholder="0"
+                                    class="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400">
+                                <p id="grouped-entry-quantity-meta" class="hidden mt-1 truncate text-[11px] leading-4 text-gray-500"></p>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2 pb-0.5">
+                                <button id="grouped-entry-add-line-button" type="button"
+                                    class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                    </svg>
+                                    Ajouter
+                                </button>
+                                <button id="grouped-entry-reset-line-button" type="button"
+                                    class="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100">
+                                    Réinitialiser
+                                </button>
+                            </div>
                         </div>
 
-                        <div class="mt-5 flex flex-wrap gap-2">
-                            <button id="grouped-entry-add-line-button" type="button"
-                                class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700">
-                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                                </svg>
-                                Ajouter à la liste
-                            </button>
-                            <button id="grouped-entry-reset-line-button" type="button"
-                                class="rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-100">
-                                Réinitialiser la ligne
-                            </button>
+                        <div class="mt-2 hidden grid grid-cols-1 gap-2 md:grid-cols-[minmax(0,1fr)_140px] md:items-end">
+                            <div>
+                                <label for="grouped-entry-description" class="block text-xs font-medium text-gray-600">Description</label>
+                                <input type="text" id="grouped-entry-description" placeholder="Optionnel"
+                                    class="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400" />
+                            </div>
+                            <div>
+                                <label for="grouped-entry-expiration-date" class="block text-xs font-medium text-gray-600">Expiration</label>
+                                <input type="date" id="grouped-entry-expiration-date"
+                                    class="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400">
+                            </div>
                         </div>
                     </div>
-
-                    <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-900">Produits ajoutés</h3>
-                            <p class="text-sm text-gray-500">Chaque ligne mettra à jour le stock et générera sa facture fournisseur.</p>
-                        </div>
-                    </div>
-
-                    <div id="grouped-entry-lines-scroll" class="multi-line-list-scroll mt-4 space-y-3">
-                        <div id="grouped-entry-lines-empty"
-                            class="flex items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-4 py-10 text-center text-sm text-gray-400">
-                            Aucun produit ajouté.
-                        </div>
-                        <div id="grouped-entry-lines-list" class="space-y-3"></div>
-                    </div>
-                    <p id="grouped-entry-error" class="mt-4 hidden text-sm text-red-500"></p>
                 </div>
 
-                <div class="border-t border-gray-100 bg-gray-50 px-6 py-4">
-                    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                        <div class="flex flex-wrap items-center gap-3 text-sm text-gray-600">
-                            <span class="inline-flex items-center rounded-full border border-gray-200 bg-white px-3 py-1 font-semibold text-gray-700">
-                                Lignes: <span id="grouped-entry-summary-lines" class="ml-1">0</span>
-                            </span>
-                            <span class="inline-flex items-center rounded-full border border-gray-200 bg-white px-3 py-1 font-semibold text-gray-700">
-                                Quantité totale: <span id="grouped-entry-summary-quantity" class="ml-1">0</span>
-                            </span>
+                <div id="grouped-entry-scroll" class="min-h-0 flex-1 overflow-y-auto px-4 py-3 sm:px-5">
+                    <div id="grouped-entry-draft-page" class="space-y-3">
+                        <div class="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(0,1.2fr)_140px_minmax(0,1fr)_150px]">
+                            <div>
+                                <label for="grouped-entry-supplier-select" class="block text-xs font-medium text-gray-600">Fournisseur *</label>
+                                <div class="mt-1 flex items-center gap-1">
+                                    <select id="grouped-entry-supplier-select"
+                                        class="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400">
+                                        <option value="">Sélectionnez un fournisseur</option>
+                                    </select>
+                                    <button type="button" id="open-grouped-entry-supplier-modal-button"
+                                        class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 hover:bg-gray-50"
+                                        title="Nouveau fournisseur">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="grouped-entry-reference" class="block text-xs font-medium text-gray-600">Référence</label>
+                                <input type="text" id="grouped-entry-reference" placeholder="BL-2026-001"
+                                    class="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400" />
+                            </div>
+                            <div>
+                                <label for="grouped-entry-delivery-name" class="block text-xs font-medium text-gray-600">Livreur</label>
+                                <input type="text" id="grouped-entry-delivery-name" placeholder="Nom du livreur"
+                                    class="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400" />
+                            </div>
+                            <div>
+                                <label for="grouped-entry-storekeeper-name" class="block text-xs font-medium text-gray-600">Magasinier</label>
+                                <input type="text" id="grouped-entry-storekeeper-name" placeholder="Nom du magasinier"
+                                    class="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400" />
+                            </div>
                         </div>
-                        <div class="flex flex-col gap-3 sm:flex-row">
-                            <button id="grouped-entry-cancel-button" type="button"
-                                class="rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 border border-gray-200 hover:bg-gray-100">
-                                Annuler
-                            </button>
-                            <button id="grouped-entry-submit-button" type="submit"
-                                class="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700">
-                                Valider l'entrée
-                            </button>
+                        <input type="text" id="grouped-entry-comment" placeholder="Commentaire (optionnel)"
+                            class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400" />
+
+                        <div class="rounded-2xl border border-gray-200 bg-white p-3">
+                            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                <h3 class="text-sm font-semibold text-gray-900">Produits ajoutés</h3>
+                                <div class="flex flex-wrap items-center gap-2 text-xs text-gray-600">
+                                    <span class="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 font-semibold text-gray-700">
+                                        Lignes: <span id="grouped-entry-summary-lines" class="ml-1">0</span>
+                                    </span>
+                                    <span class="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 font-semibold text-gray-700">
+                                        Qté: <span id="grouped-entry-summary-quantity" class="ml-1">0</span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div id="grouped-entry-lines-scroll" class="mt-2">
+                                <div id="grouped-entry-lines-empty"
+                                    class="flex min-h-[7.5rem] items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 px-3 py-3 text-center text-sm text-gray-400">
+                                    Aucun produit ajouté.
+                                </div>
+                                <div id="grouped-entry-lines-list" class="hidden overflow-hidden rounded-xl border border-gray-200"></div>
+                            </div>
                         </div>
                     </div>
+
+                    <div id="grouped-entry-preview-section" class="hidden space-y-3">
+                        <div class="rounded-2xl border border-emerald-200 bg-emerald-50/50 px-4 py-3">
+                            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-900">Récapitulatif</p>
+                                    <div id="grouped-entry-preview-meta" class="mt-1 text-sm text-gray-700"></div>
+                                </div>
+                                <div class="flex flex-wrap gap-2 text-xs">
+                                    <span class="inline-flex items-center rounded-full border border-emerald-200 bg-white px-2.5 py-1 font-semibold text-gray-700">
+                                        Lignes: <span id="grouped-entry-preview-count" class="ml-1 text-gray-900">0</span>
+                                    </span>
+                                    <span class="inline-flex items-center rounded-full border border-emerald-200 bg-white px-2.5 py-1 font-semibold text-gray-700">
+                                        Qté totale: <span id="grouped-entry-preview-quantity" class="ml-1 text-gray-900">0</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="grouped-entry-preview-lines" class="overflow-hidden rounded-xl border border-gray-200"></div>
+                    </div>
+
+                    <p id="grouped-entry-error" class="hidden rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600"></p>
                 </div>
+
+                <div class="flex shrink-0 flex-col-reverse gap-2 border-t border-gray-100 bg-white px-4 py-2.5 sm:flex-row sm:px-5">
+                    <button id="grouped-entry-cancel-button" type="button"
+                        class="flex-1 rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50">
+                        Annuler
+                    </button>
+                    <button id="grouped-entry-back-button" type="button"
+                        class="hidden flex-1 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                        Retour
+                    </button>
+                    <button id="grouped-entry-preview-button" type="button"
+                        class="flex-1 rounded-xl border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50">
+                        Voir le récapitulatif
+                    </button>
+                    <button id="grouped-entry-submit-button" type="submit"
+                        class="hidden flex-1 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+                        Confirmer et valider
+                    </button>
+                </div>
+
             </form>
+
         </div>
     </div>
 
@@ -6495,17 +6633,7 @@
                         </div>
                     </div>
                     <div id="bulk-exit-shop-price-panel" class="hidden space-y-2 rounded-xl border border-amber-200 bg-amber-50 p-3"></div>
-                    <div class="overflow-hidden rounded-xl border border-gray-200">
-                        <div class="grid grid-cols-[1.5rem_minmax(0,1fr)_auto_auto] items-center gap-3 border-b border-gray-200 bg-gray-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-500 sm:grid-cols-[1.5rem_minmax(0,1fr)_minmax(6.5rem,auto)_minmax(6.5rem,auto)_minmax(6rem,auto)_minmax(6rem,auto)]">
-                            <span>#</span>
-                            <span>Produit</span>
-                            <span class="text-right">Qté</span>
-                            <span class="hidden text-right sm:block">Prix unit.</span>
-                            <span class="hidden text-right sm:block">Stock après</span>
-                            <span class="text-right">Montant</span>
-                        </div>
-                        <div id="bulk-exit-preview-lines-list"></div>
-                    </div>
+                        <div id="bulk-exit-preview-lines-list" class="overflow-hidden rounded-xl border border-gray-200"></div>
                     <div class="hidden">
                         <tbody id="bulk-exit-preview-tbody"></tbody>
                     </div>
@@ -8369,6 +8497,9 @@
             const storeProductsPlaceholder = document.getElementById('store-products-placeholder');
             const storeProductsTableContainer = document.getElementById('store-products-table-container');
             const storeProductsTbody = document.getElementById('store-products-tbody');
+            const storeCartonSummary = document.getElementById('store-carton-summary');
+            const storeCartonTotal = document.getElementById('store-carton-total');
+            const storeCartonRemainder = document.getElementById('store-carton-remainder');
             const storeImportCsvButton = document.getElementById('store-import-csv-button');
             const storeImportCsvInput = document.getElementById('store-import-csv-input');
             const storeImportCsvStatus = document.getElementById('store-import-csv-status');
@@ -8390,6 +8521,14 @@
             const storeMovementsPaginationPages = document.getElementById('store-movements-pagination-pages');
             const storeMovementsViewDetailButton = document.getElementById('store-movements-view-detail');
             const storeMovementsViewBatchesButton = document.getElementById('store-movements-view-batches');
+            const storeMovementsTodayIn = document.getElementById('store-movements-today-in');
+            const storeMovementsTodayOut = document.getElementById('store-movements-today-out');
+            const storeMovementsTodayPieces = document.getElementById('store-movements-today-pieces');
+            const storeMovementsPeriodSummary = document.getElementById('store-movements-period-summary');
+            const storeMovementsPeriodLabel = document.getElementById('store-movements-period-label');
+            const storeMovementsPeriodIn = document.getElementById('store-movements-period-in');
+            const storeMovementsPeriodOut = document.getElementById('store-movements-period-out');
+            const storeMovementsPeriodPieces = document.getElementById('store-movements-period-pieces');
             const storeMovementsGroupedOnlyWrap = document.getElementById('store-movements-grouped-only-wrap');
             const storeMovementsGroupedOnlyFilter = document.getElementById('store-movements-grouped-only-filter');
             const storeMovementsContainer = document.getElementById('store-movements-container');
@@ -9051,6 +9190,17 @@
             const groupedEntryError = document.getElementById('grouped-entry-error');
             const groupedEntryCancelButton = document.getElementById('grouped-entry-cancel-button');
             const groupedEntrySubmitButton = document.getElementById('grouped-entry-submit-button');
+            const groupedEntryComposer = document.getElementById('grouped-entry-composer');
+            const groupedEntryDraftChrome = document.getElementById('grouped-entry-draft-chrome');
+            const groupedEntryDraftPage = document.getElementById('grouped-entry-draft-page');
+            const groupedEntryPreviewSection = document.getElementById('grouped-entry-preview-section');
+            const groupedEntryPreviewMeta = document.getElementById('grouped-entry-preview-meta');
+            const groupedEntryPreviewCount = document.getElementById('grouped-entry-preview-count');
+            const groupedEntryPreviewQuantity = document.getElementById('grouped-entry-preview-quantity');
+            const groupedEntryPreviewLines = document.getElementById('grouped-entry-preview-lines');
+            const groupedEntryPreviewButton = document.getElementById('grouped-entry-preview-button');
+            const groupedEntryBackButton = document.getElementById('grouped-entry-back-button');
+            const groupedEntryScroll = document.getElementById('grouped-entry-scroll');
             let groupedEntryMode = 'existing';
             let groupedEntryEditingLineId = null;
             let groupedEntryLines = [];
@@ -10883,7 +11033,7 @@
                             </div>
                             <div class="shrink-0 text-right">
                                 <span class="inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${isDisabled ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}">
-                                    ${isDisabled ? 'Rupture' : `Stock ${qty}`}
+                                    ${isDisabled ? 'Rupture' : escapeHtml(formatStoreExitProductStockBadge(product))}
                                 </span>
                             </div>
                         </button>
@@ -11007,7 +11157,7 @@
                             description: isOtherStore
                                 ? `Magasin: ${storeLabel || 'Autre magasin'}`
                                 : (product.description || (isUnassigned ? 'Produit non encore assigné au magasin.' : '')),
-                            badge: isUnassigned ? 'Non assigné' : (isOtherStore ? (storeLabel || 'Autre magasin') : `Stock ${qty}`),
+                            badge: isUnassigned ? 'Non assigné' : (isOtherStore ? (storeLabel || 'Autre magasin') : formatStoreExitProductStockBadge(product)),
                             badgeClasses: isUnassigned
                                 ? 'bg-amber-50 text-amber-700'
                                 : (isOtherStore ? 'bg-slate-100 text-slate-600' : 'bg-emerald-50 text-emerald-700'),
@@ -11020,6 +11170,238 @@
                 const packagings = getProductPackagings(product);
                 if (!packagings.length) return 1;
                 return Math.max(...packagings.map((packaging) => Number(packaging.unitCount) || 1));
+            }
+
+            function getLocalDateStamp(value = new Date()) {
+                const date = value instanceof Date ? value : new Date(value);
+                if (Number.isNaN(date.getTime())) return '';
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+
+            function formatShortDateStamp(stamp) {
+                if (!stamp) return '';
+                const [year, month, day] = String(stamp).split('-');
+                if (!day || !month) return stamp;
+                return `${day}/${month}${year ? `/${year.slice(-2)}` : ''}`;
+            }
+
+            function getLargestCartonPackaging(product) {
+                return [...getProductPackagings(product)]
+                    .filter((packaging) => Number(packaging?.unitCount) > 1)
+                    .sort((a, b) => (Number(b.unitCount) || 1) - (Number(a.unitCount) || 1))[0] || null;
+            }
+
+            function getCartonBreakdownFromBaseUnits(baseUnits, product) {
+                const quantity = Math.max(0, parseNonNegativeInteger(baseUnits, 0));
+                const carton = getLargestCartonPackaging(product);
+                const unitCount = Number(carton?.unitCount) || 0;
+                if (!carton || unitCount <= 1) {
+                    return { cartons: 0, remainder: quantity, label: carton?.label || 'Carton' };
+                }
+                return {
+                    cartons: Math.floor(quantity / unitCount),
+                    remainder: quantity % unitCount,
+                    label: carton.label || 'Carton',
+                    unitCount
+                };
+            }
+
+            function getStoreMovementEventDate(move) {
+                return move?.date || move?.approvedAt || move?.createdAt || move?.requestedAt || '';
+            }
+
+            function getStoreMovementPackagingContext(move) {
+                const item = typeof move === 'object' && move && !move.quantityChange && move.quantity
+                    ? move
+                    : buildBatchItemFromStoreMovement(move);
+                const parsed = extractPackagingSummaryFromText(item.sourceSummary || item.comment || '');
+                const enriched = parsed
+                    ? enrichBatchItemFromSummary({ ...item, sourceSummary: parsed })
+                    : enrichBatchItemFromSummary(item);
+                const product = item.productId ? appData.storeProducts?.[item.productId] : null;
+                return { item, enriched, product };
+            }
+
+            function getUsedPackagingUnits(item = {}, enriched = {}, product = null, baseQty = 0) {
+                const explicit = Number(item.packagingUnits ?? item.unitsPerCarton ?? item.packageUnits);
+                if (Number.isFinite(explicit) && explicit > 0) return explicit;
+                if (item.packagingCode && product) {
+                    const units = getPackageUnits(product, item.packagingCode);
+                    if (units > 0) return units;
+                }
+                const packagingQty = Number(enriched.packagingQuantity ?? item.packagingQuantity);
+                if (Number.isFinite(packagingQty) && packagingQty > 0 && baseQty > 0) {
+                    const inferred = Math.round(baseQty / packagingQty);
+                    if (inferred > 0) return inferred;
+                }
+                return 0;
+            }
+
+            function getStoreMovementCartonBreakdown(move) {
+                const { item, enriched, product } = getStoreMovementPackagingContext(move);
+                const baseQty = Math.abs(Number(item.quantity || move?.quantityChange) || 0);
+                const carton = getLargestCartonPackaging(product);
+                const cartonUnits = Number(carton?.unitCount) || 0;
+                const packagingQty = Number(enriched.packagingQuantity);
+                const usedUnits = getUsedPackagingUnits(item, enriched, product, baseQty);
+                if (
+                    carton
+                    && cartonUnits > 1
+                    && Number.isFinite(packagingQty)
+                    && packagingQty > 0
+                    && usedUnits === cartonUnits
+                ) {
+                    return {
+                        cartons: Math.abs(packagingQty),
+                        remainder: 0,
+                        label: carton.label || 'Carton',
+                        unitCount: cartonUnits
+                    };
+                }
+                return getCartonBreakdownFromBaseUnits(baseQty, product);
+            }
+
+            function getStoreMovementCartonCount(move) {
+                return getStoreMovementCartonBreakdown(move).cartons;
+            }
+
+            function splitMovementQuantityLabel(label) {
+                const text = String(label || '').trim();
+                if (!text) return { main: '—', sub: '' };
+                const equality = text.match(/^(.+?)\s*=\s*(.+)$/);
+                if (equality) return { main: equality[1].trim(), sub: equality[2].trim() };
+                return splitRecapParenLabel(text);
+            }
+
+            function getStoreMovementQuantityParts(data, { isRequest = false } = {}) {
+                const item = isRequest
+                    ? {
+                        productId: data.productId || '',
+                        quantity: Math.abs(parseInt(data.quantity, 10) || 0),
+                        packagingQuantity: data.packagingQuantity ?? data.sourceCartonQty ?? null,
+                        packagingLabel: data.packagingLabel || data.sourcePackageLabel || '',
+                        sourceSummary: data.sourceSummary || extractPackagingSummaryFromText(data.comment || ''),
+                        comment: data.comment || ''
+                    }
+                    : buildBatchItemFromStoreMovement(data);
+                if (!item.sourceSummary) {
+                    item.sourceSummary = extractPackagingSummaryFromText(item.comment || '');
+                }
+                const label = formatBatchItemQuantityLabel(item);
+                return splitMovementQuantityLabel(label);
+            }
+
+            function getStoreMovementFlowKind(move) {
+                const typeLabel = getMovementTypeBadge(move).label;
+                if (typeLabel === 'Entrée') return 'in';
+                if (typeLabel === 'Ajustement') {
+                    const qty = parseInt(move.quantityChange, 10) || 0;
+                    if (qty > 0) return 'in';
+                    if (qty < 0) return 'out';
+                    return '';
+                }
+                if (['Sortie', 'Sortie directe', 'Transfert', 'Suppression'].includes(typeLabel)) return 'out';
+                return '';
+            }
+
+            function isCountedStoreMovement(move) {
+                const status = move?.status || EXIT_STATUS_APPROVED;
+                return status !== EXIT_STATUS_REJECTED;
+            }
+
+            function formatSignedCartonCount(count, direction = 'in') {
+                const value = Math.abs(Number(count) || 0);
+                return `${direction === 'out' ? '−' : '+'}${value}`;
+            }
+
+            function formatMovementPieceRemainder(inQty, outQty) {
+                const parts = [];
+                if (inQty > 0) parts.push(`+${inQty} p.`);
+                if (outQty > 0) parts.push(`−${outQty} p.`);
+                return parts.length ? `· ${parts.join(' / ')}` : '';
+            }
+
+            function setMovementPieceRemainder(element, inQty, outQty) {
+                if (!element) return;
+                const text = formatMovementPieceRemainder(inQty, outQty);
+                element.textContent = text;
+                element.classList.toggle('hidden', !text);
+            }
+
+            function summarizeStoreCartonStock(products = []) {
+                return products.reduce((acc, product) => {
+                    const breakdown = getCartonBreakdownFromBaseUnits(product?.quantityInStore, product);
+                    acc.cartons += breakdown.cartons;
+                    acc.remainder += breakdown.remainder;
+                    return acc;
+                }, { cartons: 0, remainder: 0 });
+            }
+
+            function summarizeStoreCartonFlows(movements = [], { start = '', end = '' } = {}) {
+                return movements.reduce((acc, move) => {
+                    if (!isCountedStoreMovement(move)) return acc;
+                    if (!isDateWithinRange(getStoreMovementEventDate(move), start, end)) return acc;
+                    const kind = getStoreMovementFlowKind(move);
+                    if (!kind) return acc;
+                    const breakdown = getStoreMovementCartonBreakdown(move);
+                    if (kind === 'in') {
+                        acc.in += breakdown.cartons;
+                        acc.inRemainder += breakdown.remainder;
+                    }
+                    if (kind === 'out') {
+                        acc.out += breakdown.cartons;
+                        acc.outRemainder += breakdown.remainder;
+                    }
+                    return acc;
+                }, { in: 0, out: 0, inRemainder: 0, outRemainder: 0 });
+            }
+
+            function refreshStoreCartonStockSummary() {
+                const products = getActiveStoreId() ? getActiveStoreProducts() : [];
+                const summary = summarizeStoreCartonStock(products);
+                if (storeCartonTotal) storeCartonTotal.textContent = String(summary.cartons);
+                if (storeCartonRemainder) {
+                    storeCartonRemainder.textContent = summary.remainder > 0
+                        ? `· ${summary.remainder} pièce${summary.remainder > 1 ? 's' : ''} hors carton`
+                        : '';
+                }
+                if (storeCartonSummary) storeCartonSummary.classList.toggle('hidden', !getActiveStoreId());
+            }
+
+            function refreshStoreMovementCartonSummary() {
+                const movements = getActiveStoreId() ? getActiveStoreMovements() : [];
+                const today = getLocalDateStamp();
+                const todayFlow = summarizeStoreCartonFlows(movements, { start: today, end: today });
+                if (storeMovementsTodayIn) storeMovementsTodayIn.textContent = formatSignedCartonCount(todayFlow.in, 'in');
+                if (storeMovementsTodayOut) storeMovementsTodayOut.textContent = formatSignedCartonCount(todayFlow.out, 'out');
+                setMovementPieceRemainder(storeMovementsTodayPieces, todayFlow.inRemainder, todayFlow.outRemainder);
+                const start = storeMovementFilterStart?.value || '';
+                const end = storeMovementFilterEnd?.value || '';
+                const isTodayOnly = Boolean(start && end && start === end && start === today);
+                const hasPeriod = Boolean(start || end) && !isTodayOnly;
+                if (storeMovementsPeriodSummary) {
+                    storeMovementsPeriodSummary.classList.toggle('hidden', !hasPeriod);
+                    storeMovementsPeriodSummary.classList.toggle('flex', hasPeriod);
+                }
+                if (!hasPeriod) return;
+                const periodFlow = summarizeStoreCartonFlows(movements, { start, end });
+                if (storeMovementsPeriodIn) storeMovementsPeriodIn.textContent = formatSignedCartonCount(periodFlow.in, 'in');
+                if (storeMovementsPeriodOut) storeMovementsPeriodOut.textContent = formatSignedCartonCount(periodFlow.out, 'out');
+                setMovementPieceRemainder(storeMovementsPeriodPieces, periodFlow.inRemainder, periodFlow.outRemainder);
+                if (storeMovementsPeriodLabel) {
+                    if (start && end && start === end) {
+                        storeMovementsPeriodLabel.textContent = start === today ? 'Aujourd\'hui' : formatShortDateStamp(start);
+                    } else if (start && end) {
+                        storeMovementsPeriodLabel.textContent = `${formatShortDateStamp(start)} – ${formatShortDateStamp(end)}`;
+                    } else if (start) {
+                        storeMovementsPeriodLabel.textContent = `Depuis ${formatShortDateStamp(start)}`;
+                    } else {
+                        storeMovementsPeriodLabel.textContent = `Jusqu'au ${formatShortDateStamp(end)}`;
+                    }
+                }
             }
 
             function compareStoreProductsByPackagingDesc(a, b) {
@@ -13204,19 +13586,32 @@
                 return normalizeString(value).includes(filterValue);
             }
 
+            function parseLocalDateBound(value, endOfDay = false) {
+                if (!value && value !== 0) return null;
+                if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+                    const [year, month, day] = value.split('-').map(Number);
+                    return endOfDay
+                        ? new Date(year, month - 1, day, 23, 59, 59, 999)
+                        : new Date(year, month - 1, day, 0, 0, 0, 0);
+                }
+                const date = new Date(value);
+                if (Number.isNaN(date.getTime())) return null;
+                if (endOfDay) date.setHours(23, 59, 59, 999);
+                else date.setHours(0, 0, 0, 0);
+                return date;
+            }
+
             function isDateWithinRange(dateValue, startValue, endValue) {
                 if (!startValue && !endValue) return true;
                 const date = new Date(dateValue);
                 if (Number.isNaN(date.getTime())) return false;
                 if (startValue) {
-                    const startDate = new Date(startValue);
-                    startDate.setHours(0, 0, 0, 0);
-                    if (date < startDate) return false;
+                    const startDate = parseLocalDateBound(startValue, false);
+                    if (startDate && date < startDate) return false;
                 }
                 if (endValue) {
-                    const endDate = new Date(endValue);
-                    endDate.setHours(23, 59, 59, 999);
-                    if (date > endDate) return false;
+                    const endDate = parseLocalDateBound(endValue, true);
+                    if (endDate && date > endDate) return false;
                 }
                 return true;
             }
@@ -13592,11 +13987,16 @@
                         boutiqueName: getSaleBoutiqueLabel(sale),
                         name: sale.productName || 'Produit',
                         quantity: Number(sale.quantity || 0) || 0,
+                        billingQuantity: getSaleLineBillingQuantity(sale),
+                        packagingQuantity: sale.packagingQuantity ?? null,
+                        packagingCode: sale.packagingCode || sale.packageCode || '',
+                        packagingLabel: sale.packagingLabel || sale.packageLabel || '',
+                        priceScope: sale.priceScope || '',
                         price: hasLinePrice ? Number(sale.sellingPrice) : null,
                         total: hasLinePrice ? Number(sale.totalAmount || 0) : null,
                         currency: getSaleCurrency(sale) || 'CFA',
-                        packageLabel: sale.packageLabel || '',
-                        packageCode: sale.packageCode || '',
+                        packageLabel: sale.packageLabel || sale.packagingLabel || '',
+                        packageCode: sale.packageCode || sale.packagingCode || '',
                         packageUnits: sale.packageUnits || 1,
                         stockUnits: sale.stockUnits || sale.quantity || 0,
                         lotId: sale.lotId || null,
@@ -13804,11 +14204,13 @@
                             : (item.boutiqueName || 'Boutique')
                     );
                     const hasLinePrice = item.pricePending !== true && hasUsableSellingPrice(item.price);
+                    const billingQty = getSaleLineBillingQuantity(item);
+                    const priceUnitLabel = getSaleLinePriceUnitLabel(item);
                     const unitPriceLabel = hasLinePrice
                         ? formatCurrency(item.price, item.currency || group.currency)
                         : 'Prix à définir';
                     const totalLabel = hasLinePrice
-                        ? formatCurrency(item.total ?? ((Number(item.price) || 0) * (Number(item.quantity) || 0)), item.currency || group.currency)
+                        ? formatCurrency(item.total ?? ((Number(item.price) || 0) * billingQty), item.currency || group.currency)
                         : 'Prix à définir';
                     return `
                         <div class="rounded-2xl border border-gray-200 bg-white px-4 py-4 shadow-sm">
@@ -13818,7 +14220,7 @@
                                         <p class="text-sm font-semibold text-gray-900">${escapeHtml(item.name || 'Produit')}</p>
                                         <span class="rounded-full px-2.5 py-1 text-[11px] font-semibold ${badge.classes}">${escapeHtml(badge.label)}</span>
                                     </div>
-                                    <p class="mt-1 text-xs text-gray-500">${escapeHtml(item.packageLabel || 'Unité')} · ${Number(item.quantity) || 0} unité(s)</p>
+                                    <p class="mt-1 text-xs text-gray-500">${escapeHtml(priceUnitLabel)} · ${billingQty} ${escapeHtml(priceUnitLabel)}${billingQty > 1 ? 's' : ''}</p>
                                 </div>
                                 <button type="button" data-store-validation-line-remove="${item.saleId}"
                                     class="inline-flex items-center justify-center rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-100">
@@ -15354,7 +15756,7 @@
                 const discountState = getGroupDiscountState(group);
                 const items = group.items.map(item => ({
                     sellingPrice: item.price,
-                    quantity: item.quantity,
+                    quantity: getSaleLineBillingQuantity(item),
                     currency: group.currency,
                     total: item.total,
                     lineDiscountAmount: item.lineDiscountAmount || 0
@@ -17131,14 +17533,16 @@
                     : formatCurrency(summary.subtotal, summary.currency);
                 const itemsHtml = group.items.map((item, itemIndex) => {
                     const hasLinePrice = item.pricePending !== true && hasUsableSellingPrice(item.price);
+                    const billingQty = getSaleLineBillingQuantity(item);
+                    const priceUnitLabel = getSaleLinePriceUnitLabel(item);
                     const unitPriceLabel = hasLinePrice
-                        ? `${formatCurrency(item.price, item.currency || currency)} / unité`
+                        ? `${formatCurrency(item.price, item.currency || currency)} / ${priceUnitLabel}`
                         : 'Prix à définir avant validation';
                     const totalLineLabel = hasLinePrice
-                        ? formatCurrency(item.total ?? (item.price * item.quantity), item.currency || currency)
+                        ? formatCurrency(item.total ?? (item.price * billingQty), item.currency || currency)
                         : 'Prix à définir';
                     const packageHtml = item.packageLabel
-                        ? `<p class="mt-1 text-[11px] font-semibold text-slate-500">${item.packageLabel}</p>`
+                        ? `<p class="mt-1 text-[11px] font-semibold text-slate-500">${item.packageLabel}${Number(item.packageUnits) > 1 ? ` · ${item.packageUnits} unités` : ''}</p>`
                         : '';
                     const lineSourceBadge = getStoreValidationLineSourceBadge(
                         item.saleSource,
@@ -17148,7 +17552,7 @@
                     );
                     const priceEditorHtml = canValidateStore ? `
                         <div class="mt-2 flex items-center justify-end gap-2">
-                            <span class="text-[11px] font-semibold text-slate-400">PU</span>
+                            <span class="text-[11px] font-semibold text-slate-400">PU ${priceUnitLabel}</span>
                             <input type="number" min="0" step="0.01" value="${hasLinePrice ? formatInputNumber(item.price) : ''}"
                                 data-store-validation-price-id="${item.saleId}"
                                 class="w-24 h-8 rounded-md border border-gray-200 px-2 text-xs text-right text-gray-700 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400"
@@ -17159,7 +17563,7 @@
                     return `
                         <div class="flex items-start justify-between text-sm text-gray-700 gap-4 rounded-xl px-3 py-2.5 ${bandClass}">
                             <div class="flex items-start gap-3">
-                                <span class="px-2 py-0.5 rounded-lg bg-white/80 text-xs font-semibold text-gray-600">${item.quantity}x</span>
+                                <span class="px-2 py-0.5 rounded-lg bg-white/80 text-xs font-semibold text-gray-600">${billingQty}x</span>
                                 <div>
                                     <div class="flex flex-wrap items-center gap-2">
                                         <span class="font-semibold text-gray-900">${item.name}</span>
@@ -19187,6 +19591,36 @@
                 return Number(snapshot.quantity) || 0;
             }
 
+            function getSaleLineBillingQuantity(saleOrItem = {}) {
+                const billing = Number(saleOrItem.billingQuantity);
+                if (Number.isFinite(billing) && billing > 0) return billing;
+
+                const packagingQty = Number(saleOrItem.packagingQuantity);
+                const packagingCode = saleOrItem.packagingCode || saleOrItem.packageCode || '';
+                const packagingLabel = saleOrItem.packagingLabel || saleOrItem.packageLabel || '';
+                if (Number.isFinite(packagingQty) && packagingQty > 0 && (packagingCode || packagingLabel || saleOrItem.priceScope === 'packaging')) {
+                    return packagingQty;
+                }
+
+                const packageUnits = Math.max(1, Number(saleOrItem.packageUnits) || 1);
+                const stockQty = Number(saleOrItem.stockUnits || saleOrItem.quantity) || 0;
+                const hasPackaging = !!(packagingCode || (packagingLabel && packageUnits > 1) || saleOrItem.priceScope === 'packaging');
+                if (hasPackaging && packageUnits > 1 && stockQty > 0 && stockQty % packageUnits === 0) {
+                    return stockQty / packageUnits;
+                }
+                return stockQty || 0;
+            }
+
+            function getSaleLinePriceUnitLabel(saleOrItem = {}) {
+                const label = String(saleOrItem.packagingLabel || saleOrItem.packageLabel || '').trim();
+                const packagingCode = saleOrItem.packagingCode || saleOrItem.packageCode || '';
+                const packageUnits = Number(saleOrItem.packageUnits) || 1;
+                if (label && (packagingCode || packageUnits > 1 || saleOrItem.priceScope === 'packaging' || Number(saleOrItem.packagingQuantity) > 0 || Number(saleOrItem.billingQuantity) > 0)) {
+                    return label;
+                }
+                return 'unité';
+            }
+
             function getStoreExitPriceScope(snapshot = {}) {
                 return snapshot.packagingQuantity && snapshot.packagingCode ? 'packaging' : 'base';
             }
@@ -20065,12 +20499,21 @@
                     : null;
 
                 if (groupedEntryPackagingRow) {
-                    groupedEntryPackagingRow.classList.toggle('hidden', !showPackaging);
+                    groupedEntryPackagingRow.classList.toggle('opacity-50', !showPackaging);
+                }
+                if (groupedEntryPackagingSelect) {
+                    groupedEntryPackagingSelect.disabled = !showPackaging;
                 }
 
                 if (groupedEntryPackagingSelect) {
                     const previousValue = groupedEntryPackagingSelect.value || '';
                     groupedEntryPackagingSelect.innerHTML = '';
+                    if (!showPackaging) {
+                        const emptyOption = document.createElement('option');
+                        emptyOption.value = '';
+                        emptyOption.textContent = '—';
+                        groupedEntryPackagingSelect.appendChild(emptyOption);
+                    }
                     if (showPackaging) {
                         packagings.forEach((packaging) => {
                             const option = document.createElement('option');
@@ -20093,8 +20536,8 @@
                     : (newDraftPackaging?.hasPackaging ? newDraftPackaging.packagingLabel.toLowerCase() : '');
                 if (groupedEntryQuantityLabel) {
                     groupedEntryQuantityLabel.textContent = showPackaging || newDraftPackaging?.hasPackaging
-                        ? `Nombre de ${packagingLabel}(s) *`
-                        : 'Quantité à ajouter *';
+                        ? `Qté ${packagingLabel}`
+                        : 'Qté *';
                 }
 
                 const packagingQty = parseInt(groupedEntryQuantityInput?.value, 10);
@@ -20107,14 +20550,9 @@
                         const baseQty = packagingQty * newDraftPackaging.unitCount;
                         groupedEntryQuantityMeta.textContent = `Équivaut à ${formatBaseUnits(baseQty, newDraftPackaging.baseUnitLabel)} en stock magasin.`;
                         groupedEntryQuantityMeta.classList.remove('hidden');
-                    } else if (featureEnabled && groupedEntryMode === 'existing' && product) {
-                        groupedEntryQuantityMeta.textContent = 'Saisie en unités de base pour ce produit.';
-                        groupedEntryQuantityMeta.classList.toggle('hidden', !!showPackaging);
                     } else {
-                        groupedEntryQuantityMeta.textContent = groupedEntryMode === 'new'
-                            ? 'Sans conditionnement, la quantité est saisie en unités de base.'
-                            : '';
-                        groupedEntryQuantityMeta.classList.toggle('hidden', groupedEntryMode !== 'new');
+                        groupedEntryQuantityMeta.textContent = '';
+                        groupedEntryQuantityMeta.classList.add('hidden');
                     }
                 }
             }
@@ -21189,7 +21627,7 @@
                 if (!product || !getProductPackagings(product).length) {
                     return formatBaseUnits(quantity, product ? getProductBaseUnitLabel(product) : DEFAULT_BASE_UNIT_LABEL);
                 }
-                return formatProductStockBreakdown(quantity, product, { includeBaseTotal: true });
+                return formatProductStockBreakdown(quantity, product, { includeBaseTotal: false });
             }
 
             function getShopStockBaseUnits(item, sourceProduct = null) {
@@ -25167,13 +25605,13 @@
                 const storeLabel = resolvedStoreId ? (getStoreName(resolvedStoreId) || DEFAULT_STORE_NAME) : '';
                 const activeStoreId = getActiveStoreId();
                 const isOtherStore = resolvedStoreId && activeStoreId && resolvedStoreId !== activeStoreId;
-                const stockValue = Number(product.quantityInStore) || 0;
+                const stockLabel = formatStoreExitProductStockBadge(product);
                 if (isUnassigned) {
-                    entryProductStock.textContent = `${stockValue} (Non assigné)`;
+                    entryProductStock.textContent = `${stockLabel} (Non assigné)`;
                 } else if (isOtherStore) {
-                    entryProductStock.textContent = `${stockValue} (${storeLabel || 'Autre magasin'})`;
+                    entryProductStock.textContent = `${stockLabel} (${storeLabel || 'Autre magasin'})`;
                 } else {
-                    entryProductStock.textContent = `${stockValue}`;
+                    entryProductStock.textContent = stockLabel;
                 }
                 if (entryDescriptionInput) entryDescriptionInput.value = product.description || '';
             }
@@ -25645,66 +26083,166 @@
                 if (groupedEntryAddLineButton) groupedEntryAddLineButton.textContent = 'Mettre à jour la ligne';
             }
 
+            function splitRecapParenLabel(label) {
+                const text = String(label || '').trim();
+                if (!text) return { main: '—', sub: '' };
+                const match = text.match(/^(.+?)\s*\((.+)\)\s*$/);
+                if (match) return { main: match[1].trim(), sub: match[2].trim() };
+                return { main: text, sub: '' };
+            }
+
+            function splitRecapSlashLabel(label) {
+                const text = String(label || '').trim();
+                if (!text) return { main: '—', sub: '' };
+                const index = text.lastIndexOf(' / ');
+                if (index > 0) {
+                    return {
+                        main: text.slice(0, index).trim(),
+                        sub: `/ ${text.slice(index + 3).trim()}`
+                    };
+                }
+                return { main: text, sub: '' };
+            }
+
+            function renderRecapStack(main, sub, escapeFn = escapeHtml) {
+                return `<span class="batch-recap-stack">
+                    <span class="batch-recap-main">${escapeFn(main || '—')}</span>
+                    ${sub ? `<span class="batch-recap-sub">${escapeFn(sub)}</span>` : ''}
+                </span>`;
+            }
+
+            function wrapBatchRecapTable(variant, headers, rowsHtml) {
+                return `
+                    <div class="batch-recap-table-wrap">
+                        <table class="batch-recap-table batch-recap-table-${variant}">
+                            <thead>
+                                <tr>${headers}</tr>
+                            </thead>
+                            <tbody>${rowsHtml}</tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            function getGroupedEntryStockAfterLabel(line) {
+                const addQty = parseInt(line?.quantity, 10) || 0;
+                if (line?.mode === 'new') {
+                    return formatGroupedEntryLineQuantityLabel(line);
+                }
+                const product = getEntryProductById(line?.productId);
+                if (!product) return formatGroupedEntryLineQuantityLabel(line);
+                const after = (Number(product.quantityInStore) || 0) + addQty;
+                if (getProductPackagings(product).length) {
+                    return formatProductStockBreakdown(after, product, { includeBaseTotal: false });
+                }
+                return formatStoreProductStockDisplay({ ...product, quantityInStore: after });
+            }
+
+            function renderGroupedEntryLineRow(line, index, { preview = false } = {}) {
+                const isNewLine = line.mode === 'new';
+                const product = !isNewLine && line.productId ? getEntryProductById(line.productId) : null;
+                const codeLabel = isNewLine
+                    ? (line.newProductCode || '')
+                    : (product ? getProductInternalCodeText(product) : '');
+                const quantityParts = splitRecapParenLabel(formatGroupedEntryLineQuantityLabel(line));
+                const stockParts = splitRecapParenLabel(getGroupedEntryStockAfterLabel(line));
+                const rowBg = index % 2 === 0 ? 'bg-white' : 'bg-emerald-50';
+                const typeLabel = isNewLine ? 'Nouveau' : 'Existant';
+                const lastCell = preview
+                    ? `<td class="col-type is-num text-[11px] font-semibold ${isNewLine ? 'text-amber-700' : 'text-emerald-700'}">${typeLabel}</td>`
+                    : `<td class="col-actions is-num">
+                        <div class="flex items-center justify-end gap-1">
+                            <button type="button" data-grouped-entry-edit="${escapeShopDocumentValue(line.id)}"
+                                class="rounded-lg px-2 py-1 text-[11px] font-semibold text-gray-600 hover:bg-white">Modifier</button>
+                            <button type="button" data-grouped-entry-remove="${escapeShopDocumentValue(line.id)}"
+                                class="rounded-lg px-2 py-1 text-[11px] font-semibold text-rose-600 hover:bg-rose-100">Retirer</button>
+                        </div>
+                    </td>`;
+                return `
+                    <tr data-grouped-entry-row-id="${escapeShopDocumentValue(line.id)}" class="${rowBg}">
+                        <td class="col-num">${index + 1}</td>
+                        <td class="col-product min-w-0">
+                            <p class="truncate text-sm font-semibold leading-5 text-gray-900">
+                                ${escapeShopDocumentValue(getGroupedEntryDisplayName(line))}
+                                ${codeLabel ? `<span class="ml-1 font-medium text-[11px] text-sky-700">${escapeShopDocumentValue(codeLabel)}</span>` : ''}
+                            </p>
+                        </td>
+                        <td class="col-qty is-num">${renderRecapStack(quantityParts.main, quantityParts.sub, escapeShopDocumentValue)}</td>
+                        <td class="col-stock is-num">${renderRecapStack(stockParts.main, stockParts.sub, escapeShopDocumentValue)}</td>
+                        <td class="col-date is-num text-xs text-gray-600">${escapeShopDocumentValue(line.expirationDate || '—')}</td>
+                        ${lastCell}
+                    </tr>
+                `;
+            }
+
+            function showGroupedEntryDraftPage() {
+                if (groupedEntryDraftChrome) groupedEntryDraftChrome.classList.remove('hidden');
+                if (groupedEntryComposer) groupedEntryComposer.classList.remove('hidden');
+                if (groupedEntryDraftPage) groupedEntryDraftPage.classList.remove('hidden');
+                if (groupedEntryPreviewSection) groupedEntryPreviewSection.classList.add('hidden');
+                if (groupedEntryPreviewButton) groupedEntryPreviewButton.classList.remove('hidden');
+                if (groupedEntryBackButton) groupedEntryBackButton.classList.add('hidden');
+                if (groupedEntrySubmitButton) groupedEntrySubmitButton.classList.add('hidden');
+            }
+
+            function showGroupedEntryPreviewPage() {
+                if (groupedEntryDraftChrome) groupedEntryDraftChrome.classList.add('hidden');
+                if (groupedEntryComposer) groupedEntryComposer.classList.add('hidden');
+                if (groupedEntryDraftPage) groupedEntryDraftPage.classList.add('hidden');
+                if (groupedEntryPreviewSection) groupedEntryPreviewSection.classList.remove('hidden');
+                if (groupedEntryPreviewButton) groupedEntryPreviewButton.classList.add('hidden');
+                if (groupedEntryBackButton) groupedEntryBackButton.classList.remove('hidden');
+                if (groupedEntrySubmitButton) groupedEntrySubmitButton.classList.remove('hidden');
+                if (groupedEntryScroll) groupedEntryScroll.scrollTop = 0;
+            }
+
+            function renderGroupedEntryPreview() {
+                const lines = consolidateGroupedEntryLines(groupedEntryLines.slice());
+                const supplier = getSupplierById(groupedEntrySupplierSelect?.value || '');
+                const reference = (groupedEntryReferenceInput?.value || '').trim();
+                const deliveryName = (groupedEntryDeliveryNameInput?.value || '').trim();
+                const storekeeperName = (groupedEntryStorekeeperNameInput?.value || '').trim();
+                const comment = (groupedEntryCommentInput?.value || '').trim();
+                if (groupedEntryPreviewMeta) {
+                    groupedEntryPreviewMeta.innerHTML = `
+                        <p class="font-semibold text-gray-900">${escapeShopDocumentValue(supplier?.name || 'Fournisseur')}</p>
+                        <p class="mt-1 text-xs text-gray-500">${escapeShopDocumentValue(reference || 'Référence automatique')}${deliveryName ? ` · Livreur: ${escapeShopDocumentValue(deliveryName)}` : ''}</p>
+                        ${storekeeperName ? `<p class="mt-1 text-xs text-gray-500">Magasinier: ${escapeShopDocumentValue(storekeeperName)}</p>` : ''}
+                        ${comment ? `<p class="mt-1 text-xs text-gray-500">Commentaire: ${escapeShopDocumentValue(comment)}</p>` : ''}
+                    `;
+                }
+                if (groupedEntryPreviewCount) groupedEntryPreviewCount.textContent = String(lines.length);
+                if (groupedEntryPreviewQuantity) groupedEntryPreviewQuantity.textContent = summarizeEntryLinesPackagingQuantity(lines);
+                if (groupedEntryPreviewLines) {
+                    groupedEntryPreviewLines.innerHTML = wrapBatchRecapTable('entry', `
+                        <th class="col-num">#</th>
+                        <th class="col-product">Produit</th>
+                        <th class="col-qty is-num">Qté</th>
+                        <th class="col-stock is-num">Stock après</th>
+                        <th class="col-date is-num">Expiration</th>
+                        <th class="col-type is-num">Type</th>
+                    `, lines.map((line, index) => renderGroupedEntryLineRow(line, index, { preview: true })).join(''));
+                }
+            }
+
             function renderGroupedEntryRows() {
                 if (!groupedEntryLinesList || !groupedEntryLinesEmpty) return;
                 groupedEntryLines = consolidateGroupedEntryLines(groupedEntryLines);
                 if (!groupedEntryLines.length) {
                     groupedEntryLinesEmpty.classList.remove('hidden');
+                    groupedEntryLinesList.classList.add('hidden');
                     groupedEntryLinesList.innerHTML = '';
                 } else {
                     groupedEntryLinesEmpty.classList.add('hidden');
-                    groupedEntryLinesList.innerHTML = groupedEntryLines.slice().reverse().map((line, index) => {
-                        const isNewLine = line.mode === 'new';
-                        const product = !isNewLine && line.productId ? getEntryProductById(line.productId) : null;
-                        const stockLabel = isNewLine
-                            ? 'Nouveau produit'
-                            : getGroupedEntryProductStockLabel(product);
-                        const codeLabel = isNewLine
-                            ? (line.newProductCode || 'Code à définir')
-                            : (product ? getProductInternalCodeText(product) : 'Produit');
-                        const quantityLabel = formatGroupedEntryLineQuantityLabel(line);
-
-                        return `
-                            <article data-grouped-entry-row-id="${escapeShopDocumentValue(line.id)}" class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-                                <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                                    <div class="min-w-0">
-                                        <div class="flex flex-wrap items-center gap-2">
-                                            <span class="inline-flex items-center rounded-full border ${isNewLine ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'} px-2.5 py-1 text-[11px] font-semibold">
-                                                ${isNewLine ? 'Nouveau produit' : 'Produit existant'}
-                                            </span>
-                                            <span class="text-xs text-gray-400">Ligne ${index + 1}</span>
-                                        </div>
-                                        <p class="mt-2 truncate text-sm font-semibold text-gray-900">${escapeShopDocumentValue(getGroupedEntryDisplayName(line))}</p>
-                                        <p class="mt-1 text-xs text-gray-500">${escapeShopDocumentValue(codeLabel)} · ${escapeShopDocumentValue(stockLabel)}</p>
-                                    </div>
-                                    <div class="flex flex-wrap items-center gap-2">
-                                        <button type="button" data-grouped-entry-edit="${escapeShopDocumentValue(line.id)}"
-                                            class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-100">
-                                            Modifier
-                                        </button>
-                                        <button type="button" data-grouped-entry-remove="${escapeShopDocumentValue(line.id)}"
-                                            class="inline-flex items-center justify-center rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-100">
-                                            Retirer
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="mt-4 grid grid-cols-1 gap-3 text-sm text-gray-600 md:grid-cols-3">
-                                    <div class="rounded-xl border border-gray-200 bg-gray-50 px-3 py-3">
-                                        <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Quantité</p>
-                                        <p class="mt-1 font-semibold text-gray-900">${escapeShopDocumentValue(quantityLabel)}</p>
-                                    </div>
-                                    <div class="rounded-xl border border-gray-200 bg-gray-50 px-3 py-3">
-                                        <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Date d'expiration</p>
-                                        <p class="mt-1 font-semibold text-gray-900">${escapeShopDocumentValue(line.expirationDate || '—')}</p>
-                                    </div>
-                                    <div class="rounded-xl border border-gray-200 bg-gray-50 px-3 py-3">
-                                        <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Description</p>
-                                        <p class="mt-1 font-semibold text-gray-900">${escapeShopDocumentValue(line.description || '—')}</p>
-                                    </div>
-                                </div>
-                            </article>
-                        `;
-                    }).join('');
+                    groupedEntryLinesList.classList.remove('hidden');
+                    groupedEntryLinesList.innerHTML = wrapBatchRecapTable('entry', `
+                        <th class="col-num">#</th>
+                        <th class="col-product">Produit</th>
+                        <th class="col-qty is-num">Qté</th>
+                        <th class="col-stock is-num">Stock après</th>
+                        <th class="col-date is-num">Expiration</th>
+                        <th class="col-actions is-num">Actions</th>
+                    `, groupedEntryLines.map((line, index) => renderGroupedEntryLineRow(line, index)).join(''));
                 }
 
                 refreshGroupedEntrySummary();
@@ -25717,6 +26255,7 @@
                 setGroupedEntryError('');
                 resetGroupedEntryDraft();
                 renderGroupedEntryRows();
+                showGroupedEntryDraftPage();
             }
 
             function openGroupedEntryModal({ productId = null } = {}) {
@@ -25741,6 +26280,7 @@
                     updateGroupedEntryProductInfo(product);
                 }
                 updateGroupedEntryPackagingUI();
+                showGroupedEntryDraftPage();
                 groupedEntryModal.classList.remove('hidden');
                 groupedEntryModal.classList.add('flex');
             }
@@ -25932,9 +26472,11 @@
 
             function extractPackagingSummaryFromText(text = '') {
                 const value = String(text || '').trim();
-                const match = value.match(/(\d+(?:[.,]\d+)?)\s+([^=·]+?)\s*=\s*(\d+(?:[.,]\d+)?)/);
-                if (!match) return '';
-                return `${match[1]} ${match[2].trim()} = ${match[3]}`;
+                const equalityMatch = value.match(/(\d+(?:[.,]\d+)?)\s+([^=·]+?)\s*=\s*(\d+(?:[.,]\d+)?)/);
+                if (equalityMatch) return `${equalityMatch[1]} ${equalityMatch[2].trim()} = ${equalityMatch[3]}`;
+                const parenMatch = value.match(/(\d+(?:[.,]\d+)?)\s+([^(·]+?)\s*\((\d+(?:[.,]\d+)?)\s*([^)]*)\)/);
+                if (parenMatch) return `${parenMatch[1]} ${parenMatch[2].trim()} = ${parenMatch[3]}`;
+                return '';
             }
 
             function buildBatchItemFromStoreMovement(move) {
@@ -27918,34 +28460,36 @@
             } = {}) {
                 const product = line.product || getActiveStoreProductById(line.productId);
                 const codeText = product ? getProductInternalCodeText(product) : '';
-                const quantityLabel = formatBulkExitLineQuantityLabel(line);
+                const quantityParts = splitRecapParenLabel(formatBulkExitLineQuantityLabel(line));
+                const priceParts = splitRecapSlashLabel(unitPriceLabel || '—');
+                const stockParts = splitRecapParenLabel(stockAfterLabel || '—');
+                const amountParts = splitRecapParenLabel(amountLabel || '—');
                 const lineNumber = line.lineNumber || index + 1;
                 const rowBg = index % 2 === 0 ? 'bg-white' : 'bg-orange-50';
                 const isPreview = tone === 'preview';
-                const gridClass = isPreview
-                    ? 'grid grid-cols-[1.5rem_minmax(0,1fr)_auto_auto] sm:grid-cols-[1.5rem_minmax(0,1fr)_minmax(6.5rem,auto)_minmax(6.5rem,auto)_minmax(6rem,auto)_minmax(6rem,auto)]'
-                    : 'grid grid-cols-[1.5rem_minmax(0,1fr)_auto_auto]';
                 return `
-                    <article class="${rowBg} ${gridClass} items-center gap-3 border-b border-gray-100 px-3 py-1.5 last:border-b-0" data-bulk-exit-recap-line="${lineNumber}">
-                        <span class="text-[11px] font-semibold text-gray-400">${index + 1}</span>
-                        <div class="min-w-0">
+                    <tr class="${rowBg}" data-bulk-exit-recap-line="${lineNumber}">
+                        <td class="col-num">${index + 1}</td>
+                        <td class="col-product min-w-0">
                             <p class="truncate text-sm font-semibold leading-5 text-gray-900">
                                 ${escapeHtml(line.productName || product?.name || 'Produit')}
                                 <span class="ml-1 font-medium text-[11px] text-sky-700">${escapeHtml(codeText)}</span>
                             </p>
-                        </div>
-                        <p class="shrink-0 text-right text-xs font-semibold leading-4 text-gray-800">${escapeHtml(quantityLabel)}</p>
+                        </td>
+                        <td class="col-qty is-num">${renderRecapStack(quantityParts.main, quantityParts.sub)}</td>
                         ${isPreview ? `
-                            <p class="hidden shrink-0 text-right text-xs leading-4 text-gray-600 sm:block">${escapeHtml(unitPriceLabel || '—')}</p>
-                            <p class="hidden shrink-0 text-right text-xs leading-4 text-gray-600 sm:block">${escapeHtml(stockAfterLabel || '—')}</p>
-                            <p class="shrink-0 text-right text-xs font-semibold leading-4 ${amountClass}">${escapeHtml(amountLabel || '—')}</p>
+                            <td class="col-price is-num">${renderRecapStack(priceParts.main, priceParts.sub)}</td>
+                            <td class="col-stock is-num">${renderRecapStack(stockParts.main, stockParts.sub)}</td>
+                            <td class="col-amount is-num ${amountClass}">${renderRecapStack(amountParts.main, amountParts.sub)}</td>
                         ` : `
-                            <div class="flex shrink-0 items-center justify-end gap-1">
-                                ${shopPriceNote}
-                                ${actionsHtml}
-                            </div>
+                            <td class="col-actions is-num">
+                                <div class="flex items-center justify-end gap-1">
+                                    ${shopPriceNote}
+                                    ${actionsHtml}
+                                </div>
+                            </td>
                         `}
-                    </article>
+                    </tr>
                 `;
             }
 
@@ -27983,7 +28527,12 @@
                     } else {
                         bulkExitLinesEmpty.classList.add('hidden');
                         bulkExitLinesList.classList.remove('hidden');
-                        bulkExitLinesList.innerHTML = sortedSnapshots.map((line, index) =>
+                        bulkExitLinesList.innerHTML = wrapBatchRecapTable('draft', `
+                            <th class="col-num">#</th>
+                            <th class="col-product">Produit</th>
+                            <th class="col-qty is-num">Qté</th>
+                            <th class="col-actions is-num">Actions</th>
+                        `, sortedSnapshots.map((line, index) =>
                             renderBulkExitRecapCard(line, {
                                 index,
                                 tone: 'draft',
@@ -28003,7 +28552,7 @@
                                     </button>
                                 `
                             })
-                        ).join('');
+                        ).join(''));
                     }
                 }
             }
@@ -28150,7 +28699,14 @@
                     bulkExitShopPricePanel.classList.add('hidden');
                 }
                 if (bulkExitPreviewLinesList) {
-                    bulkExitPreviewLinesList.innerHTML = preview.rows.map((row, index) => {
+                    bulkExitPreviewLinesList.innerHTML = wrapBatchRecapTable('preview', `
+                        <th class="col-num">#</th>
+                        <th class="col-product">Produit</th>
+                        <th class="col-qty is-num">Qté</th>
+                        <th class="col-price is-num">Prix unit.</th>
+                        <th class="col-stock is-num">Stock après</th>
+                        <th class="col-amount is-num">Montant</th>
+                    `, preview.rows.map((row, index) => {
                         const currency = row.product.currency || 'CFA';
                         let amountLabel = 'Prix à définir';
                         let amountClass = 'text-amber-600';
@@ -28172,7 +28728,7 @@
                             amountLabel,
                             amountClass
                         });
-                    }).join('');
+                    }).join(''));
                 }
                 if (bulkExitPreviewCount) bulkExitPreviewCount.textContent = String(preview.rows.length);
                 if (bulkExitPreviewQuantity) {
@@ -28718,6 +29274,7 @@
             }
 
             function renderStoreProducts(searchTerm = '') {
+                refreshStoreCartonStockSummary();
                 const activeStore = getActiveStoreId();
                 if (!activeStore) {
                     if (storeProductsTableContainer) storeProductsTableContainer.classList.add('hidden');
@@ -29917,6 +30474,7 @@
 
             function renderStoreMovementsPage() {
                 if (!storeMovementsPlaceholder || !storeMovementsTableContainer || !storeMovementsTbody) return;
+                refreshStoreMovementCartonSummary();
                 updateStoreMovementsViewToggleUI();
                 const activeStore = getActiveStoreId();
                 const filters = {
@@ -30012,8 +30570,7 @@
                 storeMovementsTbody.innerHTML = pagination.items.map(item => {
                     if (item.kind === 'request') {
                         const request = item.data;
-                        const qty = parseInt(request.quantity, 10) || 0;
-                        const changeValue = -Math.abs(qty);
+                        const quantityParts = getStoreMovementQuantityParts(request, { isRequest: true });
                         const statusBadge = getStatusBadge(request.status);
                         const commentDisplay = formatStoreMovementCommentDisplay({ comment: request.comment || 'Sortie en attente' });
                         const commentHtml = `<p class="truncate max-w-[16rem]" title="${escapeHtml(commentDisplay.full || commentDisplay.short)}">${escapeHtml(request.comment ? commentDisplay.short : 'Sortie en attente')}</p>`;
@@ -30026,8 +30583,13 @@
                                 <td class="px-4 py-2.5 whitespace-nowrap text-sm">
                                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-700">Sortie</span>
                                 </td>
-                                <td class="px-4 py-2.5 whitespace-nowrap text-sm font-semibold text-gray-900">${Math.abs(qty)}</td>
-                                <td class="px-4 py-2.5 whitespace-nowrap text-sm font-semibold text-red-600">${changeValue}</td>
+                                <td class="px-4 py-2.5 text-sm font-semibold text-gray-900">
+                                    <span class="block leading-5">${escapeHtml(quantityParts.main)}</span>
+                                    ${quantityParts.sub ? `<span class="block text-[11px] font-medium text-gray-400">${escapeHtml(quantityParts.sub)}</span>` : ''}
+                                </td>
+                                <td class="px-4 py-2.5 text-sm font-semibold text-red-600">
+                                    <span class="block leading-5">−${escapeHtml(quantityParts.main)}</span>
+                                </td>
                                 <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500">-</td>
                                 <td class="px-4 py-2.5 text-sm text-gray-600">
                                     ${commentHtml}
@@ -30049,6 +30611,8 @@
                     const isEntry = move.type === 'Entrée';
                     const isAdjustment = move.type === 'Ajustement';
                     const changeValue = isEntry ? Math.abs(qty) : (isAdjustment ? qty : -Math.abs(qty));
+                    const quantityParts = getStoreMovementQuantityParts(move);
+                    const changePrefix = changeValue >= 0 ? '+' : '−';
                     const typeBadge = getMovementTypeBadge(move);
                     const statusBadge = getStatusBadge(move.status || EXIT_STATUS_APPROVED);
                     const commentDisplay = formatStoreMovementCommentDisplay(move);
@@ -30073,8 +30637,13 @@
                             <td class="px-4 py-2.5 whitespace-nowrap text-sm">
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${typeBadge.classes}">${typeBadge.label}</span>
                             </td>
-                            <td class="px-4 py-2.5 whitespace-nowrap text-sm font-semibold text-gray-900">${Math.abs(qty)}</td>
-                            <td class="px-4 py-2.5 whitespace-nowrap text-sm font-semibold ${changeValue >= 0 ? 'text-emerald-600' : 'text-red-600'}">${changeValue >= 0 ? '+' : ''}${changeValue}</td>
+                            <td class="px-4 py-2.5 text-sm font-semibold text-gray-900">
+                                <span class="block leading-5">${escapeHtml(quantityParts.main)}</span>
+                                ${quantityParts.sub ? `<span class="block text-[11px] font-medium text-gray-400">${escapeHtml(quantityParts.sub)}</span>` : ''}
+                            </td>
+                            <td class="px-4 py-2.5 text-sm font-semibold ${changeValue >= 0 ? 'text-emerald-600' : 'text-red-600'}">
+                                <span class="block leading-5">${changePrefix}${escapeHtml(quantityParts.main)}</span>
+                            </td>
                             <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500">${supplierLabel}</td>
                             <td class="px-4 py-2.5 text-sm text-gray-600">${commentHtml}</td>
                             <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500">${userLabel}</td>
@@ -30416,9 +30985,10 @@
                         renderSalesHistory();
                         return;
                     }
-                    const quantity = parseInt(sale.quantity, 10) || 0;
+                    const billingQty = getSaleLineBillingQuantity(sale);
                     updates[`${dbBasePath}/salesHistory/${saleId}/sellingPrice`] = nextPrice;
-                    updates[`${dbBasePath}/salesHistory/${saleId}/totalAmount`] = nextPrice * quantity;
+                    updates[`${dbBasePath}/salesHistory/${saleId}/totalAmount`] = nextPrice * billingQty;
+                    updates[`${dbBasePath}/salesHistory/${saleId}/billingQuantity`] = billingQty;
                     updates[`${dbBasePath}/salesHistory/${saleId}/manualSellingPrice`] = nextPrice;
                     updates[`${dbBasePath}/salesHistory/${saleId}/pricePending`] = false;
                     updates[`${dbBasePath}/salesHistory/${saleId}/pricingStatus`] = PENDING_SALE_PRICING_READY;
@@ -30438,9 +31008,10 @@
                             appData.salesHistory[saleId].pricePending = true;
                             appData.salesHistory[saleId].pricingStatus = PENDING_SALE_PRICING_PENDING;
                         } else {
-                            const quantity = parseInt(appData.salesHistory[saleId].quantity, 10) || 0;
+                            const billingQty = getSaleLineBillingQuantity(appData.salesHistory[saleId]);
                             appData.salesHistory[saleId].sellingPrice = nextPrice;
-                            appData.salesHistory[saleId].totalAmount = nextPrice * quantity;
+                            appData.salesHistory[saleId].totalAmount = nextPrice * billingQty;
+                            appData.salesHistory[saleId].billingQuantity = billingQty;
                             appData.salesHistory[saleId].manualSellingPrice = nextPrice;
                             appData.salesHistory[saleId].pricePending = false;
                             appData.salesHistory[saleId].pricingStatus = PENDING_SALE_PRICING_READY;
@@ -35705,8 +36276,8 @@
 
             function calculateSaleItemBaseSubtotal(item = {}) {
                 const price = Number(item?.sellingPrice ?? item?.price ?? 0);
-                const quantity = Math.max(1, Number(item?.quantity) || 1);
-                if (!hasUsableSellingPrice(price)) {
+                const quantity = Math.max(0, getSaleLineBillingQuantity(item) || Number(item?.quantity) || 0);
+                if (!hasUsableSellingPrice(price) || quantity <= 0) {
                     return 0;
                 }
                 return roundAmount(price * quantity);
@@ -40526,6 +41097,10 @@
 
             if (groupedEntryForm) groupedEntryForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
+                if (groupedEntryPreviewSection?.classList.contains('hidden')) {
+                    groupedEntryPreviewButton?.click();
+                    return;
+                }
                 if (!currentUser || !dbBasePath) return;
                 const storeId = getActiveStoreId();
                 if (!storeId) {
@@ -41617,6 +42192,8 @@
                     const result = upsertGroupedEntryLine(nextLine);
                     renderGroupedEntryRows();
                     resetGroupedEntryDraft();
+                    const lastAddedRow = groupedEntryLinesList?.querySelector('tbody tr:last-child');
+                    lastAddedRow?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
                     if (result.merged) {
                         showSuccessToast('Quantité ajoutée à la ligne existante du même produit.');
                     }
@@ -41627,6 +42204,23 @@
             if (groupedEntryResetLineButton) groupedEntryResetLineButton.addEventListener('click', () => {
                 setGroupedEntryError('');
                 resetGroupedEntryDraft();
+            });
+            if (groupedEntryPreviewButton) groupedEntryPreviewButton.addEventListener('click', () => {
+                setGroupedEntryError('');
+                if (!groupedEntrySupplierSelect?.value) {
+                    setGroupedEntryError('Veuillez sélectionner un fournisseur.');
+                    return;
+                }
+                if (!consolidateGroupedEntryLines(groupedEntryLines.slice()).length) {
+                    setGroupedEntryError('Ajoutez au moins une ligne produit.');
+                    return;
+                }
+                renderGroupedEntryPreview();
+                showGroupedEntryPreviewPage();
+            });
+            if (groupedEntryBackButton) groupedEntryBackButton.addEventListener('click', () => {
+                setGroupedEntryError('');
+                showGroupedEntryDraftPage();
             });
             if (groupedEntryLinesList) groupedEntryLinesList.addEventListener('click', (event) => {
                 const editButton = event.target.closest('[data-grouped-entry-edit]');
